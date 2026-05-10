@@ -645,7 +645,9 @@ def main() -> int:
 <nav class="nav">
     <div class="container nav-inner">
         <a href="index.html" class="active">Podium Combinations</a>
-        <a href="seasons.html">Season Alignments &rarr;</a>
+        <a href="seasons.html">Season Alignments</a>
+        <a href="charts.html">Charts</a>
+        <a href="soulmates.html">Soulmates &rarr;</a>
     </div>
 </nav>
 <header>

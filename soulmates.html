@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 Soulmates &middot; Podigami</title>
+<style>
+:root {
+    --bg: #0b0d12;
+    --bg-2: #0e1116;
+    --surface: #161b22;
+    --surface-2: #1f2630;
+    --surface-3: #262d38;
+    --text: #e6edf3;
+    --text-dim: #c9d1d9;
+    --muted: #8b949e;
+    --muted-dim: #6e7681;
+    --accent: #e10600;
+    --accent-bright: #ff2d20;
+    --accent-dim: #8a0500;
+    --gold: #f4c430;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+    --border: #2a313c;
+    --border-strong: #3a4250;
+    --radius: 10px;
+    --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+/* nav */
+.nav {
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+    display: flex;
+    gap: 24px;
+    padding: 12px 0;
+    align-items: center;
+}
+.nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+}
+.nav a:hover { color: var(--text); background: var(--surface-2); }
+.nav a.active { color: var(--text); background: var(--surface-2); border-left: 2px solid var(--accent); padding-left: 10px; }
+
+/* header */
+header {
+    background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    padding: 40px 0 32px;
+}
+header::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%, var(--accent) 20%, var(--accent-bright) 50%, var(--accent) 80%, transparent 100%);
+    opacity: 0.85;
+}
+header h1 {
+    margin: 0 0 6px;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+}
+header h1 .accent { color: var(--accent); font-weight: 800; margin-right: 10px; }
+header .tagline { margin: 0 0 22px; color: var(--muted); font-size: 15px; max-width: 760px; }
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    max-width: 880px;
+}
+.stat {
+    background: var(--surface-2);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+.stat::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0.85;
+}
+.stat .num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    letter-spacing: -0.3px;
+}
+.stat .num small { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+.stat .label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-top: 4px;
+}
+
+/* main + controls */
+main { flex: 1; padding: 28px 0 48px; }
+.controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.controls label {
+    font-size: 13px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+.controls select, .controls input[type=number] {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 14px;
+}
+.controls select:focus, .controls input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.15);
+}
+.hint { color: var(--muted); font-size: 13px; margin-left: auto; }
+.hint strong { color: var(--text); font-weight: 600; }
+
+/* season cards */
+.season-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.season-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.season-card.has-match { border-left: 3px solid var(--accent); }
+
+.season-head {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    gap: 18px;
+    align-items: center;
+    padding: 16px 22px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s;
+}
+.season-head:hover { background: var(--surface-2); }
+.season-card.expanded .season-head { background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.season-year {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+.season-zones {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: baseline;
+    gap: 16px;
+    min-width: 0;
+}
+.zone {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+}
+.zone .placeholder {
+    color: var(--muted-dim);
+    font-size: 14px;
+}
+.zone-count .count {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.3px;
+    line-height: 1;
+}
+.zone-count .label {
+    color: var(--text-dim);
+    font-size: 13px;
+}
+.zone-rate .rate {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.zone-best .best {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+.zone-best .best b {
+    color: var(--accent-bright);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+}
+
+.season-chev {
+    color: var(--muted-dim);
+    font-size: 14px;
+    transition: transform 0.18s, color 0.15s;
+}
+.season-card.expanded .season-chev { transform: rotate(180deg); color: var(--accent-bright); }
+
+/* expanded season body */
+.season-body { display: none; padding: 18px 22px 22px; }
+.season-card.expanded .season-body { display: block; }
+.season-body .grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) 2fr;
+    gap: 22px;
+}
+@media (max-width: 760px) {
+    .season-body .grid { grid-template-columns: 1fr; }
+    .season-head { grid-template-columns: 70px 1fr auto; gap: 14px; padding: 14px 16px; }
+    .season-year { font-size: 24px; }
+    .season-body { padding: 16px; }
+    .container { padding: 0 18px; }
+    .season-zones {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 14px;
+        row-gap: 4px;
+    }
+    .zone { justify-content: flex-start; }
+}
+
+.panel {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+.panel h3 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+}
+
+/* champ standings list */
+.champ-list { list-style: none; padding: 0; margin: 0; counter-reset: champ; }
+.champ-list li {
+    counter-increment: champ;
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 8px;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+.champ-list li:last-child { border-bottom: none; }
+.champ-list li::before {
+    content: counter(champ);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted-dim);
+    text-align: right;
+    padding-right: 4px;
+}
+.champ-list li:nth-child(1)::before { color: var(--gold); }
+.champ-list li:nth-child(2)::before { color: var(--silver); }
+.champ-list li:nth-child(3)::before { color: var(--bronze); }
+.champ-list li .driver-name { color: var(--text); font-weight: 500; }
+.champ-list li .points { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.champ-list li.champ-list-extra { display: none; }
+.champ-list.expanded li.champ-list-extra { display: grid; }
+.champ-toggle {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline dotted var(--border-strong);
+}
+.champ-toggle:hover { color: var(--text); }
+
+/* races table */
+.races-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.races-table th {
+    text-align: left;
+    padding: 8px 10px;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+}
+.races-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+.races-table tr:last-child td { border-bottom: none; }
+.races-table .col-r { width: 50px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+.races-table .col-name { color: var(--text); font-weight: 500; }
+.races-table .col-len { width: 70px; }
+.races-table .col-drivers { color: var(--text-dim); font-size: 13px; }
+.races-table .col-drivers .dr {
+    font-family: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    font-size: 13px;
+}
+.races-table .col-drivers .sep { color: var(--muted-dim); margin: 0 6px; }
+
+/* match depth label */
+.match-depth {
+    font-weight: 700;
+    color: var(--accent-bright);
+    font-variant-numeric: tabular-nums;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+}
+
+.empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
+.indy-note { color: var(--muted-dim); font-size: 12px; margin-top: 10px; font-style: italic; }
+.global-empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+    font-size: 14px;
+}
+.global-empty strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+/* footer */
+footer {
+    border-top: 1px solid var(--border);
+    background: var(--bg-2);
+    color: var(--muted);
+    font-size: 13px;
+    padding: 18px 0;
+    text-align: center;
+}
+footer a {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+}
+footer a:hover { color: var(--accent-bright); border-color: var(--accent); }
+
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 18px;
+}
+.chart-card .chart-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+.chart-card h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+}
+.chart-card .chart-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 12px;
+    line-height: 1.5;
+}
+.chart-card .chart-host {
+    width: 100%;
+    overflow-x: auto;
+}
+/* tooltip overrides */
+.apexcharts-tooltip.apexcharts-theme-dark {
+    background: var(--surface-2) !important;
+    border: 1px solid var(--border-strong) !important;
+    color: var(--text) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5) !important;
+    border-radius: var(--radius-sm) !important;
+}
+.apex-tt {
+    padding: 8px 12px;
+    font-size: 12px;
+    line-height: 1.55;
+    font-family: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+}
+.apex-tt .tt-head {
+    color: var(--accent-bright);
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+.apex-tt .tt-row { color: var(--text); }
+.apex-tt .tt-dim { color: var(--muted); margin-top: 2px; }
+.apex-tt .tt-drivers { color: var(--text-dim); margin-top: 4px; }
+/* axis tweaks */
+.apexcharts-xaxis text, .apexcharts-yaxis text { fill: var(--muted) !important; }
+.apexcharts-gridline { stroke: var(--border) !important; }
+
+/* soulmate matrix layout */
+.soulmate-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+@media (max-width: 1000px) {
+    .soulmate-grid { grid-template-columns: 1fr; }
+}
+.pair-list h3 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+}
+.pair-rows {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.pair-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto auto;
+    align-items: baseline;
+    column-gap: 10px;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-2);
+    border: 1px solid transparent;
+    font-size: 13px;
+    transition: background 0.12s, border-color 0.12s;
+}
+.pair-row:hover {
+    background: var(--surface-2);
+    border-color: var(--border);
+}
+.pair-rank {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted-dim);
+    font-size: 11px;
+    text-align: right;
+    font-weight: 700;
+}
+.pair-names {
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pair-names b {
+    color: var(--text);
+    font-weight: 600;
+}
+.pair-count {
+    color: var(--accent-bright);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 28px;
+    text-align: right;
+}
+.pair-years {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    min-width: 76px;
+    text-align: right;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body>
+<nav class="nav">
+    <div class="container nav-inner">
+        <a href="index.html">&larr; Podium Combinations</a>
+        <a href="seasons.html">Season Alignments</a>
+        <a href="charts.html">Charts</a>
+        <a href="soulmates.html" class="active">Soulmates</a>
+    </div>
+</nav>
+<header>
+    <div class="container">
+        <h1><span class="accent">F1</span>Podium Soulmates</h1>
+        <p class="tagline">Which legends spent the most race weekends together on the box? A symmetric heatmap of the 40 most decorated drivers, sorted by era so partnerships glow as bright clusters.</p>
+    </div>
+</header>
+<main>
+    <div class="container">
+        
+<section class="chart-card" id="chart-soulmate-matrix">
+    <div class="chart-head">
+        <h2>Podium Soulmates</h2>
+        <span class="chart-sub" style="margin: 0;">Top 40 drivers, sorted by era</span>
+    </div>
+    <p class="chart-sub">For each pair of legendary drivers, how many races did they share a podium together? Era-mates form bright squares along the diagonal &mdash; Senna &amp; Prost, Schumacher &amp; Barrichello, Hamilton &amp; Verstappen.</p>
+    <div class="soulmate-grid">
+        <div class="chart-host"><div id="soulmate-matrix"></div></div>
+        <aside class="pair-list">
+            <h3>Top pairs</h3>
+            <ol class="pair-rows">
+                <li class="pair-row"><span class="pair-rank">1</span><span class="pair-names"><b>Lewis Hamilton</b> &amp; <b>Max Verstappen</b></span><span class="pair-count">60</span><span class="pair-years">2016&ndash;2024</span></li>
+<li class="pair-row"><span class="pair-rank">2</span><span class="pair-names"><b>Sebastian Vettel</b> &amp; <b>Lewis Hamilton</b></span><span class="pair-count">56</span><span class="pair-years">2009&ndash;2020</span></li>
+<li class="pair-row"><span class="pair-rank">3</span><span class="pair-names"><b>Lewis Hamilton</b> &amp; <b>Valtteri Bottas</b></span><span class="pair-count">53</span><span class="pair-years">2014&ndash;2021</span></li>
+<li class="pair-row"><span class="pair-rank">4</span><span class="pair-names"><b>Nico Rosberg</b> &amp; <b>Lewis Hamilton</b></span><span class="pair-count">45</span><span class="pair-years">2008&ndash;2016</span></li>
+<li class="pair-row"><span class="pair-rank">5</span><span class="pair-names"><b>Alain Prost</b> &amp; <b>Ayrton Senna</b></span><span class="pair-count">41</span><span class="pair-years">1984&ndash;1993</span></li>
+<li class="pair-row"><span class="pair-rank">6</span><span class="pair-names"><b>Michael Schumacher</b> &amp; <b>Rubens Barrichello</b></span><span class="pair-count">41</span><span class="pair-years">1994&ndash;2005</span></li>
+<li class="pair-row"><span class="pair-rank">7</span><span class="pair-names"><b>Michael Schumacher</b> &amp; <b>David Coulthard</b></span><span class="pair-count">37</span><span class="pair-years">1995&ndash;2002</span></li>
+<li class="pair-row"><span class="pair-rank">8</span><span class="pair-names"><b>Kimi Räikkönen</b> &amp; <b>Fernando Alonso</b></span><span class="pair-count">34</span><span class="pair-years">2003&ndash;2013</span></li>
+<li class="pair-row"><span class="pair-rank">9</span><span class="pair-names"><b>Kimi Räikkönen</b> &amp; <b>Lewis Hamilton</b></span><span class="pair-count">32</span><span class="pair-years">2007&ndash;2018</span></li>
+<li class="pair-row"><span class="pair-rank">10</span><span class="pair-names"><b>Mark Webber</b> &amp; <b>Sebastian Vettel</b></span><span class="pair-count">31</span><span class="pair-years">2009&ndash;2013</span></li>
+<li class="pair-row"><span class="pair-rank">11</span><span class="pair-names"><b>Mika Häkkinen</b> &amp; <b>Michael Schumacher</b></span><span class="pair-count">30</span><span class="pair-years">1994&ndash;2001</span></li>
+<li class="pair-row"><span class="pair-rank">12</span><span class="pair-names"><b>Nelson Piquet</b> &amp; <b>Alain Prost</b></span><span class="pair-count">29</span><span class="pair-years">1981&ndash;1991</span></li>
+<li class="pair-row"><span class="pair-rank">13</span><span class="pair-names"><b>Ayrton Senna</b> &amp; <b>Nigel Mansell</b></span><span class="pair-count">27</span><span class="pair-years">1985&ndash;1992</span></li>
+<li class="pair-row"><span class="pair-rank">14</span><span class="pair-names"><b>Max Verstappen</b> &amp; <b>Charles Leclerc</b></span><span class="pair-count">27</span><span class="pair-years">2019&ndash;2025</span></li>
+<li class="pair-row"><span class="pair-rank">15</span><span class="pair-names"><b>Max Verstappen</b> &amp; <b>Lando Norris</b></span><span class="pair-count">27</span><span class="pair-years">2021&ndash;2025</span></li>
+<li class="pair-row"><span class="pair-rank">16</span><span class="pair-names"><b>Alain Prost</b> &amp; <b>Nigel Mansell</b></span><span class="pair-count">26</span><span class="pair-years">1982&ndash;1991</span></li>
+<li class="pair-row"><span class="pair-rank">17</span><span class="pair-names"><b>Fernando Alonso</b> &amp; <b>Sebastian Vettel</b></span><span class="pair-count">26</span><span class="pair-years">2010&ndash;2013</span></li>
+<li class="pair-row"><span class="pair-rank">18</span><span class="pair-names"><b>Fernando Alonso</b> &amp; <b>Lewis Hamilton</b></span><span class="pair-count">25</span><span class="pair-years">2007&ndash;2023</span></li>
+<li class="pair-row"><span class="pair-rank">19</span><span class="pair-names"><b>Max Verstappen</b> &amp; <b>Sergio Pérez</b></span><span class="pair-count">25</span><span class="pair-years">2021&ndash;2024</span></li>
+<li class="pair-row"><span class="pair-rank">20</span><span class="pair-names"><b>Valtteri Bottas</b> &amp; <b>Max Verstappen</b></span><span class="pair-count">25</span><span class="pair-years">2017&ndash;2021</span></li>
+            </ol>
+        </aside>
+    </div>
+</section>
+
+    </div>
+</main>
+<footer>
+    <div class="container">
+        Data from <a href="https://api.jolpi.ca/ergast/f1/" target="_blank" rel="noopener">Jolpica F1 API</a>
+        &middot; 1950&ndash;2025
+    </div>
+</footer>
+<script>
+(function() {
+    const series = [{"name": "Lando Norris", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 1}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 6}, {"x": "Daniel Ricciardo", "y": 1}, {"x": "Valtteri Bottas", "y": 3}, {"x": "Max Verstappen", "y": 27}, {"x": "Sergio Pérez", "y": 3}, {"x": "Carlos Sainz", "y": 6}, {"x": "Charles Leclerc", "y": 14}, {"x": "Lando Norris", "y": null}]}, {"name": "Charles Leclerc", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 2}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 15}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 9}, {"x": "Max Verstappen", "y": 27}, {"x": "Sergio Pérez", "y": 9}, {"x": "Carlos Sainz", "y": 9}, {"x": "Charles Leclerc", "y": null}, {"x": "Lando Norris", "y": 14}]}, {"name": "Carlos Sainz", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 9}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 16}, {"x": "Sergio Pérez", "y": 7}, {"x": "Carlos Sainz", "y": null}, {"x": "Charles Leclerc", "y": 9}, {"x": "Lando Norris", "y": 6}]}, {"name": "Sergio Pérez", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 1}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 5}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 4}, {"x": "Nico Rosberg", "y": 2}, {"x": "Lewis Hamilton", "y": 13}, {"x": "Daniel Ricciardo", "y": 1}, {"x": "Valtteri Bottas", "y": 1}, {"x": "Max Verstappen", "y": 25}, {"x": "Sergio Pérez", "y": null}, {"x": "Carlos Sainz", "y": 7}, {"x": "Charles Leclerc", "y": 9}, {"x": "Lando Norris", "y": 3}]}, {"name": "Max Verstappen", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 8}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 9}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 11}, {"x": "Nico Rosberg", "y": 4}, {"x": "Lewis Hamilton", "y": 60}, {"x": "Daniel Ricciardo", "y": 5}, {"x": "Valtteri Bottas", "y": 25}, {"x": "Max Verstappen", "y": null}, {"x": "Sergio Pérez", "y": 25}, {"x": "Carlos Sainz", "y": 16}, {"x": "Charles Leclerc", "y": 27}, {"x": "Lando Norris", "y": 27}]}, {"name": "Valtteri Bottas", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 8}, {"x": "Felipe Massa", "y": 1}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 17}, {"x": "Nico Rosberg", "y": 6}, {"x": "Lewis Hamilton", "y": 53}, {"x": "Daniel Ricciardo", "y": 9}, {"x": "Valtteri Bottas", "y": null}, {"x": "Max Verstappen", "y": 25}, {"x": "Sergio Pérez", "y": 1}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 9}, {"x": "Lando Norris", "y": 3}]}, {"name": "Daniel Ricciardo", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 3}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 1}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 9}, {"x": "Nico Rosberg", "y": 11}, {"x": "Lewis Hamilton", "y": 22}, {"x": "Daniel Ricciardo", "y": null}, {"x": "Valtteri Bottas", "y": 9}, {"x": "Max Verstappen", "y": 5}, {"x": "Sergio Pérez", "y": 1}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 1}]}, {"name": "Lewis Hamilton", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 2}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 32}, {"x": "Felipe Massa", "y": 19}, {"x": "Fernando Alonso", "y": 25}, {"x": "Jenson Button", "y": 9}, {"x": "Mark Webber", "y": 9}, {"x": "Sebastian Vettel", "y": 56}, {"x": "Nico Rosberg", "y": 45}, {"x": "Lewis Hamilton", "y": null}, {"x": "Daniel Ricciardo", "y": 22}, {"x": "Valtteri Bottas", "y": 53}, {"x": "Max Verstappen", "y": 60}, {"x": "Sergio Pérez", "y": 13}, {"x": "Carlos Sainz", "y": 9}, {"x": "Charles Leclerc", "y": 15}, {"x": "Lando Norris", "y": 6}]}, {"name": "Nico Rosberg", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 4}, {"x": "Felipe Massa", "y": 3}, {"x": "Fernando Alonso", "y": 4}, {"x": "Jenson Button", "y": 3}, {"x": "Mark Webber", "y": 6}, {"x": "Sebastian Vettel", "y": 21}, {"x": "Nico Rosberg", "y": null}, {"x": "Lewis Hamilton", "y": 45}, {"x": "Daniel Ricciardo", "y": 11}, {"x": "Valtteri Bottas", "y": 6}, {"x": "Max Verstappen", "y": 4}, {"x": "Sergio Pérez", "y": 2}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Sebastian Vettel", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 1}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 22}, {"x": "Felipe Massa", "y": 4}, {"x": "Fernando Alonso", "y": 26}, {"x": "Jenson Button", "y": 20}, {"x": "Mark Webber", "y": 31}, {"x": "Sebastian Vettel", "y": null}, {"x": "Nico Rosberg", "y": 21}, {"x": "Lewis Hamilton", "y": 56}, {"x": "Daniel Ricciardo", "y": 9}, {"x": "Valtteri Bottas", "y": 17}, {"x": "Max Verstappen", "y": 11}, {"x": "Sergio Pérez", "y": 4}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 2}, {"x": "Lando Norris", "y": 0}]}, {"name": "Mark Webber", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 2}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 2}, {"x": "Felipe Massa", "y": 2}, {"x": "Fernando Alonso", "y": 17}, {"x": "Jenson Button", "y": 9}, {"x": "Mark Webber", "y": null}, {"x": "Sebastian Vettel", "y": 31}, {"x": "Nico Rosberg", "y": 6}, {"x": "Lewis Hamilton", "y": 9}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Jenson Button", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 8}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 10}, {"x": "Juan Pablo Montoya", "y": 3}, {"x": "Kimi Räikkönen", "y": 6}, {"x": "Felipe Massa", "y": 4}, {"x": "Fernando Alonso", "y": 16}, {"x": "Jenson Button", "y": null}, {"x": "Mark Webber", "y": 9}, {"x": "Sebastian Vettel", "y": 20}, {"x": "Nico Rosberg", "y": 3}, {"x": "Lewis Hamilton", "y": 9}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Fernando Alonso", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 17}, {"x": "David Coulthard", "y": 1}, {"x": "Rubens Barrichello", "y": 7}, {"x": "Juan Pablo Montoya", "y": 8}, {"x": "Kimi Räikkönen", "y": 34}, {"x": "Felipe Massa", "y": 20}, {"x": "Fernando Alonso", "y": null}, {"x": "Jenson Button", "y": 16}, {"x": "Mark Webber", "y": 17}, {"x": "Sebastian Vettel", "y": 26}, {"x": "Nico Rosberg", "y": 4}, {"x": "Lewis Hamilton", "y": 25}, {"x": "Daniel Ricciardo", "y": 1}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 9}, {"x": "Sergio Pérez", "y": 5}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 1}]}, {"name": "Felipe Massa", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 5}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 14}, {"x": "Felipe Massa", "y": null}, {"x": "Fernando Alonso", "y": 20}, {"x": "Jenson Button", "y": 4}, {"x": "Mark Webber", "y": 2}, {"x": "Sebastian Vettel", "y": 4}, {"x": "Nico Rosberg", "y": 3}, {"x": "Lewis Hamilton", "y": 19}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 1}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Kimi Räikkönen", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 19}, {"x": "David Coulthard", "y": 3}, {"x": "Rubens Barrichello", "y": 15}, {"x": "Juan Pablo Montoya", "y": 9}, {"x": "Kimi Räikkönen", "y": null}, {"x": "Felipe Massa", "y": 14}, {"x": "Fernando Alonso", "y": 34}, {"x": "Jenson Button", "y": 6}, {"x": "Mark Webber", "y": 2}, {"x": "Sebastian Vettel", "y": 22}, {"x": "Nico Rosberg", "y": 4}, {"x": "Lewis Hamilton", "y": 32}, {"x": "Daniel Ricciardo", "y": 3}, {"x": "Valtteri Bottas", "y": 8}, {"x": "Max Verstappen", "y": 8}, {"x": "Sergio Pérez", "y": 1}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Juan Pablo Montoya", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 17}, {"x": "David Coulthard", "y": 6}, {"x": "Rubens Barrichello", "y": 8}, {"x": "Juan Pablo Montoya", "y": null}, {"x": "Kimi Räikkönen", "y": 9}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 8}, {"x": "Jenson Button", "y": 3}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Rubens Barrichello", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 1}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 1}, {"x": "Mika Häkkinen", "y": 6}, {"x": "Michael Schumacher", "y": 41}, {"x": "David Coulthard", "y": 15}, {"x": "Rubens Barrichello", "y": null}, {"x": "Juan Pablo Montoya", "y": 8}, {"x": "Kimi Räikkönen", "y": 15}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 7}, {"x": "Jenson Button", "y": 10}, {"x": "Mark Webber", "y": 2}, {"x": "Sebastian Vettel", "y": 1}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 2}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "David Coulthard", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 3}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 5}, {"x": "Jean Alesi", "y": 3}, {"x": "Mika Häkkinen", "y": 24}, {"x": "Michael Schumacher", "y": 37}, {"x": "David Coulthard", "y": null}, {"x": "Rubens Barrichello", "y": 15}, {"x": "Juan Pablo Montoya", "y": 6}, {"x": "Kimi Räikkönen", "y": 3}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 1}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Michael Schumacher", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 8}, {"x": "Ayrton Senna", "y": 4}, {"x": "Nigel Mansell", "y": 5}, {"x": "Gerhard Berger", "y": 11}, {"x": "Riccardo Patrese", "y": 4}, {"x": "Damon Hill", "y": 22}, {"x": "Jean Alesi", "y": 11}, {"x": "Mika Häkkinen", "y": 30}, {"x": "Michael Schumacher", "y": null}, {"x": "David Coulthard", "y": 37}, {"x": "Rubens Barrichello", "y": 41}, {"x": "Juan Pablo Montoya", "y": 17}, {"x": "Kimi Räikkönen", "y": 19}, {"x": "Felipe Massa", "y": 5}, {"x": "Fernando Alonso", "y": 17}, {"x": "Jenson Button", "y": 8}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Mika Häkkinen", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 1}, {"x": "Ayrton Senna", "y": 1}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 3}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 6}, {"x": "Jean Alesi", "y": 2}, {"x": "Mika Häkkinen", "y": null}, {"x": "Michael Schumacher", "y": 30}, {"x": "David Coulthard", "y": 24}, {"x": "Rubens Barrichello", "y": 6}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Jean Alesi", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 5}, {"x": "Nigel Mansell", "y": 3}, {"x": "Gerhard Berger", "y": 3}, {"x": "Riccardo Patrese", "y": 2}, {"x": "Damon Hill", "y": 15}, {"x": "Jean Alesi", "y": null}, {"x": "Mika Häkkinen", "y": 2}, {"x": "Michael Schumacher", "y": 11}, {"x": "David Coulthard", "y": 3}, {"x": "Rubens Barrichello", "y": 1}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Damon Hill", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 6}, {"x": "Ayrton Senna", "y": 4}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 7}, {"x": "Riccardo Patrese", "y": 1}, {"x": "Damon Hill", "y": null}, {"x": "Jean Alesi", "y": 15}, {"x": "Mika Häkkinen", "y": 6}, {"x": "Michael Schumacher", "y": 22}, {"x": "David Coulthard", "y": 5}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Riccardo Patrese", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 1}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 3}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 2}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 6}, {"x": "Alain Prost", "y": 4}, {"x": "Ayrton Senna", "y": 9}, {"x": "Nigel Mansell", "y": 14}, {"x": "Gerhard Berger", "y": 5}, {"x": "Riccardo Patrese", "y": null}, {"x": "Damon Hill", "y": 1}, {"x": "Jean Alesi", "y": 2}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 4}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Gerhard Berger", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 4}, {"x": "Alain Prost", "y": 15}, {"x": "Ayrton Senna", "y": 17}, {"x": "Nigel Mansell", "y": 6}, {"x": "Gerhard Berger", "y": null}, {"x": "Riccardo Patrese", "y": 5}, {"x": "Damon Hill", "y": 7}, {"x": "Jean Alesi", "y": 3}, {"x": "Mika Häkkinen", "y": 3}, {"x": "Michael Schumacher", "y": 11}, {"x": "David Coulthard", "y": 3}, {"x": "Rubens Barrichello", "y": 1}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Nigel Mansell", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 2}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 1}, {"x": "Jacques Laffite", "y": 1}, {"x": "Nelson Piquet", "y": 15}, {"x": "Alain Prost", "y": 26}, {"x": "Ayrton Senna", "y": 27}, {"x": "Nigel Mansell", "y": null}, {"x": "Gerhard Berger", "y": 6}, {"x": "Riccardo Patrese", "y": 14}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 3}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 5}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Ayrton Senna", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 3}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 2}, {"x": "Nelson Piquet", "y": 16}, {"x": "Alain Prost", "y": 41}, {"x": "Ayrton Senna", "y": null}, {"x": "Nigel Mansell", "y": 27}, {"x": "Gerhard Berger", "y": 17}, {"x": "Riccardo Patrese", "y": 9}, {"x": "Damon Hill", "y": 4}, {"x": "Jean Alesi", "y": 5}, {"x": "Mika Häkkinen", "y": 1}, {"x": "Michael Schumacher", "y": 4}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Alain Prost", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 7}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 3}, {"x": "Jacques Laffite", "y": 4}, {"x": "Nelson Piquet", "y": 29}, {"x": "Alain Prost", "y": null}, {"x": "Ayrton Senna", "y": 41}, {"x": "Nigel Mansell", "y": 26}, {"x": "Gerhard Berger", "y": 15}, {"x": "Riccardo Patrese", "y": 4}, {"x": "Damon Hill", "y": 6}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 1}, {"x": "Michael Schumacher", "y": 8}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Nelson Piquet", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 1}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 3}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 6}, {"x": "Jacques Laffite", "y": 6}, {"x": "Nelson Piquet", "y": null}, {"x": "Alain Prost", "y": 29}, {"x": "Ayrton Senna", "y": 16}, {"x": "Nigel Mansell", "y": 15}, {"x": "Gerhard Berger", "y": 4}, {"x": "Riccardo Patrese", "y": 6}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Jacques Laffite", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 3}, {"x": "Niki Lauda", "y": 4}, {"x": "Jody Scheckter", "y": 4}, {"x": "Carlos Reutemann", "y": 8}, {"x": "Jacques Laffite", "y": null}, {"x": "Nelson Piquet", "y": 6}, {"x": "Alain Prost", "y": 4}, {"x": "Ayrton Senna", "y": 2}, {"x": "Nigel Mansell", "y": 1}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Carlos Reutemann", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 1}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 2}, {"x": "Clay Regazzoni", "y": 3}, {"x": "Niki Lauda", "y": 8}, {"x": "Jody Scheckter", "y": 9}, {"x": "Carlos Reutemann", "y": null}, {"x": "Jacques Laffite", "y": 8}, {"x": "Nelson Piquet", "y": 6}, {"x": "Alain Prost", "y": 3}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 1}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 2}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Jody Scheckter", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 4}, {"x": "Clay Regazzoni", "y": 3}, {"x": "Niki Lauda", "y": 12}, {"x": "Jody Scheckter", "y": null}, {"x": "Carlos Reutemann", "y": 9}, {"x": "Jacques Laffite", "y": 4}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Niki Lauda", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 1}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 7}, {"x": "Clay Regazzoni", "y": 9}, {"x": "Niki Lauda", "y": null}, {"x": "Jody Scheckter", "y": 12}, {"x": "Carlos Reutemann", "y": 8}, {"x": "Jacques Laffite", "y": 4}, {"x": "Nelson Piquet", "y": 3}, {"x": "Alain Prost", "y": 7}, {"x": "Ayrton Senna", "y": 3}, {"x": "Nigel Mansell", "y": 2}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 3}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Clay Regazzoni", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 2}, {"x": "Jackie Stewart", "y": 3}, {"x": "Emerson Fittipaldi", "y": 6}, {"x": "Clay Regazzoni", "y": null}, {"x": "Niki Lauda", "y": 9}, {"x": "Jody Scheckter", "y": 3}, {"x": "Carlos Reutemann", "y": 3}, {"x": "Jacques Laffite", "y": 3}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Emerson Fittipaldi", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 5}, {"x": "Jackie Stewart", "y": 9}, {"x": "Emerson Fittipaldi", "y": null}, {"x": "Clay Regazzoni", "y": 6}, {"x": "Niki Lauda", "y": 7}, {"x": "Jody Scheckter", "y": 4}, {"x": "Carlos Reutemann", "y": 2}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 1}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 1}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Jackie Stewart", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 3}, {"x": "Graham Hill", "y": 6}, {"x": "Jack Brabham", "y": 2}, {"x": "Denny Hulme", "y": 7}, {"x": "Jackie Stewart", "y": null}, {"x": "Emerson Fittipaldi", "y": 9}, {"x": "Clay Regazzoni", "y": 3}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Denny Hulme", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 4}, {"x": "Graham Hill", "y": 5}, {"x": "Jack Brabham", "y": 11}, {"x": "Denny Hulme", "y": null}, {"x": "Jackie Stewart", "y": 7}, {"x": "Emerson Fittipaldi", "y": 5}, {"x": "Clay Regazzoni", "y": 2}, {"x": "Niki Lauda", "y": 1}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 1}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Jack Brabham", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 7}, {"x": "Graham Hill", "y": 5}, {"x": "Jack Brabham", "y": null}, {"x": "Denny Hulme", "y": 11}, {"x": "Jackie Stewart", "y": 2}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Graham Hill", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": 13}, {"x": "Graham Hill", "y": null}, {"x": "Jack Brabham", "y": 5}, {"x": "Denny Hulme", "y": 5}, {"x": "Jackie Stewart", "y": 6}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Jim Clark", "data": [{"x": "Juan Fangio", "y": 0}, {"x": "Jim Clark", "y": null}, {"x": "Graham Hill", "y": 13}, {"x": "Jack Brabham", "y": 7}, {"x": "Denny Hulme", "y": 4}, {"x": "Jackie Stewart", "y": 3}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}, {"name": "Juan Fangio", "data": [{"x": "Juan Fangio", "y": null}, {"x": "Jim Clark", "y": 0}, {"x": "Graham Hill", "y": 0}, {"x": "Jack Brabham", "y": 0}, {"x": "Denny Hulme", "y": 0}, {"x": "Jackie Stewart", "y": 0}, {"x": "Emerson Fittipaldi", "y": 0}, {"x": "Clay Regazzoni", "y": 0}, {"x": "Niki Lauda", "y": 0}, {"x": "Jody Scheckter", "y": 0}, {"x": "Carlos Reutemann", "y": 0}, {"x": "Jacques Laffite", "y": 0}, {"x": "Nelson Piquet", "y": 0}, {"x": "Alain Prost", "y": 0}, {"x": "Ayrton Senna", "y": 0}, {"x": "Nigel Mansell", "y": 0}, {"x": "Gerhard Berger", "y": 0}, {"x": "Riccardo Patrese", "y": 0}, {"x": "Damon Hill", "y": 0}, {"x": "Jean Alesi", "y": 0}, {"x": "Mika Häkkinen", "y": 0}, {"x": "Michael Schumacher", "y": 0}, {"x": "David Coulthard", "y": 0}, {"x": "Rubens Barrichello", "y": 0}, {"x": "Juan Pablo Montoya", "y": 0}, {"x": "Kimi Räikkönen", "y": 0}, {"x": "Felipe Massa", "y": 0}, {"x": "Fernando Alonso", "y": 0}, {"x": "Jenson Button", "y": 0}, {"x": "Mark Webber", "y": 0}, {"x": "Sebastian Vettel", "y": 0}, {"x": "Nico Rosberg", "y": 0}, {"x": "Lewis Hamilton", "y": 0}, {"x": "Daniel Ricciardo", "y": 0}, {"x": "Valtteri Bottas", "y": 0}, {"x": "Max Verstappen", "y": 0}, {"x": "Sergio Pérez", "y": 0}, {"x": "Carlos Sainz", "y": 0}, {"x": "Charles Leclerc", "y": 0}, {"x": "Lando Norris", "y": 0}]}];
+    const ranges = [{"from": 0, "to": 0, "color": "#262d38", "name": "no shared"}, {"from": 1, "to": 6, "color": "#3d1a17"}, {"from": 7, "to": 15, "color": "#6a1410"}, {"from": 16, "to": 27, "color": "#a50300"}, {"from": 28, "to": 42, "color": "#d80500"}, {"from": 43, "to": 60, "color": "#ff2d20"}];
+    const options = {
+        chart: {
+            type: 'heatmap',
+            height: 760,
+            background: 'transparent',
+            foreColor: '#c9d1d9',
+            toolbar: { show: false },
+            animations: { enabled: false },
+            fontFamily: 'inherit',
+        },
+        series: series,
+        plotOptions: {
+            heatmap: {
+                radius: 1,
+                enableShades: false,
+                useFillColorAsStroke: false,
+                colorScale: { ranges: ranges },
+            },
+        },
+        stroke: { width: 1, colors: ['#0b0d12'] },
+        dataLabels: { enabled: false },
+        xaxis: {
+            type: 'category',
+            labels: {
+                style: { colors: '#8b949e', fontSize: '9px' },
+                rotate: -55,
+                rotateAlways: true,
+                trim: false,
+                hideOverlappingLabels: false,
+            },
+            axisBorder: { color: '#2a313c' },
+            axisTicks: { color: '#2a313c' },
+            position: 'top',
+        },
+        yaxis: {
+            labels: {
+                style: { colors: '#8b949e', fontSize: '10px' },
+                maxWidth: 160,
+            },
+        },
+        grid: { show: false, padding: { top: 0, right: 8, bottom: 0, left: 0 } },
+        legend: {
+            show: true,
+            position: 'bottom',
+            horizontalAlign: 'left',
+            labels: { colors: '#8b949e' },
+            markers: { size: 6, shape: 'square', strokeWidth: 0, offsetX: -2 },
+            itemMargin: { horizontal: 8, vertical: 2 },
+            fontSize: '11px',
+            fontWeight: 600,
+        },
+        tooltip: {
+            theme: 'dark',
+            custom: function({seriesIndex, dataPointIndex, w}) {
+                const point = w.config.series[seriesIndex].data[dataPointIndex];
+                if (!point || point.y === null || point.y === undefined || point.y === 0) return '';
+                const a = w.config.series[seriesIndex].name;
+                const b = point.x;
+                return '<div class="apex-tt">'
+                    + '<div class="tt-head">' + a + ' &amp; ' + b + '</div>'
+                    + '<div class="tt-row">' + point.y + ' shared podium' + (point.y === 1 ? '' : 's') + '</div>'
+                    + '</div>';
+            },
+        },
+    };
+    new ApexCharts(document.getElementById('soulmate-matrix'), options).render();
+})();
+</script>
+</body>
+</html>

@@ -643,6 +643,8 @@ def main() -> int:
     <div class="container nav-inner">
         <a href="index.html">&larr; Podium Combinations</a>
         <a href="seasons.html" class="active">Season Alignments</a>
+        <a href="charts.html">Charts</a>
+        <a href="soulmates.html">Soulmates &rarr;</a>
     </div>
 </nav>
 <header>
