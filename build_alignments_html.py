@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import json
 import sys
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -204,42 +205,56 @@ main { flex: 1; padding: 28px 0 48px; }
     color: var(--text);
     font-variant-numeric: tabular-nums;
 }
-.season-mid { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.season-champ {
+.season-zones {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: baseline;
+    gap: 16px;
+    min-width: 0;
+}
+.zone {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+}
+.zone .placeholder {
+    color: var(--muted-dim);
+    font-size: 14px;
+}
+.zone-count .count {
+    font-size: 20px;
+    font-weight: 700;
     color: var(--text);
-    font-weight: 600;
-    font-size: 15px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.3px;
+    line-height: 1;
 }
-.season-champ .label-tag {
-    font-size: 10px;
-    color: var(--muted);
-    background: var(--surface-3);
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-right: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-    vertical-align: middle;
-}
-.season-summary {
-    color: var(--muted);
+.zone-count .label {
+    color: var(--text-dim);
     font-size: 13px;
 }
-.season-summary .pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-right: 6px;
+.zone-rate .rate {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
 }
-.pill-best { background: rgba(225, 6, 0, 0.18); color: var(--accent-bright); border: 1px solid rgba(225, 6, 0, 0.4); }
-.pill-best.dim { background: var(--surface-3); color: var(--muted); border-color: var(--border); }
-.pill-count { background: var(--surface-3); color: var(--text-dim); border: 1px solid var(--border); }
+.zone-best .best {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+.zone-best .best b {
+    color: var(--accent-bright);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+}
 
 .season-chev {
     color: var(--muted-dim);
@@ -262,6 +277,13 @@ main { flex: 1; padding: 28px 0 48px; }
     .season-year { font-size: 24px; }
     .season-body { padding: 16px; }
     .container { padding: 0 18px; }
+    .season-zones {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 14px;
+        row-gap: 4px;
+    }
+    .zone { justify-content: flex-start; }
 }
 
 .panel {
@@ -305,8 +327,8 @@ main { flex: 1; padding: 28px 0 48px; }
 .champ-list li:nth-child(3)::before { color: var(--bronze); }
 .champ-list li .driver-name { color: var(--text); font-weight: 500; }
 .champ-list li .points { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.champ-list-extra { display: none; }
-.champ-list.expanded .champ-list-extra { display: grid; }
+.champ-list li.champ-list-extra { display: none; }
+.champ-list.expanded li.champ-list-extra { display: grid; }
 .champ-toggle {
     display: inline-block;
     margin-top: 10px;
@@ -340,34 +362,24 @@ main { flex: 1; padding: 28px 0 48px; }
 .races-table tr:last-child td { border-bottom: none; }
 .races-table .col-r { width: 50px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
 .races-table .col-name { color: var(--text); font-weight: 500; }
-.races-table .col-len { width: 110px; }
+.races-table .col-len { width: 70px; }
 .races-table .col-drivers { color: var(--text-dim); font-size: 13px; }
+.races-table .col-drivers .dr {
+    font-family: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    font-size: 13px;
+}
 .races-table .col-drivers .sep { color: var(--muted-dim); margin: 0 6px; }
 
-/* match length bar */
-.match-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.match-bar .L {
+/* match depth label */
+.match-depth {
     font-weight: 700;
     color: var(--accent-bright);
     font-variant-numeric: tabular-nums;
-    min-width: 36px;
-}
-.match-bar .bar {
-    flex: 1;
-    height: 6px;
-    background: var(--surface-3);
-    border-radius: 3px;
-    overflow: hidden;
-    max-width: 60px;
-}
-.match-bar .fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-bright));
-    border-radius: 3px;
+    font-size: 14px;
+    letter-spacing: 0.2px;
 }
 
 .empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
@@ -431,10 +443,13 @@ function applySort() {
         const bB = Number(b.dataset.best);
         const aP = Number(a.dataset.perfect3);
         const bP = Number(b.dataset.perfect3);
+        const aR = Number(a.dataset.rate);
+        const bR = Number(b.dataset.rate);
         if (key === 'season-desc') return bS - aS;
         if (key === 'season-asc')  return aS - bS;
         if (key === 'best-desc')   return (bB - aB) || (bS - aS);
         if (key === 'perfect-desc') return (bP - aP) || (bS - aS);
+        if (key === 'rate-desc')   return (bR - aR) || (bS - aS);
         return 0;
     });
     sorted.forEach(c => list.appendChild(c));
@@ -461,11 +476,20 @@ applyFilter();
 """
 
 
-def driver_initial(name: str) -> str:
+_ABBREV_OVERRIDES: dict[str, str] = {
+    "Michael Schumacher": "MSC",
+    "Ralf Schumacher": "RSC",
+}
+
+
+def driver_abbrev(name: str) -> str:
+    """Last-name first-3 letters, uppercase ASCII. Schumachers disambiguated as MSC/RSC."""
+    if name in _ABBREV_OVERRIDES:
+        return _ABBREV_OVERRIDES[name]
     parts = name.split()
-    if len(parts) >= 2:
-        return f"{parts[0][0]}. {' '.join(parts[1:])}"
-    return name
+    last = parts[-1] if parts else name
+    folded = "".join(c for c in unicodedata.normalize("NFKD", last) if not unicodedata.combining(c))
+    return folded[:3].upper()
 
 
 def render_champ_list(drivers: list[dict]) -> str:
@@ -485,7 +509,7 @@ def render_champ_list(drivers: list[dict]) -> str:
     toggle = ""
     if hidden:
         n = len(hidden)
-        label = f"Show top 10 (+{n} more)"
+        label = f"Show {n} more"
         toggle = f'<button class="champ-toggle" data-label="{html.escape(label, quote=True)}">{html.escape(label)}</button>'
     return (
         f'<ol class="champ-list">{items}{extra}</ol>{toggle}'
@@ -496,18 +520,13 @@ def render_match_drivers(drivers: list[dict]) -> str:
     if not drivers:
         return '<span style="color:var(--muted-dim)">—</span>'
     return '<span class="sep">/</span>'.join(
-        f'<span>{html.escape(d["name"])}</span>' for d in drivers
+        f'<span class="dr" title="{html.escape(d["name"])}">{html.escape(driver_abbrev(d["name"]))}</span>'
+        for d in drivers
     )
 
 
-def render_match_bar(L: int, max_L: int = 10) -> str:
-    pct = int(round(100 * L / max_L))
-    return (
-        f'<div class="match-bar">'
-        f'<span class="L">Top {L}</span>'
-        f'<span class="bar"><span class="fill" style="width:{pct}%"></span></span>'
-        f'</div>'
-    )
+def render_match_depth(L: int) -> str:
+    return f'<span class="match-depth">Top {L}</span>'
 
 
 def render_races(season_entry: dict) -> str:
@@ -519,7 +538,7 @@ def render_races(season_entry: dict) -> str:
         f'<tr>'
         f'<td class="col-r">R{html.escape(r["round"])}</td>'
         f'<td class="col-name">{html.escape(r["raceName"])}</td>'
-        f'<td class="col-len">{render_match_bar(r["matchLength"])}</td>'
+        f'<td class="col-len">{render_match_depth(r["matchLength"])}</td>'
         f'<td class="col-drivers">{render_match_drivers(r["matchedDrivers"])}</td>'
         f'</tr>'
         for r in races_to_show
@@ -534,19 +553,30 @@ def render_races(season_entry: dict) -> str:
 
 def render_season_card(s: dict) -> str:
     season = s["season"]
-    champ_name = s["championship"][0]["name"] if s["championship"] else "—"
     best = s["bestMatchLength"]
     p3 = s["perfectTop3Count"]
     indy = s["indy500Count"]
 
-    pill_best = (
-        f'<span class="pill pill-best">Best: top {best}</span>'
-        if best >= 3
-        else f'<span class="pill pill-best dim">Best: top {best}</span>' if best > 0
-        else '<span class="pill pill-best dim">No top-3 match</span>'
+    n_races = len(s["races"])
+    pct = round(100 * p3 / n_races) if n_races else 0
+    rate_pct = (100 * p3 / n_races) if n_races else 0
+    placeholder = '<span class="placeholder">&mdash;</span>'
+
+    count_zone = (
+        f'<div class="zone zone-count">'
+        f'<span class="count">{p3}/{n_races}</span>'
+        f'<span class="label">aligned</span>'
+        f'</div>'
     )
-    pill_count = f'<span class="pill pill-count">{p3} perfect-3 race{"s" if p3 != 1 else ""}</span>'
-    summary = f'{pill_best}{pill_count}'
+    rate_zone = (
+        f'<div class="zone zone-rate"><span class="rate">{pct}%</span></div>'
+        if p3 > 0 else f'<div class="zone zone-rate">{placeholder}</div>'
+    )
+    best_zone = (
+        f'<div class="zone zone-best"><span class="best">best <b>Top {best}</b></span></div>'
+        if best >= 3 else f'<div class="zone zone-best">{placeholder}</div>'
+    )
+    zones = f'<div class="season-zones">{count_zone}{rate_zone}{best_zone}</div>'
 
     indy_note = (
         f'<div class="indy-note">{indy} Indy 500 round{"s" if indy != 1 else ""} excluded from comparison.</div>'
@@ -556,13 +586,11 @@ def render_season_card(s: dict) -> str:
     has_match = "has-match" if best >= 3 else ""
     return (
         f'<article class="season-card {has_match}" '
-        f'data-season="{season}" data-best="{best}" data-perfect3="{p3}">'
+        f'data-season="{season}" data-best="{best}" data-perfect3="{p3}" '
+        f'data-rate="{rate_pct:.4f}">'
         f'  <header class="season-head">'
         f'    <div class="season-year">{html.escape(season)}</div>'
-        f'    <div class="season-mid">'
-        f'      <div class="season-champ"><span class="label-tag">Champion</span>{html.escape(champ_name)}</div>'
-        f'      <div class="season-summary">{summary}</div>'
-        f'    </div>'
+        f'    {zones}'
         f'    <div class="season-chev">&#9662;</div>'
         f'  </header>'
         f'  <div class="season-body">'
@@ -637,6 +665,7 @@ def main() -> int:
                 <option value="season-asc">Oldest first</option>
                 <option value="best-desc">Best match length</option>
                 <option value="perfect-desc"># of top-3 alignments</option>
+                <option value="rate-desc">% alignment rate</option>
             </select>
             <label for="min-len">Min match</label>
             <input id="min-len" type="number" min="0" max="10" value="0" step="1">
