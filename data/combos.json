@@ -9969,6 +9969,37 @@
   },
   {
     "drivers": [
+      "Andrea Kimi Antonelli",
+      "Lewis Hamilton",
+      "Max Verstappen"
+    ],
+    "driverIds": [
+      "antonelli",
+      "hamilton",
+      "max_verstappen"
+    ],
+    "count": 1,
+    "lastRace": {
+      "season": "2026",
+      "round": "5",
+      "raceName": "Canadian Grand Prix"
+    },
+    "firstRace": {
+      "season": "2026",
+      "round": "5",
+      "raceName": "Canadian Grand Prix"
+    },
+    "lastRaceKey": 2026005,
+    "races": [
+      {
+        "season": "2026",
+        "round": "5",
+        "raceName": "Canadian Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
       "Art Cross",
       "Bill Vukovich",
       "Duane Carter"

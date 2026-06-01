@@ -19599,5 +19599,22 @@
       "driverId": "piastri",
       "name": "Oscar Piastri"
     }
+  },
+  {
+    "season": "2026",
+    "round": "5",
+    "raceName": "Canadian Grand Prix",
+    "p1": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p2": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton"
+    },
+    "p3": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    }
   }
 ]
