@@ -9908,6 +9908,37 @@
   {
     "drivers": [
       "Andrea Kimi Antonelli",
+      "Isack Hadjar",
+      "Lewis Hamilton"
+    ],
+    "driverIds": [
+      "antonelli",
+      "hadjar",
+      "hamilton"
+    ],
+    "count": 1,
+    "lastRace": {
+      "season": "2026",
+      "round": "6",
+      "raceName": "Monaco Grand Prix"
+    },
+    "firstRace": {
+      "season": "2026",
+      "round": "6",
+      "raceName": "Monaco Grand Prix"
+    },
+    "lastRaceKey": 2026006,
+    "races": [
+      {
+        "season": "2026",
+        "round": "6",
+        "raceName": "Monaco Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
+      "Andrea Kimi Antonelli",
       "Lando Norris",
       "Max Verstappen"
     ],

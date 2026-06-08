@@ -19616,5 +19616,22 @@
       "driverId": "max_verstappen",
       "name": "Max Verstappen"
     }
+  },
+  {
+    "season": "2026",
+    "round": "6",
+    "raceName": "Monaco Grand Prix",
+    "p1": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p2": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton"
+    },
+    "p3": {
+      "driverId": "hadjar",
+      "name": "Isack Hadjar"
+    }
   }
 ]

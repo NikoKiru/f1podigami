@@ -1,10 +1,16 @@
-"""Fetch every F1 World Championship podium (P1/P2/P3) since 1950 from the Jolpica API.
+"""Fetch F1 World Championship podiums (P1/P2/P3) from the Jolpica API.
 
 Writes data/podiums.json — one entry per race with the three podium drivers.
+
+By default this runs *incrementally*: it loads the existing podiums.json and
+only fetches the latest season already on disk (which may have gained rounds)
+plus any newer seasons. Past results are immutable, so older seasons are never
+re-fetched. Pass --full to rebuild the whole history from 1950.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import time
@@ -38,17 +44,20 @@ def get(url: str, params: dict) -> dict:
     raise RuntimeError(f"giving up on {url} after {MAX_BACKOFF_RETRIES} retries")
 
 
-def fetch_all_for_position(position: int) -> list[dict]:
+def fetch_all_for_position(position: int, season: int | None = None) -> list[dict]:
     """Page through every Race that has a finisher at the given position.
 
     Uses Ergast's path-style position filter: /results/{position}.json
+    When ``season`` is given, scopes to /{season}/results/{position}.json so we
+    fetch only that season instead of all of history.
     """
     races: list[dict] = []
     offset = 0
     total = None
+    base = f"{API_ROOT}/{season}" if season is not None else API_ROOT
     while True:
         data = get(
-            f"{API_ROOT}/results/{position}.json",
+            f"{base}/results/{position}.json",
             {"limit": PAGE_SIZE, "offset": offset},
         )
         mr = data["MRData"]
@@ -73,30 +82,60 @@ def driver_record(result_obj: dict) -> dict:
     }
 
 
-def main() -> int:
+def load_existing() -> dict[tuple[str, str], dict]:
+    """Load podiums.json into a {(season, round): entry} map, if it exists."""
+    if not OUT_PATH.exists():
+        return {}
+    existing = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+    return {(r["season"], r["round"]): r for r in existing}
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="rebuild the entire history from 1950 instead of fetching incrementally",
+    )
+    args = parser.parse_args(argv)
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    by_race: dict[tuple[str, str], dict] = {}
+    by_race: dict[tuple[str, str], dict] = {} if args.full else load_existing()
 
-    for position in (1, 2, 3):
-        for race in fetch_all_for_position(position):
-            key = (race["season"], race["round"])
-            entry = by_race.setdefault(
-                key,
-                {
-                    "season": race["season"],
-                    "round": race["round"],
-                    "raceName": race["raceName"],
-                    "p1": None,
-                    "p2": None,
-                    "p3": None,
-                },
-            )
-            results = race.get("Results") or []
-            if not results:
-                continue
-            entry[f"p{position}"] = driver_record(results[0])
-        time.sleep(SLEEP_BETWEEN)
+    # Decide which seasons to fetch. Past seasons are immutable, so we only
+    # re-fetch the latest season we already have (it may have new rounds) and
+    # trust the API to return any newer seasons via season-scoped requests.
+    seasons_to_fetch: list[int | None]
+    if args.full or not by_race:
+        seasons_to_fetch = [None]  # unscoped = all of history
+        print("Full fetch: pulling every season from 1950")
+    else:
+        latest = max(int(s) for s, _ in by_race)
+        # Fetch the latest known season plus the next few in case a new season started.
+        seasons_to_fetch = list(range(latest, latest + 2))
+        print(f"Incremental fetch: latest season on disk is {latest}; fetching {seasons_to_fetch}")
+
+    for season in seasons_to_fetch:
+        for position in (1, 2, 3):
+            for race in fetch_all_for_position(position, season):
+                key = (race["season"], race["round"])
+                entry = by_race.setdefault(
+                    key,
+                    {
+                        "season": race["season"],
+                        "round": race["round"],
+                        "raceName": race["raceName"],
+                        "p1": None,
+                        "p2": None,
+                        "p3": None,
+                    },
+                )
+                results = race.get("Results") or []
+                if not results:
+                    continue
+                entry[f"p{position}"] = driver_record(results[0])
+            time.sleep(SLEEP_BETWEEN)
 
     races_sorted = sorted(by_race.values(), key=lambda r: (int(r["season"]), int(r["round"])))
 
