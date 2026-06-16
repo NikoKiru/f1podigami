@@ -1,5 +1,5 @@
 {
-  "totalRaces": 1153,
+  "totalRaces": 1156,
   "yearMarkers": {
     "1": 1950,
     "8": 1951,
@@ -82,7 +82,7 @@
   "drivers": [
     {
       "name": "Lewis Hamilton",
-      "total": 203,
+      "total": 206,
       "data": [
         {
           "x": 0,
@@ -1510,11 +1510,25 @@
           "round": "2"
         },
         {
-          "x": 1153,
-          "y": 203,
+          "x": 1154,
+          "y": 204,
           "year": 2026,
-          "raceName": "",
-          "round": ""
+          "raceName": "Canadian Grand Prix",
+          "round": "5"
+        },
+        {
+          "x": 1155,
+          "y": 205,
+          "year": 2026,
+          "raceName": "Monaco Grand Prix",
+          "round": "6"
+        },
+        {
+          "x": 1156,
+          "y": 206,
+          "year": 2026,
+          "raceName": "Barcelona Grand Prix",
+          "round": "7"
         }
       ]
     },
@@ -2612,7 +2626,7 @@
           "round": "8"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 155,
           "year": 2026,
           "raceName": "",
@@ -2622,7 +2636,7 @@
     },
     {
       "name": "Max Verstappen",
-      "total": 127,
+      "total": 128,
       "data": [
         {
           "x": 0,
@@ -3518,8 +3532,15 @@
           "round": "24"
         },
         {
-          "x": 1153,
-          "y": 127,
+          "x": 1154,
+          "y": 128,
+          "year": 2026,
+          "raceName": "Canadian Grand Prix",
+          "round": "5"
+        },
+        {
+          "x": 1156,
+          "y": 128,
           "year": 2026,
           "raceName": "",
           "round": ""
@@ -4389,7 +4410,7 @@
           "round": "6"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 122,
           "year": 2026,
           "raceName": "",
@@ -5148,7 +5169,7 @@
           "round": "16"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 106,
           "year": 2026,
           "raceName": "",
@@ -5907,7 +5928,7 @@
           "round": "20"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 106,
           "year": 2026,
           "raceName": "",
@@ -6645,7 +6666,7 @@
           "round": "20"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 103,
           "year": 2026,
           "raceName": "",
@@ -7222,7 +7243,7 @@
           "round": "16"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 80,
           "year": 2026,
           "raceName": "",
@@ -7715,7 +7736,7 @@
           "round": "13"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 68,
           "year": 2026,
           "raceName": "",
@@ -8201,7 +8222,7 @@
           "round": "21"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 67,
           "year": 2026,
           "raceName": "",
@@ -8652,7 +8673,7 @@
           "round": "7"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 62,
           "year": 2026,
           "raceName": "",
@@ -9089,7 +9110,7 @@
           "round": "11"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 60,
           "year": 2026,
           "raceName": "",
@@ -9519,7 +9540,7 @@
           "round": "16"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 59,
           "year": 2026,
           "raceName": "",
@@ -9935,7 +9956,7 @@
           "round": "21"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 57,
           "year": 2026,
           "raceName": "",
@@ -10330,7 +10351,7 @@
           "round": "11"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 54,
           "year": 2026,
           "raceName": "",
@@ -10711,7 +10732,7 @@
           "round": "3"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 52,
           "year": 2026,
           "raceName": "",
@@ -11085,7 +11106,7 @@
           "round": "16"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 51,
           "year": 2026,
           "raceName": "",
@@ -11452,7 +11473,7 @@
           "round": "1"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 50,
           "year": 2026,
           "raceName": "",
@@ -11805,7 +11826,7 @@
           "round": "10"
         },
         {
-          "x": 1153,
+          "x": 1156,
           "y": 48,
           "year": 2026,
           "raceName": "",
@@ -11814,334 +11835,334 @@
       ]
     },
     {
-      "name": "Carlos Reutemann",
-      "total": 45,
+      "name": "Lando Norris",
+      "total": 46,
       "data": [
         {
           "x": 0,
           "y": 0
         },
         {
-          "x": 228,
+          "x": 1019,
           "y": 1,
-          "year": 1973,
-          "raceName": "French Grand Prix",
-          "round": "8"
-        },
-        {
-          "x": 235,
-          "y": 2,
-          "year": 1973,
-          "raceName": "United States Grand Prix",
-          "round": "15"
-        },
-        {
-          "x": 238,
-          "y": 3,
-          "year": 1974,
-          "raceName": "South African Grand Prix",
-          "round": "3"
-        },
-        {
-          "x": 246,
-          "y": 4,
-          "year": 1974,
-          "raceName": "German Grand Prix",
-          "round": "11"
-        },
-        {
-          "x": 247,
-          "y": 5,
-          "year": 1974,
+          "year": 2020,
           "raceName": "Austrian Grand Prix",
-          "round": "12"
-        },
-        {
-          "x": 250,
-          "y": 6,
-          "year": 1974,
-          "raceName": "United States Grand Prix",
-          "round": "15"
-        },
-        {
-          "x": 251,
-          "y": 7,
-          "year": 1975,
-          "raceName": "Argentine Grand Prix",
           "round": "1"
         },
         {
-          "x": 253,
-          "y": 8,
-          "year": 1975,
-          "raceName": "South African Grand Prix",
-          "round": "3"
-        },
-        {
-          "x": 254,
-          "y": 9,
-          "year": 1975,
-          "raceName": "Spanish Grand Prix",
-          "round": "4"
-        },
-        {
-          "x": 256,
-          "y": 10,
-          "year": 1975,
-          "raceName": "Belgian Grand Prix",
-          "round": "6"
-        },
-        {
-          "x": 257,
-          "y": 11,
-          "year": 1975,
-          "raceName": "Swedish Grand Prix",
-          "round": "7"
-        },
-        {
-          "x": 261,
-          "y": 12,
-          "year": 1975,
-          "raceName": "German Grand Prix",
-          "round": "11"
-        },
-        {
-          "x": 281,
-          "y": 13,
-          "year": 1977,
-          "raceName": "Argentine Grand Prix",
-          "round": "1"
-        },
-        {
-          "x": 282,
-          "y": 14,
-          "year": 1977,
-          "raceName": "Brazilian Grand Prix",
+          "x": 1037,
+          "y": 2,
+          "year": 2021,
+          "raceName": "Emilia Romagna Grand Prix",
           "round": "2"
         },
         {
-          "x": 285,
-          "y": 15,
-          "year": 1977,
-          "raceName": "Spanish Grand Prix",
+          "x": 1040,
+          "y": 3,
+          "year": 2021,
+          "raceName": "Monaco Grand Prix",
           "round": "5"
         },
         {
-          "x": 286,
-          "y": 16,
-          "year": 1977,
-          "raceName": "Monaco Grand Prix",
-          "round": "6"
+          "x": 1044,
+          "y": 4,
+          "year": 2021,
+          "raceName": "Austrian Grand Prix",
+          "round": "9"
         },
         {
-          "x": 288,
-          "y": 17,
-          "year": 1977,
-          "raceName": "Swedish Grand Prix",
-          "round": "8"
-        },
-        {
-          "x": 297,
-          "y": 18,
-          "year": 1977,
-          "raceName": "Japanese Grand Prix",
-          "round": "17"
-        },
-        {
-          "x": 299,
-          "y": 19,
-          "year": 1978,
-          "raceName": "Brazilian Grand Prix",
-          "round": "2"
-        },
-        {
-          "x": 301,
-          "y": 20,
-          "year": 1978,
-          "raceName": "United States Grand Prix West",
-          "round": "4"
-        },
-        {
-          "x": 303,
-          "y": 21,
-          "year": 1978,
-          "raceName": "Belgian Grand Prix",
-          "round": "6"
-        },
-        {
-          "x": 307,
-          "y": 22,
-          "year": 1978,
-          "raceName": "British Grand Prix",
-          "round": "10"
-        },
-        {
-          "x": 311,
-          "y": 23,
-          "year": 1978,
+          "x": 1049,
+          "y": 5,
+          "year": 2021,
           "raceName": "Italian Grand Prix",
           "round": "14"
         },
         {
-          "x": 312,
-          "y": 24,
-          "year": 1978,
-          "raceName": "United States Grand Prix",
+          "x": 1061,
+          "y": 6,
+          "year": 2022,
+          "raceName": "Emilia Romagna Grand Prix",
+          "round": "4"
+        },
+        {
+          "x": 1089,
+          "y": 7,
+          "year": 2023,
+          "raceName": "British Grand Prix",
+          "round": "10"
+        },
+        {
+          "x": 1090,
+          "y": 8,
+          "year": 2023,
+          "raceName": "Hungarian Grand Prix",
+          "round": "11"
+        },
+        {
+          "x": 1094,
+          "y": 9,
+          "year": 2023,
+          "raceName": "Singapore Grand Prix",
           "round": "15"
         },
         {
-          "x": 313,
-          "y": 25,
-          "year": 1978,
-          "raceName": "Canadian Grand Prix",
+          "x": 1095,
+          "y": 10,
+          "year": 2023,
+          "raceName": "Japanese Grand Prix",
           "round": "16"
         },
         {
-          "x": 314,
-          "y": 26,
-          "year": 1979,
-          "raceName": "Argentine Grand Prix",
-          "round": "1"
+          "x": 1096,
+          "y": 11,
+          "year": 2023,
+          "raceName": "Qatar Grand Prix",
+          "round": "17"
         },
         {
-          "x": 315,
-          "y": 27,
-          "year": 1979,
-          "raceName": "Brazilian Grand Prix",
-          "round": "2"
-        },
-        {
-          "x": 318,
-          "y": 28,
-          "year": 1979,
-          "raceName": "Spanish Grand Prix",
-          "round": "5"
-        },
-        {
-          "x": 320,
-          "y": 29,
-          "year": 1979,
-          "raceName": "Monaco Grand Prix",
-          "round": "7"
-        },
-        {
-          "x": 333,
-          "y": 30,
-          "year": 1980,
-          "raceName": "Belgian Grand Prix",
-          "round": "5"
-        },
-        {
-          "x": 334,
-          "y": 31,
-          "year": 1980,
-          "raceName": "Monaco Grand Prix",
-          "round": "6"
-        },
-        {
-          "x": 336,
-          "y": 32,
-          "year": 1980,
-          "raceName": "British Grand Prix",
-          "round": "8"
-        },
-        {
-          "x": 337,
-          "y": 33,
-          "year": 1980,
-          "raceName": "German Grand Prix",
-          "round": "9"
-        },
-        {
-          "x": 338,
-          "y": 34,
-          "year": 1980,
-          "raceName": "Austrian Grand Prix",
-          "round": "10"
-        },
-        {
-          "x": 340,
-          "y": 35,
-          "year": 1980,
-          "raceName": "Italian Grand Prix",
-          "round": "12"
-        },
-        {
-          "x": 341,
-          "y": 36,
-          "year": 1980,
-          "raceName": "Canadian Grand Prix",
-          "round": "13"
-        },
-        {
-          "x": 342,
-          "y": 37,
-          "year": 1980,
+          "x": 1097,
+          "y": 12,
+          "year": 2023,
           "raceName": "United States Grand Prix",
-          "round": "14"
+          "round": "18"
         },
         {
-          "x": 343,
-          "y": 38,
-          "year": 1981,
-          "raceName": "United States Grand Prix West",
-          "round": "1"
+          "x": 1099,
+          "y": 13,
+          "year": 2023,
+          "raceName": "São Paulo Grand Prix",
+          "round": "20"
         },
         {
-          "x": 344,
-          "y": 39,
-          "year": 1981,
-          "raceName": "Brazilian Grand Prix",
-          "round": "2"
-        },
-        {
-          "x": 345,
-          "y": 40,
-          "year": 1981,
-          "raceName": "Argentine Grand Prix",
+          "x": 1104,
+          "y": 14,
+          "year": 2024,
+          "raceName": "Australian Grand Prix",
           "round": "3"
         },
         {
-          "x": 346,
-          "y": 41,
-          "year": 1981,
-          "raceName": "San Marino Grand Prix",
-          "round": "4"
-        },
-        {
-          "x": 347,
-          "y": 42,
-          "year": 1981,
-          "raceName": "Belgian Grand Prix",
+          "x": 1106,
+          "y": 15,
+          "year": 2024,
+          "raceName": "Chinese Grand Prix",
           "round": "5"
         },
         {
-          "x": 351,
-          "y": 43,
-          "year": 1981,
-          "raceName": "British Grand Prix",
+          "x": 1107,
+          "y": 16,
+          "year": 2024,
+          "raceName": "Miami Grand Prix",
+          "round": "6"
+        },
+        {
+          "x": 1108,
+          "y": 17,
+          "year": 2024,
+          "raceName": "Emilia Romagna Grand Prix",
+          "round": "7"
+        },
+        {
+          "x": 1110,
+          "y": 18,
+          "year": 2024,
+          "raceName": "Canadian Grand Prix",
           "round": "9"
         },
         {
-          "x": 355,
-          "y": 44,
-          "year": 1981,
-          "raceName": "Italian Grand Prix",
+          "x": 1111,
+          "y": 19,
+          "year": 2024,
+          "raceName": "Spanish Grand Prix",
+          "round": "10"
+        },
+        {
+          "x": 1113,
+          "y": 20,
+          "year": 2024,
+          "raceName": "British Grand Prix",
+          "round": "12"
+        },
+        {
+          "x": 1114,
+          "y": 21,
+          "year": 2024,
+          "raceName": "Hungarian Grand Prix",
           "round": "13"
         },
         {
-          "x": 358,
-          "y": 45,
-          "year": 1982,
-          "raceName": "South African Grand Prix",
+          "x": 1116,
+          "y": 22,
+          "year": 2024,
+          "raceName": "Dutch Grand Prix",
+          "round": "15"
+        },
+        {
+          "x": 1117,
+          "y": 23,
+          "year": 2024,
+          "raceName": "Italian Grand Prix",
+          "round": "16"
+        },
+        {
+          "x": 1119,
+          "y": 24,
+          "year": 2024,
+          "raceName": "Singapore Grand Prix",
+          "round": "18"
+        },
+        {
+          "x": 1121,
+          "y": 25,
+          "year": 2024,
+          "raceName": "Mexico City Grand Prix",
+          "round": "20"
+        },
+        {
+          "x": 1125,
+          "y": 26,
+          "year": 2024,
+          "raceName": "Abu Dhabi Grand Prix",
+          "round": "24"
+        },
+        {
+          "x": 1126,
+          "y": 27,
+          "year": 2025,
+          "raceName": "Australian Grand Prix",
           "round": "1"
+        },
+        {
+          "x": 1127,
+          "y": 28,
+          "year": 2025,
+          "raceName": "Chinese Grand Prix",
+          "round": "2"
+        },
+        {
+          "x": 1128,
+          "y": 29,
+          "year": 2025,
+          "raceName": "Japanese Grand Prix",
+          "round": "3"
+        },
+        {
+          "x": 1129,
+          "y": 30,
+          "year": 2025,
+          "raceName": "Bahrain Grand Prix",
+          "round": "4"
+        },
+        {
+          "x": 1131,
+          "y": 31,
+          "year": 2025,
+          "raceName": "Miami Grand Prix",
+          "round": "6"
+        },
+        {
+          "x": 1132,
+          "y": 32,
+          "year": 2025,
+          "raceName": "Emilia Romagna Grand Prix",
+          "round": "7"
+        },
+        {
+          "x": 1133,
+          "y": 33,
+          "year": 2025,
+          "raceName": "Monaco Grand Prix",
+          "round": "8"
+        },
+        {
+          "x": 1134,
+          "y": 34,
+          "year": 2025,
+          "raceName": "Spanish Grand Prix",
+          "round": "9"
+        },
+        {
+          "x": 1136,
+          "y": 35,
+          "year": 2025,
+          "raceName": "Austrian Grand Prix",
+          "round": "11"
+        },
+        {
+          "x": 1137,
+          "y": 36,
+          "year": 2025,
+          "raceName": "British Grand Prix",
+          "round": "12"
+        },
+        {
+          "x": 1138,
+          "y": 37,
+          "year": 2025,
+          "raceName": "Belgian Grand Prix",
+          "round": "13"
+        },
+        {
+          "x": 1139,
+          "y": 38,
+          "year": 2025,
+          "raceName": "Hungarian Grand Prix",
+          "round": "14"
+        },
+        {
+          "x": 1141,
+          "y": 39,
+          "year": 2025,
+          "raceName": "Italian Grand Prix",
+          "round": "16"
+        },
+        {
+          "x": 1143,
+          "y": 40,
+          "year": 2025,
+          "raceName": "Singapore Grand Prix",
+          "round": "18"
+        },
+        {
+          "x": 1144,
+          "y": 41,
+          "year": 2025,
+          "raceName": "United States Grand Prix",
+          "round": "19"
+        },
+        {
+          "x": 1145,
+          "y": 42,
+          "year": 2025,
+          "raceName": "Mexico City Grand Prix",
+          "round": "20"
+        },
+        {
+          "x": 1146,
+          "y": 43,
+          "year": 2025,
+          "raceName": "São Paulo Grand Prix",
+          "round": "21"
+        },
+        {
+          "x": 1149,
+          "y": 44,
+          "year": 2025,
+          "raceName": "Abu Dhabi Grand Prix",
+          "round": "24"
         },
         {
           "x": 1153,
           "y": 45,
           "year": 2026,
-          "raceName": "",
-          "round": ""
+          "raceName": "Miami Grand Prix",
+          "round": "4"
+        },
+        {
+          "x": 1156,
+          "y": 46,
+          "year": 2026,
+          "raceName": "Barcelona Grand Prix",
+          "round": "7"
         }
       ]
     }
@@ -12149,10 +12170,10 @@
   "breakdown": [
     {
       "name": "Lewis Hamilton",
-      "p1": 105,
-      "p2": 57,
+      "p1": 106,
+      "p2": 59,
       "p3": 41,
-      "total": 203,
+      "total": 206,
       "firstYear": 2007,
       "lastYear": 2026
     },
@@ -12169,10 +12190,10 @@
       "name": "Max Verstappen",
       "p1": 71,
       "p2": 37,
-      "p3": 19,
-      "total": 127,
+      "p3": 20,
+      "total": 128,
       "firstYear": 2016,
-      "lastYear": 2025
+      "lastYear": 2026
     },
     {
       "name": "Sebastian Vettel",
@@ -12319,6 +12340,15 @@
       "lastYear": 1997
     },
     {
+      "name": "Lando Norris",
+      "p1": 11,
+      "p2": 22,
+      "p3": 13,
+      "total": 46,
+      "firstYear": 2020,
+      "lastYear": 2026
+    },
+    {
       "name": "Carlos Reutemann",
       "p1": 12,
       "p2": 13,
@@ -12326,15 +12356,6 @@
       "total": 45,
       "firstYear": 1973,
       "lastYear": 1982
-    },
-    {
-      "name": "Lando Norris",
-      "p1": 11,
-      "p2": 22,
-      "p3": 12,
-      "total": 45,
-      "firstYear": 2020,
-      "lastYear": 2026
     },
     {
       "name": "Jackie Stewart",
