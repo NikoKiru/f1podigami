@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0d12">
 <title>F1 Podium Combinations - 1950-2026</title>
 <style>
 :root {
@@ -224,6 +225,7 @@ main {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
+    overflow-x: auto;
 }
 table {
     width: 100%;
@@ -423,7 +425,7 @@ footer a:hover { color: var(--accent-bright); border-color: var(--accent); }
 /* ---------- responsive ---------- */
 
 @media (max-width: 720px) {
-    .container { padding: 0 18px; }
+    .container { padding: 0 12px; }
     header { padding: 32px 0 28px; }
     header h1 { font-size: 26px; }
     main { padding: 24px 0 32px; }
