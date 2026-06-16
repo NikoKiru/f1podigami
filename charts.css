@@ -1,0 +1,133 @@
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 18px;
+}
+.chart-card .chart-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+.chart-card h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+}
+.chart-card .chart-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 12px;
+    line-height: 1.5;
+}
+.chart-card .chart-host {
+    width: 100%;
+    overflow-x: auto;
+}
+/* tooltip overrides */
+.apexcharts-tooltip.apexcharts-theme-dark {
+    background: var(--surface-2) !important;
+    border: 1px solid var(--border-strong) !important;
+    color: var(--text) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5) !important;
+    border-radius: var(--radius-sm) !important;
+}
+.apex-tt {
+    padding: 8px 12px;
+    font-size: 12px;
+    line-height: 1.55;
+    font-family: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+}
+.apex-tt .tt-head {
+    color: var(--accent-bright);
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+.apex-tt .tt-row { color: var(--text); }
+.apex-tt .tt-dim { color: var(--muted); margin-top: 2px; }
+.apex-tt .tt-drivers { color: var(--text-dim); margin-top: 4px; }
+/* axis tweaks */
+.apexcharts-xaxis text, .apexcharts-yaxis text { fill: var(--muted) !important; }
+.apexcharts-gridline { stroke: var(--border) !important; }
+
+/* soulmate matrix layout */
+.soulmate-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+@media (max-width: 1000px) {
+    .soulmate-grid { grid-template-columns: 1fr; }
+}
+.pair-list h3 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+}
+.pair-rows {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.pair-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto auto;
+    align-items: baseline;
+    column-gap: 10px;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-2);
+    border: 1px solid transparent;
+    font-size: 13px;
+    transition: background 0.12s, border-color 0.12s;
+}
+.pair-row:hover {
+    background: var(--surface-2);
+    border-color: var(--border);
+}
+.pair-rank {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted-dim);
+    font-size: 11px;
+    text-align: right;
+    font-weight: 700;
+}
+.pair-names {
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pair-names b {
+    color: var(--text);
+    font-weight: 600;
+}
+.pair-count {
+    color: var(--accent-bright);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 28px;
+    text-align: right;
+}
+.pair-years {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    min-width: 76px;
+    text-align: right;
+}
