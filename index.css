@@ -261,12 +261,22 @@ tr.detail > td {
     header { padding: 32px 0 28px; }
     header h1 { font-size: 26px; }
     main { padding: 24px 0 32px; }
-    col.col-last  { width: 150px; }
-    col.col-rank  { width: 56px; }
-    col.col-count { width: 70px; }
-    thead th, tbody tr.combo > td { padding: 11px 10px; }
-    thead th { font-size: 10px; }
+    
+    /* Force table to be wider than the container to allow scrolling */
+    table { table-layout: auto; min-width: 500px; }
+    
+    col.col-rank    { width: 40px; }
+    col.col-drivers { width: 160px; }
+    col.col-count   { width: 50px; }
+    col.col-last    { width: 100px; }
+    col.col-expand  { width: 30px; }
+    
+    thead th, tbody tr.combo > td { padding: 10px 8px; font-size: 12px; }
+    
+    td.drivers .driver { white-space: normal; }
+    td.last { font-size: 12px; }
     td.last .race-name { display: none; }
+    
     .detail-inner { padding: 14px 14px 16px; }
     .season-row { grid-template-columns: 56px 1fr; }
 }
