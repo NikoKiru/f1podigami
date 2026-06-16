@@ -18,6 +18,33 @@ def main() -> int:
     soulmates = json.loads(SOULMATES_PATH.read_text(encoding="utf-8"))
     matrix = build_charts.render_soulmate_matrix(soulmates)
 
+    top_pairs = soulmates.get("topPairs", [])
+    top = top_pairs[0] if top_pairs else None
+    n_drivers = len(soulmates["drivers"])
+    n_pairs = len(top_pairs)
+
+    def last(name: str) -> str:
+        parts = name.split()
+        return parts[-1] if parts else name
+
+    stats_html = ""
+    if top:
+        stats_html = f"""
+        <div class="stats">
+            <div class="stat">
+                <div class="num">{n_drivers}</div>
+                <div class="label">Drivers charted</div>
+            </div>
+            <div class="stat">
+                <div class="num">{top["count"]} <small>shared podiums</small></div>
+                <div class="label">{last(top["a"])} &amp; {last(top["b"])} &mdash; #1 pair</div>
+            </div>
+            <div class="stat">
+                <div class="num">{n_pairs}</div>
+                <div class="label">Pairs ranked</div>
+            </div>
+        </div>"""
+
     page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,6 +67,7 @@ def main() -> int:
     <div class="container">
         <h1><span class="accent">F1</span>Podium Soulmates</h1>
         <p class="tagline">Which legends spent the most race weekends together on the box? A symmetric heatmap of the 40 most decorated drivers, sorted by era so partnerships glow as bright clusters.</p>
+        {stats_html}
     </div>
 </header>
 <main>

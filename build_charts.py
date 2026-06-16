@@ -75,8 +75,8 @@ CHART_CSS = """
 /* soulmate matrix layout */
 .soulmate-grid {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-    gap: 22px;
+    grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
+    gap: 24px;
     align-items: start;
 }
 @media (max-width: 1000px) {
@@ -591,6 +591,22 @@ def render_top25_dotplot(breakdown: list[dict]) -> dict[str, str]:
     return {"html": html, "js_init": js}
 
 
+def _make_abbrevs(names: list[str]) -> list[str]:
+    """Return a unique 3-letter (or 5-char "X.YYY") abbreviation per driver."""
+    from collections import Counter
+    raw = [driver_abbrev(n) for n in names]
+    dups = {abbr for abbr, cnt in Counter(raw).items() if cnt > 1}
+    result = []
+    for name, abbr in zip(names, raw):
+        if abbr in dups:
+            parts = name.split()
+            fi = _ascii_fold(parts[0])[0].upper()
+            result.append(f"{fi}.{abbr}")
+        else:
+            result.append(abbr)
+    return result
+
+
 def render_soulmate_matrix(soulmates: dict) -> dict[str, str]:
     """40x40 driver-pair heatmap. Color = # shared podiums. Drivers sorted by era."""
     drivers = soulmates["drivers"]
@@ -598,6 +614,7 @@ def render_soulmate_matrix(soulmates: dict) -> dict[str, str]:
     max_val = soulmates.get("max", 1) or 1
 
     names = [d["name"] for d in drivers]
+    abbrevs = _make_abbrevs(names)
     n = len(names)
 
     # ApexCharts plots first series at the bottom; reverse so oldest era ends up at the bottom too.
@@ -609,7 +626,7 @@ def render_soulmate_matrix(soulmates: dict) -> dict[str, str]:
         data = []
         for j in range(n):
             v = matrix[i][j] if i != j else None
-            data.append({"x": names[j], "y": v})
+            data.append({"x": abbrevs[j], "y": v, "fn": names[j]})
         series.append({"name": row_name, "data": data})
 
     series_json = json.dumps(series, ensure_ascii=False)
@@ -634,7 +651,7 @@ def render_soulmate_matrix(soulmates: dict) -> dict[str, str]:
             seen_to = r["to"]
     ranges_json = json.dumps(dedup_ranges)
 
-    pairs = soulmates.get("topPairs", [])[:20]
+    pairs = soulmates.get("topPairs", [])[:30]
     pairs_html = "\n".join(
         f'<li class="pair-row">'
         f'<span class="pair-rank">{i+1}</span>'
@@ -647,11 +664,6 @@ def render_soulmate_matrix(soulmates: dict) -> dict[str, str]:
 
     html = f"""
 <section class="chart-card" id="chart-soulmate-matrix">
-    <div class="chart-head">
-        <h2>Podium Soulmates</h2>
-        <span class="chart-sub" style="margin: 0;">Top 40 drivers, sorted by era</span>
-    </div>
-    <p class="chart-sub">For each pair of legendary drivers, how many races did they share a podium together? Era-mates form bright squares along the diagonal &mdash; Senna &amp; Prost, Schumacher &amp; Barrichello, Hamilton &amp; Verstappen.</p>
     <div class="soulmate-grid">
         <div class="chart-host"><div id="soulmate-matrix"></div></div>
         <aside class="pair-list">
@@ -692,9 +704,9 @@ def render_soulmate_matrix(soulmates: dict) -> dict[str, str]:
         xaxis: {{
             type: 'category',
             labels: {{
-                style: {{ colors: '#8b949e', fontSize: '9px' }},
-                rotate: -55,
-                rotateAlways: true,
+                style: {{ colors: '#8b949e', fontSize: '10px' }},
+                rotate: 0,
+                rotateAlways: false,
                 trim: false,
                 hideOverlappingLabels: false,
             }},
@@ -725,7 +737,7 @@ def render_soulmate_matrix(soulmates: dict) -> dict[str, str]:
                 const point = w.config.series[seriesIndex].data[dataPointIndex];
                 if (!point || point.y === null || point.y === undefined || point.y === 0) return '';
                 const a = w.config.series[seriesIndex].name;
-                const b = point.x;
+                const b = point.fn || point.x;
                 return '<div class="apex-tt">'
                     + '<div class="tt-head">' + a + ' &amp; ' + b + '</div>'
                     + '<div class="tt-row">' + point.y + ' shared podium' + (point.y === 1 ? '' : 's') + '</div>'
