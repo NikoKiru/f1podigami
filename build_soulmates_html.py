@@ -6,156 +6,9 @@ import json
 import sys
 from pathlib import Path
 
-from build_alignments_html import CSS as BASE_CSS
-
 ROOT = Path(__file__).parent
 SOULMATES_PATH = ROOT / "data" / "soulmates.json"
 OUT_PATH = ROOT / "soulmates.html"
-
-
-SOULMATES_CSS = """
-/* ── page grid ───────────────────────────────────────── */
-.sm-page {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
-    gap: 32px;
-    align-items: start;
-}
-@media (max-width: 960px) {
-    .sm-page { grid-template-columns: 1fr; }
-}
-
-/* ── section heading ─────────────────────────────────── */
-.sm-section-title {
-    margin: 0 0 12px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1.3px;
-}
-
-/* ── ranked pairs list ───────────────────────────────── */
-.pl-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-.pl-row {
-    display: grid;
-    grid-template-columns: 24px 1fr auto;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    background: var(--surface);
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    transition: border-color 0.12s, background 0.12s;
-}
-.pl-row:hover {
-    background: var(--surface-2);
-    border-color: var(--border);
-}
-.pl-rank {
-    font-size: 11px;
-    color: var(--muted-dim);
-    font-weight: 700;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-}
-.pl-body { min-width: 0; }
-.pl-names {
-    font-size: 13px;
-    color: var(--text);
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 5px;
-}
-.pl-names b { color: var(--text); font-weight: 700; }
-.pl-bar-wrap {
-    height: 3px;
-    background: var(--surface-3);
-    border-radius: 2px;
-    overflow: hidden;
-}
-.pl-bar {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    opacity: 0.7;
-    transition: opacity 0.12s;
-}
-.pl-row:hover .pl-bar { opacity: 1; }
-.pl-meta { text-align: right; flex-shrink: 0; }
-.pl-count {
-    display: block;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--accent-bright);
-    font-variant-numeric: tabular-nums;
-    line-height: 1.2;
-}
-.pl-years {
-    display: block;
-    font-size: 11px;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-}
-
-/* ── fact cards ──────────────────────────────────────── */
-.fact-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.fact-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    transition: border-color 0.12s, background 0.12s;
-}
-.fact-card:hover {
-    background: var(--surface-2);
-    border-color: var(--border-strong);
-    border-left-color: var(--accent-bright);
-}
-.fc-num {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.4px;
-    line-height: 1.1;
-    margin-bottom: 2px;
-}
-.fc-num .fc-unit {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
-    margin-left: 4px;
-    letter-spacing: 0;
-}
-.fc-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1.3px;
-    margin-bottom: 6px;
-}
-.fc-detail {
-    font-size: 12px;
-    color: var(--text-dim);
-    line-height: 1.5;
-}
-.fc-detail b { color: var(--text); font-weight: 600; }
-"""
 
 
 def _last(name: str) -> str:
@@ -337,7 +190,8 @@ def main() -> int:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0d12">
 <title>F1 Soulmates &middot; Podigami</title>
-<style>{BASE_CSS}{SOULMATES_CSS}</style>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="soulmates.css">
 </head>
 <body>
 <nav class="nav">

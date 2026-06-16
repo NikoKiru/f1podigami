@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import build_charts
-from build_alignments_html import CSS as BASE_CSS
 
 ROOT = Path(__file__).parent
 ALIGNMENTS_PATH = ROOT / "data" / "alignments.json"
@@ -22,7 +21,6 @@ def main() -> int:
     depth_area = build_charts.render_alignment_depth_area(seasons)
     line_race = build_charts.render_career_line_race(career)
     dotplot = build_charts.render_top25_dotplot(career["breakdown"])
-
     page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +28,8 @@ def main() -> int:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0d12">
 <title>F1 Charts &middot; Podigami</title>
-<style>{BASE_CSS}{build_charts.CHART_CSS}</style>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="charts.css">
 {build_charts.APEX_CDN_TAG}
 </head>
 <body>
