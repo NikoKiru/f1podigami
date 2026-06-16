@@ -335,6 +335,7 @@ def main() -> int:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0d12">
 <title>F1 Soulmates &middot; Podigami</title>
 <style>{BASE_CSS}{SOULMATES_CSS}</style>
 </head>

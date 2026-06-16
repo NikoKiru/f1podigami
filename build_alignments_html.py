@@ -343,7 +343,8 @@ main { flex: 1; padding: 28px 0 48px; }
 .champ-toggle:hover { color: var(--text); }
 
 /* races table */
-.races-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.races-table-wrap { overflow-x: auto; }
+.races-table { width: 100%; min-width: 500px; border-collapse: collapse; font-size: 14px; }
 .races-table th {
     text-align: left;
     padding: 8px 10px;
@@ -544,10 +545,12 @@ def render_races(season_entry: dict) -> str:
         for r in races_to_show
     )
     return (
+        f'<div class="races-table-wrap">'
         f'<table class="races-table">'
         f'<thead><tr><th>Round</th><th>Race</th><th>Match</th><th>Matched drivers (in order)</th></tr></thead>'
         f'<tbody>{rows}</tbody>'
         f'</table>'
+        f'</div>'
     )
 
 
@@ -635,6 +638,7 @@ def main() -> int:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0d12">
 <title>F1 Season Alignments - Race vs Championship Order</title>
 <style>{CSS}</style>
 </head>

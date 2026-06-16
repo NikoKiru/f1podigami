@@ -28,6 +28,7 @@ def main() -> int:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0d12">
 <title>F1 Charts &middot; Podigami</title>
 <style>{BASE_CSS}{build_charts.CHART_CSS}</style>
 {build_charts.APEX_CDN_TAG}
