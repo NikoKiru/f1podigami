@@ -1,10 +1,9 @@
-"""Render soulmates.html — ranked pairs list + compact CSS grid heatmap."""
+"""Render soulmates.html — ranked pairs list + fun-fact stat cards."""
 
 from __future__ import annotations
 
 import json
 import sys
-import unicodedata
 from pathlib import Path
 
 from build_alignments_html import CSS as BASE_CSS
@@ -18,15 +17,15 @@ SOULMATES_CSS = """
 /* ── page grid ───────────────────────────────────────── */
 .sm-page {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 620px);
+    grid-template-columns: minmax(0, 1fr) 380px;
     gap: 32px;
     align-items: start;
 }
-@media (max-width: 1050px) {
+@media (max-width: 960px) {
     .sm-page { grid-template-columns: 1fr; }
 }
 
-/* ── section headings ────────────────────────────────── */
+/* ── section heading ─────────────────────────────────── */
 .sm-section-title {
     margin: 0 0 12px;
     font-size: 11px;
@@ -108,201 +107,61 @@ SOULMATES_CSS = """
     font-variant-numeric: tabular-nums;
 }
 
-/* ── CSS heatmap ─────────────────────────────────────── */
-.hm-wrap { overflow-x: auto; }
-.hm-hint {
-    font-size: 12px;
-    color: var(--muted-dim);
-    margin: 0 0 10px;
-}
-
-/* x-axis (rotated abbreviated labels above the grid) */
-.hm-xaxis {
-    display: flex;
-    margin-left: 74px;   /* y-label width (70px) + gap (4px) */
-    height: 56px;
-    align-items: flex-end;
-    gap: 1px;
-}
-.hm-xlabel {
-    width: 12px;
-    flex-shrink: 0;
-    font-size: 8px;
-    color: var(--muted);
-    white-space: nowrap;
-    transform: rotate(-45deg);
-    transform-origin: right bottom;
-    text-align: right;
-    line-height: 1;
-    cursor: default;
-    user-select: none;
-}
-
-/* y-labels + grid row */
-.hm-body {
-    display: flex;
-    gap: 4px;
-}
-.hm-ylabels {
+/* ── fact cards ──────────────────────────────────────── */
+.fact-stack {
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    flex-shrink: 0;
-    width: 70px;
+    gap: 10px;
 }
-.hm-ylabel {
-    height: 12px;
-    font-size: 8px;
-    color: var(--muted);
-    line-height: 12px;
-    text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: default;
-    user-select: none;
+.fact-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color 0.12s, background 0.12s;
 }
-
-/* the grid itself */
-.hm-grid {
-    display: grid;
-    grid-template-columns: repeat(40, 12px);
-    grid-auto-rows: 12px;
-    gap: 1px;
-    flex-shrink: 0;
-}
-.hm-cell {
-    width: 12px;
-    height: 12px;
-    border-radius: 1px;
-    cursor: crosshair;
-    transition: filter 0.08s;
-}
-.hm-cell:hover { filter: brightness(1.4); }
-
-/* legend */
-.hm-legend {
-    display: flex;
-    gap: 14px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-}
-.hm-leg-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    color: var(--muted);
-}
-.hm-leg-swatch {
-    width: 10px;
-    height: 10px;
-    border-radius: 1px;
-    flex-shrink: 0;
-}
-
-/* floating tooltip */
-.hm-tooltip {
-    position: fixed;
-    pointer-events: none;
+.fact-card:hover {
     background: var(--surface-2);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-    font-size: 12px;
-    line-height: 1.55;
-    z-index: 9999;
-    display: none;
-    max-width: 240px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    border-color: var(--border-strong);
+    border-left-color: var(--accent-bright);
 }
-.hm-tooltip .tt-head {
-    color: var(--accent-bright);
+.fc-num {
+    font-size: 24px;
     font-weight: 700;
-    margin-bottom: 3px;
+    color: var(--text);
+    letter-spacing: -0.4px;
+    line-height: 1.1;
+    margin-bottom: 2px;
 }
-.hm-tooltip .tt-body { color: var(--text); }
+.fc-num .fc-unit {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-left: 4px;
+    letter-spacing: 0;
+}
+.fc-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    margin-bottom: 6px;
+}
+.fc-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+}
+.fc-detail b { color: var(--text); font-weight: 600; }
 """
-
-
-TOOLTIP_JS = """
-(function () {
-    const tt = document.getElementById('hm-tt');
-    document.querySelectorAll('.hm-cell').forEach(function (cell) {
-        cell.addEventListener('mouseenter', function (e) {
-            const a = cell.dataset.a;
-            const b = cell.dataset.b;
-            const v = parseInt(cell.dataset.v, 10);
-            if (!a || !b || a === b) return;
-            tt.innerHTML =
-                '<div class="tt-head">' + a + ' &amp; ' + b + '</div>' +
-                '<div class="tt-body">' +
-                (v > 0 ? v + ' shared podium' + (v === 1 ? '' : 's') : 'No shared podiums') +
-                '</div>';
-            tt.style.display = 'block';
-            move(e);
-        });
-        cell.addEventListener('mousemove', move);
-        cell.addEventListener('mouseleave', function () { tt.style.display = 'none'; });
-    });
-    function move(e) {
-        const m = 16, w = 250, h = 60;
-        let x = e.clientX + m;
-        let y = e.clientY + m;
-        if (x + w > window.innerWidth)  x = e.clientX - w - m;
-        if (y + h > window.innerHeight) y = e.clientY - h - m;
-        tt.style.left = x + 'px';
-        tt.style.top  = y + 'px';
-    }
-})();
-"""
-
-
-# ── helpers ──────────────────────────────────────────────────────────────────
-
-def _ascii_fold(s: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
-
-
-def _abbrev(name: str) -> str:
-    OVERRIDES = {"Michael Schumacher": "MSC", "Ralf Schumacher": "RSC"}
-    if name in OVERRIDES:
-        return OVERRIDES[name]
-    parts = name.split()
-    return _ascii_fold(parts[-1])[:3].upper() if parts else name[:3].upper()
-
-
-def _make_abbrevs(names: list[str]) -> list[str]:
-    from collections import Counter
-    raw = [_abbrev(n) for n in names]
-    dups = {a for a, c in Counter(raw).items() if c > 1}
-    result = []
-    for name, abbr in zip(names, raw):
-        if abbr in dups:
-            fi = _ascii_fold(name.split()[0])[0].upper()
-            result.append(f"{fi}.{abbr}")
-        else:
-            result.append(abbr)
-    return result
 
 
 def _last(name: str) -> str:
     parts = name.split()
     return parts[-1] if parts else name
 
-
-def _cell_color(v: int, max_val: int) -> str:
-    if not v:
-        return "#1a1f2a"
-    p = v / max_val
-    if p < 0.10: return "#3d1a17"
-    if p < 0.25: return "#6a1410"
-    if p < 0.45: return "#a50300"
-    if p < 0.70: return "#d80500"
-    return "#ff2d20"
-
-
-# ── renderers ─────────────────────────────────────────────────────────────────
 
 def _render_pairs(pairs: list[dict]) -> str:
     if not pairs:
@@ -327,53 +186,120 @@ def _render_pairs(pairs: list[dict]) -> str:
     return "\n".join(rows)
 
 
-def _render_matrix(soulmates: dict) -> str:
-    drivers = soulmates["drivers"]
-    matrix  = soulmates["matrix"]
-    max_val = soulmates.get("max", 1) or 1
+def _compute_facts(soulmates: dict) -> list[dict]:
+    drivers   = soulmates["drivers"]
+    matrix    = soulmates["matrix"]
+    top_pairs = soulmates.get("topPairs", [])
+    n         = len(drivers)
+    names     = [d["name"] for d in drivers]
+    median_by = {d["name"]: d["medianYear"] for d in drivers}
 
-    names   = [d["name"] for d in drivers]
-    abbrevs = _make_abbrevs(names)
-    n       = len(names)
+    facts = []
 
-    y_labels = "\n".join(
-        f'<div class="hm-ylabel" title="{names[i]}">{_last(names[i])}</div>'
+    # 1. Most connected driver (shares podiums with most other top-40 drivers)
+    connections = [
+        (sum(1 for j in range(n) if j != i and matrix[i][j] > 0), names[i])
         for i in range(n)
-    )
-    x_labels = "\n".join(
-        f'<span class="hm-xlabel" title="{names[j]}">{abbrevs[j]}</span>'
-        for j in range(n)
-    )
+    ]
+    best_cnt, best_name = max(connections)
+    facts.append({
+        "num": str(best_cnt),
+        "unit": "connections",
+        "label": "Most connected driver",
+        "detail": f"<b>{best_name}</b> shared at least one podium with {best_cnt} different "
+                  f"drivers from the all-time top 40 — more than anyone else.",
+    })
 
-    cells = []
-    for i in range(n):
-        for j in range(n):
-            v = matrix[i][j] if i != j else 0
-            c = _cell_color(v, max_val)
-            cells.append(
-                f'<div class="hm-cell" style="background:{c}"'
-                f' data-a="{names[i]}" data-b="{names[j]}" data-v="{v}"></div>'
-            )
+    # 2. Longest active partnership
+    if top_pairs:
+        longest = max(top_pairs, key=lambda p: p["lastYear"] - p["firstYear"])
+        span    = longest["lastYear"] - longest["firstYear"]
+        facts.append({
+            "num": str(span),
+            "unit": "seasons",
+            "label": "Longest partnership",
+            "detail": f"<b>{longest['a']}</b> &amp; <b>{longest['b']}</b> shared podiums "
+                      f"across {span} seasons ({longest['firstYear']}&ndash;{longest['lastYear']}), "
+                      f"the longest-running pairing in the top 30.",
+        })
 
-    return f"""
-<div class="hm-xaxis">{x_labels}</div>
-<div class="hm-body">
-    <div class="hm-ylabels">{y_labels}</div>
-    <div class="hm-grid">{"".join(cells)}</div>
-</div>
-<div class="hm-legend">
-    <span class="hm-leg-item"><span class="hm-leg-swatch" style="background:#1a1f2a"></span>none</span>
-    <span class="hm-leg-item"><span class="hm-leg-swatch" style="background:#3d1a17"></span>1&ndash;6</span>
-    <span class="hm-leg-item"><span class="hm-leg-swatch" style="background:#6a1410"></span>7&ndash;15</span>
-    <span class="hm-leg-item"><span class="hm-leg-swatch" style="background:#a50300"></span>16&ndash;27</span>
-    <span class="hm-leg-item"><span class="hm-leg-swatch" style="background:#d80500"></span>28&ndash;43</span>
-    <span class="hm-leg-item"><span class="hm-leg-swatch" style="background:#ff2d20"></span>44+</span>
-</div>
-<div id="hm-tt" class="hm-tooltip"></div>
-"""
+    # 3. Most intense: highest shared podiums per active season
+    if top_pairs:
+        def intensity(p: dict) -> float:
+            return p["count"] / max(1, p["lastYear"] - p["firstYear"] + 1)
+        hot = max(top_pairs, key=intensity)
+        seasons = max(1, hot["lastYear"] - hot["firstYear"] + 1)
+        rate    = hot["count"] / seasons
+        facts.append({
+            "num": f"{rate:.1f}",
+            "unit": "per season",
+            "label": "Most intense rivalry",
+            "detail": f"<b>{hot['a']}</b> &amp; <b>{hot['b']}</b> averaged "
+                      f"{rate:.1f} shared podiums per season over their "
+                      f"{seasons}-season overlap — the densest podium partnership on record.",
+        })
+
+    # 4. Biggest era gap: top-30 pair whose drivers' median career years differ most
+    if top_pairs:
+        def era_gap(p: dict) -> float:
+            return abs(median_by.get(p["a"], 0) - median_by.get(p["b"], 0))
+        cross      = max(top_pairs, key=era_gap)
+        gap_years  = int(round(era_gap(cross)))
+        a_med      = int(round(median_by.get(cross["a"], 0)))
+        b_med      = int(round(median_by.get(cross["b"], 0)))
+        if a_med < b_med:
+            older, older_med, younger, younger_med = cross["a"], a_med, cross["b"], b_med
+        else:
+            older, older_med, younger, younger_med = cross["b"], b_med, cross["a"], a_med
+        facts.append({
+            "num": str(gap_years),
+            "unit": "year era gap",
+            "label": "Biggest cross-era connection",
+            "detail": (
+                f"<b>{older}</b> (peak ~{older_med}) and <b>{younger}</b> "
+                f"(peak ~{younger_med}) still shared {cross['count']} podiums "
+                f"despite their careers being {gap_years} years apart."
+            ),
+        })
+
+    # 5. Total unique shared podium moments across all 40×40 pairs
+    total = sum(matrix[i][j] for i in range(n) for j in range(i + 1, n))
+    facts.append({
+        "num": f"{total:,}",
+        "unit": "",
+        "label": "Total shared podium moments",
+        "detail": f"Across all {n * (n - 1) // 2:,} possible pairings within the top {n}, "
+                  f"drivers shared a podium a combined <b>{total:,}</b> times.",
+    })
+
+    # 6. Most isolated: top-40 driver with fewest connections to others in the group
+    least_cnt, least_name = min(connections)
+    least_total = next(d["total"] for d in drivers if d["name"] == least_name)
+    facts.append({
+        "num": str(least_cnt),
+        "unit": "connections",
+        "label": "Solo legend",
+        "detail": f"Despite {least_total} career podiums, <b>{least_name}</b> shared the box "
+                  f"with only {least_cnt} other driver{'s' if least_cnt != 1 else ''} "
+                  f"from the top 40 &mdash; a testament to era dominance.",
+    })
+
+    return facts
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+def _render_facts(facts: list[dict]) -> str:
+    cards = []
+    for f in facts:
+        unit_html = f' <span class="fc-unit">{f["unit"]}</span>' if f["unit"] else ""
+        cards.append(
+            f'<div class="fact-card">'
+            f'  <div class="fc-label">{f["label"]}</div>'
+            f'  <div class="fc-num">{f["num"]}{unit_html}</div>'
+            f'  <div class="fc-detail">{f["detail"]}</div>'
+            f'</div>'
+        )
+    return "\n".join(cards)
+
 
 def main() -> int:
     soulmates = json.loads(SOULMATES_PATH.read_text(encoding="utf-8"))
@@ -400,8 +326,9 @@ def main() -> int:
             </div>
         </div>"""
 
-    pairs_html  = _render_pairs(top_pairs)
-    matrix_html = _render_matrix(soulmates)
+    pairs_html = _render_pairs(top_pairs)
+    facts      = _compute_facts(soulmates)
+    facts_html = _render_facts(facts)
 
     page = f"""<!DOCTYPE html>
 <html lang="en">
@@ -423,7 +350,7 @@ def main() -> int:
 <header>
     <div class="container">
         <h1><span class="accent">F1</span>Podium Soulmates</h1>
-        <p class="tagline">Which legends spent the most race weekends together on the box? Era-mates form bright clusters along the diagonal &mdash; Senna &amp; Prost, Schumacher &amp; Barrichello, Hamilton &amp; Verstappen.</p>
+        <p class="tagline">Which legends spent the most race weekends together on the box? 76 years of F1 history distilled into the partnerships that defined each era.</p>
         {stats_html}
     </div>
 </header>
@@ -439,10 +366,9 @@ def main() -> int:
             </section>
 
             <section>
-                <p class="sm-section-title">Shared podium matrix</p>
-                <p class="hm-hint">Hover any cell &mdash; diagonal clusters show era-mates</p>
-                <div class="hm-wrap">
-                    {matrix_html}
+                <p class="sm-section-title">Did you know</p>
+                <div class="fact-stack">
+                    {facts_html}
                 </div>
             </section>
 
@@ -455,7 +381,6 @@ def main() -> int:
         &middot; 1950&ndash;2025
     </div>
 </footer>
-<script>{TOOLTIP_JS}</script>
 </body>
 </html>
 """
