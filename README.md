@@ -1,6 +1,21 @@
 # F1 Podigami
 
-A static-site generator that turns 76 years of Formula 1 race data into four browsable HTML pages — no server, no framework, just Python and a single `requests` dependency.
+A static-site generator that turns 76 years of Formula 1 race data into four browsable HTML pages — no server, no framework, just Python and a single `requests` dependency. The pages are fully responsive and tuned for mobile.
+
+## Project layout
+
+```
+src/
+  fetch/      API fetchers          -> data/*.json
+  compute/    aggregation/analysis  -> data/*.json
+  build/      page renderers        -> dist/*.html
+  build_site.py   builds dist/ (renders pages + copies assets)
+  update.py       refresh data, then build the site
+assets/       source CSS + JS (copied into dist/ at build time)
+data/         committed JSON datasets the site builds from
+dist/         generated, deployable site (git-ignored)
+tests/        pytest suite (run in CI)
+```
 
 ---
 
@@ -45,7 +60,17 @@ pip install -r requirements.txt
 Fetches new podium data incrementally (only the current season) and rebuilds the three podium-driven pages.
 
 ```bash
-python update.py
+python src/update.py
+```
+
+The built site lands in `dist/` — open `dist/index.html` in your browser.
+
+### Rebuild the site without fetching (offline)
+
+Re-render all pages from the committed data and refresh `dist/`:
+
+```bash
+python src/build_site.py
 ```
 
 ### After the final race of a season (full rebuild)
@@ -53,7 +78,7 @@ python update.py
 Also re-fetches top-10 results and driver standings for all seasons, recomputes alignment data, and rebuilds `seasons.html`. This is slow — it pages through the full history.
 
 ```bash
-python update.py --full
+python src/update.py --full
 ```
 
 ### First-ever run / full history rebuild
@@ -61,25 +86,42 @@ python update.py --full
 Wipe and re-fetch everything from 1950:
 
 ```bash
-python fetch_podiums.py --full
-python update.py --full
+python src/fetch/fetch_podiums.py --full
+python src/update.py --full
 ```
+
+---
+
+## Tests & CI
+
+```bash
+pytest
+```
+
+The suite (in `tests/`) covers data integrity, mobile-CSS regressions, and built-HTML
+validation. It runs on every push and pull request via `.github/workflows/ci.yml`.
+
+## Deployment
+
+`.github/workflows/deploy.yml` builds `dist/` and publishes it to **GitHub Pages** on
+every push to `main`. Enable it once under **Settings → Pages → Build and deployment →
+Source: GitHub Actions**.
 
 ---
 
 ## Pipeline
 
 ```
-                         ┌─ count_combos ──────────────── build_html ──────────► index.html
-fetch_podiums ───────────┼─ compute_career_podiums ─────── build_charts_page ──► charts.html
-                         └─ compute_soulmates ──────────── build_soulmates_html ► soulmates.html
+                         ┌─ count_combos ────────────── build_html ───────────► dist/index.html
+fetch_podiums ───────────┼─ compute_career_podiums ───── build_charts_page ───► dist/charts.html
+                         └─ compute_soulmates ────────── build_soulmates_html ► dist/soulmates.html
 
 fetch_standings ─┐
-                 ├─ compute_alignments ── build_alignments_html ──────────────► seasons.html
+                 ├─ compute_alignments ── build_alignments_html ──────────────► dist/seasons.html
 fetch_top10 ─────┘
 
-└─── update.py (default) runs the top block ───────────────────────────────────────────────┘
-└─── update.py --full    runs both blocks ─────────────────────────────────────────────────┘
+└─── src/update.py (default) runs fetch+compute (top block), then build_site ───────────────┘
+└─── src/update.py --full    also runs the seasonal block ──────────────────────────────────┘
 ```
 
 ---
@@ -88,16 +130,17 @@ fetch_top10 ─────┘
 
 | Script | Role |
 |---|---|
-| `fetch_podiums.py` | Fetch P1/P2/P3 for every race → `data/podiums.json` |
-| `fetch_standings.py` | Fetch final WDC standings per season → `data/standings.json` |
-| `fetch_top10.py` | Fetch top-10 finishers for every race → `data/top10.json` |
-| `count_combos.py` | Aggregate podiums into unique trios → `data/combos.json` |
-| `compute_career_podiums.py` | Cumulative podium trajectories per driver → `data/career_podiums.json` |
-| `compute_soulmates.py` | Shared-podium matrix for top-40 drivers → `data/soulmates.json` |
-| `compute_alignments.py` | Race-vs-championship order matching → `data/alignments.json` |
-| `build_html.py` | Render `index.html` |
-| `build_soulmates_html.py` | Render `soulmates.html` |
-| `build_charts_page.py` | Render `charts.html` |
-| `build_alignments_html.py` | Render `seasons.html` |
-| `build_charts.py` | Shared ApexCharts rendering helpers |
-| `update.py` | Orchestrate the full pipeline |
+| `src/fetch/fetch_podiums.py` | Fetch P1/P2/P3 for every race → `data/podiums.json` |
+| `src/fetch/fetch_standings.py` | Fetch final WDC standings per season → `data/standings.json` |
+| `src/fetch/fetch_top10.py` | Fetch top-10 finishers for every race → `data/top10.json` |
+| `src/compute/count_combos.py` | Aggregate podiums into unique trios → `data/combos.json` |
+| `src/compute/compute_career_podiums.py` | Cumulative podium trajectories per driver → `data/career_podiums.json` |
+| `src/compute/compute_soulmates.py` | Shared-podium matrix for top-40 drivers → `data/soulmates.json` |
+| `src/compute/compute_alignments.py` | Race-vs-championship order matching → `data/alignments.json` |
+| `src/build/build_html.py` | Render `dist/index.html` |
+| `src/build/build_soulmates_html.py` | Render `dist/soulmates.html` |
+| `src/build/build_charts_page.py` | Render `dist/charts.html` |
+| `src/build/build_alignments_html.py` | Render `dist/seasons.html` |
+| `src/build/build_charts.py` | Shared ApexCharts rendering helpers |
+| `src/build_site.py` | Build `dist/` (render all pages + copy assets) |
+| `src/update.py` | Refresh data, then build the site |

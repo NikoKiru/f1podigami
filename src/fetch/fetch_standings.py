@@ -20,7 +20,7 @@ USER_AGENT = "f1_podigami/0.2 (https://github.com/local/f1_podigami)"
 FIRST_SEASON = 1950
 LAST_COMPLETED_SEASON = 2025  # 2026 in progress as of 2026-05-09
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 OUT_PATH = DATA_DIR / "standings.json"
 TOP_N = 10
 

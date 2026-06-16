@@ -7,10 +7,10 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parents[2]
 COMBOS_PATH = ROOT / "data" / "combos.json"
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
-OUT_PATH = ROOT / "index.html"
+OUT_PATH = ROOT / "dist" / "index.html"
 
 
 def render_race_pills(races: list[dict]) -> str:
@@ -181,6 +181,7 @@ def main() -> int:
 </html>
 """
 
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(page, encoding="utf-8")
     print(f"Wrote {OUT_PATH}")
     print(f"  rendered {unique_combos} combos covering {total_podiums} races ({season_min}-{season_max})")

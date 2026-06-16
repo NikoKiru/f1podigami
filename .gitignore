@@ -1,0 +1,17 @@
+# Build output (regenerated from data/ by src/build_site.py and in CI)
+/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor / OS
+.DS_Store
+Thumbs.db

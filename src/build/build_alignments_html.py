@@ -8,9 +8,9 @@ import sys
 import unicodedata
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parents[2]
 ALIGNMENTS_PATH = ROOT / "data" / "alignments.json"
-OUT_PATH = ROOT / "seasons.html"
+OUT_PATH = ROOT / "dist" / "seasons.html"
 
 
 def driver_abbrev(name: str) -> str:
@@ -232,6 +232,7 @@ def main() -> int:
 </body>
 </html>
 """
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(page, encoding="utf-8")
     print(f"Wrote {OUT_PATH}")
     print(f"  rendered {total_seasons} seasons")

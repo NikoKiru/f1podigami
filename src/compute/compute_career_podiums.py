@@ -12,7 +12,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parents[2]
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
 OUT_PATH = ROOT / "data" / "career_podiums.json"
 TOP_N = 20

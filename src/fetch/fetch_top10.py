@@ -19,7 +19,7 @@ MAX_BACKOFF_RETRIES = 6
 USER_AGENT = "f1_podigami/0.2 (https://github.com/local/f1_podigami)"
 MAX_POSITION = 10
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 OUT_PATH = DATA_DIR / "top10.json"
 
 

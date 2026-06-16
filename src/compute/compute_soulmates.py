@@ -13,7 +13,7 @@ from collections import defaultdict
 from itertools import combinations
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parents[2]
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
 OUT_PATH = ROOT / "data" / "soulmates.json"
 TOP_N = 40

@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 TOP10_PATH = DATA_DIR / "top10.json"
 STANDINGS_PATH = DATA_DIR / "standings.json"
 OUT_PATH = DATA_DIR / "alignments.json"

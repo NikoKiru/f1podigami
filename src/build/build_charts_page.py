@@ -8,10 +8,10 @@ from pathlib import Path
 
 import build_charts
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parents[2]
 ALIGNMENTS_PATH = ROOT / "data" / "alignments.json"
 CAREER_PATH = ROOT / "data" / "career_podiums.json"
-OUT_PATH = ROOT / "charts.html"
+OUT_PATH = ROOT / "dist" / "charts.html"
 
 
 def main() -> int:
@@ -68,6 +68,7 @@ def main() -> int:
 </body>
 </html>
 """
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(page, encoding="utf-8")
     print(f"Wrote {OUT_PATH}")
     return 0

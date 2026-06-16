@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 IN_PATH = DATA_DIR / "podiums.json"
 OUT_PATH = DATA_DIR / "combos.json"
 
