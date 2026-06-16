@@ -19630,8 +19630,25 @@
       "name": "Lewis Hamilton"
     },
     "p3": {
-      "driverId": "hadjar",
-      "name": "Isack Hadjar"
+      "driverId": "gasly",
+      "name": "Pierre Gasly"
+    }
+  },
+  {
+    "season": "2026",
+    "round": "7",
+    "raceName": "Barcelona Grand Prix",
+    "p1": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton"
+    },
+    "p2": {
+      "driverId": "russell",
+      "name": "George Russell"
+    },
+    "p3": {
+      "driverId": "norris",
+      "name": "Lando Norris"
     }
   }
 ]
