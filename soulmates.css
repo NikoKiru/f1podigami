@@ -139,3 +139,13 @@
     line-height: 1.5;
 }
 .fc-detail b { color: var(--text); font-weight: 600; }
+
+/* ── phones ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .sm-page { gap: 22px; }
+    .pl-row { grid-template-columns: 22px 1fr auto; gap: 8px; padding: 9px 10px; }
+    .pl-names { white-space: normal; overflow: visible; text-overflow: clip; }
+    .pl-count { font-size: 16px; }
+    .fact-card { padding: 13px 14px; }
+    .fc-num { font-size: 22px; }
+}

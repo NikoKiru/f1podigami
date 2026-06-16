@@ -141,5 +141,32 @@ footer a {
 footer a:hover { color: var(--accent-bright); border-color: var(--accent); }
 
 @media (max-width: 720px) {
-    .container { padding: 0 12px; }
+    .container { padding: 0 14px; }
+
+    /* nav becomes a horizontal scroll strip so the four links never wrap/overflow */
+    .nav-inner {
+        gap: 2px;
+        padding: 4px 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .nav-inner::-webkit-scrollbar { display: none; }
+    .nav a {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        padding: 11px 12px;          /* ~44px tap height */
+        font-size: 13px;
+    }
+    .nav a.active { padding-left: 12px; }
+
+    header { padding: 28px 0 24px; }
+    header h1 { font-size: 24px; letter-spacing: -0.4px; }
+    header h1 .accent { margin-right: 8px; }
+    header .tagline { font-size: 14px; margin-bottom: 18px; }
+
+    .stats { grid-template-columns: 1fr; gap: 8px; max-width: none; }
+    .stat { padding: 12px 14px; }
+    .stat .num { font-size: 20px; }
 }

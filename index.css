@@ -257,26 +257,136 @@ tr.detail > td {
 }
 .empty-state strong { color: var(--text); display: block; margin-bottom: 4px; }
 
+/* 600-720px: compact horizontal-scroll table + stacked filters */
 @media (max-width: 720px) {
-    header { padding: 32px 0 28px; }
-    header h1 { font-size: 26px; }
     main { padding: 24px 0 32px; }
-    
-    /* Force table to be wider than the container to allow scrolling */
+
+    .filters { flex-direction: column; align-items: stretch; gap: 8px; }
+    .filters .search-wrap { flex: 1 1 auto; min-width: 0; max-width: none; }
+    .filters input { font-size: 16px; }      /* >=16px prevents iOS zoom-on-focus */
+    .clear-btn { width: 100%; padding: 11px 14px; }
+
     table { table-layout: auto; min-width: 500px; }
-    
     col.col-rank    { width: 40px; }
     col.col-drivers { width: 160px; }
     col.col-count   { width: 50px; }
     col.col-last    { width: 100px; }
     col.col-expand  { width: 30px; }
-    
+
     thead th, tbody tr.combo > td { padding: 10px 8px; font-size: 12px; }
-    
     td.drivers .driver { white-space: normal; }
     td.last { font-size: 12px; }
     td.last .race-name { display: none; }
-    
+
     .detail-inner { padding: 14px 14px 16px; }
     .season-row { grid-template-columns: 56px 1fr; }
+}
+
+/* <=600px: each combo row becomes a self-contained card (no sideways scroll) */
+@media (max-width: 600px) {
+    .table-wrap {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        overflow: visible;
+    }
+    table, tbody { display: block; width: 100%; }
+    table { min-width: 0; }
+    thead, colgroup { display: none; }
+
+    tbody tr.combo {
+        display: block;
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 10px;
+        padding: 13px 16px;
+    }
+    /* neutralize desktop cell borders / zebra / hover backgrounds in card mode */
+    tbody tr.combo > td,
+    tbody tr.combo:hover > td,
+    tbody tr.combo:nth-of-type(2n) > td,
+    tbody tr.combo:nth-of-type(2n):hover > td,
+    tbody tr.combo.expanded > td {
+        display: block;
+        padding: 0;
+        border: none;
+        background: transparent;
+    }
+
+    tbody tr.combo td.rank {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--accent-bright);
+        letter-spacing: 0.3px;
+        margin-bottom: 3px;
+    }
+    tbody tr.combo td.rank::before { content: "#"; opacity: 0.55; }
+
+    tbody tr.combo td.drivers {
+        font-size: 15.5px;
+        font-weight: 600;
+        line-height: 1.35;
+        padding-right: 30px;          /* clear the expand chevron */
+        margin-bottom: 10px;
+    }
+    tbody tr.combo td.drivers .driver { white-space: normal; }
+    tbody tr.combo td.drivers .sep { margin: 0 6px; }
+
+    tbody tr.combo td.count,
+    tbody tr.combo td.last {
+        font-size: 14px;
+        padding: 7px 0;
+        border-top: 1px solid var(--border);
+        line-height: 1.4;
+    }
+    tbody tr.combo td.count::before,
+    tbody tr.combo td.last::before {
+        display: inline-block;
+        width: 70px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        font-size: 10px;
+        font-weight: 700;
+        vertical-align: middle;
+    }
+    tbody tr.combo td.count::before { content: "Podiums"; }
+    tbody tr.combo td.last::before  { content: "Last"; }
+    tbody tr.combo td.count { color: var(--accent-bright); font-weight: 700; }
+    tbody tr.combo td.last  { color: var(--text-dim); }
+    tbody tr.combo td.last .year { color: var(--text); }
+    tbody tr.combo td.last .race-name { display: inline; color: var(--text-dim); }
+
+    tbody tr.combo td.expand {
+        position: absolute;
+        top: 10px;
+        right: 8px;
+        width: auto;
+        padding: 6px;
+    }
+    tbody tr.combo td.expand .chev {
+        width: 24px; height: 24px; line-height: 24px; font-size: 11px;
+    }
+
+    /* card + its expanded detail join into one connected block */
+    tbody tr.combo.expanded {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        margin-bottom: 0;
+    }
+    tr.detail { display: none; }
+    tr.detail.open {
+        display: block;
+        margin: 0 0 10px;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+    tr.detail.open > td { display: block; padding: 0; }
+    .detail-inner { padding: 12px 14px 14px; }
+    .season-row { grid-template-columns: 50px 1fr; gap: 10px; }
+    .race-list { gap: 5px; }
 }

@@ -217,3 +217,64 @@
     font-size: 14px;
 }
 .global-empty strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+/* <=600px: per-race tables become cards (no sideways scroll).
+   Placed after the base .races-table rules so these override min-width:500px,
+   which otherwise blows out the season grid track on phones. */
+@media (max-width: 600px) {
+    .season-head { grid-template-columns: 56px 1fr auto; gap: 10px; padding: 13px 14px; }
+    .season-year { font-size: 22px; }
+    .season-body { padding: 14px; }
+    .season-body .grid { gap: 16px; }
+    .panel { padding: 12px 14px; }
+
+    .races-table-wrap { overflow: visible; }
+    .races-table, .races-table tbody { display: block; width: 100%; min-width: 0; }
+    .races-table thead { display: none; }
+    .races-table tr {
+        display: block;
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+        margin-bottom: 8px;
+    }
+    .races-table tr:last-child { margin-bottom: 0; }
+    .races-table td { display: block; padding: 0; border: none; }
+
+    .races-table .col-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        padding-right: 52px;          /* clear the round badge */
+        margin-bottom: 7px;
+    }
+    .races-table .col-r {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        width: auto;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted-dim);
+    }
+    .races-table .col-len,
+    .races-table .col-drivers {
+        font-size: 13px;
+        padding: 5px 0 0;
+    }
+    .races-table .col-len::before,
+    .races-table .col-drivers::before {
+        display: inline-block;
+        width: 58px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 10px;
+        font-weight: 700;
+        vertical-align: middle;
+    }
+    .races-table .col-len::before     { content: "Match"; }
+    .races-table .col-drivers::before { content: "Order"; }
+}

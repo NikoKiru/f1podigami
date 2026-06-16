@@ -131,3 +131,15 @@
     min-width: 76px;
     text-align: right;
 }
+
+/* ── phones ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .chart-card { padding: 14px 14px; }
+    .chart-card .chart-host { overflow-x: auto; }
+    .chart-card h2 { font-size: 15px; }
+    .soulmate-grid { gap: 18px; }
+    /* drop the years column so rows fit narrow screens */
+    .pair-row { grid-template-columns: 24px 1fr auto; column-gap: 8px; }
+    .pair-years { display: none; }
+    .pair-names { font-size: 12.5px; }
+}
