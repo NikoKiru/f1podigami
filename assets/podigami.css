@@ -8,7 +8,7 @@ main { padding: 28px 0 48px; flex: 1; }
 .trio .sep, .tl-item .sep { color: var(--muted-dim); margin: 0 2px; }
 .trio-sm .pdriver { font-size: 14px; }
 
-.as-of { color: var(--muted); font-size: 12px; margin: -8px 0 24px; }
+.as-of { color: var(--muted); font-size: 12px; margin: 14px 2px 0; }
 
 /* hero */
 .hero {
