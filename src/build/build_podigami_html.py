@@ -21,10 +21,11 @@ def esc(s: str) -> str:
     return html.escape(str(s))
 
 
-def render_trio_names(names: list[str], cls: str = "trio") -> str:
+def render_trio_names(names: list[str], extra: str = "") -> str:
     parts = '<span class="sep">/</span>'.join(
         f'<span class="pdriver">{esc(n)}</span>' for n in names
     )
+    cls = f"trio {extra}".strip()
     return f'<span class="{cls}">{parts}</span>'
 
 

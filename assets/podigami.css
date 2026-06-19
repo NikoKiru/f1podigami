@@ -2,11 +2,11 @@
 
 main { padding: 28px 0 48px; flex: 1; }
 
-/* shared trio name styling */
-.trio { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.pdriver { font-weight: 600; color: var(--text); }
-.trio .sep, .tl-item .sep { color: var(--muted-dim); margin: 0 2px; }
-.trio-sm .pdriver { font-size: 14px; }
+/* shared trio name styling (matches the combinations page) */
+.trio { color: var(--text); }
+.pdriver { font-weight: 600; color: var(--text); white-space: nowrap; }
+.trio .sep { color: var(--muted-dim); margin: 0 8px; font-weight: 400; }
+.trio-sm .pdriver { font-size: 14px; font-weight: 500; }
 
 .as-of { color: var(--muted); font-size: 12px; margin: 14px 2px 0; }
 
