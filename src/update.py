@@ -24,6 +24,8 @@ POST_RACE_STEPS = [
     ("Counting combos",           "compute/count_combos.py"),
     ("Computing career podiums",  "compute/compute_career_podiums.py"),
     ("Computing soulmates",       "compute/compute_soulmates.py"),
+    ("Fetching current grid",     "fetch/fetch_current_drivers.py"),
+    ("Computing podigami",        "compute/compute_podigami.py"),
 ]
 
 SEASONAL_STEPS = [

@@ -1,4 +1,8 @@
-"""Render data/combos.json into a static index.html."""
+"""Render data/combos.json into dist/combos.html (the full combinations table).
+
+This is the former landing page; index.html is now the podigami predictor
+(build_podigami_html.py). Content is unchanged — only the nav and output path.
+"""
 
 from __future__ import annotations
 
@@ -10,12 +14,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 COMBOS_PATH = ROOT / "data" / "combos.json"
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
-OUT_PATH = ROOT / "dist" / "index.html"
+OUT_PATH = ROOT / "dist" / "combos.html"
 
 
 def render_race_pills(races: list[dict]) -> str:
     """Group races by season; each season gets a row with year + race pills."""
-    # Importing here to avoid circular dependencies if needed, but not needed currently
     import html
     races_sorted = sorted(races, key=lambda r: (int(r["season"]), int(r["round"])))
     parts: list[str] = []
@@ -103,7 +106,8 @@ def main() -> int:
 <body>
 <nav class="nav">
     <div class="container nav-inner">
-        <a href="index.html" class="active">Podium Combinations</a>
+        <a href="index.html">Podigami</a>
+        <a href="combos.html" class="active">Combinations</a>
         <a href="seasons.html">Season Alignments</a>
         <a href="charts.html">Charts</a>
         <a href="soulmates.html">Soulmates &rarr;</a>

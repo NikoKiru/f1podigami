@@ -10,6 +10,7 @@ DATA = Path(__file__).resolve().parents[1] / "data"
 DATASETS = [
     "podiums.json", "combos.json", "soulmates.json", "career_podiums.json",
     "alignments.json", "standings.json", "top10.json",
+    "current_drivers.json", "podigami.json",
 ]
 
 

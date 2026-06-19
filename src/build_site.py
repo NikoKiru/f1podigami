@@ -22,7 +22,8 @@ DIST = REPO / "dist"
 ASSETS = REPO / "assets"
 
 PAGE_BUILDERS = [
-    "build_html.py",
+    "build_podigami_html.py",
+    "build_combos_html.py",
     "build_alignments_html.py",
     "build_charts_page.py",
     "build_soulmates_html.py",

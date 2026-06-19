@@ -1,0 +1,93 @@
+{
+  "season": "2026",
+  "drivers": [
+    {
+      "driverId": "albon",
+      "name": "Alexander Albon"
+    },
+    {
+      "driverId": "alonso",
+      "name": "Fernando Alonso"
+    },
+    {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    {
+      "driverId": "arvid_lindblad",
+      "name": "Arvid Lindblad"
+    },
+    {
+      "driverId": "bearman",
+      "name": "Oliver Bearman"
+    },
+    {
+      "driverId": "bortoleto",
+      "name": "Gabriel Bortoleto"
+    },
+    {
+      "driverId": "bottas",
+      "name": "Valtteri Bottas"
+    },
+    {
+      "driverId": "colapinto",
+      "name": "Franco Colapinto"
+    },
+    {
+      "driverId": "gasly",
+      "name": "Pierre Gasly"
+    },
+    {
+      "driverId": "hadjar",
+      "name": "Isack Hadjar"
+    },
+    {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton"
+    },
+    {
+      "driverId": "hulkenberg",
+      "name": "Nico Hülkenberg"
+    },
+    {
+      "driverId": "lawson",
+      "name": "Liam Lawson"
+    },
+    {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc"
+    },
+    {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    {
+      "driverId": "norris",
+      "name": "Lando Norris"
+    },
+    {
+      "driverId": "ocon",
+      "name": "Esteban Ocon"
+    },
+    {
+      "driverId": "perez",
+      "name": "Sergio Pérez"
+    },
+    {
+      "driverId": "piastri",
+      "name": "Oscar Piastri"
+    },
+    {
+      "driverId": "russell",
+      "name": "George Russell"
+    },
+    {
+      "driverId": "sainz",
+      "name": "Carlos Sainz"
+    },
+    {
+      "driverId": "stroll",
+      "name": "Lance Stroll"
+    }
+  ]
+}

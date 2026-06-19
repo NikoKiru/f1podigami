@@ -4,7 +4,8 @@ import pytest
 
 # page -> assets it must reference (and which must end up in dist/)
 PAGES = {
-    "index.html": ["index.css", "index.js"],
+    "index.html": ["podigami.css", "podigami.js"],
+    "combos.html": ["index.css", "index.js"],
     "seasons.html": ["seasons.css", "seasons.js"],
     "soulmates.html": ["soulmates.css"],
     "charts.html": ["charts.css"],
@@ -12,7 +13,7 @@ PAGES = {
 
 ALL_ASSETS = [
     "style.css", "index.css", "seasons.css", "soulmates.css", "charts.css",
-    "index.js", "seasons.js",
+    "podigami.css", "index.js", "seasons.js", "podigami.js",
 ]
 
 
@@ -45,11 +46,19 @@ def test_all_assets_copied(dist):
         assert (dist / asset).is_file(), f"missing asset in dist/: {asset}"
 
 
-def test_index_has_nav_and_combo_rows(dist):
-    html = (dist / "index.html").read_text(encoding="utf-8")
+def test_combos_has_nav_and_combo_rows(dist):
+    html = (dist / "combos.html").read_text(encoding="utf-8")
     assert 'class="nav"' in html
     assert "<table" in html
     assert 'class="combo"' in html
+
+
+def test_index_is_podigami_predictor(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'class="nav"' in html
+    assert 'class="hero"' in html              # next-podigami hero
+    assert 'id="tl-slider"' in html            # year-slider timeline
+    assert 'id="podigami-data"' in html        # embedded slider data
 
 
 def test_seasons_has_cards(dist):
