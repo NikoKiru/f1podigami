@@ -14,7 +14,7 @@ import build_site
 import update
 
 REPO = Path(__file__).resolve().parents[1]
-PAGES = ["index.html", "combos.html", "soulmates.html"]
+PAGES = ["index.html", "combos.html", "overdue.html", "soulmates.html"]
 
 
 # --- orchestration wiring ------------------------------------------------------

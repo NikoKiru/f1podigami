@@ -6,6 +6,7 @@ import pytest
 PAGES = {
     "index.html": ["podigami.css", "podigami.js"],
     "combos.html": ["index.css", "index.js"],
+    "overdue.html": ["podigami.css"],
     "soulmates.html": ["soulmates.css"],
 }
 
@@ -57,3 +58,11 @@ def test_index_is_podigami_predictor(dist):
     assert 'class="hero"' in html              # next-podigami hero
     assert 'id="tl-slider"' in html            # year-slider timeline
     assert 'id="podigami-data"' in html        # embedded slider data
+
+
+def test_overdue_has_two_ranked_lists(dist):
+    html = (dist / "overdue.html").read_text(encoding="utf-8")
+    assert 'class="nav"' in html
+    assert html.count('class="cand-list"') == 2          # all-time + current grid
+    assert "All-time near-misses" in html
+    assert 'class="cand-meta"' in html                   # "raced N times together"
