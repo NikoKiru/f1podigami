@@ -95,3 +95,56 @@ def test_current_grid_list_only_uses_grid_drivers(scenario):
     assert res["currentGrid"], "expected at least one current-grid candidate"
     for e in res["currentGrid"]:
         assert set(e["driverIds"]) <= grid_ids
+
+
+# --- additional edge cases ----------------------------------------------------
+
+def _races(*keys):
+    return {"name": "X", "starts": max(len(keys), 1), "races": list(keys)}
+
+
+def test_zero_podium_driver_makes_score_zero_and_is_excluded():
+    # cas never podiums -> rate 0 -> the only possible trio scores 0 -> dropped.
+    podiums = [race(2020, 1, "alf", "bob", "yy"), race(2020, 2, "alf", "bob", "zz")]
+    dr = {"drivers": {
+        "alf": _races(2020001, 2020002, 2020003),
+        "bob": _races(2020001, 2020002, 2020003),
+        "cas": _races(2020001, 2020002, 2020003),  # starts 3, 0 podiums
+    }}
+    res = co.compute(podiums, combos_from(podiums), [], dr)
+    assert res["allTime"] == []
+
+
+def test_top_n_truncates_the_list():
+    # 5 mutually overlapping podium drivers -> C(5,3)=10 candidate trios.
+    drivers = ["d1", "d2", "d3", "d4", "d5"]
+    podiums = [race(2020, i + 1, d, "yy", "zz") for i, d in enumerate(drivers)]
+    keys = [2020001, 2020002, 2020003, 2020004, 2020005]
+    dr = {"drivers": {d: {"name": d, "starts": 5, "races": keys} for d in drivers}}
+    res = co.compute(podiums, combos_from(podiums), [], dr, top_n=3)
+    assert len(res["allTime"]) == 3
+
+
+def test_grid_driver_missing_race_data_is_skipped(scenario):
+    podiums, combos, grid, dr = scenario
+    grid = grid + [{"driverId": "ghost", "name": "Ghost"}]  # not in driver_races
+    res = co.compute(podiums, combos, grid, dr)            # must not raise
+    assert all("ghost" not in e["driverIds"] for e in res["currentGrid"])
+
+
+def test_asof_and_params_reported(scenario):
+    podiums, combos, grid, dr = scenario
+    res = co.compute(podiums, combos, grid, dr, pool_n=42, top_n=7)
+    assert res["params"] == {"poolN": 42, "topN": 7}
+    last = max(podiums, key=lambda r: (int(r["season"]), int(r["round"])))
+    assert res["asOf"]["round"] == last["round"]
+    assert res["asOf"]["season"] == last["season"]
+
+
+def test_scores_and_rates_are_rounded(scenario):
+    podiums, combos, grid, dr = scenario
+    res = co.compute(podiums, combos, grid, dr)
+    for e in res["allTime"]:
+        assert round(e["score"], 4) == e["score"]
+        for pd in e["perDriver"]:
+            assert round(pd["rate"], 4) == pd["rate"]
