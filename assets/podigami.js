@@ -18,6 +18,12 @@
         return d.innerHTML;
     }
 
+    // Wikipedia race-report URL — same source the Ergast/Jolpica API cites.
+    function wikiUrl(season, name) {
+        return 'https://en.wikipedia.org/wiki/' +
+            encodeURIComponent((season + ' ' + name).replace(/ /g, '_'));
+    }
+
     function render(year) {
         year = String(year);
         const entries = bySeason[year] || [];
@@ -31,9 +37,11 @@
                 .map(n => `<span class="pdriver">${esc(n)}</span>`)
                 .join('<span class="sep">/</span>');
             const fr = e.firstRace;
+            const url = wikiUrl(year, fr.raceName);
             return `<li class="tl-item">
                 <span class="trio trio-sm">${names}</span>
-                <span class="tl-where">R${esc(fr.round)} &middot; ${esc(fr.raceName)}</span>
+                <a class="tl-where" href="${url}" target="_blank" rel="noopener"
+                   title="${esc(year + ' ' + fr.raceName)} &mdash; race report">R${esc(fr.round)} &middot; ${esc(fr.raceName)}</a>
             </li>`;
         }).join('');
 

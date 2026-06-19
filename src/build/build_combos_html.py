@@ -9,12 +9,19 @@ from __future__ import annotations
 import itertools
 import json
 import sys
+import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 COMBOS_PATH = ROOT / "data" / "combos.json"
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
 OUT_PATH = ROOT / "dist" / "combos.html"
+
+
+def wiki_url(season: str, race_name: str) -> str:
+    """Wikipedia race-report URL — the same source the Ergast/Jolpica API cites."""
+    title = f"{season} {race_name}".replace(" ", "_")
+    return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(title)
 
 
 def render_race_pills(races: list[dict]) -> str:
@@ -25,10 +32,12 @@ def render_race_pills(races: list[dict]) -> str:
     for season, group in itertools.groupby(races_sorted, key=lambda r: r["season"]):
         group_list = list(group)
         pills = "".join(
-            f'<span class="race-pill">'
+            f'<a class="race-pill" href="{html.escape(wiki_url(r["season"], r["raceName"]), quote=True)}"'
+            f' target="_blank" rel="noopener"'
+            f' title="{html.escape(r["season"] + " " + r["raceName"], quote=True)} &mdash; race report">'
             f'<span class="round">R{html.escape(r["round"])}</span>'
             f'{html.escape(short_race_name(r["raceName"]))}'
-            f'</span>'
+            f'</a>'
             for r in group_list
         )
         ct = len(group_list)

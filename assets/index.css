@@ -277,6 +277,13 @@ tr.detail > td {
     color: var(--text-dim);
     line-height: 1.3;
     white-space: nowrap;
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+a.race-pill:hover {
+    border-color: var(--accent);
+    background: var(--surface-3);
+    color: var(--text);
 }
 .race-pill .round {
     color: var(--muted-dim);
