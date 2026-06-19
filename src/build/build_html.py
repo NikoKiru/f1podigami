@@ -134,11 +134,22 @@ def main() -> int:
                     <input data-filter type="search" placeholder="Driver 3..." aria-label="Driver 3 filter">
                 </div>
                 <button id="clear-filters" type="button" class="clear-btn" disabled>Clear</button>
+                <div class="filter-group mobile-sort">
+                    <label for="mobile-sort">Sort</label>
+                    <select id="mobile-sort">
+                        <option value="count-desc">Count (high &rarr; low)</option>
+                        <option value="count-asc">Count (low &rarr; high)</option>
+                        <option value="last-desc">Last seen (newest)</option>
+                        <option value="last-asc">Last seen (oldest)</option>
+                        <option value="drivers-asc">Drivers (A &rarr; Z)</option>
+                        <option value="drivers-desc">Drivers (Z &rarr; A)</option>
+                    </select>
+                </div>
             </div>
             <div class="hint">
                 Showing <strong id="visible-count">{unique_combos}</strong> of <span id="total-count">{unique_combos}</span>
                 &middot; each field matches one distinct driver (AND)
-                &middot; click a row to expand &middot; click a column header to sort
+                &middot; click a row to expand
             </div>
         </div>
         <div class="table-wrap">

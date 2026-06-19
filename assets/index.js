@@ -3,6 +3,7 @@ const comboRows = Array.from(tbody.querySelectorAll('tr.combo'));
 const filterInputs = Array.from(document.querySelectorAll('.filters input[data-filter]'));
 const clearBtn = document.getElementById('clear-filters');
 const headers = document.querySelectorAll('th[data-sort]');
+const mobileSortSel = document.getElementById('mobile-sort');
 const visibleEl = document.getElementById('visible-count');
 const totalEl = document.getElementById('total-count');
 const emptyEl = document.getElementById('empty-state');
@@ -31,6 +32,7 @@ function applySort() {
         h.classList.toggle('dir-asc', isActive && dir === 'asc');
         h.classList.toggle('dir-desc', isActive && dir === 'desc');
     });
+    if (mobileSortSel) mobileSortSel.value = key + '-' + dir;
 }
 
 headers.forEach(h => {
@@ -45,6 +47,15 @@ headers.forEach(h => {
         applySort();
     });
 });
+
+if (mobileSortSel) {
+    mobileSortSel.addEventListener('change', () => {
+        const [key, dir] = mobileSortSel.value.split('-');
+        currentSort.key = key;
+        currentSort.dir = dir;
+        applySort();
+    });
+}
 
 comboRows.forEach(row => {
     row.addEventListener('click', () => {
