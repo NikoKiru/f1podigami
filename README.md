@@ -52,6 +52,12 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 ## 🔮 How the predictor works
 
+![Backtested](https://img.shields.io/badge/backtested-1950–2026-1f6feb?style=flat-square)
+![Half-life](https://img.shields.io/badge/recency_half--life-8_races-e10600?style=flat-square)
+![Top-1](https://img.shields.io/badge/exact_trio_top--1-13%25-brightgreen?style=flat-square)
+![Top-5](https://img.shields.io/badge/trio_top--5-41%25-brightgreen?style=flat-square)
+![Hold-outs](https://img.shields.io/badge/race_hold--outs-333-8957e5?style=flat-square)
+
 A *podigami* = a 3-driver podium **set** that has **never** finished a podium together before.
 
 For each driver on the current grid:
@@ -75,17 +81,47 @@ The score of a trio is the product of its three weights, normalised over **every
 
 ## 🧱 Architecture
 
-```text
-                          ┌─ count_combos ──────────────► build_combos_html ──► dist/combos.html
-                          ├─ compute_career_podiums ─────► build_charts_page ──► dist/charts.html
-fetch_podiums ────────────┼─ compute_soulmates ─────────► build_soulmates_html ► dist/soulmates.html
-                          └─ (podiums + combos) ─┐
-fetch_current_drivers ───────────────────────────┴─ compute_podigami ─► build_podigami_html ─► dist/index.html
+Each stage reads committed JSON and writes the next — **fetch → compute → build → pages**:
 
-fetch_standings ─┐
-                 ├─ compute_alignments ─────────────────► build_alignments_html ► dist/seasons.html
-fetch_top10 ─────┘
+```mermaid
+flowchart LR
+    classDef fetch fill:#15151E,stroke:#e10600,color:#fff;
+    classDef compute fill:#1f2630,stroke:#8b949e,color:#fff;
+    classDef build fill:#262d38,stroke:#f4c430,color:#fff;
+    classDef page fill:#0b0d12,stroke:#e10600,color:#fff;
+
+    FP[fetch_podiums]:::fetch
+    FG[fetch_current_drivers]:::fetch
+    FS[fetch_standings]:::fetch
+    FT[fetch_top10]:::fetch
+
+    CC[count_combos]:::compute
+    CP[compute_podigami]:::compute
+    CR[compute_career_podiums]:::compute
+    CM[compute_soulmates]:::compute
+    CA[compute_alignments]:::compute
+
+    BP[build_podigami_html]:::build
+    BC[build_combos_html]:::build
+    BH[build_charts_page]:::build
+    BM[build_soulmates_html]:::build
+    BA[build_alignments_html]:::build
+
+    FP --> CC & CR & CM & CP
+    CC --> CP
+    FG --> CP
+    FS --> CA
+    FT --> CA
+
+    CP --> BP --> I([index.html]):::page
+    CC --> BC --> O([combos.html]):::page
+    CR --> BH --> H([charts.html]):::page
+    CM --> BM --> S([soulmates.html]):::page
+    CA --> BA --> E([seasons.html]):::page
 ```
+
+<details>
+<summary>📁 <strong>Repository layout</strong></summary>
 
 ```text
 src/
@@ -99,6 +135,8 @@ data/         committed JSON datasets the site builds from
 dist/         generated, deployable site (git-ignored)
 tests/        pytest suite (88 tests, run in CI)
 ```
+
+</details>
 
 ---
 
@@ -147,7 +185,19 @@ from combos + grid…), **build determinism & link resolution**, **mobile-CSS re
 ## ☁️ Deployment
 
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds `dist/` and publishes it to
-**GitHub Pages** on every push to `main`.
+**GitHub Pages** on every push to `main` — **but only if the test suite passes first.** A failing
+test fails the build job, so the deploy step is skipped and the live site stays on the last good build.
+
+```mermaid
+flowchart LR
+    classDef ok fill:#1f2630,stroke:#2ea043,color:#fff;
+    classDef bad fill:#1f2630,stroke:#e10600,color:#fff;
+    classDef gate fill:#262d38,stroke:#f4c430,color:#fff;
+
+    P[push to main] --> T{pytest -q}:::gate
+    T -- pass --> B[build dist/]:::ok --> D[(GitHub Pages)]:::ok
+    T -- fail --> X[deploy skipped<br/>site unchanged]:::bad
+```
 
 > **One-time setup:** *Settings → Pages → Build and deployment → Source: **GitHub Actions***.
 
