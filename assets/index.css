@@ -64,7 +64,7 @@ main {
     background: rgba(225, 6, 0, 0.08);
 }
 .clear-btn:disabled { opacity: 0.45; cursor: default; }
-.mobile-sort { display: none; }
+.filter-group.mobile-sort { display: none; }
 .filter-group {
     display: flex;
     flex-direction: column;
@@ -302,7 +302,7 @@ tr.detail > td {
     .filters input { font-size: 16px; }      /* >=16px prevents iOS zoom-on-focus */
     .filters select { font-size: 16px; width: 100%; }
     .clear-btn { width: 100%; padding: 11px 14px; }
-    .mobile-sort { display: flex; }
+    .filter-group.mobile-sort { display: flex; }
 
     table { table-layout: auto; min-width: 500px; }
     col.col-rank    { width: 40px; }
