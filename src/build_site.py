@@ -24,6 +24,7 @@ ASSETS = REPO / "assets"
 PAGE_BUILDERS = [
     "build_podigami_html.py",
     "build_combos_html.py",
+    "build_overdue_html.py",
     "build_soulmates_html.py",
 ]
 

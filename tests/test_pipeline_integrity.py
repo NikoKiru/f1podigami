@@ -130,3 +130,27 @@ def test_podigami_season_range_matches_history():
     assert pg["seasonRange"] == [min(seasons), max(seasons)]
     assert pg["currentSeason"] == str(max(seasons))
     assert pg["asOf"]["season"] == pg["currentSeason"]
+
+
+# --- overdue podiums derive from combos + driver_races -------------------------
+
+def test_overdue_candidates_are_new_overlapping_and_ranked():
+    od = load_data("overdue.json")
+    existing = {trio(c["driverIds"]) for c in load_data("combos.json")}
+    races = load_data("driver_races.json")["drivers"]
+    for key in ("allTime", "currentGrid"):
+        scores = [e["score"] for e in od[key]]
+        assert scores == sorted(scores, reverse=True), f"{key} not ranked by score"
+        for e in od[key]:
+            assert trio(e["driverIds"]) not in existing, "overdue trio already happened"
+            assert e["racesTogether"] > 0, "overdue trio never raced together"
+            assert len(e["perDriver"]) == 3
+            for d in e["driverIds"]:
+                assert d in races, f"{d} missing from driver_races"
+
+
+def test_overdue_current_grid_uses_only_grid_drivers():
+    od = load_data("overdue.json")
+    grid_ids = {d["driverId"] for d in load_data("current_drivers.json")["drivers"]}
+    for e in od["currentGrid"]:
+        assert set(e["driverIds"]) <= grid_ids
