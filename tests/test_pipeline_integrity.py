@@ -49,24 +49,6 @@ def test_combo_first_last_race_consistent():
         assert c["driverIds"] == sorted(c["driverIds"])
 
 
-# --- career_podiums ------------------------------------------------------------
-
-def test_career_breakdown_totals_add_up():
-    cp = load_data("career_podiums.json")
-    assert cp["totalRaces"] > 0
-    for d in cp["breakdown"]:
-        assert d["p1"] + d["p2"] + d["p3"] == d["total"]
-        assert d["firstYear"] <= d["lastYear"]
-
-
-def test_career_trajectories_are_monotonic():
-    cp = load_data("career_podiums.json")
-    for d in cp["drivers"]:
-        ys = [pt["y"] for pt in d["data"]]
-        assert ys == sorted(ys), f"{d['name']} cumulative podiums went down"
-        assert ys[-1] == d["total"], f"{d['name']} trajectory end != total"
-
-
 # --- soulmates -----------------------------------------------------------------
 
 def test_soulmates_matrix_square_and_symmetric():
@@ -86,17 +68,6 @@ def test_soulmates_top_pairs_sorted_within_max():
     counts = [p["count"] for p in sm["topPairs"]]
     assert counts == sorted(counts, reverse=True)
     assert all(c <= sm["max"] for c in counts)
-
-
-# --- alignments ----------------------------------------------------------------
-
-def test_alignments_self_consistent():
-    for s in load_data("alignments.json"):
-        races = s["races"]
-        lengths = [r["matchLength"] for r in races]
-        assert all(0 <= L <= 10 for L in lengths)
-        assert s["perfectTop3Count"] == sum(1 for L in lengths if L >= 3)
-        assert s["bestMatchLength"] == (max(lengths) if lengths else 0)
 
 
 # --- current grid --------------------------------------------------------------

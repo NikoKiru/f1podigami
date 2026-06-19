@@ -8,8 +8,7 @@ import pytest
 DATA = Path(__file__).resolve().parents[1] / "data"
 
 DATASETS = [
-    "podiums.json", "combos.json", "soulmates.json", "career_podiums.json",
-    "alignments.json", "standings.json", "top10.json",
+    "podiums.json", "combos.json", "soulmates.json",
     "current_drivers.json", "podigami.json",
 ]
 

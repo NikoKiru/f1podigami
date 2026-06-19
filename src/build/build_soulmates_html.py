@@ -198,8 +198,6 @@ def main() -> int:
     <div class="container nav-inner">
         <a href="index.html">Podigami</a>
         <a href="combos.html">Combinations</a>
-        <a href="seasons.html">Season Alignments</a>
-        <a href="charts.html">Charts</a>
         <a href="soulmates.html" class="active">Soulmates</a>
     </div>
 </nav>

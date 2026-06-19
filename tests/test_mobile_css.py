@@ -34,15 +34,6 @@ def test_index_inputs_prevent_ios_zoom():
     assert "font-size: 16px" in css("index.css")
 
 
-def test_seasons_race_table_becomes_cards():
-    s = css("seasons.css")
-    assert "@media (max-width: 600px)" in s
-    assert 'content: "Match"' in s
-    assert 'content: "Order"' in s
-    # the min-width:0 override that prevents the CSS-grid blowout on phones
-    assert "min-width: 0" in s
-
-
-@pytest.mark.parametrize("name", ["soulmates.css", "charts.css"])
+@pytest.mark.parametrize("name", ["soulmates.css", "podigami.css"])
 def test_secondary_pages_have_phone_breakpoint(name):
     assert "@media (max-width: 600px)" in css(name)

@@ -3,7 +3,6 @@
 import pytest
 
 from build import build_combos_html as bc
-from compute import compute_alignments as ca
 from compute import compute_podigami as cp
 from fetch import fetch_podiums as fp
 
@@ -36,24 +35,6 @@ def test_short_race_name_trims_grand_prix():
 
 def test_short_race_name_leaves_non_gp_untouched():
     assert bc.short_race_name("Indianapolis 500") == "Indianapolis 500"
-
-
-# --- compute_alignments.match_length -------------------------------------------
-
-def test_match_length_full_prefix():
-    assert ca.match_length(["a", "b", "c"], ["a", "b", "c", "d"]) == 3
-
-
-def test_match_length_stops_at_mismatch():
-    assert ca.match_length(["a", "x", "c"], ["a", "b", "c"]) == 1
-
-
-def test_match_length_stops_at_none():
-    assert ca.match_length(["a", None, "c"], ["a", "b", "c"]) == 1
-
-
-def test_match_length_zero_when_first_differs():
-    assert ca.match_length(["z"], ["a"]) == 0
 
 
 # --- compute_podigami.trio_key -------------------------------------------------

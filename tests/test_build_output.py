@@ -6,14 +6,12 @@ import pytest
 PAGES = {
     "index.html": ["podigami.css", "podigami.js"],
     "combos.html": ["index.css", "index.js"],
-    "seasons.html": ["seasons.css", "seasons.js"],
     "soulmates.html": ["soulmates.css"],
-    "charts.html": ["charts.css"],
 }
 
 ALL_ASSETS = [
-    "style.css", "index.css", "seasons.css", "soulmates.css", "charts.css",
-    "podigami.css", "index.js", "seasons.js", "podigami.js",
+    "style.css", "index.css", "soulmates.css",
+    "podigami.css", "index.js", "podigami.js",
 ]
 
 
@@ -59,9 +57,3 @@ def test_index_is_podigami_predictor(dist):
     assert 'class="hero"' in html              # next-podigami hero
     assert 'id="tl-slider"' in html            # year-slider timeline
     assert 'id="podigami-data"' in html        # embedded slider data
-
-
-def test_seasons_has_cards(dist):
-    html = (dist / "seasons.html").read_text(encoding="utf-8")
-    assert "season-card" in html
-    assert "races-table" in html

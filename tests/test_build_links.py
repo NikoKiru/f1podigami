@@ -14,7 +14,7 @@ import build_site
 import update
 
 REPO = Path(__file__).resolve().parents[1]
-PAGES = ["index.html", "combos.html", "seasons.html", "charts.html", "soulmates.html"]
+PAGES = ["index.html", "combos.html", "soulmates.html"]
 
 
 # --- orchestration wiring ------------------------------------------------------
@@ -25,7 +25,7 @@ def test_page_builders_exist():
 
 
 def test_update_steps_point_to_real_scripts():
-    for _, rel in update.POST_RACE_STEPS + update.SEASONAL_STEPS:
+    for _, rel in update.STEPS:
         assert (REPO / "src" / rel).is_file(), f"update.py references missing {rel}"
 
 
