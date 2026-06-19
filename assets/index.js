@@ -17,7 +17,7 @@ function applySort() {
     const mult = dir === 'asc' ? 1 : -1;
     const sorted = comboRows.slice().sort((a, b) => {
         if (key === 'count') return (Number(a.dataset.count) - Number(b.dataset.count)) * mult;
-        if (key === 'last')  return (Number(a.dataset.last)  - Number(b.dataset.last))  * mult;
+        if (key === 'last') return (Number(a.dataset.last) - Number(b.dataset.last)) * mult;
         return a.dataset.drivers.localeCompare(b.dataset.drivers) * mult;
     });
     sorted.forEach((row, i) => {

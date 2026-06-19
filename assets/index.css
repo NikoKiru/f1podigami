@@ -5,7 +5,10 @@ main {
     padding: 32px 0 48px;
 }
 
-.controls { margin-bottom: 18px; }
+.controls {
+    margin-bottom: 18px;
+}
+
 .filters {
     display: flex;
     gap: 10px;
@@ -13,23 +16,28 @@ main {
     align-items: center;
     margin-bottom: 10px;
 }
+
 .filters .search-wrap {
     position: relative;
     flex: 1 1 220px;
     min-width: 180px;
     max-width: 320px;
 }
+
 .filters .search-wrap::before {
     content: "";
     position: absolute;
-    left: 12px; top: 50%;
-    width: 13px; height: 13px;
+    left: 12px;
+    top: 50%;
+    width: 13px;
+    height: 13px;
     transform: translateY(-50%);
     background: var(--muted);
     -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/></svg>") center/contain no-repeat;
-            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/></svg>") center/contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/></svg>") center/contain no-repeat;
     pointer-events: none;
 }
+
 .filters input {
     width: 100%;
     background: var(--surface);
@@ -40,13 +48,21 @@ main {
     font: inherit;
     transition: border-color 0.15s, box-shadow 0.15s;
 }
+
 .filters input:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.15);
 }
-.filters input:not(:placeholder-shown) { border-color: var(--accent-dim); }
-.filters input::placeholder { color: var(--muted-dim); }
+
+.filters input:not(:placeholder-shown) {
+    border-color: var(--accent-dim);
+}
+
+.filters input::placeholder {
+    color: var(--muted-dim);
+}
+
 .clear-btn {
     background: transparent;
     color: var(--muted);
@@ -58,18 +74,28 @@ main {
     transition: color 0.15s, border-color 0.15s, background 0.15s;
     white-space: nowrap;
 }
+
 .clear-btn:hover:not(:disabled) {
     color: var(--text);
     border-color: var(--accent);
     background: rgba(225, 6, 0, 0.08);
 }
-.clear-btn:disabled { opacity: 0.45; cursor: default; }
-.filter-group.mobile-sort { display: none; }
+
+.clear-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.filter-group.mobile-sort {
+    display: none;
+}
+
 .filter-group {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
+
 .filter-group label {
     font-size: 11px;
     font-weight: 600;
@@ -77,6 +103,7 @@ main {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
+
 .filters select {
     appearance: none;
     -webkit-appearance: none;
@@ -94,17 +121,26 @@ main {
     background-position: right 12px center;
     cursor: pointer;
 }
+
 .filters select:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.15);
 }
-.filters select:hover { border-color: var(--border-strong); }
+
+.filters select:hover {
+    border-color: var(--border-strong);
+}
+
 .hint {
     color: var(--muted);
     font-size: 13px;
 }
-.hint strong { color: var(--text); font-weight: 600; }
+
+.hint strong {
+    color: var(--text);
+    font-weight: 600;
+}
 
 /* ---------- table ---------- */
 
@@ -115,16 +151,32 @@ main {
     overflow: hidden;
     overflow-x: auto;
 }
+
 table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
 }
-col.col-rank    { width: 68px; }
-col.col-drivers { width: auto; }
-col.col-count   { width: 92px; }
-col.col-last    { width: 240px; }
-col.col-expand  { width: 44px; }
+
+col.col-rank {
+    width: 68px;
+}
+
+col.col-drivers {
+    width: auto;
+}
+
+col.col-count {
+    width: 92px;
+}
+
+col.col-last {
+    width: 240px;
+}
+
+col.col-expand {
+    width: 44px;
+}
 
 thead th {
     text-align: left;
@@ -142,8 +194,16 @@ thead th {
     z-index: 1;
     white-space: nowrap;
 }
-thead th[data-sort] { cursor: pointer; transition: color 0.15s; }
-thead th[data-sort]:hover { color: var(--text); }
+
+thead th[data-sort] {
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+thead th[data-sort]:hover {
+    color: var(--text);
+}
+
 thead th .sort-ind {
     display: inline-block;
     margin-left: 6px;
@@ -153,25 +213,50 @@ thead th .sort-ind {
     transition: transform 0.18s ease, color 0.15s;
     transform-origin: 50% 55%;
 }
-thead th.active            { color: var(--text); }
-thead th.active .sort-ind  { color: var(--accent-bright); }
-thead th.active.dir-asc .sort-ind { transform: rotate(180deg); }
+
+thead th.active {
+    color: var(--text);
+}
+
+thead th.active .sort-ind {
+    color: var(--accent-bright);
+}
+
+thead th.active.dir-asc .sort-ind {
+    transform: rotate(180deg);
+}
 
 tbody tr.combo {
     cursor: pointer;
     transition: background 0.12s;
 }
-tbody tr.combo > td {
+
+tbody tr.combo>td {
     padding: 14px 18px;
     border-top: 1px solid var(--border);
     vertical-align: middle;
     overflow-wrap: break-word;
 }
-tbody tr.combo:first-child > td { border-top: none; }
-tbody tr.combo:hover > td { background: var(--surface-2); }
-tbody tr.combo:nth-of-type(2n) > td { background: rgba(255, 255, 255, 0.012); }
-tbody tr.combo:nth-of-type(2n):hover > td { background: var(--surface-2); }
-tbody tr.combo.expanded > td { background: var(--surface-2); }
+
+tbody tr.combo:first-child>td {
+    border-top: none;
+}
+
+tbody tr.combo:hover>td {
+    background: var(--surface-2);
+}
+
+tbody tr.combo:nth-of-type(2n)>td {
+    background: rgba(255, 255, 255, 0.012);
+}
+
+tbody tr.combo:nth-of-type(2n):hover>td {
+    background: var(--surface-2);
+}
+
+tbody tr.combo.expanded>td {
+    background: var(--surface-2);
+}
 
 td.rank {
     color: var(--muted);
@@ -179,47 +264,67 @@ td.rank {
     font-size: 13px;
     white-space: nowrap;
 }
-td.drivers { font-weight: 500; color: var(--text); }
-td.drivers .driver { white-space: nowrap; }
+
+td.drivers {
+    font-weight: 500;
+    color: var(--text);
+}
+
+td.drivers .driver {
+    white-space: nowrap;
+}
+
 td.drivers .sep {
     color: var(--muted-dim);
     margin: 0 8px;
     font-weight: 400;
 }
+
 td.count {
     font-weight: 700;
     color: var(--accent-bright);
     font-variant-numeric: tabular-nums;
     font-size: 16px;
 }
+
 td.last {
     color: var(--muted);
     font-size: 14px;
     line-height: 1.35;
 }
+
 td.last .year {
     color: var(--text);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     margin-right: 8px;
 }
-td.last .race-name { color: var(--text-dim); }
+
+td.last .race-name {
+    color: var(--text-dim);
+}
 
 td.expand {
     text-align: center;
     color: var(--muted-dim);
     width: 44px;
 }
+
 td.expand .chev {
     display: inline-block;
-    width: 18px; height: 18px;
+    width: 18px;
+    height: 18px;
     line-height: 18px;
     text-align: center;
     border-radius: 50%;
     font-size: 10px;
     transition: transform 0.18s ease, color 0.15s, background 0.15s;
 }
-tr.combo:hover td.expand .chev { color: var(--text); }
+
+tr.combo:hover td.expand .chev {
+    color: var(--text);
+}
+
 tr.combo.expanded td.expand .chev {
     transform: rotate(180deg);
     color: var(--accent-bright);
@@ -227,17 +332,25 @@ tr.combo.expanded td.expand .chev {
 }
 
 /* expanded detail row */
-tr.detail { display: none; }
-tr.detail.open { display: table-row; }
-tr.detail > td {
+tr.detail {
+    display: none;
+}
+
+tr.detail.open {
+    display: table-row;
+}
+
+tr.detail>td {
     background: var(--bg-2);
     border-top: 1px solid var(--border);
     padding: 0;
 }
+
 .detail-inner {
     padding: 18px 24px 20px;
     border-left: 3px solid var(--accent);
 }
+
 .season-row {
     display: grid;
     grid-template-columns: 70px 1fr;
@@ -246,7 +359,12 @@ tr.detail > td {
     border-top: 1px solid var(--border);
     align-items: baseline;
 }
-.season-row:first-child { border-top: none; padding-top: 0; }
+
+.season-row:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
 .season-row .season-label {
     font-weight: 700;
     color: var(--text);
@@ -254,17 +372,20 @@ tr.detail > td {
     font-size: 14px;
     letter-spacing: -0.2px;
 }
+
 .season-row .season-label .ct {
     color: var(--muted-dim);
     font-weight: 500;
     font-size: 12px;
     margin-left: 4px;
 }
+
 .season-row .race-list {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
+
 .race-pill {
     display: inline-flex;
     align-items: baseline;
@@ -280,11 +401,13 @@ tr.detail > td {
     text-decoration: none;
     transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
+
 a.race-pill:hover {
     border-color: var(--accent);
     background: var(--surface-3);
     color: var(--text);
 }
+
 .race-pill .round {
     color: var(--muted-dim);
     font-variant-numeric: tabular-nums;
@@ -298,33 +421,100 @@ a.race-pill:hover {
     color: var(--muted);
     font-size: 14px;
 }
-.empty-state strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+.empty-state strong {
+    color: var(--text);
+    display: block;
+    margin-bottom: 4px;
+}
 
 /* 600-720px: compact horizontal-scroll table + stacked filters */
 @media (max-width: 720px) {
-    main { padding: 24px 0 32px; }
+    main {
+        padding: 24px 0 32px;
+    }
 
-    .filters { flex-direction: column; align-items: stretch; gap: 8px; }
-    .filters .search-wrap { flex: 1 1 auto; min-width: 0; max-width: none; }
-    .filters input { font-size: 16px; }      /* >=16px prevents iOS zoom-on-focus */
-    .filters select { font-size: 16px; width: 100%; }
-    .clear-btn { width: 100%; padding: 11px 14px; }
-    .filter-group.mobile-sort { display: flex; }
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
 
-    table { table-layout: auto; min-width: 500px; }
-    col.col-rank    { width: 40px; }
-    col.col-drivers { width: 160px; }
-    col.col-count   { width: 50px; }
-    col.col-last    { width: 100px; }
-    col.col-expand  { width: 30px; }
+    .filters .search-wrap {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: none;
+    }
 
-    thead th, tbody tr.combo > td { padding: 10px 8px; font-size: 12px; }
-    td.drivers .driver { white-space: normal; }
-    td.last { font-size: 12px; }
-    td.last .race-name { display: none; }
+    .filters input {
+        font-size: 16px;
+    }
 
-    .detail-inner { padding: 14px 14px 16px; }
-    .season-row { grid-template-columns: 56px 1fr; }
+    /* >=16px prevents iOS zoom-on-focus */
+    .filters select {
+        font-size: 16px;
+        width: 100%;
+    }
+
+    .clear-btn {
+        width: 100%;
+        padding: 11px 14px;
+    }
+
+    .filter-group.mobile-sort {
+        display: flex;
+    }
+
+    table {
+        table-layout: auto;
+        min-width: 500px;
+    }
+
+    col.col-rank {
+        width: 40px;
+    }
+
+    col.col-drivers {
+        width: 160px;
+    }
+
+    col.col-count {
+        width: 50px;
+    }
+
+    col.col-last {
+        width: 100px;
+    }
+
+    col.col-expand {
+        width: 30px;
+    }
+
+    thead th,
+    tbody tr.combo>td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+
+    td.drivers .driver {
+        white-space: normal;
+    }
+
+    td.last {
+        font-size: 12px;
+    }
+
+    td.last .race-name {
+        display: none;
+    }
+
+    .detail-inner {
+        padding: 14px 14px 16px;
+    }
+
+    .season-row {
+        grid-template-columns: 56px 1fr;
+    }
 }
 
 /* <=600px: each combo row becomes a self-contained card (no sideways scroll) */
@@ -335,9 +525,21 @@ a.race-pill:hover {
         border-radius: 0;
         overflow: visible;
     }
-    table, tbody { display: block; width: 100%; }
-    table { min-width: 0; }
-    thead, colgroup { display: none; }
+
+    table,
+    tbody {
+        display: block;
+        width: 100%;
+    }
+
+    table {
+        min-width: 0;
+    }
+
+    thead,
+    colgroup {
+        display: none;
+    }
 
     tbody tr.combo {
         display: block;
@@ -348,12 +550,13 @@ a.race-pill:hover {
         margin-bottom: 10px;
         padding: 13px 16px;
     }
+
     /* neutralize desktop cell borders / zebra / hover backgrounds in card mode */
-    tbody tr.combo > td,
-    tbody tr.combo:hover > td,
-    tbody tr.combo:nth-of-type(2n) > td,
-    tbody tr.combo:nth-of-type(2n):hover > td,
-    tbody tr.combo.expanded > td {
+    tbody tr.combo>td,
+    tbody tr.combo:hover>td,
+    tbody tr.combo:nth-of-type(2n)>td,
+    tbody tr.combo:nth-of-type(2n):hover>td,
+    tbody tr.combo.expanded>td {
         display: block;
         padding: 0;
         border: none;
@@ -367,17 +570,28 @@ a.race-pill:hover {
         letter-spacing: 0.3px;
         margin-bottom: 3px;
     }
-    tbody tr.combo td.rank::before { content: "#"; opacity: 0.55; }
+
+    tbody tr.combo td.rank::before {
+        content: "#";
+        opacity: 0.55;
+    }
 
     tbody tr.combo td.drivers {
         font-size: 15.5px;
         font-weight: 600;
         line-height: 1.35;
-        padding-right: 30px;          /* clear the expand chevron */
+        padding-right: 30px;
+        /* clear the expand chevron */
         margin-bottom: 10px;
     }
-    tbody tr.combo td.drivers .driver { white-space: normal; }
-    tbody tr.combo td.drivers .sep { margin: 0 6px; }
+
+    tbody tr.combo td.drivers .driver {
+        white-space: normal;
+    }
+
+    tbody tr.combo td.drivers .sep {
+        margin: 0 6px;
+    }
 
     tbody tr.combo td.count,
     tbody tr.combo td.last {
@@ -386,6 +600,7 @@ a.race-pill:hover {
         border-top: 1px solid var(--border);
         line-height: 1.4;
     }
+
     tbody tr.combo td.count::before,
     tbody tr.combo td.last::before {
         display: inline-block;
@@ -397,12 +612,32 @@ a.race-pill:hover {
         font-weight: 700;
         vertical-align: middle;
     }
-    tbody tr.combo td.count::before { content: "Podiums"; }
-    tbody tr.combo td.last::before  { content: "Last"; }
-    tbody tr.combo td.count { color: var(--accent-bright); font-weight: 700; }
-    tbody tr.combo td.last  { color: var(--text-dim); }
-    tbody tr.combo td.last .year { color: var(--text); }
-    tbody tr.combo td.last .race-name { display: inline; color: var(--text-dim); }
+
+    tbody tr.combo td.count::before {
+        content: "Podiums";
+    }
+
+    tbody tr.combo td.last::before {
+        content: "Last";
+    }
+
+    tbody tr.combo td.count {
+        color: var(--accent-bright);
+        font-weight: 700;
+    }
+
+    tbody tr.combo td.last {
+        color: var(--text-dim);
+    }
+
+    tbody tr.combo td.last .year {
+        color: var(--text);
+    }
+
+    tbody tr.combo td.last .race-name {
+        display: inline;
+        color: var(--text-dim);
+    }
 
     tbody tr.combo td.expand {
         position: absolute;
@@ -411,8 +646,12 @@ a.race-pill:hover {
         width: auto;
         padding: 6px;
     }
+
     tbody tr.combo td.expand .chev {
-        width: 24px; height: 24px; line-height: 24px; font-size: 11px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        font-size: 11px;
     }
 
     /* card + its expanded detail join into one connected block */
@@ -421,7 +660,11 @@ a.race-pill:hover {
         border-bottom-right-radius: 0;
         margin-bottom: 0;
     }
-    tr.detail { display: none; }
+
+    tr.detail {
+        display: none;
+    }
+
     tr.detail.open {
         display: block;
         margin: 0 0 10px;
@@ -430,8 +673,22 @@ a.race-pill:hover {
         border-top: none;
         border-radius: 0 0 var(--radius) var(--radius);
     }
-    tr.detail.open > td { display: block; padding: 0; }
-    .detail-inner { padding: 12px 14px 14px; }
-    .season-row { grid-template-columns: 50px 1fr; gap: 10px; }
-    .race-list { gap: 5px; }
+
+    tr.detail.open>td {
+        display: block;
+        padding: 0;
+    }
+
+    .detail-inner {
+        padding: 12px 14px 14px;
+    }
+
+    .season-row {
+        grid-template-columns: 50px 1fr;
+        gap: 10px;
+    }
+
+    .race-list {
+        gap: 5px;
+    }
 }
