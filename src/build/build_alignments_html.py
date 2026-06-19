@@ -200,16 +200,22 @@ def main() -> int:
 <main>
     <div class="container">
         <div class="controls">
-            <label for="sort-by">Sort</label>
-            <select id="sort-by">
-                <option value="season-desc">Newest first</option>
-                <option value="season-asc">Oldest first</option>
-                <option value="best-desc">Best match length</option>
-                <option value="perfect-desc"># of top-3 alignments</option>
-                <option value="rate-desc">% alignment rate</option>
-            </select>
-            <label for="min-len">Min match</label>
-            <input id="min-len" type="number" min="0" max="10" value="0" step="1">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="sort-by">Sort</label>
+                    <select id="sort-by">
+                        <option value="season-desc">Newest first</option>
+                        <option value="season-asc">Oldest first</option>
+                        <option value="best-desc">Best match length</option>
+                        <option value="perfect-desc"># of top-3 alignments</option>
+                        <option value="rate-desc">% alignment rate</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="min-len">Min match</label>
+                    <input id="min-len" type="number" min="0" max="10" value="0" step="1">
+                </div>
+            </div>
             <span class="hint">Showing <strong id="visible-count">{total_seasons}</strong> of <span id="total-count">{total_seasons}</span> seasons &middot; click a card to expand</span>
         </div>
         <div class="season-grid" id="season-list">
