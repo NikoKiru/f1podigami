@@ -102,3 +102,32 @@ def test_by_season_groups_debut_trios(scenario):
     # every combo's debut lands in exactly one season bucket
     assert sum(res["seasonCounts"].values()) == len(combos)
     assert set(res["bySeason"]) == set(res["seasonCounts"])
+
+
+# --- edge cases ---------------------------------------------------------------
+
+def test_grid_smaller_than_three_yields_no_candidates(scenario):
+    podiums, combos, _ = scenario
+    grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob")]
+    res = cp.compute(podiums, combos, grid)
+    assert res["candidates"] == []
+    assert res["chanceNextRaceNew"] == 0.0
+    assert res["gridSize"] == 2
+
+
+def test_single_unseen_trio_is_certain():
+    # a 3-driver grid whose trio has never appeared -> the next new combo is certain
+    podiums = [race(2025, 1, "alf", "bob", "dan")]
+    grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob", "cas")]
+    res = cp.compute(podiums, combos_from(podiums), grid)
+    assert res["chanceNextRaceNew"] == pytest.approx(100.0)
+    assert tuple(sorted(res["candidates"][0]["driverIds"])) == ("alf", "bob", "cas")
+
+
+def test_single_seen_trio_is_impossible():
+    # the only possible trio on the grid has already happened -> 0% new
+    podiums = [race(2025, 1, "alf", "bob", "cas")]
+    grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob", "cas")]
+    res = cp.compute(podiums, combos_from(podiums), grid)
+    assert res["chanceNextRaceNew"] == pytest.approx(0.0)
+    assert res["candidates"] == []

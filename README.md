@@ -1,146 +1,186 @@
-# F1 Podigami
+<div align="center">
 
-A static-site generator that turns 76 years of Formula 1 race data into four browsable HTML pages — no server, no framework, just Python and a single `requests` dependency. The pages are fully responsive and tuned for mobile.
+# 🏁 F1 Podigami
 
-## Project layout
+### A scorigami-style predictor for Formula 1 podiums — *which trio of drivers will share a podium for the very first time next?*
+
+Turns **76 years** of F1 race data (1950–2026) into a fast, framework-free static site.
+No server. No database. No JavaScript framework. Just Python, one `requests` dependency, and vanilla JS.
+
+<br>
+
+[![CI](https://github.com/NikoKiru/f1_podigami/actions/workflows/ci.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/NikoKiru/f1_podigami/actions/workflows/deploy.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/deploy.yml)
+[![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1_podigami/)
+
+[![Python](https://img.shields.io/badge/python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Dependencies](https://img.shields.io/badge/dependencies-requests-orange?style=flat-square&logo=pypi&logoColor=white)](requirements.txt)
+[![Vanilla JS](https://img.shields.io/badge/JS-vanilla-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](assets/)
+[![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
+[![Seasons](https://img.shields.io/badge/seasons-1950–2026-e10600?style=flat-square)](https://nikokiru.github.io/f1_podigami/)
+
+**[🔮 Live demo →](https://nikokiru.github.io/f1_podigami/)**
+
+</div>
+
+---
+
+## ✨ Features
+
+- 🔮 **Podigami predictor** — ranks the never-before podium trios most likely to debut next, with a scorigami-style *"% chance the next race is brand-new"*.
+- 🧮 **Backtested model** — the algorithm was *chosen by data*, not guesswork (see [the model](#-how-the-predictor-works)).
+- 🗓️ **Season timeline** — drag a year slider to see every trio that debuted on a podium in each season since 1950.
+- 🔗 **Cited sources** — every race links to its Wikipedia race report.
+- 📊 **Four more views** — combinations, soulmates heatmap, career charts, championship-alignment analysis.
+- 📱 **Mobile-first** — fully responsive, dark theme, locked in by CSS regression tests.
+- ⚙️ **Zero-ops deploy** — rebuilds from committed JSON in CI and ships to GitHub Pages on every push.
+
+---
+
+## 🏎️ Pages
+
+| | Page | What it shows |
+|---|---|---|
+| 🔮 | **`index.html`** | The **Podigami predictor** — most likely next brand-new podium trio + the season debut timeline |
+| 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 (order-independent) |
+| 💞 | `soulmates.html` | A symmetric heatmap of the 40 most decorated drivers — who shared the most podiums, clustered by era |
+| 📈 | `charts.html` | Career podium trajectories, a top-25 dot plot, and alignment charts — hover any point for race detail |
+| 🏆 | `seasons.html` | Per season, how closely did each race's finishing order match the year's final WDC standings? |
+
+---
+
+## 🔮 How the predictor works
+
+A *podigami* = a 3-driver podium **set** that has **never** finished a podium together before.
+
+For each driver on the current grid:
 
 ```
+weight(d) = α  +  Σ over past podiums of 0.5 ^ (races_ago / H)  +  boost · (podiums this season)
+            └ floor ┘   └──────── recency decay (half-life H) ────────┘   └── current-season nudge ──┘
+```
+
+The score of a trio is the product of its three weights, normalised over **every** trio on the grid.
+`P(next race is new)` is the share of that mass sitting on trios that have never happened.
+
+> **Why this formula?** It was picked by backtesting candidate models over 1950–2026 (333 race hold-outs):
+> - 📉 Cumulative **career** counts barely beat random (top-1 ≈ 2%) — longevity ≠ current form.
+> - 📈 **Recency** (exponential decay, half-life ≈ 8 races) jumped to **top-1 ≈ 13%, top-5 ≈ 41%**.
+> - ➕ A *mild* current-season boost helped; blending career rate back in **hurt**, so it was dropped.
+>
+> Tunable constants live in [`src/compute/compute_podigami.py`](src/compute/compute_podigami.py).
+
+---
+
+## 🧱 Architecture
+
+```text
+                          ┌─ count_combos ──────────────► build_combos_html ──► dist/combos.html
+                          ├─ compute_career_podiums ─────► build_charts_page ──► dist/charts.html
+fetch_podiums ────────────┼─ compute_soulmates ─────────► build_soulmates_html ► dist/soulmates.html
+                          └─ (podiums + combos) ─┐
+fetch_current_drivers ───────────────────────────┴─ compute_podigami ─► build_podigami_html ─► dist/index.html
+
+fetch_standings ─┐
+                 ├─ compute_alignments ─────────────────► build_alignments_html ► dist/seasons.html
+fetch_top10 ─────┘
+```
+
+```text
 src/
-  fetch/      API fetchers          -> data/*.json
-  compute/    aggregation/analysis  -> data/*.json
-  build/      page renderers        -> dist/*.html
-  build_site.py   builds dist/ (renders pages + copies assets)
-  update.py       refresh data, then build the site
+  fetch/      API fetchers          → data/*.json
+  compute/    aggregation / model   → data/*.json
+  build/      page renderers        → dist/*.html
+  build_site.py   render all pages + copy assets → dist/
+  update.py       refresh data, then build
 assets/       source CSS + JS (copied into dist/ at build time)
 data/         committed JSON datasets the site builds from
 dist/         generated, deployable site (git-ignored)
-tests/        pytest suite (run in CI)
+tests/        pytest suite (88 tests, run in CI)
 ```
 
 ---
 
-## Pages
-
-| File | What it shows |
-|---|---|
-| `index.html` | Every unique three-driver combination that has shared an F1 podium since 1950 — order doesn't matter, only the set |
-| `soulmates.html` | A symmetric heatmap of the 40 most decorated drivers; how many podiums did each pair share? Sorted by era so partnerships cluster on the diagonal |
-| `charts.html` | Career podium trajectories, a top-25 dot plot, and alignment charts — hover any point for race-level detail |
-| `seasons.html` | For each completed season (1950–2025), how far did each race's finishing order match the year's final WDC standings? Top 3, top 5, top 10… |
-
----
-
-## Data source
-
-All race data is fetched from the [Jolpica F1 API](https://api.jolpi.ca) (an Ergast-compatible endpoint). No API key required.
-
----
-
-## Setup
+## 🚀 Quick start
 
 ```bash
-# 1. Create and activate a virtual environment
+# 1 · create + activate a virtual environment
 python -m venv .venv
+.venv\Scripts\activate         # Windows
+source .venv/bin/activate      # macOS / Linux
 
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
-
-# 2. Install dependencies
+# 2 · install dependencies
 pip install -r requirements.txt
-```
 
----
-
-## Usage
-
-### After each race (fast)
-
-Fetches new podium data incrementally (only the current season) and rebuilds the three podium-driven pages.
-
-```bash
-python src/update.py
-```
-
-The built site lands in `dist/` — open `dist/index.html` in your browser.
-
-### Rebuild the site without fetching (offline)
-
-Re-render all pages from the committed data and refresh `dist/`:
-
-```bash
+# 3 · build the site from the committed data (no network needed)
 python src/build_site.py
-```
-
-### After the final race of a season (full rebuild)
-
-Also re-fetches top-10 results and driver standings for all seasons, recomputes alignment data, and rebuilds `seasons.html`. This is slow — it pages through the full history.
-
-```bash
-python src/update.py --full
-```
-
-### First-ever run / full history rebuild
-
-Wipe and re-fetch everything from 1950:
-
-```bash
-python src/fetch/fetch_podiums.py --full
-python src/update.py --full
+#    → open dist/index.html
 ```
 
 ---
 
-## Tests & CI
+## 🛠️ Usage
+
+| Command | When | What it does |
+|---|---|---|
+| `python src/build_site.py` | Anytime (offline) | Re-render all pages from committed data → `dist/` |
+| `python src/update.py` | After each race | Incrementally fetch new podiums + grid, recompute, rebuild |
+| `python src/update.py --full` | After a season's last race | Also refresh standings, top-10s & alignments |
+| `python src/fetch/fetch_podiums.py --full` | First run / full rebuild | Re-fetch the entire 1950→ history |
+
+---
+
+## 🧪 Tests & CI
 
 ```bash
-pytest
+pytest          # 88 tests
 ```
 
-The suite (in `tests/`) covers data integrity, mobile-CSS regressions, and built-HTML
-validation. It runs on every push and pull request via `.github/workflows/ci.yml`.
-
-## Deployment
-
-`.github/workflows/deploy.yml` builds `dist/` and publishes it to **GitHub Pages** on
-every push to `main`. Enable it once under **Settings → Pages → Build and deployment →
-Source: GitHub Actions**.
+The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
+from combos + grid…), **build determinism & link resolution**, **mobile-CSS regressions**, and the
+**prediction model** (including edge cases). It runs on every push and PR via
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
-## Pipeline
+## ☁️ Deployment
 
-```
-                         ┌─ count_combos ────────────── build_html ───────────► dist/index.html
-fetch_podiums ───────────┼─ compute_career_podiums ───── build_charts_page ───► dist/charts.html
-                         └─ compute_soulmates ────────── build_soulmates_html ► dist/soulmates.html
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds `dist/` and publishes it to
+**GitHub Pages** on every push to `main`.
 
-fetch_standings ─┐
-                 ├─ compute_alignments ── build_alignments_html ──────────────► dist/seasons.html
-fetch_top10 ─────┘
-
-└─── src/update.py (default) runs fetch+compute (top block), then build_site ───────────────┘
-└─── src/update.py --full    also runs the seasonal block ──────────────────────────────────┘
-```
+> **One-time setup:** *Settings → Pages → Build and deployment → Source: **GitHub Actions***.
 
 ---
 
-## File map
+## 🗂️ File map
 
 | Script | Role |
 |---|---|
 | `src/fetch/fetch_podiums.py` | Fetch P1/P2/P3 for every race → `data/podiums.json` |
+| `src/fetch/fetch_current_drivers.py` | Fetch the current racing grid → `data/current_drivers.json` |
 | `src/fetch/fetch_standings.py` | Fetch final WDC standings per season → `data/standings.json` |
 | `src/fetch/fetch_top10.py` | Fetch top-10 finishers for every race → `data/top10.json` |
 | `src/compute/count_combos.py` | Aggregate podiums into unique trios → `data/combos.json` |
-| `src/compute/compute_career_podiums.py` | Cumulative podium trajectories per driver → `data/career_podiums.json` |
-| `src/compute/compute_soulmates.py` | Shared-podium matrix for top-40 drivers → `data/soulmates.json` |
+| `src/compute/compute_podigami.py` | 🔮 Predict the next brand-new trio → `data/podigami.json` |
+| `src/compute/compute_career_podiums.py` | Cumulative podium trajectories → `data/career_podiums.json` |
+| `src/compute/compute_soulmates.py` | Shared-podium matrix for the top 40 → `data/soulmates.json` |
 | `src/compute/compute_alignments.py` | Race-vs-championship order matching → `data/alignments.json` |
-| `src/build/build_html.py` | Render `dist/index.html` |
+| `src/build/build_podigami_html.py` | Render `dist/index.html` (the predictor) |
+| `src/build/build_combos_html.py` | Render `dist/combos.html` |
 | `src/build/build_soulmates_html.py` | Render `dist/soulmates.html` |
-| `src/build/build_charts_page.py` | Render `dist/charts.html` |
+| `src/build/build_charts_page.py` · `build_charts.py` | Render `dist/charts.html` (+ ApexCharts helpers) |
 | `src/build/build_alignments_html.py` | Render `dist/seasons.html` |
-| `src/build/build_charts.py` | Shared ApexCharts rendering helpers |
 | `src/build_site.py` | Build `dist/` (render all pages + copy assets) |
 | `src/update.py` | Refresh data, then build the site |
+
+---
+
+## 📡 Data source
+
+All race data comes from the **[Jolpica F1 API](https://api.jolpi.ca)** — an Ergast-compatible
+endpoint, no API key required. Race reports link to **Wikipedia**, the same source the API cites.
+
+<div align="center">
+<sub>Includes the Indy 500 (1950–1960) · excludes Sprint races · predictions are for fun, not betting 🏎️</sub>
+</div>
