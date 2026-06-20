@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
+from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
 
 OVERDUE_PATH = ROOT / "data" / "overdue.json"
 OUT_PATH = ROOT / "dist" / "overdue.html"
@@ -79,27 +79,9 @@ def main() -> int:
         data["currentGrid"],
     )
 
-    page = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b0d12">
-<script>(function(){{try{{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);}}catch(e){{}}}})();</script>
-<title>F1 Overdue Podiums - Most Likely Trio to Never Have Happened</title>
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="podigami.css">
-</head>
+    page = f"""{head("F1 Overdue Podiums - Most Likely Trio to Never Have Happened", "podigami.css")}
 <body>
-<nav class="nav">
-    <div class="container nav-inner">
-        <a href="index.html">Podigami</a>
-        <a href="combos.html">Combinations</a>
-        <a href="overdue.html" class="active">Overdue</a>
-        <a href="soulmates.html">Soulmates &rarr;</a>
-        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle light/dark theme"></button>
-    </div>
-</nav>
+{nav("overdue.html")}
 <header>
     <div class="container">
         <h1><span class="accent">F1</span>Overdue Podiums</h1>

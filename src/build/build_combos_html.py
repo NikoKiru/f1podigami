@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
+from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
 
 COMBOS_PATH = ROOT / "data" / "combos.json"
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
@@ -107,27 +107,9 @@ def main() -> int:
 
     rows_html = "\n".join(render_combo(i, c) for i, c in enumerate(combos, 1))
 
-    page = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b0d12">
-<script>(function(){{try{{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);}}catch(e){{}}}})();</script>
-<title>F1 Podium Combinations - {season_min}-{season_max}</title>
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="index.css">
-</head>
+    page = f"""{head(f"F1 Podium Combinations - {season_min}-{season_max}", "index.css")}
 <body>
-<nav class="nav">
-    <div class="container nav-inner">
-        <a href="index.html">Podigami</a>
-        <a href="combos.html" class="active">Combinations</a>
-        <a href="overdue.html">Overdue</a>
-        <a href="soulmates.html">Soulmates &rarr;</a>
-        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle light/dark theme"></button>
-    </div>
-</nav>
+{nav("combos.html")}
 <header>
     <div class="container">
         <h1><span class="accent">F1</span>Podium Combinations</h1>
