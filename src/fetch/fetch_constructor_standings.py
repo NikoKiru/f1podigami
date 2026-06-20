@@ -42,8 +42,11 @@ def get(url: str, params: dict | None = None) -> dict:
         if resp.status_code == 200:
             return resp.json()
         if resp.status_code in (429, 500, 502, 503, 504):
-            wait = 2.0 ** attempt
-            print(f"  [{resp.status_code}] backoff {wait:.1f}s ({attempt + 1}/{MAX_BACKOFF_RETRIES})", file=sys.stderr)
+            wait = 2.0**attempt
+            print(
+                f"  [{resp.status_code}] backoff {wait:.1f}s ({attempt + 1}/{MAX_BACKOFF_RETRIES})",
+                file=sys.stderr,
+            )
             time.sleep(wait)
             continue
         resp.raise_for_status()
@@ -82,9 +85,15 @@ def main() -> int:
     season, rounds = season_and_rounds()
 
     if len(rounds) < MIN_ROUNDS:
-        print(f"Only {len(rounds)} round(s) completed in {season}; too early for constructor standings.")
-        out = {"season": str(season), "round": str(rounds[-1]) if rounds else "0",
-               "constructors": [], "driverConstructor": {}}
+        print(
+            f"Only {len(rounds)} round(s) completed in {season}; too early for constructor standings."
+        )
+        out = {
+            "season": str(season),
+            "round": str(rounds[-1]) if rounds else "0",
+            "constructors": [],
+            "driverConstructor": {},
+        }
         OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
         print(f"Wrote empty {OUT_PATH}")
         return 0
@@ -97,13 +106,15 @@ def main() -> int:
     constructors = []
     for s in standings:
         c = s["Constructor"]
-        constructors.append({
-            "constructorId": c["constructorId"],
-            "name": c.get("name", c["constructorId"]),
-            "points": float(s["points"]),
-            "position": int(s["position"]),
-            "wins": int(s.get("wins", 0)),
-        })
+        constructors.append(
+            {
+                "constructorId": c["constructorId"],
+                "name": c.get("name", c["constructorId"]),
+                "points": float(s["points"]),
+                "position": int(s["position"]),
+                "wins": int(s.get("wins", 0)),
+            }
+        )
 
     out = {
         "season": str(season),
@@ -113,7 +124,9 @@ def main() -> int:
     }
     OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Wrote {OUT_PATH}")
-    print(f"  season {season} R{rounds[-1]}: {len(constructors)} constructors, {len(driver_map)} driver mappings")
+    print(
+        f"  season {season} R{rounds[-1]}: {len(constructors)} constructors, {len(driver_map)} driver mappings"
+    )
     for c in constructors[:5]:
         print(f"    P{c['position']} {c['name']}: {c['points']} pts, {c['wins']} wins")
     return 0

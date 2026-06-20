@@ -32,8 +32,8 @@ GRID_PATH = DATA_DIR / "current_drivers.json"
 RACES_PATH = DATA_DIR / "driver_races.json"
 OUT_PATH = DATA_DIR / "overdue.json"
 
-POOL_N = 60   # all-time pool: top drivers by career podiums
-TOP_N = 15    # how many trios to keep per list
+POOL_N = 60  # all-time pool: top drivers by career podiums
+TOP_N = 15  # how many trios to keep per list
 
 
 def _rank(pool: list[str], existing: set, info: dict, top_n: int) -> list[dict]:
@@ -71,8 +71,14 @@ def _rank(pool: list[str], existing: set, info: dict, top_n: int) -> list[dict]:
     return out[:top_n]
 
 
-def compute(podiums: list[dict], combos: list[dict], grid: list[dict],
-            driver_races: dict, pool_n: int = POOL_N, top_n: int = TOP_N) -> dict:
+def compute(
+    podiums: list[dict],
+    combos: list[dict],
+    grid: list[dict],
+    driver_races: dict,
+    pool_n: int = POOL_N,
+    top_n: int = TOP_N,
+) -> dict:
     """Pure core: returns the overdue.json payload. No file IO."""
     podium_count: Counter[str] = Counter()
     name_by_id: dict[str, str] = {}
@@ -128,9 +134,11 @@ def main() -> int:
     for key in ("allTime", "currentGrid"):
         print(f"\nTop 5 {key} overdue trios:")
         for e in payload[key][:5]:
-            rates = " / ".join(f"{p['rate']*100:.0f}%" for p in e["perDriver"])
-            print(f"  score {e['score']:6.2f}  raced {e['racesTogether']:>3}x  "
-                  f"{' / '.join(e['names'])}  [{rates}]")
+            rates = " / ".join(f"{p['rate'] * 100:.0f}%" for p in e["perDriver"])
+            print(
+                f"  score {e['score']:6.2f}  raced {e['racesTogether']:>3}x  "
+                f"{' / '.join(e['names'])}  [{rates}]"
+            )
     return 0
 
 

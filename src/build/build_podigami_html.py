@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
+
 PODIGAMI_PATH = ROOT / "data" / "podigami.json"
 OUT_PATH = ROOT / "dist" / "index.html"
 
@@ -36,7 +37,7 @@ def render_hero(top: dict, chance: float) -> str:
         f'<div class="hero-driver">'
         f'<div class="hd-name">{esc(p["name"])}</div>'
         f'<div class="hd-stat">{p["seasonPodiums"]} podium{"s" if p["seasonPodiums"] != 1 else ""} this season</div>'
-        f'</div>'
+        f"</div>"
         for p in top["perDriver"]
     )
     return (
@@ -44,13 +45,13 @@ def render_hero(top: dict, chance: float) -> str:
         f'  <div class="hero-head">'
         f'    <div class="hero-chance"><span class="hc-num">{chance:.0f}%</span>'
         f'      <span class="hc-label">chance the next race<br>delivers a brand-new trio</span></div>'
-        f'  </div>'
+        f"  </div>"
         f'  <div class="hero-pick">'
         f'    <div class="hp-label">Most likely next <span class="accent">podigami</span></div>'
         f'    <div class="hero-drivers">{pd}</div>'
         f'    <div class="hp-prob">{top["prob"]:.1f}% of all possible podiums &mdash; the top never-before trio</div>'
-        f'  </div>'
-        f'</section>'
+        f"  </div>"
+        f"</section>"
     )
 
 
@@ -67,16 +68,16 @@ def render_candidates(cands: list[dict]) -> str:
             f'<div class="cand-body">'
             f'  <div class="cand-names">{render_trio_names(c["names"], "trio-sm")}</div>'
             f'  <div class="cand-bar-wrap"><div class="cand-bar" style="width:{pct}%"></div></div>'
-            f'</div>'
+            f"</div>"
             f'<span class="cand-prob">{c["prob"]:.2f}%</span>'
-            f'</li>'
+            f"</li>"
         )
     return (
         f'<section class="panel">'
-        f'  <h2>Most likely next combinations</h2>'
+        f"  <h2>Most likely next combinations</h2>"
         f'  <p class="panel-sub">Trios that have never shared a podium, ranked by the model\'s probability they do it next.</p>'
         f'  <ol class="cand-list">{"".join(rows)}</ol>'
-        f'</section>'
+        f"</section>"
     )
 
 
@@ -93,26 +94,26 @@ def render_form(form: list[dict], using_constructors: bool) -> str:
                 f'  <div class="fc-constructor">'
                 f'<span class="fc-team">{esc(d["constructor"])}</span>'
                 f'<span class="fc-strength" title="Constructor strength">{strength_pct}%</span>'
-                f'</div>'
+                f"</div>"
             )
         chips.append(
             f'<div class="form-chip">'
             f'  <div class="fc-top"><span class="fc-name">{esc(d["name"])}</span>'
             f'    <span class="fc-w">{d["weight"]:.1f}</span></div>'
-            f'{constructor_line}'
+            f"{constructor_line}"
             f'  <div class="fc-bar-wrap"><div class="fc-bar" style="width:{pct}%"></div></div>'
-            f'</div>'
+            f"</div>"
         )
-    sub = "Each driver\'s podium weight &mdash; recent podiums decay over ~8 races, with a boost for this season"
+    sub = "Each driver's podium weight &mdash; recent podiums decay over ~8 races, with a boost for this season"
     if using_constructors:
         sub += " and constructor strength"
     sub += "."
     return (
         f'<section class="panel">'
-        f'  <h2>Current form</h2>'
+        f"  <h2>Current form</h2>"
         f'  <p class="panel-sub">{sub}</p>'
         f'  <div class="form-grid">{"".join(chips)}</div>'
-        f'</section>'
+        f"</section>"
     )
 
 
@@ -131,16 +132,16 @@ def render_timeline(data: dict) -> str:
         )
     return (
         f'<section class="panel timeline">'
-        f'  <h2>New podiums through the years</h2>'
+        f"  <h2>New podiums through the years</h2>"
         f'  <p class="panel-sub">Every trio that debuted on a podium that season. Drag the slider or click a bar.</p>'
         f'  <div class="tl-spark">{"".join(bars)}</div>'
         f'  <div class="tl-controls">'
         f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1">'
         f'    <div class="tl-readout"><span id="tl-year">{current}</span>'
         f'      <span class="tl-count" id="tl-count"></span></div>'
-        f'  </div>'
+        f"  </div>"
         f'  <ul class="tl-list" id="tl-list"></ul>'
-        f'</section>'
+        f"</section>"
     )
 
 
@@ -161,8 +162,11 @@ def main() -> int:
 
     # Embedded data for the slider (only what the client needs).
     embed = json.dumps(
-        {"bySeason": data["bySeason"], "seasonCounts": data["seasonCounts"],
-         "currentSeason": season},
+        {
+            "bySeason": data["bySeason"],
+            "seasonCounts": data["seasonCounts"],
+            "currentSeason": season,
+        },
         ensure_ascii=False,
     )
 

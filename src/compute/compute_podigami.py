@@ -40,10 +40,10 @@ CONSTRUCTOR_PATH = DATA_DIR / "constructor_standings.json"
 OUT_PATH = DATA_DIR / "podigami.json"
 
 ALPHA = 0.1
-HALF_LIFE = 8.0          # races; podium influence halves every 8 races
-SEASON_BOOST = 0.5       # extra weight per podium scored this season
+HALF_LIFE = 8.0  # races; podium influence halves every 8 races
+SEASON_BOOST = 0.5  # extra weight per podium scored this season
 CONSTRUCTOR_FACTOR = 0.5  # max multiplier boost for drivers on the top constructor
-RECENT_WINDOW = 10       # races, for the "recent form" display stat
+RECENT_WINDOW = 10  # races, for the "recent form" display stat
 TOP_CANDIDATES = 12
 
 
@@ -84,9 +84,9 @@ def _build_constructor_strength(
     return strength, driver_cid
 
 
-def compute(podiums: list[dict], combos: list[dict],
-            grid: list[dict],
-            constructor_data: dict | None = None) -> dict:
+def compute(
+    podiums: list[dict], combos: list[dict], grid: list[dict], constructor_data: dict | None = None
+) -> dict:
     """Pure core: returns the podigami.json payload. No file IO."""
     races = sorted(podiums, key=lambda r: (int(r["season"]), int(r["round"])))
     n = len(races)
@@ -118,8 +118,7 @@ def compute(podiums: list[dict], combos: list[dict],
     recent_pod: dict[str, int] = {}
     constructor_name: dict[str, str] = {}
     if using_constructors:
-        cid_to_name = {c["constructorId"]: c["name"]
-                       for c in constructor_data["constructors"]}
+        cid_to_name = {c["constructorId"]: c["name"] for c in constructor_data["constructors"]}
     for d in grid_ids:
         idxs = pod_idx.get(d, [])
         recency = sum(0.5 ** ((n - j) / HALF_LIFE) for j in idxs)
@@ -170,10 +169,7 @@ def compute(podiums: list[dict], combos: list[dict],
     candidates.sort(key=lambda x: -x["prob"])
 
     driver_form = sorted(
-        (
-            {**{"driverId": d}, **_driver_entry(d)}
-            for d in grid_ids
-        ),
+        ({**{"driverId": d}, **_driver_entry(d)} for d in grid_ids),
         key=lambda x: -x["weight"],
     )
 
@@ -202,9 +198,13 @@ def compute(podiums: list[dict], combos: list[dict],
             "round": last["round"],
             "raceName": last["raceName"],
         },
-        "params": {"alpha": ALPHA, "halfLife": HALF_LIFE, "seasonBoost": SEASON_BOOST,
-                   "constructorFactor": CONSTRUCTOR_FACTOR,
-                   "usingConstructors": using_constructors},
+        "params": {
+            "alpha": ALPHA,
+            "halfLife": HALF_LIFE,
+            "seasonBoost": SEASON_BOOST,
+            "constructorFactor": CONSTRUCTOR_FACTOR,
+            "usingConstructors": using_constructors,
+        },
         "gridSize": len(grid_ids),
         "chanceNextRaceNew": round(100 * chance_new, 1),
         "candidates": candidates[:TOP_CANDIDATES],

@@ -45,8 +45,11 @@ def get(url: str, params: dict | None = None) -> dict:
         if resp.status_code == 200:
             return resp.json()
         if resp.status_code in (429, 500, 502, 503, 504):
-            wait = 2.0 ** attempt
-            print(f"  [{resp.status_code}] backoff {wait:.1f}s ({attempt + 1}/{MAX_BACKOFF_RETRIES})", file=sys.stderr)
+            wait = 2.0**attempt
+            print(
+                f"  [{resp.status_code}] backoff {wait:.1f}s ({attempt + 1}/{MAX_BACKOFF_RETRIES})",
+                file=sys.stderr,
+            )
             time.sleep(wait)
             continue
         resp.raise_for_status()
@@ -60,8 +63,9 @@ def fetch_driver(driver_id: str) -> dict:
     offset = 0
     total = None
     while True:
-        data = get(f"{API_ROOT}/drivers/{driver_id}/results.json",
-                   {"limit": PAGE, "offset": offset})
+        data = get(
+            f"{API_ROOT}/drivers/{driver_id}/results.json", {"limit": PAGE, "offset": offset}
+        )
         mr = data["MRData"]
         total = int(mr["total"])
         for race in mr["RaceTable"]["Races"]:
@@ -103,7 +107,7 @@ def main() -> int:
     fetched = cached = 0
     for driver_id in targets:
         if driver_id in existing and driver_id not in grid_ids:
-            drivers[driver_id] = existing[driver_id]   # historical -> immutable
+            drivers[driver_id] = existing[driver_id]  # historical -> immutable
             cached += 1
             continue
         rec = fetch_driver(driver_id)

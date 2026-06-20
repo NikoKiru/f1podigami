@@ -69,20 +69,22 @@ def main() -> int:
                 a, b = sorted_names[i], sorted_names[j]
                 key = tuple(sorted([a, b]))
                 m = pair_meta[key]
-                top_pairs.append({
-                    "a": a, "b": b,
-                    "count": matrix[i][j],
-                    "firstYear": m["first"],
-                    "lastYear": m["last"],
-                })
+                top_pairs.append(
+                    {
+                        "a": a,
+                        "b": b,
+                        "count": matrix[i][j],
+                        "firstYear": m["first"],
+                        "lastYear": m["last"],
+                    }
+                )
     top_pairs.sort(key=lambda p: (-p["count"], p["a"], p["b"]))
 
     max_pair = top_pairs[0]["count"] if top_pairs else 0
 
     output = {
         "drivers": [
-            {"name": nm, "total": totals[nm], "medianYear": median_year(nm)}
-            for nm in sorted_names
+            {"name": nm, "total": totals[nm], "medianYear": median_year(nm)} for nm in sorted_names
         ],
         "matrix": matrix,
         "max": max_pair,
@@ -93,7 +95,9 @@ def main() -> int:
     print(f"Wrote {OUT_PATH}")
     if top_pairs:
         p = top_pairs[0]
-        print(f"  {n} drivers, top pair: {p['a']} & {p['b']} = {p['count']} ({p['firstYear']}-{p['lastYear']})")
+        print(
+            f"  {n} drivers, top pair: {p['a']} & {p['b']} = {p['count']} ({p['firstYear']}-{p['lastYear']})"
+        )
     return 0
 
 

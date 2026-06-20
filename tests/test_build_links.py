@@ -19,6 +19,7 @@ PAGES = ["index.html", "combos.html", "overdue.html", "soulmates.html"]
 
 # --- orchestration wiring ------------------------------------------------------
 
+
 def test_page_builders_exist():
     for script in build_site.PAGE_BUILDERS:
         assert (REPO / "src" / "build" / script).is_file(), f"missing builder {script}"
@@ -30,6 +31,7 @@ def test_update_steps_point_to_real_scripts():
 
 
 # --- internal links + assets resolve ------------------------------------------
+
 
 @pytest.mark.parametrize("page", PAGES)
 def test_internal_html_links_resolve(dist, page):
@@ -57,6 +59,7 @@ def test_every_page_has_full_nav(dist):
 
 # --- external race-report sources ---------------------------------------------
 
+
 def test_race_report_links_are_wikipedia(dist):
     html = (dist / "combos.html").read_text(encoding="utf-8")
     links = re.findall(r'<a class="race-pill" href="([^"]+)"', html)
@@ -67,6 +70,7 @@ def test_race_report_links_are_wikipedia(dist):
 
 
 # --- determinism ---------------------------------------------------------------
+
 
 def _hash_dist(dist: Path) -> dict:
     out = {}
@@ -80,7 +84,8 @@ def test_build_is_deterministic(dist):
     before = _hash_dist(dist)
     result = subprocess.run(
         [sys.executable, str(REPO / "src" / "build_site.py")],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     assert result.returncode == 0, result.stderr
     after = _hash_dist(dist)

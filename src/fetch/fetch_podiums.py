@@ -36,8 +36,11 @@ def get(url: str, params: dict) -> dict:
         if resp.status_code == 200:
             return resp.json()
         if resp.status_code in (429, 500, 502, 503, 504):
-            wait = 2.0 ** attempt
-            print(f"  [{resp.status_code}] backoff {wait:.1f}s (attempt {attempt + 1}/{MAX_BACKOFF_RETRIES})", file=sys.stderr)
+            wait = 2.0**attempt
+            print(
+                f"  [{resp.status_code}] backoff {wait:.1f}s (attempt {attempt + 1}/{MAX_BACKOFF_RETRIES})",
+                file=sys.stderr,
+            )
             time.sleep(wait)
             continue
         resp.raise_for_status()
@@ -67,7 +70,9 @@ def fetch_all_for_position(position: int, season: int | None = None) -> list[dic
         page = mr["RaceTable"]["Races"]
         races.extend(page)
         offset += PAGE_SIZE
-        print(f"  position={position} offset={offset}/{total} (+{len(page)} races, total {len(races)})")
+        print(
+            f"  position={position} offset={offset}/{total} (+{len(page)} races, total {len(races)})"
+        )
         if offset >= total or not page:
             break
         time.sleep(SLEEP_BETWEEN)

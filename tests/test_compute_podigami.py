@@ -1,12 +1,9 @@
 """Unit tests for the podigami prediction model (pure compute, no IO)."""
 
-import json
-from itertools import combinations
+import sys
 from pathlib import Path
 
 import pytest
-
-import sys
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(SRC))
@@ -15,9 +12,17 @@ from compute import compute_podigami as cp  # noqa: E402
 
 
 def race(season, rnd, p1, p2, p3, name="Test GP"):
-    mk = lambda d: {"driverId": d, "name": d.title()}
-    return {"season": str(season), "round": str(rnd), "raceName": name,
-            "p1": mk(p1), "p2": mk(p2), "p3": mk(p3)}
+    def mk(d):
+        return {"driverId": d, "name": d.title()}
+
+    return {
+        "season": str(season),
+        "round": str(rnd),
+        "raceName": name,
+        "p1": mk(p1),
+        "p2": mk(p2),
+        "p3": mk(p3),
+    }
 
 
 def combos_from(podiums):
@@ -30,8 +35,15 @@ def combos_from(podiums):
     out = []
     for ids, e in agg.items():
         chrono = sorted(e["races"], key=lambda x: (int(x["season"]), int(x["round"])))
-        out.append({"drivers": [d.title() for d in ids], "driverIds": e["driverIds"],
-                    "count": len(chrono), "firstRace": chrono[0], "lastRace": chrono[-1]})
+        out.append(
+            {
+                "drivers": [d.title() for d in ids],
+                "driverIds": e["driverIds"],
+                "count": len(chrono),
+                "firstRace": chrono[0],
+                "lastRace": chrono[-1],
+            }
+        )
     return out
 
 
@@ -106,6 +118,7 @@ def test_by_season_groups_debut_trios(scenario):
 
 # --- edge cases ---------------------------------------------------------------
 
+
 def test_grid_smaller_than_three_yields_no_candidates(scenario):
     podiums, combos, _ = scenario
     grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob")]
@@ -135,13 +148,13 @@ def test_single_seen_trio_is_impossible():
 
 # --- constructor strength -----------------------------------------------------
 
+
 def _con_data(season, constructors, driver_map):
     return {
         "season": str(season),
         "round": "5",
         "constructors": [
-            {"constructorId": cid, "name": cid.title(), "points": pts,
-             "position": i + 1, "wins": 0}
+            {"constructorId": cid, "name": cid.title(), "points": pts, "position": i + 1, "wins": 0}
             for i, (cid, pts) in enumerate(constructors)
         ],
         "driverConstructor": driver_map,
@@ -151,10 +164,11 @@ def _con_data(season, constructors, driver_map):
 @pytest.fixture
 def scenario_with_constructors(scenario):
     podiums, combos, grid = scenario
-    con = _con_data(2025, [("teamA", 200), ("teamB", 100), ("teamC", 0)],
-                    {"alf": "teamA", "bob": "teamA",
-                     "cas": "teamB", "dan": "teamB",
-                     "eli": "teamC"})
+    con = _con_data(
+        2025,
+        [("teamA", 200), ("teamB", 100), ("teamC", 0)],
+        {"alf": "teamA", "bob": "teamA", "cas": "teamB", "dan": "teamB", "eli": "teamC"},
+    )
     return podiums, combos, grid, con
 
 
@@ -204,8 +218,7 @@ def test_wrong_season_constructor_data_ignored(scenario):
 
 def test_empty_constructors_list_ignored(scenario):
     podiums, combos, grid = scenario
-    con = {"season": "2025", "round": "5", "constructors": [],
-           "driverConstructor": {}}
+    con = {"season": "2025", "round": "5", "constructors": [], "driverConstructor": {}}
     res = cp.compute(podiums, combos, grid, constructor_data=con)
     assert res["params"]["usingConstructors"] is False
 
@@ -219,8 +232,9 @@ def test_constructor_multiplier_scales_uniformly():
         race(2025, 3, "alf", "cas", "bob"),
     ]
     grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob", "cas")]
-    con = _con_data(2025, [("teamA", 200), ("teamB", 50)],
-                    {"alf": "teamA", "bob": "teamA", "cas": "teamB"})
+    con = _con_data(
+        2025, [("teamA", 200), ("teamB", 50)], {"alf": "teamA", "bob": "teamA", "cas": "teamB"}
+    )
     res_no = cp.compute(podiums, combos_from(podiums), grid, constructor_data=None)
     res_con = cp.compute(podiums, combos_from(podiums), grid, constructor_data=con)
     form_no = {d["driverId"]: d["weight"] for d in res_no["driverForm"]}
