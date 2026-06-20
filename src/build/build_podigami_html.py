@@ -78,23 +78,37 @@ def render_candidates(cands: list[dict]) -> str:
     )
 
 
-def render_form(form: list[dict]) -> str:
+def render_form(form: list[dict], using_constructors: bool) -> str:
     show = [d for d in form if d["weight"] > 0][:14]
     mx = max((d["weight"] for d in show), default=1)
     chips = []
     for d in show:
         pct = round(100 * d["weight"] / mx)
+        constructor_line = ""
+        if using_constructors and d.get("constructor"):
+            strength_pct = round(100 * d.get("constructorStrength", 0))
+            constructor_line = (
+                f'  <div class="fc-constructor">'
+                f'<span class="fc-team">{esc(d["constructor"])}</span>'
+                f'<span class="fc-strength" title="Constructor strength">{strength_pct}%</span>'
+                f'</div>'
+            )
         chips.append(
             f'<div class="form-chip">'
             f'  <div class="fc-top"><span class="fc-name">{esc(d["name"])}</span>'
             f'    <span class="fc-w">{d["weight"]:.1f}</span></div>'
+            f'{constructor_line}'
             f'  <div class="fc-bar-wrap"><div class="fc-bar" style="width:{pct}%"></div></div>'
             f'</div>'
         )
+    sub = "Each driver\'s podium weight &mdash; recent podiums decay over ~8 races, with a boost for this season"
+    if using_constructors:
+        sub += " and constructor strength"
+    sub += "."
     return (
         f'<section class="panel">'
         f'  <h2>Current form</h2>'
-        f'  <p class="panel-sub">Each driver\'s podium weight &mdash; recent podiums decay over ~8 races, with a boost for this season.</p>'
+        f'  <p class="panel-sub">{sub}</p>'
         f'  <div class="form-grid">{"".join(chips)}</div>'
         f'</section>'
     )
@@ -136,9 +150,11 @@ def main() -> int:
     cands = data["candidates"]
     lo, hi = data["seasonRange"]
 
+    using_constructors = data.get("params", {}).get("usingConstructors", False)
+
     hero = render_hero(cands[0], chance) if cands else ""
     candidates = render_candidates(cands)
-    form = render_form(data["driverForm"])
+    form = render_form(data["driverForm"], using_constructors)
     timeline = render_timeline(data)
 
     # Embedded data for the slider (only what the client needs).

@@ -24,6 +24,7 @@ STEPS = [
     ("Counting combos",           "compute/count_combos.py"),
     ("Computing soulmates",       "compute/compute_soulmates.py"),
     ("Fetching current grid",     "fetch/fetch_current_drivers.py"),
+    ("Fetching constructor standings", "fetch/fetch_constructor_standings.py"),
     ("Computing podigami",        "compute/compute_podigami.py"),
     ("Fetching driver races",     "fetch/fetch_driver_races.py"),
     ("Computing overdue podiums", "compute/compute_overdue.py"),
