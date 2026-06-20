@@ -30,7 +30,7 @@ def test_nav_marks_only_the_active_link():
     for href, _ in NAV_LINKS:
         if href != "combos.html":
             assert f'<a href="{href}">' in out
-    assert out.count("class=\"active\"") == 1
+    assert out.count('class="active"') == 1
 
 
 def test_nav_includes_theme_toggle():
