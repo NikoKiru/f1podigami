@@ -71,6 +71,13 @@
       "points": 6.0,
       "position": 10,
       "wins": 0
+    },
+    {
+      "constructorId": "cadillac",
+      "name": "Cadillac",
+      "points": 4.0,
+      "position": 11,
+      "wins": 0
     }
   ],
   "driverConstructor": {
@@ -81,20 +88,20 @@
     "norris": "mclaren",
     "piastri": "mclaren",
     "max_verstappen": "red_bull",
-    "lawson": "red_bull",
+    "lawson": "rb",
     "gasly": "alpine",
     "colapinto": "alpine",
     "alonso": "aston_martin",
     "stroll": "aston_martin",
     "ocon": "haas",
     "bearman": "haas",
-    "hadjar": "rb",
+    "hadjar": "red_bull",
     "arvid_lindblad": "rb",
     "albon": "williams",
     "sainz": "williams",
     "hulkenberg": "sauber",
     "bortoleto": "sauber",
-    "bottas": "sauber",
-    "perez": "red_bull"
+    "bottas": "cadillac",
+    "perez": "cadillac"
   }
 }

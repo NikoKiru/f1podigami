@@ -65,7 +65,7 @@
         "Lewis Hamilton",
         "Lando Norris"
       ],
-      "prob": 3.151,
+      "prob": 3.15,
       "perDriver": [
         {
           "name": "Andrea Kimi Antonelli",
@@ -569,11 +569,11 @@
     {
       "driverId": "hadjar",
       "name": "Isack Hadjar",
-      "weight": 0.343,
+      "weight": 0.388,
       "seasonPodiums": 0,
       "recentPodiums": 0,
-      "constructor": "Racing Bulls",
-      "constructorStrength": 0.081
+      "constructor": "Red Bull",
+      "constructorStrength": 0.359
     },
     {
       "driverId": "hulkenberg",
@@ -587,11 +587,11 @@
     {
       "driverId": "perez",
       "name": "Sergio Pérez",
-      "weight": 0.205,
+      "weight": 0.175,
       "seasonPodiums": 0,
       "recentPodiums": 0,
-      "constructor": "Red Bull",
-      "constructorStrength": 0.359
+      "constructor": "Cadillac",
+      "constructorStrength": 0.015
     },
     {
       "driverId": "ocon",
@@ -610,15 +610,6 @@
       "recentPodiums": 0,
       "constructor": "Aston Martin",
       "constructorStrength": 0.126
-    },
-    {
-      "driverId": "lawson",
-      "name": "Liam Lawson",
-      "weight": 0.118,
-      "seasonPodiums": 0,
-      "recentPodiums": 0,
-      "constructor": "Red Bull",
-      "constructorStrength": 0.359
     },
     {
       "driverId": "colapinto",
@@ -657,6 +648,15 @@
       "constructorStrength": 0.081
     },
     {
+      "driverId": "lawson",
+      "name": "Liam Lawson",
+      "weight": 0.104,
+      "seasonPodiums": 0,
+      "recentPodiums": 0,
+      "constructor": "Racing Bulls",
+      "constructorStrength": 0.081
+    },
+    {
       "driverId": "albon",
       "name": "Alexander Albon",
       "weight": 0.103,
@@ -671,8 +671,8 @@
       "weight": 0.102,
       "seasonPodiums": 0,
       "recentPodiums": 0,
-      "constructor": "Sauber",
-      "constructorStrength": 0.022
+      "constructor": "Cadillac",
+      "constructorStrength": 0.015
     },
     {
       "driverId": "bortoleto",
