@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
+from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
 
 SOULMATES_PATH = ROOT / "data" / "soulmates.json"
 OUT_PATH = ROOT / "dist" / "soulmates.html"
@@ -201,27 +201,9 @@ def main() -> int:
     facts = _compute_facts(soulmates)
     facts_html = _render_facts(facts)
 
-    page = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b0d12">
-<script>(function(){{try{{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);}}catch(e){{}}}})();</script>
-<title>F1 Soulmates &middot; Podigami</title>
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="soulmates.css">
-</head>
+    page = f"""{head("F1 Soulmates &middot; Podigami", "soulmates.css")}
 <body>
-<nav class="nav">
-    <div class="container nav-inner">
-        <a href="index.html">Podigami</a>
-        <a href="combos.html">Combinations</a>
-        <a href="overdue.html">Overdue</a>
-        <a href="soulmates.html" class="active">Soulmates</a>
-        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle light/dark theme"></button>
-    </div>
-</nav>
+{nav("soulmates.html")}
 <header>
     <div class="container">
         <h1><span class="accent">F1</span>Podium Soulmates</h1>
