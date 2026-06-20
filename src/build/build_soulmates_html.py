@@ -189,6 +189,7 @@ def main() -> int:
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0d12">
+<script>(function(){{try{{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);}}catch(e){{}}}})();</script>
 <title>F1 Soulmates &middot; Podigami</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="soulmates.css">
@@ -200,6 +201,7 @@ def main() -> int:
         <a href="combos.html">Combinations</a>
         <a href="overdue.html">Overdue</a>
         <a href="soulmates.html" class="active">Soulmates</a>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle light/dark theme"></button>
     </div>
 </nav>
 <header>
@@ -236,6 +238,7 @@ def main() -> int:
         &middot; 1950&ndash;2025
     </div>
 </footer>
+<script src="theme.js"></script>
 </body>
 </html>
 """

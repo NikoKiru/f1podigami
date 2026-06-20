@@ -4,15 +4,15 @@ import pytest
 
 # page -> assets it must reference (and which must end up in dist/)
 PAGES = {
-    "index.html": ["podigami.css", "podigami.js"],
-    "combos.html": ["index.css", "index.js"],
-    "overdue.html": ["podigami.css"],
-    "soulmates.html": ["soulmates.css"],
+    "index.html": ["podigami.css", "podigami.js", "theme.js"],
+    "combos.html": ["index.css", "index.js", "theme.js"],
+    "overdue.html": ["podigami.css", "theme.js"],
+    "soulmates.html": ["soulmates.css", "theme.js"],
 }
 
 ALL_ASSETS = [
     "style.css", "index.css", "soulmates.css",
-    "podigami.css", "index.js", "podigami.js",
+    "podigami.css", "index.js", "podigami.js", "theme.js",
 ]
 
 
@@ -58,6 +58,22 @@ def test_index_is_podigami_predictor(dist):
     assert 'class="hero"' in html              # next-podigami hero
     assert 'id="tl-slider"' in html            # year-slider timeline
     assert 'id="podigami-data"' in html        # embedded slider data
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_page_has_theme_toggle_and_no_flash_script(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    # the nav toggle button drives the light/dark switch
+    assert 'id="theme-toggle"' in html, f"{page} is missing the theme toggle"
+    # a blocking inline script applies the stored/OS theme before first paint
+    assert 'setAttribute("data-theme"' in html, f"{page} lacks the no-flash theme script"
+    assert "prefers-color-scheme: light" in html, f"{page} should honour the OS preference"
+
+
+def test_stylesheet_defines_light_theme(dist):
+    css = (dist / "style.css").read_text(encoding="utf-8")
+    assert '[data-theme="light"]' in css, "style.css must define a light theme"
+    assert ".theme-toggle" in css, "style.css must style the theme toggle"
 
 
 def test_overdue_has_two_ranked_lists(dist):

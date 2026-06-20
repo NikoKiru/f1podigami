@@ -247,7 +247,7 @@ tbody tr.combo:hover>td {
 }
 
 tbody tr.combo:nth-of-type(2n)>td {
-    background: rgba(255, 255, 255, 0.012);
+    background: var(--stripe);
 }
 
 tbody tr.combo:nth-of-type(2n):hover>td {
