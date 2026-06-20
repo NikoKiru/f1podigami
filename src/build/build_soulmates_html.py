@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
 SOULMATES_PATH = ROOT / "data" / "soulmates.json"
 OUT_PATH = ROOT / "dist" / "soulmates.html"
 
@@ -232,12 +234,7 @@ def main() -> int:
         </div>
     </div>
 </main>
-<footer>
-    <div class="container">
-        Data from <a href="https://api.jolpi.ca/ergast/f1/" target="_blank" rel="noopener">Jolpica F1 API</a>
-        &middot; 1950&ndash;2025
-    </div>
-</footer>
+{FOOTER}
 <script src="theme.js"></script>
 </body>
 </html>

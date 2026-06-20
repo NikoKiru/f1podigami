@@ -12,6 +12,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
 OVERDUE_PATH = ROOT / "data" / "overdue.json"
 OUT_PATH = ROOT / "dist" / "overdue.html"
 
@@ -110,12 +112,7 @@ def main() -> int:
         <p class="as-of">Score is a ranking heuristic (races together &times; each driver's career podium rate); the concrete numbers are the shared-race count and rates. Up to date through the {esc(as_of["season"])} {esc(as_of["raceName"])} (round {esc(as_of["round"])}).</p>
     </div>
 </main>
-<footer>
-    <div class="container">
-        Data from <a href="https://api.jolpi.ca/ergast/f1/" target="_blank" rel="noopener">Jolpica F1 API</a>
-        &middot; Never-before podium trios, ranked by how overdue they are
-    </div>
-</footer>
+{FOOTER}
 <script src="theme.js"></script>
 </body>
 </html>

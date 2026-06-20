@@ -70,6 +70,28 @@ def test_page_has_theme_toggle_and_no_flash_script(dist, page):
     assert "prefers-color-scheme: light" in html, f"{page} should honour the OS preference"
 
 
+def _footer_block(html: str) -> str:
+    start = html.index("<footer>")
+    end = html.index("</footer>") + len("</footer>")
+    return html[start:end]
+
+
+def test_footer_is_identical_across_pages(dist):
+    footers = {p: _footer_block((dist / p).read_text(encoding="utf-8")) for p in PAGES}
+    unique = set(footers.values())
+    assert len(unique) == 1, f"footers differ across pages: { {p: f[:60] for p, f in footers.items()} }"
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_footer_has_universal_details(dist, page):
+    footer = _footer_block((dist / page).read_text(encoding="utf-8"))
+    assert "Jolpica F1 API" in footer            # data source attribution
+    assert "github.com/NikoKiru/f1_podigami" in footer  # source link
+    assert 'class="footer-nav"' in footer        # cross-page nav
+    for link in ("index.html", "combos.html", "overdue.html", "soulmates.html"):
+        assert link in footer, f"footer should link to {link}"
+
+
 def test_stylesheet_defines_light_theme(dist):
     css = (dist / "style.css").read_text(encoding="utf-8")
     assert '[data-theme="light"]' in css, "style.css must define a light theme"

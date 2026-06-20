@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
 PODIGAMI_PATH = ROOT / "data" / "podigami.json"
 OUT_PATH = ROOT / "dist" / "index.html"
 
@@ -200,12 +202,7 @@ def main() -> int:
         {timeline}
     </div>
 </main>
-<footer>
-    <div class="container">
-        Data from <a href="https://api.jolpi.ca/ergast/f1/" target="_blank" rel="noopener">Jolpica F1 API</a>
-        &middot; Prediction is for fun, not betting &middot; <a href="combos.html">browse all combinations &rarr;</a>
-    </div>
-</footer>
+{FOOTER}
 <script type="application/json" id="podigami-data">{embed}</script>
 <script src="podigami.js"></script>
 <script src="theme.js"></script>
