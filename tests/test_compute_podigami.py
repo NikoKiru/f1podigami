@@ -131,3 +131,102 @@ def test_single_seen_trio_is_impossible():
     res = cp.compute(podiums, combos_from(podiums), grid)
     assert res["chanceNextRaceNew"] == pytest.approx(0.0)
     assert res["candidates"] == []
+
+
+# --- constructor strength -----------------------------------------------------
+
+def _con_data(season, constructors, driver_map):
+    return {
+        "season": str(season),
+        "round": "5",
+        "constructors": [
+            {"constructorId": cid, "name": cid.title(), "points": pts,
+             "position": i + 1, "wins": 0}
+            for i, (cid, pts) in enumerate(constructors)
+        ],
+        "driverConstructor": driver_map,
+    }
+
+
+@pytest.fixture
+def scenario_with_constructors(scenario):
+    podiums, combos, grid = scenario
+    con = _con_data(2025, [("teamA", 200), ("teamB", 100), ("teamC", 0)],
+                    {"alf": "teamA", "bob": "teamA",
+                     "cas": "teamB", "dan": "teamB",
+                     "eli": "teamC"})
+    return podiums, combos, grid, con
+
+
+def test_constructor_boosts_top_team(scenario_with_constructors):
+    podiums, combos, grid, con = scenario_with_constructors
+    res_no = cp.compute(podiums, combos, grid, constructor_data=None)
+    res_con = cp.compute(podiums, combos, grid, constructor_data=con)
+    form_no = {d["driverId"]: d["weight"] for d in res_no["driverForm"]}
+    form_con = {d["driverId"]: d["weight"] for d in res_con["driverForm"]}
+    # alf is on teamA (200 pts, top); with constructors his weight should be higher
+    assert form_con["alf"] > form_no["alf"]
+    # eli is on teamC (0 pts); weight unchanged (multiplier = 1.0)
+    assert form_con["eli"] == pytest.approx(form_no["eli"])
+
+
+def test_constructor_data_surfaces_in_output(scenario_with_constructors):
+    podiums, combos, grid, con = scenario_with_constructors
+    res = cp.compute(podiums, combos, grid, constructor_data=con)
+    assert res["params"]["usingConstructors"] is True
+    form = {d["driverId"]: d for d in res["driverForm"]}
+    assert form["alf"]["constructor"] == "Teama"
+    assert form["alf"]["constructorStrength"] == pytest.approx(1.0)
+    assert form["eli"]["constructorStrength"] == pytest.approx(0.0)
+
+
+def test_constructor_preserves_probability_validity(scenario_with_constructors):
+    podiums, combos, grid, con = scenario_with_constructors
+    res = cp.compute(podiums, combos, grid, constructor_data=con)
+    assert 0.0 <= res["chanceNextRaceNew"] <= 100.0
+
+
+def test_no_constructor_data_falls_back(scenario):
+    podiums, combos, grid = scenario
+    res = cp.compute(podiums, combos, grid, constructor_data=None)
+    assert res["params"]["usingConstructors"] is False
+    form = res["driverForm"][0]
+    assert "constructor" not in form
+    assert "constructorStrength" not in form
+
+
+def test_wrong_season_constructor_data_ignored(scenario):
+    podiums, combos, grid = scenario
+    con = _con_data(2020, [("teamA", 200)], {"alf": "teamA"})
+    res = cp.compute(podiums, combos, grid, constructor_data=con)
+    assert res["params"]["usingConstructors"] is False
+
+
+def test_empty_constructors_list_ignored(scenario):
+    podiums, combos, grid = scenario
+    con = {"season": "2025", "round": "5", "constructors": [],
+           "driverConstructor": {}}
+    res = cp.compute(podiums, combos, grid, constructor_data=con)
+    assert res["params"]["usingConstructors"] is False
+
+
+def test_constructor_multiplier_scales_uniformly():
+    """Same-team drivers get the same multiplier; a strong team lifts both
+    equally relative to their no-constructor weights."""
+    podiums = [
+        race(2025, 1, "alf", "bob", "cas"),
+        race(2025, 2, "alf", "bob", "cas"),
+        race(2025, 3, "alf", "cas", "bob"),
+    ]
+    grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob", "cas")]
+    con = _con_data(2025, [("teamA", 200), ("teamB", 50)],
+                    {"alf": "teamA", "bob": "teamA", "cas": "teamB"})
+    res_no = cp.compute(podiums, combos_from(podiums), grid, constructor_data=None)
+    res_con = cp.compute(podiums, combos_from(podiums), grid, constructor_data=con)
+    form_no = {d["driverId"]: d["weight"] for d in res_no["driverForm"]}
+    form_con = {d["driverId"]: d["weight"] for d in res_con["driverForm"]}
+    # teamA (top) multiplier = 1 + 0.5 * 1.0 = 1.5
+    assert form_con["alf"] == pytest.approx(form_no["alf"] * 1.5, abs=0.01)
+    assert form_con["bob"] == pytest.approx(form_no["bob"] * 1.5, abs=0.01)
+    # teamB multiplier = 1 + 0.5 * (50/200) = 1.125
+    assert form_con["cas"] == pytest.approx(form_no["cas"] * 1.125, abs=0.01)

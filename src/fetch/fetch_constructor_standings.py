@@ -1,0 +1,123 @@
+"""Fetch current-season constructor standings and driver-constructor mapping.
+
+The podigami predictor uses constructor strength to weight drivers: a driver
+on a top constructor is more likely to podium regardless of personal form.
+
+Reads data/podiums.json to determine the current season and latest round,
+then fetches:
+  1. /{season}/constructorStandings.json → championship points per team
+  2. /{season}/{round}/results.json     → driver-to-constructor mapping
+
+Writes data/constructor_standings.json.
+
+Graceful no-op: if fewer than 2 rounds have been completed (too early in the
+season for meaningful standings), the file is written with an empty
+constructors list so downstream code can detect and skip.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+import time
+from pathlib import Path
+
+import requests
+
+API_ROOT = "https://api.jolpi.ca/ergast/f1"
+SLEEP_BETWEEN = 1.0
+MAX_BACKOFF_RETRIES = 6
+USER_AGENT = "f1_podigami/0.2 (https://github.com/local/f1_podigami)"
+MIN_ROUNDS = 2
+
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+PODIUMS_PATH = DATA_DIR / "podiums.json"
+OUT_PATH = DATA_DIR / "constructor_standings.json"
+
+
+def get(url: str, params: dict | None = None) -> dict:
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    for attempt in range(MAX_BACKOFF_RETRIES):
+        resp = requests.get(url, params=params or {}, headers=headers, timeout=30)
+        if resp.status_code == 200:
+            return resp.json()
+        if resp.status_code in (429, 500, 502, 503, 504):
+            wait = 2.0 ** attempt
+            print(f"  [{resp.status_code}] backoff {wait:.1f}s ({attempt + 1}/{MAX_BACKOFF_RETRIES})", file=sys.stderr)
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+    raise RuntimeError(f"giving up on {url}")
+
+
+def season_and_rounds() -> tuple[int, list[int]]:
+    podiums = json.loads(PODIUMS_PATH.read_text(encoding="utf-8"))
+    season = max(int(p["season"]) for p in podiums)
+    rounds = sorted({int(p["round"]) for p in podiums if int(p["season"]) == season})
+    return season, rounds
+
+
+def fetch_standings(season: int) -> list[dict]:
+    data = get(f"{API_ROOT}/{season}/constructorStandings.json", {"limit": 100})
+    lists = data["MRData"]["StandingsTable"].get("StandingsLists", [])
+    if not lists:
+        return []
+    return lists[0].get("ConstructorStandings", [])
+
+
+def fetch_driver_constructors(season: int, rnd: int) -> dict[str, str]:
+    """Map driverId → constructorId from a specific round's results."""
+    data = get(f"{API_ROOT}/{season}/{rnd}/results.json", {"limit": 100})
+    races = data["MRData"]["RaceTable"]["Races"]
+    if not races:
+        return {}
+    out: dict[str, str] = {}
+    for r in races[0].get("Results", []):
+        out[r["Driver"]["driverId"]] = r["Constructor"]["constructorId"]
+    return out
+
+
+def main() -> int:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    season, rounds = season_and_rounds()
+
+    if len(rounds) < MIN_ROUNDS:
+        print(f"Only {len(rounds)} round(s) completed in {season}; too early for constructor standings.")
+        out = {"season": str(season), "round": str(rounds[-1]) if rounds else "0",
+               "constructors": [], "driverConstructor": {}}
+        OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Wrote empty {OUT_PATH}")
+        return 0
+
+    standings = fetch_standings(season)
+    time.sleep(SLEEP_BETWEEN)
+
+    driver_map = fetch_driver_constructors(season, rounds[-1])
+
+    constructors = []
+    for s in standings:
+        c = s["Constructor"]
+        constructors.append({
+            "constructorId": c["constructorId"],
+            "name": c.get("name", c["constructorId"]),
+            "points": float(s["points"]),
+            "position": int(s["position"]),
+            "wins": int(s.get("wins", 0)),
+        })
+
+    out = {
+        "season": str(season),
+        "round": str(rounds[-1]),
+        "constructors": constructors,
+        "driverConstructor": driver_map,
+    }
+    OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Wrote {OUT_PATH}")
+    print(f"  season {season} R{rounds[-1]}: {len(constructors)} constructors, {len(driver_map)} driver mappings")
+    for c in constructors[:5]:
+        print(f"    P{c['position']} {c['name']}: {c['points']} pts, {c['wins']} wins")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
