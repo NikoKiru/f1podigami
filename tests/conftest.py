@@ -39,9 +39,7 @@ def dist(repo: Path) -> Path:
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, (
-        f"build_site.py failed:\n{result.stdout}\n{result.stderr}"
-    )
+    assert result.returncode == 0, f"build_site.py failed:\n{result.stdout}\n{result.stderr}"
     dist_dir = repo / "dist"
     assert dist_dir.is_dir(), "dist/ was not created"
     return dist_dir

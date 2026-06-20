@@ -10,13 +10,15 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 <br>
 
 [![CI](https://github.com/NikoKiru/f1_podigami/actions/workflows/ci.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/NikoKiru/f1_podigami/actions/workflows/codeql.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/codeql.yml)
+[![Security](https://github.com/NikoKiru/f1_podigami/actions/workflows/security.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/security.yml)
 [![Deploy to GitHub Pages](https://github.com/NikoKiru/f1_podigami/actions/workflows/deploy.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/deploy.yml)
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1_podigami/)
 
-[![Python](https://img.shields.io/badge/python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-65%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
-[![Dependencies](https://img.shields.io/badge/dependencies-requests-orange?style=flat-square&logo=pypi&logoColor=white)](requirements.txt)
-[![Vanilla JS](https://img.shields.io/badge/JS-vanilla-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](assets/)
+[![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-107%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
 [![Seasons](https://img.shields.io/badge/seasons-1950–2026-e10600?style=flat-square)](https://nikokiru.github.io/f1_podigami/)
 
@@ -123,7 +125,7 @@ src/
 assets/       source CSS + JS (copied into dist/ at build time)
 data/         committed JSON datasets the site builds from
 dist/         generated, deployable site (git-ignored)
-tests/        pytest suite (65 tests, run in CI)
+tests/        pytest suite (107 tests, run in CI)
 ```
 
 </details>
@@ -161,13 +163,28 @@ python src/build_site.py
 ## 🧪 Tests & CI
 
 ```bash
-pytest          # 65 tests
+pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
+ruff check . && ruff format --check .  # lint + format
+pytest --cov                          # 107 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
 from combos + grid…), **build determinism & link resolution**, **mobile-CSS regressions**, and the
-**prediction model** (including edge cases). It runs on every push and PR via
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+**prediction model** (including edge cases).
+
+Every push and PR runs a hardened pipeline:
+
+| Workflow | What it enforces |
+|---|---|
+| [`ci.yml`](.github/workflows/ci.yml) | **Lint & format** (Ruff) · **tests** on Python 3.11 / 3.12 / 3.13 with a **coverage gate** · **build** + offline **link-check** of the generated HTML |
+| [`codeql.yml`](.github/workflows/codeql.yml) | **CodeQL** static analysis of Python *and* the workflow files (weekly + on PRs) |
+| [`security.yml`](.github/workflows/security.yml) | **pip-audit** for vulnerable dependencies · **gitleaks** secret scanning |
+| [`deploy.yml`](.github/workflows/deploy.yml) | Test-gated publish to **GitHub Pages** |
+| [`update.yml`](.github/workflows/update.yml) | Scheduled weekly **data refresh** (auto-commits new race results) |
+| [`dependabot.yml`](.github/dependabot.yml) + [auto-merge](.github/workflows/dependabot-automerge.yml) | Weekly dependency PRs; patch/minor bumps auto-merge once CI is green |
+
+All workflows run with **least-privilege permissions**, **concurrency cancellation**, and **pip
+caching**. Quality settings live in [`pyproject.toml`](pyproject.toml).
 
 ---
 

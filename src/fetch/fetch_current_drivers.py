@@ -38,8 +38,11 @@ def get(url: str, params: dict | None = None) -> dict:
         if resp.status_code == 200:
             return resp.json()
         if resp.status_code in (429, 500, 502, 503, 504):
-            wait = 2.0 ** attempt
-            print(f"  [{resp.status_code}] backoff {wait:.1f}s ({attempt + 1}/{MAX_BACKOFF_RETRIES})", file=sys.stderr)
+            wait = 2.0**attempt
+            print(
+                f"  [{resp.status_code}] backoff {wait:.1f}s ({attempt + 1}/{MAX_BACKOFF_RETRIES})",
+                file=sys.stderr,
+            )
             time.sleep(wait)
             continue
         resp.raise_for_status()

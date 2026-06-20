@@ -9,14 +9,16 @@ def entry(names, ids, races_together, score, rates):
         "names": names,
         "racesTogether": races_together,
         "score": score,
-        "perDriver": [{"name": n, "podiums": 1, "starts": 10, "rate": r}
-                      for n, r in zip(names, rates)],
+        "perDriver": [
+            {"name": n, "podiums": 1, "starts": 10, "rate": r}
+            for n, r in zip(names, rates, strict=False)
+        ],
     }
 
 
 def test_render_trio_escapes_and_separates():
     out = bo.render_trio(["A & B", "C", "D"])
-    assert "A &amp; B" in out                 # HTML-escaped
+    assert "A &amp; B" in out  # HTML-escaped
     assert out.count('class="pdriver"') == 3
     assert 'class="sep"' in out
 
@@ -28,11 +30,11 @@ def test_render_list_marks_top_bar_full_width():
     ]
     html = bo.render_list(entries)
     assert html.count('class="cand"') == 2
-    assert "width:100%" in html                       # top entry bar is full
-    assert "width:50%" in html                        # second is score/top = 4/8
-    assert "raced <b>50</b> times together" in html   # meta line
-    assert "8.00" in html and "4.00" in html          # score formatting
-    assert "50% / 40% / 30% podium rates" in html     # rates formatting
+    assert "width:100%" in html  # top entry bar is full
+    assert "width:50%" in html  # second is score/top = 4/8
+    assert "raced <b>50</b> times together" in html  # meta line
+    assert "8.00" in html and "4.00" in html  # score formatting
+    assert "50% / 40% / 30% podium rates" in html  # rates formatting
 
 
 def test_render_list_empty_shows_placeholder():

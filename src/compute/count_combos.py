@@ -32,7 +32,7 @@ def main() -> int:
         )
 
     out = []
-    for key, combo in combos.items():
+    for combo in combos.values():
         names = [name_by_id[d] for d in combo["driverIds"]]
         names_alpha = sorted(names)
         races_chrono = sorted(combo["races"], key=lambda r: (int(r["season"]), int(r["round"])))
@@ -62,13 +62,17 @@ def main() -> int:
     print("Top 10 by count:")
     for i, c in enumerate(out[:10], 1):
         last = c["lastRace"]
-        print(f"  {i:2}. {c['count']:3}x  {' / '.join(c['drivers'])}  (last: {last['season']} {last['raceName']})")
+        print(
+            f"  {i:2}. {c['count']:3}x  {' / '.join(c['drivers'])}  (last: {last['season']} {last['raceName']})"
+        )
     print()
     print("Top 10 most recent combos:")
     by_recent = sorted(out, key=lambda c: -c["lastRaceKey"])
     for i, c in enumerate(by_recent[:10], 1):
         last = c["lastRace"]
-        print(f"  {i:2}. {last['season']} R{last['round']:>2}  {' / '.join(c['drivers'])}  ({c['count']}x)")
+        print(
+            f"  {i:2}. {last['season']} R{last['round']:>2}  {' / '.join(c['drivers'])}  ({c['count']}x)"
+        )
 
     return 0
 

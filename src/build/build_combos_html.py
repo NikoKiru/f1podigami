@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
+
 COMBOS_PATH = ROOT / "data" / "combos.json"
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
 OUT_PATH = ROOT / "dist" / "combos.html"
@@ -29,6 +30,7 @@ def wiki_url(season: str, race_name: str) -> str:
 def render_race_pills(races: list[dict]) -> str:
     """Group races by season; each season gets a row with year + race pills."""
     import html
+
     races_sorted = sorted(races, key=lambda r: (int(r["season"]), int(r["round"])))
     parts: list[str] = []
     for season, group in itertools.groupby(races_sorted, key=lambda r: r["season"]):
@@ -38,8 +40,8 @@ def render_race_pills(races: list[dict]) -> str:
             f' target="_blank" rel="noopener"'
             f' title="{html.escape(r["season"] + " " + r["raceName"], quote=True)} &mdash; race report">'
             f'<span class="round">R{html.escape(r["round"])}</span>'
-            f'{html.escape(short_race_name(r["raceName"]))}'
-            f'</a>'
+            f"{html.escape(short_race_name(r['raceName']))}"
+            f"</a>"
             for r in group_list
         )
         ct = len(group_list)
@@ -48,7 +50,7 @@ def render_race_pills(races: list[dict]) -> str:
             f'<div class="season-row">'
             f'<div class="season-label">{html.escape(season)}{ct_html}</div>'
             f'<div class="race-list">{pills}</div>'
-            f'</div>'
+            f"</div>"
         )
     return "".join(parts)
 
@@ -62,6 +64,7 @@ def short_race_name(name: str) -> str:
 
 def render_combo(rank: int, combo: dict) -> str:
     import html
+
     drivers_html = '<span class="sep">/</span>'.join(
         f'<span class="driver">{html.escape(d)}</span>' for d in combo["drivers"]
     )
@@ -82,13 +85,13 @@ def render_combo(rank: int, combo: dict) -> str:
         f'<td class="count">{n}</td>'
         f'<td class="last">{last_html}</td>'
         f'<td class="expand"><span class="chev">&#9662;</span></td>'
-        f'</tr>'
+        f"</tr>"
     )
     detail_row = (
         f'<tr class="detail">'
         f'<td colspan="5">'
         f'<div class="detail-inner">{render_race_pills(combo["races"])}</div>'
-        f'</td></tr>'
+        f"</td></tr>"
     )
     return combo_row + detail_row
 
@@ -207,7 +210,9 @@ def main() -> int:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(page, encoding="utf-8")
     print(f"Wrote {OUT_PATH}")
-    print(f"  rendered {unique_combos} combos covering {total_podiums} races ({season_min}-{season_max})")
+    print(
+        f"  rendered {unique_combos} combos covering {total_podiums} races ({season_min}-{season_max})"
+    )
     return 0
 
 

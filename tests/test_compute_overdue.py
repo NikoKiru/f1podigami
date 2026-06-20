@@ -6,9 +6,17 @@ from compute import compute_overdue as co
 
 
 def race(season, rnd, p1, p2, p3):
-    mk = lambda d: {"driverId": d, "name": d.title()}
-    return {"season": str(season), "round": str(rnd), "raceName": "GP",
-            "p1": mk(p1), "p2": mk(p2), "p3": mk(p3)}
+    def mk(d):
+        return {"driverId": d, "name": d.title()}
+
+    return {
+        "season": str(season),
+        "round": str(rnd),
+        "raceName": "GP",
+        "p1": mk(p1),
+        "p2": mk(p2),
+        "p3": mk(p3),
+    }
 
 
 def combos_from(podiums):
@@ -23,7 +31,7 @@ def combos_from(podiums):
 def scenario():
     # alf/bob/cas overlap every race and podium often; dan only early; eli never overlaps.
     podiums = [
-        race(2020, 1, "alf", "bob", "dan"),   # the trio alf+bob+dan HAS happened
+        race(2020, 1, "alf", "bob", "dan"),  # the trio alf+bob+dan HAS happened
         race(2020, 2, "alf", "bob", "yy"),
         race(2020, 3, "alf", "bob", "yy"),
         race(2020, 4, "alf", "cas", "yy"),
@@ -33,13 +41,15 @@ def scenario():
         race(2020, 101, "eli", "yy", "zz"),
     ]
     # podium counts: alf5 bob4 cas3 dan1 eli2
-    driver_races = {"drivers": {
-        "alf": {"name": "Alf", "starts": 10, "races": [2020000 + i for i in range(1, 11)]},
-        "bob": {"name": "Bob", "starts": 10, "races": [2020000 + i for i in range(1, 11)]},
-        "cas": {"name": "Cas", "starts": 10, "races": [2020000 + i for i in range(1, 11)]},
-        "dan": {"name": "Dan", "starts": 3,  "races": [2020001, 2020002, 2020003]},
-        "eli": {"name": "Eli", "starts": 4,  "races": [2020100, 2020101, 2020102, 2020103]},
-    }}
+    driver_races = {
+        "drivers": {
+            "alf": {"name": "Alf", "starts": 10, "races": [2020000 + i for i in range(1, 11)]},
+            "bob": {"name": "Bob", "starts": 10, "races": [2020000 + i for i in range(1, 11)]},
+            "cas": {"name": "Cas", "starts": 10, "races": [2020000 + i for i in range(1, 11)]},
+            "dan": {"name": "Dan", "starts": 3, "races": [2020001, 2020002, 2020003]},
+            "eli": {"name": "Eli", "starts": 4, "races": [2020100, 2020101, 2020102, 2020103]},
+        }
+    }
     grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob", "cas")]
     return podiums, combos_from(podiums), grid, driver_races
 
@@ -99,6 +109,7 @@ def test_current_grid_list_only_uses_grid_drivers(scenario):
 
 # --- additional edge cases ----------------------------------------------------
 
+
 def _races(*keys):
     return {"name": "X", "starts": max(len(keys), 1), "races": list(keys)}
 
@@ -106,11 +117,13 @@ def _races(*keys):
 def test_zero_podium_driver_makes_score_zero_and_is_excluded():
     # cas never podiums -> rate 0 -> the only possible trio scores 0 -> dropped.
     podiums = [race(2020, 1, "alf", "bob", "yy"), race(2020, 2, "alf", "bob", "zz")]
-    dr = {"drivers": {
-        "alf": _races(2020001, 2020002, 2020003),
-        "bob": _races(2020001, 2020002, 2020003),
-        "cas": _races(2020001, 2020002, 2020003),  # starts 3, 0 podiums
-    }}
+    dr = {
+        "drivers": {
+            "alf": _races(2020001, 2020002, 2020003),
+            "bob": _races(2020001, 2020002, 2020003),
+            "cas": _races(2020001, 2020002, 2020003),  # starts 3, 0 podiums
+        }
+    }
     res = co.compute(podiums, combos_from(podiums), [], dr)
     assert res["allTime"] == []
 
@@ -128,7 +141,7 @@ def test_top_n_truncates_the_list():
 def test_grid_driver_missing_race_data_is_skipped(scenario):
     podiums, combos, grid, dr = scenario
     grid = grid + [{"driverId": "ghost", "name": "Ghost"}]  # not in driver_races
-    res = co.compute(podiums, combos, grid, dr)            # must not raise
+    res = co.compute(podiums, combos, grid, dr)  # must not raise
     assert all("ghost" not in e["driverIds"] for e in res["currentGrid"])
 
 

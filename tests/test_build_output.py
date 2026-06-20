@@ -11,8 +11,13 @@ PAGES = {
 }
 
 ALL_ASSETS = [
-    "style.css", "index.css", "soulmates.css",
-    "podigami.css", "index.js", "podigami.js", "theme.js",
+    "style.css",
+    "index.css",
+    "soulmates.css",
+    "podigami.css",
+    "index.js",
+    "podigami.js",
+    "theme.js",
 ]
 
 
@@ -55,9 +60,9 @@ def test_combos_has_nav_and_combo_rows(dist):
 def test_index_is_podigami_predictor(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert 'class="nav"' in html
-    assert 'class="hero"' in html              # next-podigami hero
-    assert 'id="tl-slider"' in html            # year-slider timeline
-    assert 'id="podigami-data"' in html        # embedded slider data
+    assert 'class="hero"' in html  # next-podigami hero
+    assert 'id="tl-slider"' in html  # year-slider timeline
+    assert 'id="podigami-data"' in html  # embedded slider data
 
 
 @pytest.mark.parametrize("page", PAGES)
@@ -79,15 +84,17 @@ def _footer_block(html: str) -> str:
 def test_footer_is_identical_across_pages(dist):
     footers = {p: _footer_block((dist / p).read_text(encoding="utf-8")) for p in PAGES}
     unique = set(footers.values())
-    assert len(unique) == 1, f"footers differ across pages: { {p: f[:60] for p, f in footers.items()} }"
+    assert len(unique) == 1, (
+        f"footers differ across pages: { {p: f[:60] for p, f in footers.items()} }"
+    )
 
 
 @pytest.mark.parametrize("page", PAGES)
 def test_footer_has_universal_details(dist, page):
     footer = _footer_block((dist / page).read_text(encoding="utf-8"))
-    assert "Jolpica F1 API" in footer            # data source attribution
+    assert "Jolpica F1 API" in footer  # data source attribution
     assert "github.com/NikoKiru/f1_podigami" in footer  # source link
-    assert 'class="footer-nav"' in footer        # cross-page nav
+    assert 'class="footer-nav"' in footer  # cross-page nav
     for link in ("index.html", "combos.html", "overdue.html", "soulmates.html"):
         assert link in footer, f"footer should link to {link}"
 
@@ -101,6 +108,6 @@ def test_stylesheet_defines_light_theme(dist):
 def test_overdue_has_two_ranked_lists(dist):
     html = (dist / "overdue.html").read_text(encoding="utf-8")
     assert 'class="nav"' in html
-    assert html.count('class="cand-list"') == 2          # all-time + current grid
+    assert html.count('class="cand-list"') == 2  # all-time + current grid
     assert "All-time near-misses" in html
-    assert 'class="cand-meta"' in html                   # "raced N times together"
+    assert 'class="cand-meta"' in html  # "raced N times together"

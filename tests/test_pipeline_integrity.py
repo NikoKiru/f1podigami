@@ -5,10 +5,6 @@ the stages agree with each other (combos derive from podiums, podigami derives
 from combos + the current grid, etc.).
 """
 
-from itertools import combinations
-
-import pytest
-
 from conftest import load_data
 
 
@@ -17,6 +13,7 @@ def trio(ids):
 
 
 # --- podiums -------------------------------------------------------------------
+
 
 def test_podiums_three_distinct_drivers_per_race():
     for p in load_data("podiums.json"):
@@ -27,6 +24,7 @@ def test_podiums_three_distinct_drivers_per_race():
 
 
 # --- combos derive from podiums ------------------------------------------------
+
 
 def test_every_podium_maps_to_one_combo():
     podiums = load_data("podiums.json")
@@ -51,6 +49,7 @@ def test_combo_first_last_race_consistent():
 
 # --- soulmates -----------------------------------------------------------------
 
+
 def test_soulmates_matrix_square_and_symmetric():
     sm = load_data("soulmates.json")
     n = len(sm["drivers"])
@@ -72,6 +71,7 @@ def test_soulmates_top_pairs_sorted_within_max():
 
 # --- current grid --------------------------------------------------------------
 
+
 def test_current_drivers_matches_latest_season():
     podiums = load_data("podiums.json")
     grid = load_data("current_drivers.json")
@@ -83,6 +83,7 @@ def test_current_drivers_matches_latest_season():
 
 
 # --- podigami derives from combos + grid ---------------------------------------
+
 
 def test_podigami_headline_is_a_probability():
     pg = load_data("podigami.json")
@@ -133,6 +134,7 @@ def test_podigami_season_range_matches_history():
 
 
 # --- overdue podiums derive from combos + driver_races -------------------------
+
 
 def test_overdue_candidates_are_new_overlapping_and_ranked():
     od = load_data("overdue.json")

@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
+
 SOULMATES_PATH = ROOT / "data" / "soulmates.json"
 OUT_PATH = ROOT / "dist" / "soulmates.html"
 
@@ -31,113 +32,128 @@ def _render_pairs(pairs: list[dict]) -> str:
             f'<div class="pl-body">'
             f'  <div class="pl-names"><b>{p["a"]}</b> &amp; <b>{p["b"]}</b></div>'
             f'  <div class="pl-bar-wrap"><div class="pl-bar" style="width:{pct}%"></div></div>'
-            f'</div>'
+            f"</div>"
             f'<div class="pl-meta">'
             f'  <span class="pl-count">{p["count"]}</span>'
             f'  <span class="pl-years">{p["firstYear"]}&ndash;{p["lastYear"]}</span>'
-            f'</div>'
-            f'</li>'
+            f"</div>"
+            f"</li>"
         )
     return "\n".join(rows)
 
 
 def _compute_facts(soulmates: dict) -> list[dict]:
-    drivers   = soulmates["drivers"]
-    matrix    = soulmates["matrix"]
+    drivers = soulmates["drivers"]
+    matrix = soulmates["matrix"]
     top_pairs = soulmates.get("topPairs", [])
-    n         = len(drivers)
-    names     = [d["name"] for d in drivers]
+    n = len(drivers)
+    names = [d["name"] for d in drivers]
     median_by = {d["name"]: d["medianYear"] for d in drivers}
 
     facts = []
 
     # 1. Most connected driver (shares podiums with most other top-40 drivers)
     connections = [
-        (sum(1 for j in range(n) if j != i and matrix[i][j] > 0), names[i])
-        for i in range(n)
+        (sum(1 for j in range(n) if j != i and matrix[i][j] > 0), names[i]) for i in range(n)
     ]
     best_cnt, best_name = max(connections)
-    facts.append({
-        "num": str(best_cnt),
-        "unit": "connections",
-        "label": "Most connected driver",
-        "detail": f"<b>{best_name}</b> shared at least one podium with {best_cnt} different "
-                  f"drivers from the all-time top 40 — more than anyone else.",
-    })
+    facts.append(
+        {
+            "num": str(best_cnt),
+            "unit": "connections",
+            "label": "Most connected driver",
+            "detail": f"<b>{best_name}</b> shared at least one podium with {best_cnt} different "
+            f"drivers from the all-time top 40 — more than anyone else.",
+        }
+    )
 
     # 2. Longest active partnership
     if top_pairs:
         longest = max(top_pairs, key=lambda p: p["lastYear"] - p["firstYear"])
-        span    = longest["lastYear"] - longest["firstYear"]
-        facts.append({
-            "num": str(span),
-            "unit": "seasons",
-            "label": "Longest partnership",
-            "detail": f"<b>{longest['a']}</b> &amp; <b>{longest['b']}</b> shared podiums "
-                      f"across {span} seasons ({longest['firstYear']}&ndash;{longest['lastYear']}), "
-                      f"the longest-running pairing in the top 30.",
-        })
+        span = longest["lastYear"] - longest["firstYear"]
+        facts.append(
+            {
+                "num": str(span),
+                "unit": "seasons",
+                "label": "Longest partnership",
+                "detail": f"<b>{longest['a']}</b> &amp; <b>{longest['b']}</b> shared podiums "
+                f"across {span} seasons ({longest['firstYear']}&ndash;{longest['lastYear']}), "
+                f"the longest-running pairing in the top 30.",
+            }
+        )
 
     # 3. Most intense: highest shared podiums per active season
     if top_pairs:
+
         def intensity(p: dict) -> float:
             return p["count"] / max(1, p["lastYear"] - p["firstYear"] + 1)
+
         hot = max(top_pairs, key=intensity)
         seasons = max(1, hot["lastYear"] - hot["firstYear"] + 1)
-        rate    = hot["count"] / seasons
-        facts.append({
-            "num": f"{rate:.1f}",
-            "unit": "per season",
-            "label": "Most intense rivalry",
-            "detail": f"<b>{hot['a']}</b> &amp; <b>{hot['b']}</b> averaged "
-                      f"{rate:.1f} shared podiums per season over their "
-                      f"{seasons}-season overlap — the densest podium partnership on record.",
-        })
+        rate = hot["count"] / seasons
+        facts.append(
+            {
+                "num": f"{rate:.1f}",
+                "unit": "per season",
+                "label": "Most intense rivalry",
+                "detail": f"<b>{hot['a']}</b> &amp; <b>{hot['b']}</b> averaged "
+                f"{rate:.1f} shared podiums per season over their "
+                f"{seasons}-season overlap — the densest podium partnership on record.",
+            }
+        )
 
     # 4. Biggest era gap: top-30 pair whose drivers' median career years differ most
     if top_pairs:
+
         def era_gap(p: dict) -> float:
             return abs(median_by.get(p["a"], 0) - median_by.get(p["b"], 0))
-        cross      = max(top_pairs, key=era_gap)
-        gap_years  = int(round(era_gap(cross)))
-        a_med      = int(round(median_by.get(cross["a"], 0)))
-        b_med      = int(round(median_by.get(cross["b"], 0)))
+
+        cross = max(top_pairs, key=era_gap)
+        gap_years = int(round(era_gap(cross)))
+        a_med = int(round(median_by.get(cross["a"], 0)))
+        b_med = int(round(median_by.get(cross["b"], 0)))
         if a_med < b_med:
             older, older_med, younger, younger_med = cross["a"], a_med, cross["b"], b_med
         else:
             older, older_med, younger, younger_med = cross["b"], b_med, cross["a"], a_med
-        facts.append({
-            "num": str(gap_years),
-            "unit": "year era gap",
-            "label": "Biggest cross-era connection",
-            "detail": (
-                f"<b>{older}</b> (peak ~{older_med}) and <b>{younger}</b> "
-                f"(peak ~{younger_med}) still shared {cross['count']} podiums "
-                f"despite their careers being {gap_years} years apart."
-            ),
-        })
+        facts.append(
+            {
+                "num": str(gap_years),
+                "unit": "year era gap",
+                "label": "Biggest cross-era connection",
+                "detail": (
+                    f"<b>{older}</b> (peak ~{older_med}) and <b>{younger}</b> "
+                    f"(peak ~{younger_med}) still shared {cross['count']} podiums "
+                    f"despite their careers being {gap_years} years apart."
+                ),
+            }
+        )
 
     # 5. Total unique shared podium moments across all 40×40 pairs
     total = sum(matrix[i][j] for i in range(n) for j in range(i + 1, n))
-    facts.append({
-        "num": f"{total:,}",
-        "unit": "",
-        "label": "Total shared podium moments",
-        "detail": f"Across all {n * (n - 1) // 2:,} possible pairings within the top {n}, "
-                  f"drivers shared a podium a combined <b>{total:,}</b> times.",
-    })
+    facts.append(
+        {
+            "num": f"{total:,}",
+            "unit": "",
+            "label": "Total shared podium moments",
+            "detail": f"Across all {n * (n - 1) // 2:,} possible pairings within the top {n}, "
+            f"drivers shared a podium a combined <b>{total:,}</b> times.",
+        }
+    )
 
     # 6. Most isolated: top-40 driver with fewest connections to others in the group
     least_cnt, least_name = min(connections)
     least_total = next(d["total"] for d in drivers if d["name"] == least_name)
-    facts.append({
-        "num": str(least_cnt),
-        "unit": "connections",
-        "label": "Solo legend",
-        "detail": f"Despite {least_total} career podiums, <b>{least_name}</b> shared the box "
-                  f"with only {least_cnt} other driver{'s' if least_cnt != 1 else ''} "
-                  f"from the top 40 &mdash; a testament to era dominance.",
-    })
+    facts.append(
+        {
+            "num": str(least_cnt),
+            "unit": "connections",
+            "label": "Solo legend",
+            "detail": f"Despite {least_total} career podiums, <b>{least_name}</b> shared the box "
+            f"with only {least_cnt} other driver{'s' if least_cnt != 1 else ''} "
+            f"from the top 40 &mdash; a testament to era dominance.",
+        }
+    )
 
     return facts
 
@@ -151,7 +167,7 @@ def _render_facts(facts: list[dict]) -> str:
             f'  <div class="fc-label">{f["label"]}</div>'
             f'  <div class="fc-num">{f["num"]}{unit_html}</div>'
             f'  <div class="fc-detail">{f["detail"]}</div>'
-            f'</div>'
+            f"</div>"
         )
     return "\n".join(cards)
 
@@ -160,7 +176,7 @@ def main() -> int:
     soulmates = json.loads(SOULMATES_PATH.read_text(encoding="utf-8"))
 
     top_pairs = soulmates.get("topPairs", [])
-    top       = top_pairs[0] if top_pairs else None
+    top = top_pairs[0] if top_pairs else None
     n_drivers = len(soulmates["drivers"])
 
     stats_html = ""
@@ -182,7 +198,7 @@ def main() -> int:
         </div>"""
 
     pairs_html = _render_pairs(top_pairs)
-    facts      = _compute_facts(soulmates)
+    facts = _compute_facts(soulmates)
     facts_html = _render_facts(facts)
 
     page = f"""<!DOCTYPE html>

@@ -24,8 +24,8 @@ def test_shared_nav_is_scroll_strip_on_mobile():
 def test_index_table_becomes_cards():
     s = css("index.css")
     assert "@media (max-width: 600px)" in s
-    assert "display: block" in s          # table -> block/card layout
-    assert 'content: "Podiums"' in s      # CSS-generated row labels
+    assert "display: block" in s  # table -> block/card layout
+    assert 'content: "Podiums"' in s  # CSS-generated row labels
     assert 'content: "Last"' in s
 
 

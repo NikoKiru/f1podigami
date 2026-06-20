@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import FOOTER  # noqa: E402  (needs the sys.path entry above)
+
 OVERDUE_PATH = ROOT / "data" / "overdue.json"
 OUT_PATH = ROOT / "dist" / "overdue.html"
 
@@ -36,7 +37,7 @@ def render_list(entries: list[dict]) -> str:
     rows = []
     for i, e in enumerate(entries, 1):
         pct = round(100 * e["score"] / top)
-        rates = " / ".join(f'{p["rate"] * 100:.0f}%' for p in e["perDriver"])
+        rates = " / ".join(f"{p['rate'] * 100:.0f}%" for p in e["perDriver"])
         rows.append(
             f'<li class="cand">'
             f'<span class="cand-rank">{i}</span>'
@@ -44,10 +45,10 @@ def render_list(entries: list[dict]) -> str:
             f'  <div class="cand-names">{render_trio(e["names"])}</div>'
             f'  <div class="cand-bar-wrap"><div class="cand-bar" style="width:{pct}%"></div></div>'
             f'  <div class="cand-meta">raced <b>{e["racesTogether"]}</b> times together '
-            f'&middot; {rates} podium rates</div>'
-            f'</div>'
+            f"&middot; {rates} podium rates</div>"
+            f"</div>"
             f'<span class="cand-prob" title="overdue score = races together x podium rates">{e["score"]:.2f}</span>'
-            f'</li>'
+            f"</li>"
         )
     return f'<ol class="cand-list">{"".join(rows)}</ol>'
 
@@ -55,10 +56,10 @@ def render_list(entries: list[dict]) -> str:
 def panel(title: str, sub: str, entries: list[dict]) -> str:
     return (
         f'<section class="panel">'
-        f'  <h2>{title}</h2>'
+        f"  <h2>{title}</h2>"
         f'  <p class="panel-sub">{sub}</p>'
-        f'  {render_list(entries)}'
-        f'</section>'
+        f"  {render_list(entries)}"
+        f"</section>"
     )
 
 
