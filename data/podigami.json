@@ -581,7 +581,7 @@
       "weight": 0.28,
       "seasonPodiums": 0,
       "recentPodiums": 0,
-      "constructor": "Sauber",
+      "constructor": "Audi",
       "constructorStrength": 0.022
     },
     {
@@ -680,7 +680,7 @@
       "weight": 0.101,
       "seasonPodiums": 0,
       "recentPodiums": 0,
-      "constructor": "Sauber",
+      "constructor": "Audi",
       "constructorStrength": 0.022
     }
   ],
