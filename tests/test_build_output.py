@@ -37,6 +37,14 @@ def test_page_head_essentials(dist, page):
     assert '<link rel="stylesheet" href="style.css">' in html
 
 
+def test_google_site_verification_present(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert (
+        '<meta name="google-site-verification" '
+        'content="hLESDF63VKsCV-0eJeHsA00GDM6K4CRWjjBnPnB8Dr8">'
+    ) in html
+
+
 @pytest.mark.parametrize("page,assets", PAGES.items())
 def test_page_assets_referenced_and_copied(dist, page, assets):
     html = (dist / page).read_text(encoding="utf-8")

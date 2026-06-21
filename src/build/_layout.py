@@ -68,6 +68,7 @@ def head(
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0d12">
+<meta name="google-site-verification" content="hLESDF63VKsCV-0eJeHsA00GDM6K4CRWjjBnPnB8Dr8">
 {_THEME_INIT}
 <title>{title}</title>{seo}
 {links}
