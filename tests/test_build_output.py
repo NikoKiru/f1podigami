@@ -105,6 +105,14 @@ def test_landing_page_has_broadcast_driver_treatment(dist):
     assert 'class="tr-num"' in html  # car-number chips
 
 
+def test_landing_page_has_accuracy_section(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'id="model-accuracy"' in html  # dedicated section
+    assert 'class="acc-badge"' in html  # compact badge
+    assert 'class="acc-table"' in html  # backtest ladder table
+    assert "Model accuracy" in html
+
+
 def test_landing_page_has_next_race_box(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert 'class="next-race"' in html

@@ -1,27 +1,18 @@
 """Predict the next likely brand-new podium trio ("podigami").
 
-Model (chosen by backtesting 1950-2026 — see the plan; recency dominates,
-career history adds noise, a mild current-season boost helps):
+The probability that a trio is the next podium *set* is computed with a
+Plackett-Luce model over per-driver strengths (see src/compute/model.py); the
+strength + aggregation choices were validated by a walk-forward backtest
+(src/compute/backtest.py). P(new) = the probability mass on trios never seen on
+a podium together.
 
-    base(d)   = ALPHA
-              + sum over d's past podiums of 0.5 ** (races_ago / HALF_LIFE)
-              + SEASON_BOOST * (podiums this season)
-
-    weight(d) = base(d) * (1 + CONSTRUCTOR_FACTOR * normalized_strength(d))
-
-    where normalized_strength(d) = constructor_points / max_points  (0 to 1)
-
-    trio score  w(T) = weight(a) * weight(b) * weight(c)
-    P(T)        = w(T) / sum over all C(grid, 3) trios
-    P(new race) = sum of P(T) for trios never seen on a podium together
-
-Constructor strength is only applied when standings data exists for the
-current season (at least 2 rounds completed).  At the start of a season
-the model falls back to driver-only weights.
+A live-only constructor/teammate overlay nudges the current grid by this
+season's standings (it can't be backtested without historical team data, so it
+is flagged in the output ``params``).
 
 Inputs : data/podiums.json, data/combos.json, data/current_drivers.json,
          data/constructor_standings.json (optional)
-Output : data/podigami.json
+Output : data/podigami.json  (schema unchanged from before)
 """
 
 from __future__ import annotations
@@ -29,8 +20,10 @@ from __future__ import annotations
 import json
 import sys
 from collections import defaultdict
-from itertools import combinations
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import model  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
@@ -39,16 +32,12 @@ GRID_PATH = DATA_DIR / "current_drivers.json"
 CONSTRUCTOR_PATH = DATA_DIR / "constructor_standings.json"
 OUT_PATH = DATA_DIR / "podigami.json"
 
-ALPHA = 0.1
-HALF_LIFE = 8.0  # races; podium influence halves every 8 races
-SEASON_BOOST = 0.5  # extra weight per podium scored this season
-CONSTRUCTOR_FACTOR = 0.5  # max multiplier boost for drivers on the top constructor
 RECENT_WINDOW = 10  # races, for the "recent form" display stat
 TOP_CANDIDATES = 12
 
 
-def trio_key(ids: list[str]) -> tuple[str, str, str]:
-    return tuple(sorted(ids))  # type: ignore[return-value]
+def trio_key(ids) -> tuple[str, str, str]:
+    return model.trio_key(ids)
 
 
 def _build_constructor_strength(
@@ -92,16 +81,13 @@ def compute(
     n = len(races)
     current = max(int(r["season"]) for r in races)
 
-    pod_idx: dict[str, list[int]] = defaultdict(list)
+    per_driver = model.index_podiums(races)
     name_by_id: dict[str, str] = {}
     seen: set[tuple[str, str, str]] = set()
-    for i, r in enumerate(races):
-        ids = [r[s]["driverId"] for s in ("p1", "p2", "p3")]
+    for r in races:
         for s in ("p1", "p2", "p3"):
             name_by_id[r[s]["driverId"]] = r[s]["name"]
-        seen.add(trio_key(ids))
-        for d in ids:
-            pod_idx[d].append(i)
+        seen.add(trio_key(r[s]["driverId"] for s in ("p1", "p2", "p3")))
 
     grid_name = {d["driverId"]: d["name"] for d in grid}
     grid_ids = sorted(grid_name)
@@ -111,40 +97,31 @@ def compute(
 
     con_strength, driver_cid = _build_constructor_strength(constructor_data, current)
     using_constructors = bool(con_strength)
-
-    # races_ago is measured from the (hypothetical) next race at index n.
-    weight: dict[str, float] = {}
-    season_pod: dict[str, int] = {}
-    recent_pod: dict[str, int] = {}
     constructor_name: dict[str, str] = {}
     if using_constructors:
         cid_to_name = {c["constructorId"]: c["name"] for c in constructor_data["constructors"]}
-    for d in grid_ids:
-        idxs = pod_idx.get(d, [])
-        recency = sum(0.5 ** ((n - j) / HALF_LIFE) for j in idxs)
-        sp = sum(1 for j in idxs if int(races[j]["season"]) == current)
-        base = ALPHA + recency + SEASON_BOOST * sp
-        multiplier = 1.0 + CONSTRUCTOR_FACTOR * con_strength.get(d, 0)
-        weight[d] = base * multiplier
-        season_pod[d] = sp
-        recent_pod[d] = sum(1 for j in idxs if (n - j) <= RECENT_WINDOW)
-        if using_constructors:
-            cid = driver_cid.get(d, "")
-            constructor_name[d] = cid_to_name.get(cid, "")
+        constructor_name = {d: cid_to_name.get(driver_cid.get(d, ""), "") for d in grid_ids}
 
-    # Normalise the product score over every trio on the current grid.
-    total = 0.0
-    scored: list[tuple[tuple[str, str, str], float]] = []
-    for c in combinations(grid_ids, 3):
-        w = weight[c[0]] * weight[c[1]] * weight[c[2]]
-        scored.append((c, w))
-        total += w
+    # Validated Plackett-Luce strengths for the next race (index n), then the
+    # live-only constructor/teammate overlay nudges the current grid.
+    lam = model.strengths(per_driver, grid_ids, n, current, model.DEFAULT_PARAMS)
+    if using_constructors:
+        lam = model.apply_car_overlay(lam, driver_cid, con_strength)
+    if model.DEFAULT_PARAMS["temperature"] != 1.0:
+        lam = model.temper(lam, model.DEFAULT_PARAMS["temperature"])
+
+    season_pod: dict[str, int] = {}
+    recent_pod: dict[str, int] = {}
+    for d in grid_ids:
+        idxs = [idx for idx, _se, _po in per_driver.get(d, ()) if idx < n]
+        season_pod[d] = sum(1 for idx in idxs if int(races[idx]["season"]) == current)
+        recent_pod[d] = sum(1 for idx in idxs if (n - idx) <= RECENT_WINDOW)
 
     def _driver_entry(d: str) -> dict:
         entry: dict = {
             "driverId": d,
             "name": nm(d),
-            "weight": round(weight[d], 3),
+            "weight": round(lam[d], 3),
             "seasonPodiums": season_pod[d],
             "recentPodiums": recent_pod[d],
             "constructorId": driver_cid.get(d, ""),
@@ -154,21 +131,23 @@ def compute(
             entry["constructorStrength"] = round(con_strength.get(d, 0), 3)
         return entry
 
-    chance_new = 0.0
+    set_probs = model.all_set_probs(lam, grid_ids)
+    ranked, chance_new = model.rank_and_new(set_probs, seen)
+
     candidates: list[dict] = []
-    for c, w in scored:
-        p = (w / total) if total else 0.0
-        if c not in seen:
-            chance_new += p
-            candidates.append(
-                {
-                    "driverIds": list(c),
-                    "names": [nm(d) for d in c],
-                    "prob": round(100 * p, 3),
-                    "perDriver": [_driver_entry(d) for d in c],
-                }
-            )
-    candidates.sort(key=lambda x: -x["prob"])
+    for t, p in ranked:
+        if t in seen:
+            continue
+        candidates.append(
+            {
+                "driverIds": list(t),
+                "names": [nm(d) for d in t],
+                "prob": round(100 * p, 3),
+                "perDriver": [_driver_entry(d) for d in t],
+            }
+        )
+        if len(candidates) >= TOP_CANDIDATES:
+            break
 
     driver_form = sorted(
         (_driver_entry(d) for d in grid_ids),
@@ -201,11 +180,14 @@ def compute(
             "raceName": last["raceName"],
         },
         "params": {
-            "alpha": ALPHA,
-            "halfLife": HALF_LIFE,
-            "seasonBoost": SEASON_BOOST,
-            "constructorFactor": CONSTRUCTOR_FACTOR,
+            "model": "plackett-luce",
+            "alpha": model.DEFAULT_PARAMS["alpha"],
+            "halfLife": model.DEFAULT_PARAMS["halfLife"],
+            "offSeason": model.DEFAULT_PARAMS["offSeason"],
+            "seasonBoost": model.DEFAULT_PARAMS["seasonBoost"],
+            "temperature": model.DEFAULT_PARAMS["temperature"],
             "usingConstructors": using_constructors,
+            "carOverlay": using_constructors,
         },
         "gridSize": len(grid_ids),
         "chanceNextRaceNew": round(100 * chance_new, 1),

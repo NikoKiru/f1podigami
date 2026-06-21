@@ -16,7 +16,17 @@ DATASETS = [
     "driver_races.json",
     "overdue.json",
     "schedule.json",
+    "model_eval.json",
 ]
+
+
+def test_model_eval_shape():
+    ev = load("model_eval.json")
+    assert {"evalWindow", "modelParams", "ladder", "chosen", "calibration"} <= ev.keys()
+    assert ev["ladder"], "no ladder rows"
+    for row in ev["ladder"]:
+        assert {"model", "top1", "top3", "top5", "logLoss"} <= row.keys()
+    assert {"top3", "ece", "baseRateNew"} <= ev["chosen"].keys()
 
 
 def test_schedule_shape():

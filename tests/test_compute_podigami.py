@@ -87,7 +87,7 @@ def test_recent_form_outranks_stale_history(scenario):
     # alf podiumed all over the current season; dan only in the old season.
     assert form["alf"] > form["dan"]
     # the never-podiumed rookie sits at the alpha floor, below everyone active.
-    assert form["eli"] == pytest.approx(cp.ALPHA)
+    assert form["eli"] == pytest.approx(cp.model.DEFAULT_PARAMS["alpha"])
     assert form["eli"] < form["cas"]
 
 
@@ -246,9 +246,9 @@ def test_empty_constructors_list_ignored(scenario):
     assert res["params"]["usingConstructors"] is False
 
 
-def test_constructor_multiplier_scales_uniformly():
-    """Same-team drivers get the same multiplier; a strong team lifts both
-    equally relative to their no-constructor weights."""
+def test_constructor_overlay_lifts_stronger_team_more():
+    """The live car overlay lifts a top-team driver more than a weaker-team one
+    (exact factors blur because of the teammate 'halo' blend)."""
     podiums = [
         race(2025, 1, "alf", "bob", "cas"),
         race(2025, 2, "alf", "bob", "cas"),
@@ -262,8 +262,7 @@ def test_constructor_multiplier_scales_uniformly():
     res_con = cp.compute(podiums, combos_from(podiums), grid, constructor_data=con)
     form_no = {d["driverId"]: d["weight"] for d in res_no["driverForm"]}
     form_con = {d["driverId"]: d["weight"] for d in res_con["driverForm"]}
-    # teamA (top) multiplier = 1 + 0.5 * 1.0 = 1.5
-    assert form_con["alf"] == pytest.approx(form_no["alf"] * 1.5, abs=0.01)
-    assert form_con["bob"] == pytest.approx(form_no["bob"] * 1.5, abs=0.01)
-    # teamB multiplier = 1 + 0.5 * (50/200) = 1.125
-    assert form_con["cas"] == pytest.approx(form_no["cas"] * 1.125, abs=0.01)
+    lift = {d: form_con[d] / form_no[d] for d in ("alf", "cas")}
+    # both lifted above baseline, and the top team (teamA) is lifted more than teamB
+    assert lift["alf"] > 1.0 and lift["cas"] > 1.0
+    assert lift["alf"] > lift["cas"]
