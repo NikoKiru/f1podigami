@@ -18,7 +18,15 @@ ALL_ASSETS = [
     "index.js",
     "podigami.js",
     "theme.js",
+    "favicon.svg",
 ]
+
+
+def test_pages_link_favicon(dist):
+    for page in PAGES:
+        html = (dist / page).read_text(encoding="utf-8")
+        assert '<link rel="icon" href="favicon.svg" type="image/svg+xml">' in html
+    assert (dist / "favicon.svg").is_file()
 
 
 @pytest.mark.parametrize("page", PAGES)
