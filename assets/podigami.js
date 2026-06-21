@@ -18,6 +18,14 @@
         return d.innerHTML;
     }
 
+    // Broadcast-style full name: "First MIDDLE? LASTNAME" (surname uppercased).
+    function displayName(name) {
+        const parts = name.trim().split(/\s+/);
+        if (parts.length === 0) return name;
+        parts[parts.length - 1] = parts[parts.length - 1].toUpperCase();
+        return parts.join(' ');
+    }
+
     // Wikipedia race-report URL — same source the Ergast/Jolpica API cites.
     function wikiUrl(season, name) {
         return 'https://en.wikipedia.org/wiki/' +
@@ -38,7 +46,7 @@
 
         listEl.innerHTML = entries.map(e => {
             const names = e.names
-                .map(n => `<span class="pdriver">${esc(n)}</span>`)
+                .map(n => `<span class="pdriver">${esc(displayName(n))}</span>`)
                 .join('<span class="sep">/</span>');
             const fr = e.firstRace;
             const url = wikiUrl(year, fr.raceName);

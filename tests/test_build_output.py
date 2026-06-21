@@ -83,6 +83,21 @@ def test_landing_page_has_broadcast_driver_treatment(dist):
     assert 'class="tr-num"' in html  # car-number chips
 
 
+def test_display_name_uppercases_surname_only():
+    from build.build_podigami_html import display_name
+
+    assert display_name("Max Verstappen") == "Max VERSTAPPEN"
+    assert display_name("Andrea Kimi Antonelli") == "Andrea Kimi ANTONELLI"
+    assert display_name("Kimi Räikkönen") == "Kimi RÄIKKÖNEN"  # unicode-safe
+    assert display_name("") == ""
+
+
+def test_landing_candidate_tooltip_uses_broadcast_name(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    # candidate hover tooltips show the broadcast full name (surname uppercased)
+    assert "ANTONELLI" in html
+
+
 def test_team_styling_only_on_landing_page(dist):
     # historical/data pages stay plain — no team colours should leak in
     for page in ("combos.html", "overdue.html", "soulmates.html"):
