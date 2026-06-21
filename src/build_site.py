@@ -13,6 +13,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 SRC = Path(__file__).resolve().parent
@@ -21,12 +22,39 @@ BUILD_DIR = SRC / "build"
 DIST = REPO / "dist"
 ASSETS = REPO / "assets"
 
+SITE_URL = "https://nikokiru.github.io/f1_podigami"
+
 PAGE_BUILDERS = [
     "build_podigami_html.py",
     "build_combos_html.py",
     "build_overdue_html.py",
     "build_soulmates_html.py",
 ]
+
+PAGES = ["index.html", "combos.html", "overdue.html", "soulmates.html"]
+
+
+def _write_robots_txt() -> None:
+    content = f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
+    (DIST / "robots.txt").write_text(content, encoding="utf-8")
+
+
+def _write_sitemap_xml() -> None:
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    urls = "\n".join(
+        f"  <url>\n"
+        f"    <loc>{SITE_URL}/{page}</loc>\n"
+        f"    <lastmod>{today}</lastmod>\n"
+        f"  </url>"
+        for page in PAGES
+    )
+    content = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{urls}\n"
+        "</urlset>\n"
+    )
+    (DIST / "sitemap.xml").write_text(content, encoding="utf-8")
 
 
 def build() -> None:
@@ -45,7 +73,10 @@ def build() -> None:
             shutil.copy2(asset, DIST / asset.name)
             copied += 1
 
-    print(f"\nSite built -> {DIST} ({len(PAGE_BUILDERS)} pages, {copied} assets)")
+    _write_robots_txt()
+    _write_sitemap_xml()
+
+    print(f"\nSite built -> {DIST} ({len(PAGE_BUILDERS)} pages, {copied} assets, robots.txt, sitemap.xml)")
 
 
 if __name__ == "__main__":

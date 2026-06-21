@@ -79,7 +79,13 @@ def main() -> int:
         data["currentGrid"],
     )
 
-    page = f"""{head("F1 Overdue Podiums - Most Likely Trio to Never Have Happened", "podigami.css")}
+    page = f"""{head(
+        "F1 Overdue Podiums - Most Likely Trio to Never Have Happened",
+        "podigami.css",
+        description="The F1 podium trios that should have happened but never did. Drivers who raced together dozens of times, each a regular podium finisher, yet never all three on the rostrum.",
+        page_path="overdue.html",
+        keywords="F1, Formula 1, overdue podiums, F1 statistics, podium trios, near-miss podiums, F1 data",
+    )}
 <body>
 {nav("overdue.html")}
 <header>
