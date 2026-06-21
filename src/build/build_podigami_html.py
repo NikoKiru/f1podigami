@@ -26,6 +26,15 @@ def esc(s: str) -> str:
     return html.escape(str(s))
 
 
+def display_name(name: str) -> str:
+    """Broadcast-style full name: "First MIDDLE? LASTNAME" (surname uppercased)."""
+    parts = name.split()
+    if not parts:
+        return name
+    parts[-1] = parts[-1].upper()
+    return " ".join(parts)
+
+
 def driver_view(entry: dict, meta: dict) -> dict:
     """Enrich a podigami driver entry with broadcast fields: surname, TLA code,
     car number, and the team colour (plus a legible ink for text on it)."""
@@ -90,7 +99,7 @@ def render_candidates(cands: list[dict], meta: dict) -> str:
         for p in c["perDriver"]:
             v = driver_view(p, meta)
             chips.append(
-                f'<span class="cd" style="--team:{v["color"]}" title="{esc(v["name"])}">'
+                f'<span class="cd" style="--team:{v["color"]}" title="{esc(display_name(v["name"]))}">'
                 f'<span class="cd-dot"></span><span class="cd-code">{esc(v["code"])}</span>'
                 f"</span>"
             )
