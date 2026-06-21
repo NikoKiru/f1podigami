@@ -37,6 +37,12 @@ def test_page_head_essentials(dist, page):
     assert '<link rel="stylesheet" href="style.css">' in html
 
 
+def test_landing_h1_keyword_has_real_space(dist):
+    # the <h1> text content must read "F1 Podigami" (real space, not just CSS gap)
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert '<h1><span class="accent">F1</span> Podigami</h1>' in html
+
+
 def test_google_site_verification_present(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert (

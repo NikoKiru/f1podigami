@@ -92,7 +92,7 @@ def main() -> int:
 {nav("overdue.html")}
 <header>
     <div class="container">
-        <h1><span class="accent">F1</span>Overdue Podiums</h1>
+        <h1><span class="accent">F1</span> Overdue Podiums</h1>
         <p class="tagline">The podium that <em>should</em> have happened but never did &mdash; trios who raced together time and again, each a regular podium finisher, yet never once all three on the rostrum together.</p>
     </div>
 </header>

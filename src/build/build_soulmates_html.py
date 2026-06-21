@@ -214,7 +214,7 @@ def main() -> int:
 {nav("soulmates.html")}
 <header>
     <div class="container">
-        <h1><span class="accent">F1</span>Podium Soulmates</h1>
+        <h1><span class="accent">F1</span> Podium Soulmates</h1>
         <p class="tagline">Which legends spent the most race weekends together on the box? 76 years of F1 history distilled into the partnerships that defined each era.</p>
         {stats_html}
     </div>
