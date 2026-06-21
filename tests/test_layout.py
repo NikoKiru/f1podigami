@@ -37,12 +37,18 @@ def test_nav_includes_theme_toggle():
     assert 'id="theme-toggle"' in nav("index.html")
 
 
-def test_soulmates_arrow_only_when_not_active():
-    # arrow present when Soulmates is not the current page
-    assert "Soulmates &rarr;" in nav("index.html")
-    # plain label (no arrow) on its own page
+def test_nav_has_brand_home_link():
+    out = nav("index.html")
+    assert 'class="brand"' in out
+    assert 'href="index.html"' in out
+    assert "brand-mark" in out  # podium logo svg
+    assert "brand-name" in out
+
+
+def test_nav_links_are_plain_labels_no_arrow():
+    # the old "Soulmates ->" arrow is gone in the tabbed header
     sm = nav("soulmates.html")
-    assert "Soulmates &rarr;" not in sm
+    assert "&rarr;" not in sm
     assert '<a href="soulmates.html" class="active">Soulmates</a>' in sm
 
 
