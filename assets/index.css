@@ -97,7 +97,7 @@ main {
 }
 
 .filter-group label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
@@ -183,7 +183,7 @@ thead th {
     padding: 13px 18px;
     background: var(--surface-2);
     color: var(--muted);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -376,7 +376,7 @@ tr.detail>td {
 .season-row .season-label .ct {
     color: var(--muted-dim);
     font-weight: 500;
-    font-size: 12px;
+    font-size: 13px;
     margin-left: 4px;
 }
 
@@ -412,7 +412,7 @@ a.race-pill:hover {
     color: var(--muted-dim);
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .empty-state {
@@ -493,7 +493,7 @@ a.race-pill:hover {
     thead th,
     tbody tr.combo>td {
         padding: 10px 8px;
-        font-size: 12px;
+        font-size: 13px;
     }
 
     td.drivers .driver {
@@ -501,7 +501,7 @@ a.race-pill:hover {
     }
 
     td.last {
-        font-size: 12px;
+        font-size: 13px;
     }
 
     td.last .race-name {
@@ -564,7 +564,7 @@ a.race-pill:hover {
     }
 
     tbody tr.combo td.rank {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 700;
         color: var(--accent-bright);
         letter-spacing: 0.3px;
@@ -651,7 +651,7 @@ a.race-pill:hover {
         width: 24px;
         height: 24px;
         line-height: 24px;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     /* card + its expanded detail join into one connected block */
