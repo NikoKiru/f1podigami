@@ -24,7 +24,7 @@ import requests
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 SLEEP_BETWEEN = 1.0
 MAX_BACKOFF_RETRIES = 6
-USER_AGENT = "f1_podigami/0.2 (https://github.com/local/f1_podigami)"
+USER_AGENT = "f1podigami/0.2 (https://github.com/local/f1podigami)"
 ROUNDS_BACK = 3  # union the last N completed rounds to catch seat rotations
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
