@@ -77,21 +77,35 @@ def head(
 </head>"""
 
 
+# Small podium logo mark for the header brand (matches the favicon).
+_BRAND_MARK = (
+    '<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">'
+    '<rect x="6" y="28" width="16" height="26" rx="2" fill="#c0c0c0"/>'
+    '<rect x="24" y="17" width="16" height="37" rx="2" fill="#f4c430"/>'
+    '<rect x="42" y="35" width="16" height="19" rx="2" fill="#cd7f32"/>'
+    '<rect x="5" y="54" width="54" height="5" rx="2.5" fill="#e10600"/>'
+    "</svg>"
+)
+
+
 def nav(active: str) -> str:
-    """Return the site nav with ``active`` (an href like ``"index.html"``)
-    marked, including the light/dark theme toggle."""
+    """Return the sticky site header: brand (logo + wordmark), uppercase nav
+    with ``active`` (an href like ``"index.html"``) underlined, and the
+    light/dark theme toggle."""
     items = []
     for href, label in NAV_LINKS:
-        is_active = href == active
-        text = label
-        if href == "soulmates.html" and not is_active:
-            text = "Soulmates &rarr;"
-        cls = ' class="active"' if is_active else ""
-        items.append(f'        <a href="{href}"{cls}>{text}</a>')
+        cls = ' class="active"' if href == active else ""
+        items.append(f'            <a href="{href}"{cls}>{label}</a>')
     links = "\n".join(items)
     return f"""<nav class="nav">
     <div class="container nav-inner">
+        <a class="brand" href="index.html" aria-label="F1 Podigami home">
+            {_BRAND_MARK}
+            <span class="brand-name"><span class="accent">F1</span> Podigami</span>
+        </a>
+        <div class="nav-links">
 {links}
+        </div>
         <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle light/dark theme"></button>
     </div>
 </nav>"""

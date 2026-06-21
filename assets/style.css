@@ -73,43 +73,105 @@ body {
     padding: 0 32px;
 }
 
-/* nav */
+/* nav / sticky site header bar */
 .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
     background: var(--bg-2);
-    border-bottom: 1px solid var(--border);
+}
+
+/* thin red accent line along the bottom of the bar */
+.nav::after {
+    content: "";
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent 0%, var(--accent) 18%, var(--accent-bright) 50%, var(--accent) 82%, transparent 100%);
+    opacity: 0.85;
 }
 
 .nav-inner {
     display: flex;
-    gap: 24px;
-    padding: 12px 0;
-    align-items: center;
+    align-items: stretch;
+    gap: 20px;
+    min-height: 54px;
 }
 
-.nav a {
+/* brand: podium mark + wordmark, links home */
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    align-self: center;
+    text-decoration: none;
+    flex: 0 0 auto;
+}
+
+.brand-mark {
+    width: 26px;
+    height: 26px;
+    display: block;
+}
+
+.brand-name {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.brand-name .accent {
+    color: var(--accent);
+    margin-right: 3px;
+}
+
+/* nav links: uppercase tabs with a red active underline */
+.nav-links {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    margin-left: 8px;
+}
+
+.nav-links a {
+    position: relative;
+    display: flex;
+    align-items: center;
     color: var(--muted);
     text-decoration: none;
-    font-size: 13px;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    transition: color 0.15s, background 0.15s;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 13px;
+    transition: color 0.15s;
 }
 
-.nav a:hover {
+.nav-links a:hover {
     color: var(--text);
-    background: var(--surface-2);
 }
 
-.nav a.active {
+.nav-links a.active {
     color: var(--text);
-    background: var(--surface-2);
-    border-left: 2px solid var(--accent);
-    padding-left: 10px;
+}
+
+.nav-links a.active::after {
+    content: "";
+    position: absolute;
+    left: 13px;
+    right: 13px;
+    bottom: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
 }
 
 /* theme toggle */
 .theme-toggle {
     margin-left: auto;
+    align-self: center;
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
@@ -143,31 +205,18 @@ body {
     /* moon: shown in light mode (click for dark) */
 }
 
-/* header */
+/* page-title strip (slim, integrated with the bar above) */
 header {
-    background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
+    background: var(--bg-2);
     border-bottom: 1px solid var(--border);
-    position: relative;
-    padding: 40px 0 32px;
-}
-
-header::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 2px;
-    background: linear-gradient(90deg,
-            transparent 0%, var(--accent) 20%, var(--accent-bright) 50%, var(--accent) 80%, transparent 100%);
-    opacity: 0.85;
+    padding: 24px 0 20px;
 }
 
 header h1 {
-    margin: 0 0 6px;
-    font-size: 30px;
+    margin: 0 0 4px;
+    font-size: 26px;
     font-weight: 700;
-    letter-spacing: -0.6px;
+    letter-spacing: -0.5px;
 }
 
 header h1 .accent {
@@ -294,30 +343,47 @@ footer a:hover {
         padding: 0 14px;
     }
 
-    /* nav becomes a horizontal scroll strip so the four links never wrap/overflow */
+    /* brand + toggle on the top row; nav links become a scroll strip beneath */
     .nav-inner {
-        gap: 2px;
-        padding: 4px 0;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        align-items: center;
+        min-height: 0;
+        padding: 8px 0;
+        gap: 6px 12px;
+    }
+
+    .brand {
+        order: 1;
+    }
+
+    .theme-toggle {
+        order: 2;
+        margin-left: auto;
+    }
+
+    .nav-links {
+        order: 3;
+        flex-basis: 100%;
+        margin-left: 0;
+        gap: 0;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
     }
 
-    .nav-inner::-webkit-scrollbar {
+    .nav-links::-webkit-scrollbar {
         display: none;
     }
 
-    .nav a {
+    .nav-links a {
         flex: 0 0 auto;
         white-space: nowrap;
-        padding: 11px 12px;
-        /* ~44px tap height */
-        font-size: 13px;
+        padding: 10px 11px;
     }
 
-    .nav a.active {
-        padding-left: 12px;
+    .nav-links a.active::after {
+        left: 11px;
+        right: 11px;
     }
 
     header {
