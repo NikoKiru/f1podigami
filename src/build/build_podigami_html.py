@@ -22,6 +22,7 @@ from team_colors import team_color, text_on  # noqa: E402
 PODIGAMI_PATH = ROOT / "data" / "podigami.json"
 CURRENT_DRIVERS_PATH = ROOT / "data" / "current_drivers.json"
 SCHEDULE_PATH = ROOT / "data" / "schedule.json"
+MODEL_EVAL_PATH = ROOT / "data" / "model_eval.json"
 OUT_PATH = ROOT / "dist" / "index.html"
 
 
@@ -251,6 +252,88 @@ def render_timeline(data: dict) -> str:
     )
 
 
+def render_accuracy_badge(ev: dict) -> str:
+    if not ev:
+        return ""
+    top3 = round(100 * ev["chosen"]["top3"])
+    return (
+        f'<a class="acc-badge" href="#model-accuracy" title="Backtested model accuracy">'
+        f'<span class="acc-badge-k">Backtested</span>'
+        f"<b>top-3 {top3}%</b>"
+        f'<span class="acc-badge-sep">&middot;</span>calibrated'
+        f'<span class="acc-badge-go">method &rarr;</span>'
+        f"</a>"
+    )
+
+
+def _reliability_svg(cal: list[dict]) -> str:
+    pts = [(b["meanPred"], b["obsRate"]) for b in cal if b["n"] and b["meanPred"] is not None]
+    s = 180
+    dots = "".join(
+        f'<circle cx="{p * s:.1f}" cy="{(1 - o) * s:.1f}" r="3.5" class="acc-dot"/>' for p, o in pts
+    )
+    return (
+        f'<svg class="acc-rel" viewBox="-6 -8 {s + 16} {s + 26}" role="img" '
+        f'aria-label="P(new) calibration reliability">'
+        f'<rect x="0" y="0" width="{s}" height="{s}" class="acc-frame"/>'
+        f'<line x1="0" y1="{s}" x2="{s}" y2="0" class="acc-diag"/>'
+        f"{dots}"
+        f'<text x="{s / 2}" y="{s + 18}" class="acc-axis" text-anchor="middle">predicted &rarr;</text>'
+        f"</svg>"
+    )
+
+
+def render_accuracy(ev: dict) -> str:
+    if not ev:
+        return ""
+    ch = ev["chosen"]
+    tw = ev["evalWindow"]["test"]
+    mp = ev["modelParams"]
+    rows = ""
+    for r in ev["ladder"]:
+        cls = ' class="acc-chosen"' if r["model"].startswith("PL + tuned") else ""
+        rows += (
+            f"<tr{cls}><td>{esc(r['model'])}</td>"
+            f"<td>{round(100 * r['top1'])}%</td>"
+            f"<td>{round(100 * r['top3'])}%</td>"
+            f"<td>{round(100 * r['top5'])}%</td>"
+            f"<td>{r['logLoss']:.2f}</td></tr>"
+        )
+    base = ch.get("baseRateNew", 0.0)
+    bn = ch.get("brierNew", 0.0)
+    bnb = ch.get("brierNewBaseRate", 0.0)
+    return (
+        f'<section class="panel" id="model-accuracy">'
+        f"  <h2>Model accuracy &amp; method</h2>"
+        f'  <p class="panel-sub">A Plackett-Luce model over recency-weighted driver strengths, '
+        f"tuned and then measured on the {tw[0]}&ndash;{tw[1]} seasons it never saw during "
+        f"tuning ({ch['n']} races). Lower log-loss is better.</p>"
+        f'  <div class="acc-grid">'
+        f'    <div class="acc-tablewrap">'
+        f'      <table class="acc-table"><thead><tr><th>Model</th><th>Top-1</th>'
+        f"<th>Top-3</th><th>Top-5</th><th>Log-loss</th></tr></thead><tbody>{rows}</tbody></table>"
+        f'      <p class="acc-cap">Top-k = how often the real podium trio landed in the model&rsquo;s '
+        f"k most likely. The highlighted row is the validated, shipped model.</p>"
+        f"    </div>"
+        f'    <div class="acc-calwrap">'
+        f"      {_reliability_svg(ev['calibration'])}"
+        f'      <p class="acc-cap">Calibration of the &ldquo;brand-new trio&rdquo; chance: dots near the '
+        f"line = honest. Base-rate {round(100 * base)}%; the headline only just beats it "
+        f"(Brier {bn:.3f} vs {bnb:.3f}) &mdash; the model&rsquo;s real edge is <em>ranking</em> "
+        f"which trio, not that single %.</p>"
+        f"    </div>"
+        f"  </div>"
+        f'  <p class="acc-note"><b>How it works:</b> each driver earns a strength from their recent '
+        f"podiums (halved every {mp['halfLife']:.0f} races, shrunk across winters); Plackett-Luce "
+        f"turns those into the probability each trio is the top three. "
+        f"<b>What it can&rsquo;t do:</b> F1 podiums are high-variance, so exact-trio hits are rare by "
+        f"nature; the live current-season car/teammate nudge is applied to today&rsquo;s grid but is "
+        f"<em>not</em> in these backtested figures (no historical team data), and qualifying "
+        f"isn&rsquo;t used yet.</p>"
+        f"</section>"
+    )
+
+
 def main() -> int:
     data = json.loads(PODIGAMI_PATH.read_text(encoding="utf-8"))
     season = data["currentSeason"]
@@ -269,10 +352,16 @@ def main() -> int:
         schedule = json.loads(SCHEDULE_PATH.read_text(encoding="utf-8"))
     next_race = render_next_race(schedule) if schedule else ""
 
+    model_eval = {}
+    if MODEL_EVAL_PATH.exists():
+        model_eval = json.loads(MODEL_EVAL_PATH.read_text(encoding="utf-8"))
+
     hero = render_hero(cands[0], chance, meta) if cands else ""
     candidates = render_candidates(cands, meta)
     form = render_form(data["driverForm"], using_constructors, meta)
     timeline = render_timeline(data)
+    acc_badge = render_accuracy_badge(model_eval)
+    accuracy = render_accuracy(model_eval)
 
     # Embedded data for the slider (only what the client needs).
     embed = json.dumps(
@@ -307,12 +396,16 @@ def main() -> int:
     <div class="container">
         {next_race}
         {hero}
-        <p class="as-of">Model up to date through the {esc(as_of["season"])} {
+        <div class="as-of-row">
+            <p class="as-of">Model up to date through the {esc(as_of["season"])} {
         esc(as_of["raceName"])
     } (round {esc(as_of["round"])}).</p>
+            {acc_badge}
+        </div>
         {candidates}
         {form}
         {timeline}
+        {accuracy}
     </div>
 </main>
 {FOOTER}
