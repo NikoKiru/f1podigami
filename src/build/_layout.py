@@ -106,6 +106,7 @@ FOOTER = f"""<footer>
             Data from <a href="{DATA_URL}" target="_blank" rel="noopener">Jolpica F1 API</a> (Ergast)
             &middot; F1 World Championship podiums since 1950
             &middot; For fun, not betting
+            &middot; Circuit outlines <a href="https://github.com/bacinger/f1-circuits" target="_blank" rel="noopener">f1-circuits</a> (ODbL)
             &middot; <a href="{REPO_URL}" target="_blank" rel="noopener">Source on GitHub</a>
         </p>
     </div>

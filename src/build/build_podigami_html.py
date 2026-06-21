@@ -7,6 +7,7 @@ of every trio that debuted in each season.
 
 from __future__ import annotations
 
+import datetime as dt
 import html
 import json
 import sys
@@ -15,10 +16,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
+from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
 PODIGAMI_PATH = ROOT / "data" / "podigami.json"
 CURRENT_DRIVERS_PATH = ROOT / "data" / "current_drivers.json"
+SCHEDULE_PATH = ROOT / "data" / "schedule.json"
 OUT_PATH = ROOT / "dist" / "index.html"
 
 
@@ -57,6 +60,73 @@ def driver_view(entry: dict, meta: dict) -> dict:
 
 def _num_chip(v: dict) -> str:
     return f'<span class="d-num">{esc(v["number"])}</span>' if v["number"] else ""
+
+
+def pick_next_race(schedule: dict, today: str | None = None) -> dict | None:
+    """Return the next race whose date is today or later, else None."""
+    today = today or dt.date.today().isoformat()
+    races = sorted(schedule.get("races", []), key=lambda r: int(r["round"]))
+    for r in races:
+        if r["date"] >= today:
+            return r
+    return None
+
+
+def _iso_datetime(race: dict) -> str:
+    return f"{race['date']}T{race.get('time') or '00:00:00Z'}"
+
+
+def _fallback_when(race: dict) -> str:
+    d = dt.datetime.strptime(race["date"], "%Y-%m-%d")
+    base = f"{d:%a} {d.day} {d:%b}"
+    t = race.get("time", "")
+    return f"{base} &middot; {t[:5]} UTC" if t else base
+
+
+def render_next_race(schedule: dict, today: str | None = None) -> str:
+    nxt = pick_next_race(schedule, today)
+    if not nxt:
+        return (
+            '<section class="next-race nr-empty">'
+            '<span class="nr-tag">Next race</span>'
+            '<span class="nr-name">Season complete &mdash; see you next year</span>'
+            "</section>"
+        )
+    fl = flag_svg(nxt["country"])
+    name = esc(nxt["raceName"])
+    name_html = (
+        f'<a href="{esc(nxt["url"])}" target="_blank" rel="noopener">{name}</a>'
+        if nxt.get("url")
+        else name
+    )
+    parts = [esc(nxt["circuitName"]), esc(f"{nxt['locality']}, {nxt['country']}")]
+    if nxt.get("lengthKm"):
+        parts.append(f"{nxt['lengthKm']} km")
+    circuit_line = " &middot; ".join(parts)
+    track = ""
+    if nxt.get("trackPath"):
+        track = (
+            f'<svg class="nr-track" viewBox="{esc(nxt["trackViewBox"])}" '
+            f'fill="none" aria-hidden="true"><path d="{esc(nxt["trackPath"])}"/></svg>'
+        )
+    return (
+        f'<section class="next-race" data-datetime="{esc(_iso_datetime(nxt))}">'
+        f'  <div class="nr-main">'
+        f'    <div class="nr-head">'
+        f"      {fl}"
+        f'      <span class="nr-round">Round {esc(nxt["round"])} / {esc(schedule.get("totalRounds", ""))}</span>'
+        f'      <span class="nr-tag">Next race</span>'
+        f"    </div>"
+        f'    <h2 class="nr-name">{name_html}</h2>'
+        f'    <div class="nr-circuit">{circuit_line}</div>'
+        f'    <div class="nr-when">'
+        f'      <span class="nr-date">{_fallback_when(nxt)}</span>'
+        f'      <span class="nr-countdown" data-countdown></span>'
+        f"    </div>"
+        f"  </div>"
+        f'  <div class="nr-art">{track}</div>'
+        f"</section>"
+    )
 
 
 def render_hero(top: dict, chance: float, meta: dict) -> str:
@@ -194,6 +264,11 @@ def main() -> int:
     grid_doc = json.loads(CURRENT_DRIVERS_PATH.read_text(encoding="utf-8"))
     meta = {d["driverId"]: d for d in grid_doc["drivers"]}
 
+    schedule = {}
+    if SCHEDULE_PATH.exists():
+        schedule = json.loads(SCHEDULE_PATH.read_text(encoding="utf-8"))
+    next_race = render_next_race(schedule) if schedule else ""
+
     hero = render_hero(cands[0], chance, meta) if cands else ""
     candidates = render_candidates(cands, meta)
     form = render_form(data["driverForm"], using_constructors, meta)
@@ -230,6 +305,7 @@ def main() -> int:
 </header>
 <main>
     <div class="container">
+        {next_race}
         {hero}
         <p class="as-of">Model up to date through the {esc(as_of["season"])} {
         esc(as_of["raceName"])

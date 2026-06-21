@@ -15,7 +15,20 @@ DATASETS = [
     "podigami.json",
     "driver_races.json",
     "overdue.json",
+    "schedule.json",
 ]
+
+
+def test_schedule_shape():
+    sched = load("schedule.json")
+    assert {"season", "totalRounds", "races"} <= sched.keys()
+    assert sched["races"], "schedule has no races"
+    for r in sched["races"]:
+        assert {"round", "raceName", "date", "circuitName", "country"} <= r.keys()
+        assert r["date"][:4].isdigit() and len(r["date"]) == 10  # YYYY-MM-DD
+    # most circuits should resolve to a drawn track outline
+    with_track = sum(1 for r in sched["races"] if r.get("trackPath"))
+    assert with_track >= len(sched["races"]) * 0.8
 
 
 def load(name: str):

@@ -33,6 +33,121 @@ main {
     margin: 14px 2px 0;
 }
 
+/* next-race box */
+.next-race {
+    display: grid;
+    grid-template-columns: 1fr minmax(120px, 200px);
+    gap: 18px;
+    align-items: center;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--bg-2) 100%);
+    border: 1px solid var(--border-strong);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    overflow: hidden;
+}
+
+.nr-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.nr-flag {
+    width: 34px;
+    height: auto;
+    border-radius: 3px;
+    display: block;
+    box-shadow: 0 0 0 1px var(--border);
+}
+
+.nr-round {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+}
+
+.nr-tag {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-bright);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-left: auto;
+}
+
+.nr-name {
+    margin: 0 0 4px;
+    font-size: 24px;
+    letter-spacing: -0.4px;
+}
+
+.nr-name a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nr-name a:hover {
+    color: var(--accent-bright);
+}
+
+.nr-circuit {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.nr-when {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    align-items: baseline;
+    margin-top: 10px;
+}
+
+.nr-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.nr-countdown {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-bright);
+    font-variant-numeric: tabular-nums;
+}
+
+.nr-art {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nr-track {
+    width: 100%;
+    height: auto;
+    max-height: 88px;
+}
+
+.nr-track path {
+    stroke: var(--accent);
+    stroke-width: 2;
+    fill: none;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.next-race.nr-empty {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
 /* hero */
 .hero {
     display: grid;
@@ -478,6 +593,16 @@ a.tl-where:hover {
 
     .panel {
         padding: 16px;
+    }
+
+    .next-race {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .nr-track {
+        max-height: 70px;
     }
 
     /* timing tower: drop the team name and shrink the bar to fit narrow screens */
