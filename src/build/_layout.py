@@ -10,9 +10,9 @@ them). The import works both when a builder is run as a script
 
 from __future__ import annotations
 
-REPO_URL = "https://github.com/NikoKiru/f1_podigami"
+REPO_URL = "https://github.com/NikoKiru/f1podigami"
 DATA_URL = "https://api.jolpi.ca/ergast/f1/"
-SITE_URL = "https://nikokiru.github.io/f1_podigami"
+SITE_URL = "https://nikokiru.github.io/f1podigami"
 
 # Nav links in order: (href, label). The label shown for the active page is
 # rendered without the trailing arrow that the Soulmates link otherwise carries.

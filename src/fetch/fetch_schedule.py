@@ -27,7 +27,7 @@ from track_geo import VIEW_H, VIEW_W, geo_to_svg_path, nearest_circuit  # noqa: 
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 MAX_BACKOFF_RETRIES = 6
-USER_AGENT = "f1_podigami/0.2 (https://github.com/local/f1_podigami)"
+USER_AGENT = "f1podigami/0.2 (https://github.com/local/f1podigami)"
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"

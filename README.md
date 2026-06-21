@@ -9,20 +9,20 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 <br>
 
-[![CI](https://github.com/NikoKiru/f1_podigami/actions/workflows/ci.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/NikoKiru/f1_podigami/actions/workflows/codeql.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/codeql.yml)
-[![Security](https://github.com/NikoKiru/f1_podigami/actions/workflows/security.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/security.yml)
-[![Deploy to GitHub Pages](https://github.com/NikoKiru/f1_podigami/actions/workflows/deploy.yml/badge.svg)](https://github.com/NikoKiru/f1_podigami/actions/workflows/deploy.yml)
-[![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1_podigami/)
+[![CI](https://github.com/NikoKiru/f1podigami/actions/workflows/ci.yml/badge.svg)](https://github.com/NikoKiru/f1podigami/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/NikoKiru/f1podigami/actions/workflows/codeql.yml/badge.svg)](https://github.com/NikoKiru/f1podigami/actions/workflows/codeql.yml)
+[![Security](https://github.com/NikoKiru/f1podigami/actions/workflows/security.yml/badge.svg)](https://github.com/NikoKiru/f1podigami/actions/workflows/security.yml)
+[![Deploy to GitHub Pages](https://github.com/NikoKiru/f1podigami/actions/workflows/deploy.yml/badge.svg)](https://github.com/NikoKiru/f1podigami/actions/workflows/deploy.yml)
+[![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-107%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
-[![Seasons](https://img.shields.io/badge/seasons-1950–2026-e10600?style=flat-square)](https://nikokiru.github.io/f1_podigami/)
+[![Seasons](https://img.shields.io/badge/seasons-1950–2026-e10600?style=flat-square)](https://nikokiru.github.io/f1podigami/)
 
-**[🔮 Live demo →](https://nikokiru.github.io/f1_podigami/)**
+**[🔮 Live demo →](https://nikokiru.github.io/f1podigami/)**
 
 </div>
 

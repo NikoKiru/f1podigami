@@ -29,7 +29,7 @@ API_ROOT = "https://api.jolpi.ca/ergast/f1"
 SLEEP_BETWEEN = 1.0
 PAGE = 100
 MAX_BACKOFF_RETRIES = 6
-USER_AGENT = "f1_podigami/0.2 (https://github.com/local/f1_podigami)"
+USER_AGENT = "f1podigami/0.2 (https://github.com/local/f1podigami)"
 POOL_N = 60  # top drivers by career podiums included for the all-time list
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"

@@ -22,7 +22,7 @@ API_ROOT = "https://api.jolpi.ca/ergast/f1"
 PAGE_SIZE = 100
 SLEEP_BETWEEN = 1.0
 MAX_BACKOFF_RETRIES = 6
-USER_AGENT = "f1_podigami/0.1 (https://github.com/local/f1_podigami)"
+USER_AGENT = "f1podigami/0.1 (https://github.com/local/f1podigami)"
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 OUT_PATH = DATA_DIR / "podiums.json"

@@ -138,7 +138,7 @@ def test_footer_is_identical_across_pages(dist):
 def test_footer_has_universal_details(dist, page):
     footer = _footer_block((dist / page).read_text(encoding="utf-8"))
     assert "Jolpica F1 API" in footer  # data source attribution
-    assert "github.com/NikoKiru/f1_podigami" in footer  # source link
+    assert "github.com/NikoKiru/f1podigami" in footer  # source link
     assert 'class="footer-nav"' in footer  # cross-page nav
     for link in ("index.html", "combos.html", "overdue.html", "soulmates.html"):
         assert link in footer, f"footer should link to {link}"

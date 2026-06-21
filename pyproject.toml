@@ -1,5 +1,5 @@
 [project]
-name = "f1-podigami"
+name = "f1podigami"
 version = "0.1.0"
 description = "A scorigami-style predictor for never-before F1 podium trios."
 requires-python = ">=3.11"

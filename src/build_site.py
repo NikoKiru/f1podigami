@@ -22,7 +22,7 @@ BUILD_DIR = SRC / "build"
 DIST = REPO / "dist"
 ASSETS = REPO / "assets"
 
-SITE_URL = "https://nikokiru.github.io/f1_podigami"
+SITE_URL = "https://nikokiru.github.io/f1podigami"
 
 PAGE_BUILDERS = [
     "build_podigami_html.py",
