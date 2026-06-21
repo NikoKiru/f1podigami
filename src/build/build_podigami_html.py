@@ -170,7 +170,13 @@ def main() -> int:
         ensure_ascii=False,
     )
 
-    page = f"""{head(f"F1 Podigami - Next Likely New Podium ({season})", "podigami.css")}
+    page = f"""{head(
+        f"F1 Podigami - Next Likely New Podium ({season})",
+        "podigami.css",
+        description=f"Which never-before F1 podium trio is most likely next? A scorigami-style predictor for the {season} season, scored from {lo}-{hi} of podium history.",
+        page_path="index.html",
+        keywords="F1, podigami, Formula 1, podium prediction, scorigami, F1 podium, new podium trio, F1 statistics",
+    )}
 <body>
 {nav("index.html")}
 <header>

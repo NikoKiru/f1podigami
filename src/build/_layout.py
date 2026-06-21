@@ -12,6 +12,7 @@ from __future__ import annotations
 
 REPO_URL = "https://github.com/NikoKiru/f1_podigami"
 DATA_URL = "https://api.jolpi.ca/ergast/f1/"
+SITE_URL = "https://nikokiru.github.io/f1_podigami"
 
 # Nav links in order: (href, label). The label shown for the active page is
 # rendered without the trailing arrow that the Soulmates link otherwise carries.
@@ -34,7 +35,13 @@ _THEME_INIT = (
 )
 
 
-def head(title: str, *css_files: str) -> str:
+def head(
+    title: str,
+    *css_files: str,
+    description: str = "",
+    page_path: str = "",
+    keywords: str = "",
+) -> str:
     """Return ``<!DOCTYPE html>`` through ``</head>`` for a page.
 
     ``style.css`` is always linked first; ``css_files`` are the page-specific
@@ -43,6 +50,18 @@ def head(title: str, *css_files: str) -> str:
     links = "\n".join(
         f'<link rel="stylesheet" href="{href}">' for href in ("style.css", *css_files)
     )
+    canonical = f"{SITE_URL}/{page_path}" if page_path else f"{SITE_URL}/"
+    seo = ""
+    if description:
+        seo += f'\n<meta name="description" content="{description}">'
+        seo += f'\n<meta property="og:description" content="{description}">'
+    if keywords:
+        seo += f'\n<meta name="keywords" content="{keywords}">'
+    seo += f'\n<link rel="canonical" href="{canonical}">'
+    seo += f'\n<meta property="og:title" content="{title}">'
+    seo += '\n<meta property="og:type" content="website">'
+    seo += f'\n<meta property="og:url" content="{canonical}">'
+    seo += '\n<meta property="og:site_name" content="F1 Podigami">'
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,7 +69,7 @@ def head(title: str, *css_files: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0d12">
 {_THEME_INIT}
-<title>{title}</title>
+<title>{title}</title>{seo}
 {links}
 </head>"""
 

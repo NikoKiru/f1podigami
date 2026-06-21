@@ -107,7 +107,13 @@ def main() -> int:
 
     rows_html = "\n".join(render_combo(i, c) for i, c in enumerate(combos, 1))
 
-    page = f"""{head(f"F1 Podium Combinations - {season_min}-{season_max}", "index.css")}
+    page = f"""{head(
+        f"F1 Podium Combinations - {season_min}-{season_max}",
+        "index.css",
+        description=f"Every unique trio that has shared an F1 World Championship podium since {season_min}. Browse, filter, and sort all {unique_combos:,} combinations across {total_podiums:,} races.",
+        page_path="combos.html",
+        keywords="F1, Formula 1, podium combinations, F1 podium history, F1 statistics, podium trios, F1 data",
+    )}
 <body>
 {nav("combos.html")}
 <header>

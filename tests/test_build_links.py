@@ -37,6 +37,8 @@ def test_update_steps_point_to_real_scripts():
 def test_internal_html_links_resolve(dist, page):
     html = (dist / page).read_text(encoding="utf-8")
     for href in re.findall(r'href="([^"]+\.html)"', html):
+        if href.startswith("http"):
+            continue
         assert (dist / href).is_file(), f"{page} links to missing {href}"
 
 
