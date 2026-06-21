@@ -15,7 +15,7 @@
 /* ── section heading ─────────────────────────────────── */
 .sm-section-title {
     margin: 0 0 12px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--muted);
     text-transform: uppercase;
@@ -50,7 +50,7 @@
 }
 
 .pl-rank {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--muted-dim);
     font-weight: 700;
     text-align: right;
@@ -111,7 +111,7 @@
 
 .pl-years {
     display: block;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
 }
@@ -156,7 +156,7 @@
 }
 
 .fc-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--muted);
     text-transform: uppercase;
@@ -165,7 +165,7 @@
 }
 
 .fc-detail {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-dim);
     line-height: 1.5;
 }

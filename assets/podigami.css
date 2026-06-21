@@ -29,7 +29,7 @@ main {
 
 .as-of {
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
     margin: 14px 2px 0;
 }
 
@@ -72,7 +72,7 @@ main {
 
 .hc-label {
     display: block;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
     margin-top: 8px;
     text-transform: uppercase;
@@ -86,7 +86,7 @@ main {
 }
 
 .hp-label {
-    font-size: 12px;
+    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--muted);
@@ -126,7 +126,7 @@ main {
     border-radius: 4px;
     background: var(--team, var(--accent));
     color: var(--team-ink, #fff);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     text-align: center;
     font-variant-numeric: tabular-nums;
@@ -146,7 +146,7 @@ main {
 }
 
 .hd-team {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
@@ -155,13 +155,13 @@ main {
 }
 
 .hd-stat {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--muted);
     margin-top: 4px;
 }
 
 .hp-prob {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
     margin-top: 14px;
 }
@@ -255,7 +255,7 @@ main {
 
 .cand-meta {
     margin-top: 6px;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
 }
 
@@ -309,7 +309,7 @@ main {
     border-radius: 4px;
     background: var(--team, var(--accent));
     color: var(--team-ink, #fff);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     text-align: center;
     font-variant-numeric: tabular-nums;
@@ -335,7 +335,7 @@ main {
 }
 
 .tr-team {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -422,7 +422,7 @@ main {
 
 .tl-count {
     display: block;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
 }
 
@@ -446,7 +446,7 @@ main {
 }
 
 .tl-where {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
     white-space: nowrap;
     text-decoration: none;
