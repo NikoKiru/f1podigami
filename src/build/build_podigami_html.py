@@ -112,10 +112,10 @@ def render_next_race(schedule: dict, today: str | None = None) -> str:
     return (
         f'<section class="next-race" data-datetime="{esc(_iso_datetime(nxt))}">'
         f'  <div class="nr-main">'
+        f'    <span class="nr-tag">Next race</span>'
         f'    <div class="nr-head">'
         f"      {fl}"
         f'      <span class="nr-round">Round {esc(nxt["round"])} / {esc(schedule.get("totalRounds", ""))}</span>'
-        f'      <span class="nr-tag">Next race</span>'
         f"    </div>"
         f'    <h2 class="nr-name">{name_html}</h2>'
         f'    <div class="nr-circuit">{circuit_line}</div>'

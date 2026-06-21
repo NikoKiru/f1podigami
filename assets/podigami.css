@@ -73,12 +73,13 @@ main {
 }
 
 .nr-tag {
+    display: block;
     font-size: 12px;
     font-weight: 700;
     color: var(--accent-bright);
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    margin-left: auto;
+    margin-bottom: 8px;
 }
 
 .nr-name {
