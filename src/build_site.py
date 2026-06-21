@@ -42,10 +42,7 @@ def _write_robots_txt() -> None:
 def _write_sitemap_xml() -> None:
     today = datetime.now(UTC).strftime("%Y-%m-%d")
     urls = "\n".join(
-        f"  <url>\n"
-        f"    <loc>{SITE_URL}/{page}</loc>\n"
-        f"    <lastmod>{today}</lastmod>\n"
-        f"  </url>"
+        f"  <url>\n    <loc>{SITE_URL}/{page}</loc>\n    <lastmod>{today}</lastmod>\n  </url>"
         for page in PAGES
     )
     content = (
@@ -76,7 +73,9 @@ def build() -> None:
     _write_robots_txt()
     _write_sitemap_xml()
 
-    print(f"\nSite built -> {DIST} ({len(PAGE_BUILDERS)} pages, {copied} assets, robots.txt, sitemap.xml)")
+    print(
+        f"\nSite built -> {DIST} ({len(PAGE_BUILDERS)} pages, {copied} assets, robots.txt, sitemap.xml)"
+    )
 
 
 if __name__ == "__main__":

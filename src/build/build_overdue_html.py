@@ -79,13 +79,15 @@ def main() -> int:
         data["currentGrid"],
     )
 
-    page = f"""{head(
-        "F1 Overdue Podiums - Most Likely Trio to Never Have Happened",
-        "podigami.css",
-        description="The F1 podium trios that should have happened but never did. Drivers who raced together dozens of times, each a regular podium finisher, yet never all three on the rostrum.",
-        page_path="overdue.html",
-        keywords="F1, Formula 1, overdue podiums, F1 statistics, podium trios, near-miss podiums, F1 data",
-    )}
+    page = f"""{
+        head(
+            "F1 Overdue Podiums - Most Likely Trio to Never Have Happened",
+            "podigami.css",
+            description="The F1 podium trios that should have happened but never did. Drivers who raced together dozens of times, each a regular podium finisher, yet never all three on the rostrum.",
+            page_path="overdue.html",
+            keywords="F1, Formula 1, overdue podiums, F1 statistics, podium trios, near-miss podiums, F1 data",
+        )
+    }
 <body>
 {nav("overdue.html")}
 <header>
@@ -98,7 +100,9 @@ def main() -> int:
     <div class="container">
         {all_time}
         {grid}
-        <p class="as-of">Score is a ranking heuristic (races together &times; each driver's career podium rate); the concrete numbers are the shared-race count and rates. Up to date through the {esc(as_of["season"])} {esc(as_of["raceName"])} (round {esc(as_of["round"])}).</p>
+        <p class="as-of">Score is a ranking heuristic (races together &times; each driver's career podium rate); the concrete numbers are the shared-race count and rates. Up to date through the {
+        esc(as_of["season"])
+    } {esc(as_of["raceName"])} (round {esc(as_of["round"])}).</p>
     </div>
 </main>
 {FOOTER}

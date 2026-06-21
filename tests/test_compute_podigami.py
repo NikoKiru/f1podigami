@@ -108,6 +108,29 @@ def test_candidate_probabilities_descending(scenario):
     assert probs == sorted(probs, reverse=True)
 
 
+def test_driver_entries_carry_id_and_constructor_id(scenario):
+    podiums, combos, grid = scenario
+    res = cp.compute(podiums, combos, grid)
+    # driverForm entries expose driverId + constructorId (needed by the
+    # broadcast renderer to join codes/numbers and team colours)
+    for d in res["driverForm"]:
+        assert "driverId" in d
+        assert "constructorId" in d  # "" when no constructor data
+    # candidate perDriver entries carry the same join keys
+    for c in res["candidates"]:
+        for p in c["perDriver"]:
+            assert "driverId" in p
+            assert "constructorId" in p
+
+
+def test_constructor_id_populated_with_standings(scenario_with_constructors):
+    podiums, combos, grid, con = scenario_with_constructors
+    res = cp.compute(podiums, combos, grid, constructor_data=con)
+    form = {d["driverId"]: d for d in res["driverForm"]}
+    assert form["alf"]["constructorId"] == "teamA"
+    assert form["cas"]["constructorId"] == "teamB"
+
+
 def test_by_season_groups_debut_trios(scenario):
     podiums, combos, grid = scenario
     res = cp.compute(podiums, combos, grid)

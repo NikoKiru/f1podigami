@@ -142,10 +142,12 @@ def compute(
 
     def _driver_entry(d: str) -> dict:
         entry: dict = {
+            "driverId": d,
             "name": nm(d),
             "weight": round(weight[d], 3),
             "seasonPodiums": season_pod[d],
             "recentPodiums": recent_pod[d],
+            "constructorId": driver_cid.get(d, ""),
         }
         if using_constructors:
             entry["constructor"] = constructor_name.get(d, "")
@@ -169,7 +171,7 @@ def compute(
     candidates.sort(key=lambda x: -x["prob"])
 
     driver_form = sorted(
-        ({**{"driverId": d}, **_driver_entry(d)} for d in grid_ids),
+        (_driver_entry(d) for d in grid_ids),
         key=lambda x: -x["weight"],
     )
 

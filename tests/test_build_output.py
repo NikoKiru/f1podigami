@@ -75,6 +75,21 @@ def test_page_has_theme_toggle_and_no_flash_script(dist, page):
     assert "prefers-color-scheme: light" in html, f"{page} should honour the OS preference"
 
 
+def test_landing_page_has_broadcast_driver_treatment(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert "--team:" in html  # team-colour custom property drives the accents
+    assert 'class="tower-row"' in html  # timing-tower current-form rows
+    assert 'class="d-code"' in html  # hero TLA codes
+    assert 'class="tr-num"' in html  # car-number chips
+
+
+def test_team_styling_only_on_landing_page(dist):
+    # historical/data pages stay plain — no team colours should leak in
+    for page in ("combos.html", "overdue.html", "soulmates.html"):
+        html = (dist / page).read_text(encoding="utf-8")
+        assert "--team:" not in html, f"team styling leaked into {page}"
+
+
 def _footer_block(html: str) -> str:
     start = html.index("<footer>")
     end = html.index("</footer>") + len("</footer>")
