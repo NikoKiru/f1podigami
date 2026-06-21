@@ -120,7 +120,7 @@ def main() -> int:
 {nav("combos.html")}
 <header>
     <div class="container">
-        <h1><span class="accent">F1</span>Podium Combinations</h1>
+        <h1><span class="accent">F1</span> Podium Combinations</h1>
         <p class="tagline">Every unique trio that has shared an F1 World Championship podium since 1950 &mdash; order doesn't matter, only the set.</p>
         <div class="stats">
             <div class="stat"><div class="num">{

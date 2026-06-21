@@ -297,7 +297,7 @@ def main() -> int:
 {nav("index.html")}
 <header>
     <div class="container">
-        <h1><span class="accent">F1</span>Podigami</h1>
+        <h1><span class="accent">F1</span> Podigami</h1>
         <p class="tagline">Which never-before podium trio is most likely to happen next &mdash; a scorigami-style predictor for the {
         season
     } season, scored from {lo}&ndash;{hi} of podium history.</p>

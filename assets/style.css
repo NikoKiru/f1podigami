@@ -173,7 +173,9 @@ header h1 {
 header h1 .accent {
     color: var(--accent);
     font-weight: 800;
-    margin-right: 10px;
+    /* a real space now sits between "F1" and the title (for SEO/readability);
+       a small extra nudge keeps the wordmark balanced */
+    margin-right: 2px;
 }
 
 header .tagline {
@@ -328,7 +330,7 @@ footer a:hover {
     }
 
     header h1 .accent {
-        margin-right: 8px;
+        margin-right: 0;
     }
 
     header .tagline {
