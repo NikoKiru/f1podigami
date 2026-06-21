@@ -59,9 +59,9 @@ def head(
         seo += f'\n<meta name="keywords" content="{keywords}">'
     seo += f'\n<link rel="canonical" href="{canonical}">'
     seo += f'\n<meta property="og:title" content="{title}">'
-    seo += f'\n<meta property="og:type" content="website">'
+    seo += '\n<meta property="og:type" content="website">'
     seo += f'\n<meta property="og:url" content="{canonical}">'
-    seo += f'\n<meta property="og:site_name" content="F1 Podigami">'
+    seo += '\n<meta property="og:site_name" content="F1 Podigami">'
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>

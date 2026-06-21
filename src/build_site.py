@@ -13,7 +13,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 SRC = Path(__file__).resolve().parent
@@ -40,7 +40,7 @@ def _write_robots_txt() -> None:
 
 
 def _write_sitemap_xml() -> None:
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     urls = "\n".join(
         f"  <url>\n"
         f"    <loc>{SITE_URL}/{page}</loc>\n"
