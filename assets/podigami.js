@@ -117,3 +117,47 @@
 
     render(slider.value);
 })();
+
+// Next-race box: show the race time in the visitor's local timezone and tick a
+// live countdown. Reads the ISO datetime baked into the box at build time.
+(function () {
+    const box = document.querySelector('.next-race[data-datetime]');
+    if (!box) return;
+    const when = new Date(box.getAttribute('data-datetime'));
+    if (isNaN(when.getTime())) return;
+
+    const dateEl = box.querySelector('.nr-date');
+    const cdEl = box.querySelector('.nr-countdown');
+
+    if (dateEl) {
+        try {
+            const local = when.toLocaleString(undefined, {
+                weekday: 'short', day: 'numeric', month: 'short',
+                hour: '2-digit', minute: '2-digit',
+            });
+            dateEl.textContent = `${local} (your time)`;
+        } catch (e) { /* keep the server-rendered UTC fallback */ }
+    }
+
+    function tick() {
+        let diff = Math.floor((when.getTime() - Date.now()) / 1000);
+        if (diff <= 0) {
+            if (cdEl) cdEl.textContent = 'Lights out — race underway';
+            return false;
+        }
+        const d = Math.floor(diff / 86400); diff -= d * 86400;
+        const h = Math.floor(diff / 3600); diff -= h * 3600;
+        const m = Math.floor(diff / 60);
+        const s = diff - m * 60;
+        const pad = n => String(n).padStart(2, '0');
+        if (cdEl) {
+            cdEl.textContent =
+                (d > 0 ? d + 'd ' : '') + pad(h) + 'h ' + pad(m) + 'm ' + pad(s) + 's';
+        }
+        return true;
+    }
+
+    if (tick()) {
+        const id = setInterval(() => { if (!tick()) clearInterval(id); }, 1000);
+    }
+})();

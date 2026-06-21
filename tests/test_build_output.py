@@ -83,6 +83,13 @@ def test_landing_page_has_broadcast_driver_treatment(dist):
     assert 'class="tr-num"' in html  # car-number chips
 
 
+def test_landing_page_has_next_race_box(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'class="next-race"' in html
+    assert "data-datetime=" in html  # countdown/local-time hook
+    assert 'class="nr-track"' in html  # circuit outline SVG
+
+
 def test_display_name_uppercases_surname_only():
     from build.build_podigami_html import display_name
 
