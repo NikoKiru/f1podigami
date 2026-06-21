@@ -107,13 +107,15 @@ def main() -> int:
 
     rows_html = "\n".join(render_combo(i, c) for i, c in enumerate(combos, 1))
 
-    page = f"""{head(
-        f"F1 Podium Combinations - {season_min}-{season_max}",
-        "index.css",
-        description=f"Every unique trio that has shared an F1 World Championship podium since {season_min}. Browse, filter, and sort all {unique_combos:,} combinations across {total_podiums:,} races.",
-        page_path="combos.html",
-        keywords="F1, Formula 1, podium combinations, F1 podium history, F1 statistics, podium trios, F1 data",
-    )}
+    page = f"""{
+        head(
+            f"F1 Podium Combinations - {season_min}-{season_max}",
+            "index.css",
+            description=f"Every unique trio that has shared an F1 World Championship podium since {season_min}. Browse, filter, and sort all {unique_combos:,} combinations across {total_podiums:,} races.",
+            page_path="combos.html",
+            keywords="F1, Formula 1, podium combinations, F1 podium history, F1 statistics, podium trios, F1 data",
+        )
+    }
 <body>
 {nav("combos.html")}
 <header>
@@ -121,9 +123,13 @@ def main() -> int:
         <h1><span class="accent">F1</span>Podium Combinations</h1>
         <p class="tagline">Every unique trio that has shared an F1 World Championship podium since 1950 &mdash; order doesn't matter, only the set.</p>
         <div class="stats">
-            <div class="stat"><div class="num">{total_podiums:,}</div><div class="label">Races</div></div>
-            <div class="stat"><div class="num">{unique_combos:,}</div><div class="label">Unique Combos</div></div>
-            <div class="stat"><div class="num">{season_min}&ndash;{season_max}</div><div class="label">Seasons</div></div>
+            <div class="stat"><div class="num">{
+        total_podiums:,}</div><div class="label">Races</div></div>
+            <div class="stat"><div class="num">{
+        unique_combos:,}</div><div class="label">Unique Combos</div></div>
+            <div class="stat"><div class="num">{season_min}&ndash;{
+        season_max
+    }</div><div class="label">Seasons</div></div>
         </div>
     </div>
 </header>
@@ -154,7 +160,9 @@ def main() -> int:
                 </div>
             </div>
             <div class="hint">
-                Showing <strong id="visible-count">{unique_combos}</strong> of <span id="total-count">{unique_combos}</span>
+                Showing <strong id="visible-count">{
+        unique_combos
+    }</strong> of <span id="total-count">{unique_combos}</span>
                 &middot; each field matches one distinct driver (AND)
                 &middot; click a row to expand
             </div>

@@ -8,7 +8,8 @@ few completed rounds — that is the ~20-seat racing grid.
 
 Current season + latest rounds are read from data/podiums.json (no guessing).
 
-Writes data/current_drivers.json: {"season": "2026", "drivers": [{driverId, name}]}.
+Writes data/current_drivers.json:
+{"season": "2026", "drivers": [{driverId, name, code?, number?}]}.
 """
 
 from __future__ import annotations
@@ -56,15 +57,26 @@ def season_and_recent_rounds() -> tuple[int, list[int]]:
     return season, rounds[-ROUNDS_BACK:]
 
 
-def fetch_round_drivers(season: int, rnd: int) -> dict[str, str]:
+def fetch_round_drivers(season: int, rnd: int) -> dict[str, dict]:
+    """Return {driverId: {name, code, number}} for one round's starters.
+
+    ``code`` (the 3-letter TLA) and ``number`` (permanent car number) come
+    straight from the API's Driver object; either may be absent for some
+    drivers, in which case the key is omitted.
+    """
     data = get(f"{API_ROOT}/{season}/{rnd}/results.json", {"limit": 100})
     lists = data["MRData"]["RaceTable"]["Races"]
     if not lists:
         return {}
-    out: dict[str, str] = {}
+    out: dict[str, dict] = {}
     for r in lists[0].get("Results", []):
         d = r["Driver"]
-        out[d["driverId"]] = f"{d['givenName']} {d['familyName']}"
+        entry: dict = {"name": f"{d['givenName']} {d['familyName']}"}
+        if d.get("code"):
+            entry["code"] = d["code"]
+        if d.get("permanentNumber"):
+            entry["number"] = d["permanentNumber"]
+        out[d["driverId"]] = entry
     return out
 
 
@@ -72,12 +84,12 @@ def main() -> int:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     season, rounds = season_and_recent_rounds()
 
-    grid: dict[str, str] = {}
+    grid: dict[str, dict] = {}
     for rnd in rounds:
         grid.update(fetch_round_drivers(season, rnd))
         time.sleep(SLEEP_BETWEEN)
 
-    drivers = [{"driverId": k, "name": v} for k, v in sorted(grid.items())]
+    drivers = [{"driverId": k, **v} for k, v in sorted(grid.items())]
     out = {"season": str(season), "drivers": drivers}
     OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Wrote {OUT_PATH}")

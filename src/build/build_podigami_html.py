@@ -15,8 +15,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
+from team_colors import team_color, text_on  # noqa: E402
 
 PODIGAMI_PATH = ROOT / "data" / "podigami.json"
+CURRENT_DRIVERS_PATH = ROOT / "data" / "current_drivers.json"
 OUT_PATH = ROOT / "dist" / "index.html"
 
 
@@ -24,22 +26,44 @@ def esc(s: str) -> str:
     return html.escape(str(s))
 
 
-def render_trio_names(names: list[str], extra: str = "") -> str:
-    parts = '<span class="sep">/</span>'.join(
-        f'<span class="pdriver">{esc(n)}</span>' for n in names
-    )
-    cls = f"trio {extra}".strip()
-    return f'<span class="{cls}">{parts}</span>'
+def driver_view(entry: dict, meta: dict) -> dict:
+    """Enrich a podigami driver entry with broadcast fields: surname, TLA code,
+    car number, and the team colour (plus a legible ink for text on it)."""
+    name = entry["name"]
+    parts = name.split()
+    surname = parts[-1] if parts else name
+    m = meta.get(entry.get("driverId", ""), {})
+    code = (m.get("code") or surname[:3]).upper()
+    color = team_color(entry.get("constructorId", ""))
+    return {
+        "name": name,
+        "surname": surname,
+        "code": code,
+        "number": m.get("number"),
+        "color": color,
+        "ink": text_on(color),
+        "team": entry.get("constructor", ""),
+    }
 
 
-def render_hero(top: dict, chance: float) -> str:
-    pd = "".join(
-        f'<div class="hero-driver">'
-        f'<div class="hd-name">{esc(p["name"])}</div>'
-        f'<div class="hd-stat">{p["seasonPodiums"]} podium{"s" if p["seasonPodiums"] != 1 else ""} this season</div>'
-        f"</div>"
-        for p in top["perDriver"]
-    )
+def _num_chip(v: dict) -> str:
+    return f'<span class="d-num">{esc(v["number"])}</span>' if v["number"] else ""
+
+
+def render_hero(top: dict, chance: float, meta: dict) -> str:
+    cards = []
+    for p in top["perDriver"]:
+        v = driver_view(p, meta)
+        sp = p["seasonPodiums"]
+        cards.append(
+            f'<div class="hero-driver" style="--team:{v["color"]};--team-ink:{v["ink"]}">'
+            f'<div class="hd-id">{_num_chip(v)}<span class="d-code">{esc(v["code"])}</span></div>'
+            f'<div class="hd-name">{esc(v["surname"])}</div>'
+            f'<div class="hd-team">{esc(v["team"])}</div>'
+            f'<div class="hd-stat">{sp} podium{"s" if sp != 1 else ""} this season</div>'
+            f"</div>"
+        )
+    pd = "".join(cards)
     return (
         f'<section class="hero">'
         f'  <div class="hero-head">'
@@ -55,18 +79,27 @@ def render_hero(top: dict, chance: float) -> str:
     )
 
 
-def render_candidates(cands: list[dict]) -> str:
+def render_candidates(cands: list[dict], meta: dict) -> str:
     if not cands:
         return ""
     top = cands[0]["prob"] or 1
     rows = []
     for i, c in enumerate(cands, 1):
         pct = round(100 * c["prob"] / top)
+        chips = []
+        for p in c["perDriver"]:
+            v = driver_view(p, meta)
+            chips.append(
+                f'<span class="cd" style="--team:{v["color"]}" title="{esc(v["name"])}">'
+                f'<span class="cd-dot"></span><span class="cd-code">{esc(v["code"])}</span>'
+                f"</span>"
+            )
+        names = '<span class="cd-sep">/</span>'.join(chips)
         rows.append(
             f'<li class="cand">'
             f'<span class="cand-rank">{i}</span>'
             f'<div class="cand-body">'
-            f'  <div class="cand-names">{render_trio_names(c["names"], "trio-sm")}</div>'
+            f'  <div class="cand-names">{names}</div>'
             f'  <div class="cand-bar-wrap"><div class="cand-bar" style="width:{pct}%"></div></div>'
             f"</div>"
             f'<span class="cand-prob">{c["prob"]:.2f}%</span>'
@@ -81,27 +114,21 @@ def render_candidates(cands: list[dict]) -> str:
     )
 
 
-def render_form(form: list[dict], using_constructors: bool) -> str:
+def render_form(form: list[dict], using_constructors: bool, meta: dict) -> str:
     show = [d for d in form if d["weight"] > 0][:14]
     mx = max((d["weight"] for d in show), default=1)
-    chips = []
+    rows = []
     for d in show:
+        v = driver_view(d, meta)
         pct = round(100 * d["weight"] / mx)
-        constructor_line = ""
-        if using_constructors and d.get("constructor"):
-            strength_pct = round(100 * d.get("constructorStrength", 0))
-            constructor_line = (
-                f'  <div class="fc-constructor">'
-                f'<span class="fc-team">{esc(d["constructor"])}</span>'
-                f'<span class="fc-strength" title="Constructor strength">{strength_pct}%</span>'
-                f"</div>"
-            )
-        chips.append(
-            f'<div class="form-chip">'
-            f'  <div class="fc-top"><span class="fc-name">{esc(d["name"])}</span>'
-            f'    <span class="fc-w">{d["weight"]:.1f}</span></div>'
-            f"{constructor_line}"
-            f'  <div class="fc-bar-wrap"><div class="fc-bar" style="width:{pct}%"></div></div>'
+        rows.append(
+            f'<div class="tower-row" style="--team:{v["color"]};--team-ink:{v["ink"]}">'
+            f'<span class="tr-num">{esc(v["number"]) if v["number"] else ""}</span>'
+            f'<span class="tr-code">{esc(v["code"])}</span>'
+            f'<span class="tr-name">{esc(v["surname"])}</span>'
+            f'<span class="tr-team">{esc(v["team"])}</span>'
+            f'<div class="tr-bar"><i style="width:{pct}%"></i></div>'
+            f'<span class="tr-w">{d["weight"]:.1f}</span>'
             f"</div>"
         )
     sub = "Each driver's podium weight &mdash; recent podiums decay over ~8 races, with a boost for this season"
@@ -112,7 +139,7 @@ def render_form(form: list[dict], using_constructors: bool) -> str:
         f'<section class="panel">'
         f"  <h2>Current form</h2>"
         f'  <p class="panel-sub">{sub}</p>'
-        f'  <div class="form-grid">{"".join(chips)}</div>'
+        f'  <div class="form-tower">{"".join(rows)}</div>'
         f"</section>"
     )
 
@@ -155,9 +182,12 @@ def main() -> int:
 
     using_constructors = data.get("params", {}).get("usingConstructors", False)
 
-    hero = render_hero(cands[0], chance) if cands else ""
-    candidates = render_candidates(cands)
-    form = render_form(data["driverForm"], using_constructors)
+    grid_doc = json.loads(CURRENT_DRIVERS_PATH.read_text(encoding="utf-8"))
+    meta = {d["driverId"]: d for d in grid_doc["drivers"]}
+
+    hero = render_hero(cands[0], chance, meta) if cands else ""
+    candidates = render_candidates(cands, meta)
+    form = render_form(data["driverForm"], using_constructors, meta)
     timeline = render_timeline(data)
 
     # Embedded data for the slider (only what the client needs).
@@ -170,25 +200,31 @@ def main() -> int:
         ensure_ascii=False,
     )
 
-    page = f"""{head(
-        f"F1 Podigami - Next Likely New Podium ({season})",
-        "podigami.css",
-        description=f"Which never-before F1 podium trio is most likely next? A scorigami-style predictor for the {season} season, scored from {lo}-{hi} of podium history.",
-        page_path="index.html",
-        keywords="F1, podigami, Formula 1, podium prediction, scorigami, F1 podium, new podium trio, F1 statistics",
-    )}
+    page = f"""{
+        head(
+            f"F1 Podigami - Next Likely New Podium ({season})",
+            "podigami.css",
+            description=f"Which never-before F1 podium trio is most likely next? A scorigami-style predictor for the {season} season, scored from {lo}-{hi} of podium history.",
+            page_path="index.html",
+            keywords="F1, podigami, Formula 1, podium prediction, scorigami, F1 podium, new podium trio, F1 statistics",
+        )
+    }
 <body>
 {nav("index.html")}
 <header>
     <div class="container">
         <h1><span class="accent">F1</span>Podigami</h1>
-        <p class="tagline">Which never-before podium trio is most likely to happen next &mdash; a scorigami-style predictor for the {season} season, scored from {lo}&ndash;{hi} of podium history.</p>
+        <p class="tagline">Which never-before podium trio is most likely to happen next &mdash; a scorigami-style predictor for the {
+        season
+    } season, scored from {lo}&ndash;{hi} of podium history.</p>
     </div>
 </header>
 <main>
     <div class="container">
         {hero}
-        <p class="as-of">Model up to date through the {esc(as_of["season"])} {esc(as_of["raceName"])} (round {esc(as_of["round"])}).</p>
+        <p class="as-of">Model up to date through the {esc(as_of["season"])} {
+        esc(as_of["raceName"])
+    } (round {esc(as_of["round"])}).</p>
         {candidates}
         {form}
         {timeline}

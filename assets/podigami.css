@@ -106,21 +106,58 @@ main {
 .hero-driver {
     background: var(--surface-2);
     border: 1px solid var(--border);
+    border-top: 3px solid var(--team, var(--accent));
     border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    min-width: 130px;
+    padding: 11px 14px 12px;
+    min-width: 138px;
+}
+
+.hd-id {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+/* team-coloured number chip with computed legible ink (shared with the tower) */
+.d-num {
+    min-width: 24px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--team, var(--accent));
+    color: var(--team-ink, #fff);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.d-code {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--text);
 }
 
 .hd-name {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text);
+}
+
+.hd-team {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 2px;
 }
 
 .hd-stat {
     font-size: 11px;
     color: var(--muted);
-    margin-top: 3px;
+    margin-top: 4px;
 }
 
 .hp-prob {
@@ -184,6 +221,36 @@ main {
 
 .cand-names {
     margin-bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* candidate trio: team-colour dot + TLA code (full name on hover) */
+.cd {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cd-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--team, var(--muted));
+    flex: 0 0 auto;
+}
+
+.cd-code {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--text-dim);
+}
+
+.cd-sep {
+    color: var(--muted-dim);
+    margin: 0 9px;
 }
 
 .cand-meta {
@@ -219,74 +286,86 @@ main {
     text-align: right;
 }
 
-/* current form */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 12px;
-}
-
-.form-chip {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-}
-
-.fc-top {
+/* current form — broadcast timing tower */
+.form-tower {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 8px;
+    flex-direction: column;
+    gap: 3px;
 }
 
-.fc-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
+.tower-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    background: var(--surface-2);
+    border-left: 3px solid var(--team, var(--accent));
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
-.fc-w {
+.tr-num {
+    min-width: 26px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--team, var(--accent));
+    color: var(--team-ink, #fff);
     font-size: 12px;
-    color: var(--muted);
+    font-weight: 700;
+    text-align: center;
     font-variant-numeric: tabular-nums;
 }
 
-.fc-bar-wrap {
-    background: var(--surface-3);
-    border-radius: 99px;
-    height: 5px;
-    margin-top: 7px;
-    overflow: hidden;
+.tr-code {
+    min-width: 40px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--text);
 }
 
-.fc-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold), var(--accent-bright));
-    border-radius: 99px;
-}
-
-.fc-constructor {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 6px;
-    margin-top: 4px;
-}
-
-.fc-team {
-    font-size: 11px;
-    color: var(--muted);
+.tr-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.fc-strength {
+.tr-team {
     font-size: 11px;
-    color: var(--accent-bright);
-    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
     white-space: nowrap;
+}
+
+.tr-bar {
+    width: 110px;
+    height: 6px;
+    background: var(--surface-3);
+    border-radius: 99px;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.tr-bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--team, var(--accent-bright));
+    border-radius: 99px;
+}
+
+.tr-w {
+    min-width: 42px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
 }
 
 /* timeline */
@@ -401,8 +480,13 @@ a.tl-where:hover {
         padding: 16px;
     }
 
-    .form-grid {
-        grid-template-columns: 1fr 1fr;
+    /* timing tower: drop the team name and shrink the bar to fit narrow screens */
+    .tr-team {
+        display: none;
+    }
+
+    .tr-bar {
+        width: 64px;
     }
 
     .tl-readout {
