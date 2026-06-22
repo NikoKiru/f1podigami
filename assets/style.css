@@ -234,6 +234,67 @@ header .tagline {
     max-width: 760px;
 }
 
+/* about / description section (e.g. podigami landing page) */
+.about {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.about-block {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-block::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0.85;
+}
+
+.about-block h2 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.about-block p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--muted);
+}
+
+.about-block a {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.about-block a:hover {
+    color: var(--accent-bright);
+    border-color: var(--accent);
+}
+
+.about-block strong {
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
 .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -402,6 +463,11 @@ footer a:hover {
     header .tagline {
         font-size: 14px;
         margin-bottom: 18px;
+    }
+
+    .about {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 
     .stats {

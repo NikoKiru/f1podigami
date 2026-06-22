@@ -20,6 +20,8 @@ from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
 PODIGAMI_PATH = ROOT / "data" / "podigami.json"
+COMBOS_PATH = ROOT / "data" / "combos.json"
+PODIUMS_PATH = ROOT / "data" / "podiums.json"
 CURRENT_DRIVERS_PATH = ROOT / "data" / "current_drivers.json"
 SCHEDULE_PATH = ROOT / "data" / "schedule.json"
 MODEL_EVAL_PATH = ROOT / "data" / "model_eval.json"
@@ -344,6 +346,11 @@ def main() -> int:
 
     using_constructors = data.get("params", {}).get("usingConstructors", False)
 
+    total_combos = len(json.loads(COMBOS_PATH.read_text(encoding="utf-8")))
+    total_races = len(json.loads(PODIUMS_PATH.read_text(encoding="utf-8")))
+    grid_size = data["gridSize"]
+    possible_trios = grid_size * (grid_size - 1) * (grid_size - 2) // 6
+
     grid_doc = json.loads(CURRENT_DRIVERS_PATH.read_text(encoding="utf-8"))
     meta = {d["driverId"]: d for d in grid_doc["drivers"]}
 
@@ -377,7 +384,11 @@ def main() -> int:
         head(
             f"F1 Podigami - Next Likely New Podium ({season})",
             "podigami.css",
-            description=f"Which never-before F1 podium trio is most likely next? A scorigami-style predictor for the {season} season, scored from {lo}-{hi} of podium history.",
+            description=(
+                f"Podigami is the art of spotting F1 podium trios that have never happened before. "
+                f"Only {total_combos:,} unique trios have appeared in {total_races:,} races since {lo}. "
+                f"A statistical model predicts which brand-new trio is most likely next in the {season} season."
+            ),
             page_path="index.html",
             keywords="F1, podigami, Formula 1, podium prediction, scorigami, F1 podium, new podium trio, F1 statistics",
         )
@@ -390,6 +401,34 @@ def main() -> int:
         <p class="tagline">Which never-before podium trio is most likely to happen next &mdash; a scorigami-style predictor for the {
         season
     } season, scored from {lo}&ndash;{hi} of podium history.</p>
+        <div class="about">
+            <div class="about-block">
+                <h2>What is Podigami?</h2>
+                <p>Podigami &mdash; a blend of &ldquo;podium&rdquo; and
+                &ldquo;<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>&rdquo;
+                &mdash; is the art of spotting F1 podium trios that have never happened before.
+                Every race crowns three drivers on the rostrum; a <strong>podigami</strong> occurs
+                when that exact combination of three is brand new.</p>
+            </div>
+            <div class="about-block">
+                <h2>Why does it happen?</h2>
+                <p>With {hi - lo + 1} years of racing and hundreds of drivers through the World Championship,
+                you might expect most trios to have appeared already. But only <strong>{
+        total_combos:,}</strong> unique
+                combinations have been seen in <strong>{total_races:,}</strong> races since {lo}.
+                Today&rsquo;s {grid_size}-driver grid produces <strong>{
+        possible_trios:,}</strong> possible
+                trios per race &mdash; the vast majority are podigamis waiting to happen.</p>
+            </div>
+            <div class="about-block">
+                <h2>How does the prediction work?</h2>
+                <p>A <a href="#model-accuracy">Plackett&ndash;Luce model</a> estimates each
+                driver&rsquo;s current strength from their recent podium finishes, weighted toward
+                recency. It then calculates the probability of every possible trio for the next
+                race and ranks the never-before-seen ones from most to least likely. The
+                headline number is the overall chance that <em>any</em> brand-new trio appears.</p>
+            </div>
+        </div>
     </div>
 </header>
 <main>
