@@ -28,8 +28,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
       - name: Fetch latest data and rebuild site
         run: python src/update.py
+      - name: Validate datasets
+        run: PYTHONPATH=src python -m datalib.validate
+      - name: Run tests
+        run: pytest -q
       - name: Commit and push if data changed
         run: |
           git config user.name "github-actions[bot]"
