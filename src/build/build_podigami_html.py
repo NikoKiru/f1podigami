@@ -267,14 +267,16 @@ def render_timeline(data: dict) -> str:
         )
     return (
         f'<section class="panel timeline">'
-        f"  <h2>New podiums through the years"
-        f'    <span class="info-tip" tabindex="0" aria-label="More info">'
-        f'      <span class="info-icon">i</span>'
-        f'      <span class="info-bubble">Every trio that debuted on a podium that season. Drag the slider or click a bar to explore.</span>'
-        f"    </span>"
-        f"  </h2>"
-        f'  <div class="tl-readout"><span id="tl-year">{current}</span>'
-        f'    <span class="tl-count" id="tl-count"></span></div>'
+        f'  <div class="tl-header">'
+        f"    <h2>New podiums through the years"
+        f'      <span class="info-tip" tabindex="0" aria-label="More info">'
+        f'        <span class="info-icon">i</span>'
+        f'        <span class="info-bubble">Every trio that debuted on a podium that season. Drag the slider or click a bar to explore.</span>'
+        f"      </span>"
+        f"    </h2>"
+        f'    <div class="tl-readout"><span id="tl-year">{current}</span>'
+        f'      <span class="tl-count" id="tl-count"></span></div>'
+        f"  </div>"
         f'  <div class="tl-spark">{"".join(bars)}</div>'
         f'  <div class="tl-controls">'
         f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1">'
