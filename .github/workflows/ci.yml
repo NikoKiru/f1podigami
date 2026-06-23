@@ -64,6 +64,8 @@ jobs:
           cache: pip
           cache-dependency-path: requirements.txt
       - run: pip install -r requirements.txt
+      - name: Validate datasets
+        run: PYTHONPATH=src python -m datalib.validate
       - name: Build site
         run: python src/build_site.py
       - name: Check links in the built site

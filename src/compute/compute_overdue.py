@@ -25,6 +25,9 @@ from collections import Counter
 from itertools import combinations
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from datalib import save_overdue  # noqa: E402
+
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
 COMBOS_PATH = DATA_DIR / "combos.json"
@@ -128,7 +131,7 @@ def main() -> int:
     driver_races = json.loads(RACES_PATH.read_text(encoding="utf-8"))
 
     payload = compute(podiums, combos, grid, driver_races)
-    OUT_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_overdue(payload)
 
     print(f"Wrote {OUT_PATH}")
     for key in ("allTime", "currentGrid"):

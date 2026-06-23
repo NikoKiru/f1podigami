@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(ROOT / "src"))
 from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
 
-SOULMATES_PATH = ROOT / "data" / "soulmates.json"
+from datalib import SoulmatePair, Soulmates, load_soulmates  # noqa: E402
+
 OUT_PATH = ROOT / "dist" / "soulmates.html"
 
 
@@ -19,36 +20,36 @@ def _last(name: str) -> str:
     return parts[-1] if parts else name
 
 
-def _render_pairs(pairs: list[dict]) -> str:
+def _render_pairs(pairs: list[SoulmatePair]) -> str:
     if not pairs:
         return ""
-    max_c = pairs[0]["count"]
+    max_c = pairs[0].count
     rows = []
     for i, p in enumerate(pairs, 1):
-        pct = round(100 * p["count"] / max_c)
+        pct = round(100 * p.count / max_c)
         rows.append(
             f'<li class="pl-row">'
             f'<span class="pl-rank">{i}</span>'
             f'<div class="pl-body">'
-            f'  <div class="pl-names"><b>{p["a"]}</b> &amp; <b>{p["b"]}</b></div>'
+            f'  <div class="pl-names"><b>{p.a}</b> &amp; <b>{p.b}</b></div>'
             f'  <div class="pl-bar-wrap"><div class="pl-bar" style="width:{pct}%"></div></div>'
             f"</div>"
             f'<div class="pl-meta">'
-            f'  <span class="pl-count">{p["count"]}</span>'
-            f'  <span class="pl-years">{p["firstYear"]}&ndash;{p["lastYear"]}</span>'
+            f'  <span class="pl-count">{p.count}</span>'
+            f'  <span class="pl-years">{p.firstYear}&ndash;{p.lastYear}</span>'
             f"</div>"
             f"</li>"
         )
     return "\n".join(rows)
 
 
-def _compute_facts(soulmates: dict) -> list[dict]:
-    drivers = soulmates["drivers"]
-    matrix = soulmates["matrix"]
-    top_pairs = soulmates.get("topPairs", [])
+def _compute_facts(soulmates: Soulmates) -> list[dict]:
+    drivers = soulmates.drivers
+    matrix = soulmates.matrix
+    top_pairs = soulmates.topPairs
     n = len(drivers)
-    names = [d["name"] for d in drivers]
-    median_by = {d["name"]: d["medianYear"] for d in drivers}
+    names = [d.name for d in drivers]
+    median_by = {d.name: d.medianYear for d in drivers}
 
     facts = []
 
@@ -69,15 +70,15 @@ def _compute_facts(soulmates: dict) -> list[dict]:
 
     # 2. Longest active partnership
     if top_pairs:
-        longest = max(top_pairs, key=lambda p: p["lastYear"] - p["firstYear"])
-        span = longest["lastYear"] - longest["firstYear"]
+        longest = max(top_pairs, key=lambda p: p.lastYear - p.firstYear)
+        span = longest.lastYear - longest.firstYear
         facts.append(
             {
                 "num": str(span),
                 "unit": "seasons",
                 "label": "Longest partnership",
-                "detail": f"<b>{longest['a']}</b> &amp; <b>{longest['b']}</b> shared podiums "
-                f"across {span} seasons ({longest['firstYear']}&ndash;{longest['lastYear']}), "
+                "detail": f"<b>{longest.a}</b> &amp; <b>{longest.b}</b> shared podiums "
+                f"across {span} seasons ({longest.firstYear}&ndash;{longest.lastYear}), "
                 f"the longest-running pairing in the top 30.",
             }
         )
@@ -85,18 +86,18 @@ def _compute_facts(soulmates: dict) -> list[dict]:
     # 3. Most intense: highest shared podiums per active season
     if top_pairs:
 
-        def intensity(p: dict) -> float:
-            return p["count"] / max(1, p["lastYear"] - p["firstYear"] + 1)
+        def intensity(p: SoulmatePair) -> float:
+            return p.count / max(1, p.lastYear - p.firstYear + 1)
 
         hot = max(top_pairs, key=intensity)
-        seasons = max(1, hot["lastYear"] - hot["firstYear"] + 1)
-        rate = hot["count"] / seasons
+        seasons = max(1, hot.lastYear - hot.firstYear + 1)
+        rate = hot.count / seasons
         facts.append(
             {
                 "num": f"{rate:.1f}",
                 "unit": "per season",
                 "label": "Most intense rivalry",
-                "detail": f"<b>{hot['a']}</b> &amp; <b>{hot['b']}</b> averaged "
+                "detail": f"<b>{hot.a}</b> &amp; <b>{hot.b}</b> averaged "
                 f"{rate:.1f} shared podiums per season over their "
                 f"{seasons}-season overlap — the densest podium partnership on record.",
             }
@@ -105,17 +106,17 @@ def _compute_facts(soulmates: dict) -> list[dict]:
     # 4. Biggest era gap: top-30 pair whose drivers' median career years differ most
     if top_pairs:
 
-        def era_gap(p: dict) -> float:
-            return abs(median_by.get(p["a"], 0) - median_by.get(p["b"], 0))
+        def era_gap(p: SoulmatePair) -> float:
+            return abs(median_by.get(p.a, 0) - median_by.get(p.b, 0))
 
         cross = max(top_pairs, key=era_gap)
         gap_years = int(round(era_gap(cross)))
-        a_med = int(round(median_by.get(cross["a"], 0)))
-        b_med = int(round(median_by.get(cross["b"], 0)))
+        a_med = int(round(median_by.get(cross.a, 0)))
+        b_med = int(round(median_by.get(cross.b, 0)))
         if a_med < b_med:
-            older, older_med, younger, younger_med = cross["a"], a_med, cross["b"], b_med
+            older, older_med, younger, younger_med = cross.a, a_med, cross.b, b_med
         else:
-            older, older_med, younger, younger_med = cross["b"], b_med, cross["a"], a_med
+            older, older_med, younger, younger_med = cross.b, b_med, cross.a, a_med
         facts.append(
             {
                 "num": str(gap_years),
@@ -123,7 +124,7 @@ def _compute_facts(soulmates: dict) -> list[dict]:
                 "label": "Biggest cross-era connection",
                 "detail": (
                     f"<b>{older}</b> (peak ~{older_med}) and <b>{younger}</b> "
-                    f"(peak ~{younger_med}) still shared {cross['count']} podiums "
+                    f"(peak ~{younger_med}) still shared {cross.count} podiums "
                     f"despite their careers being {gap_years} years apart."
                 ),
             }
@@ -143,7 +144,7 @@ def _compute_facts(soulmates: dict) -> list[dict]:
 
     # 6. Most isolated: top-40 driver with fewest connections to others in the group
     least_cnt, least_name = min(connections)
-    least_total = next(d["total"] for d in drivers if d["name"] == least_name)
+    least_total = next(d.total for d in drivers if d.name == least_name)
     facts.append(
         {
             "num": str(least_cnt),
@@ -173,11 +174,11 @@ def _render_facts(facts: list[dict]) -> str:
 
 
 def main() -> int:
-    soulmates = json.loads(SOULMATES_PATH.read_text(encoding="utf-8"))
+    soulmates = load_soulmates()
 
-    top_pairs = soulmates.get("topPairs", [])
+    top_pairs = soulmates.topPairs
     top = top_pairs[0] if top_pairs else None
-    n_drivers = len(soulmates["drivers"])
+    n_drivers = len(soulmates.drivers)
 
     stats_html = ""
     if top:
@@ -188,8 +189,8 @@ def main() -> int:
                 <div class="label">Drivers charted</div>
             </div>
             <div class="stat">
-                <div class="num">{top["count"]} <small>shared podiums</small></div>
-                <div class="label">{_last(top["a"])} &amp; {_last(top["b"])} &mdash; #1 pair</div>
+                <div class="num">{top.count} <small>shared podiums</small></div>
+                <div class="label">{_last(top.a)} &amp; {_last(top.b)} &mdash; #1 pair</div>
             </div>
             <div class="stat">
                 <div class="num">{len(top_pairs)}</div>

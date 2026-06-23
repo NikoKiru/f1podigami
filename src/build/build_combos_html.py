@@ -7,17 +7,17 @@ This is the former landing page; index.html is now the podigami predictor
 from __future__ import annotations
 
 import itertools
-import json
 import sys
 import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(ROOT / "src"))
 from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
 
-COMBOS_PATH = ROOT / "data" / "combos.json"
-PODIUMS_PATH = ROOT / "data" / "podiums.json"
+from datalib import Combo, RaceRef, load_combos, load_podiums  # noqa: E402
+
 OUT_PATH = ROOT / "dist" / "combos.html"
 
 
@@ -27,20 +27,20 @@ def wiki_url(season: str, race_name: str) -> str:
     return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(title)
 
 
-def render_race_pills(races: list[dict]) -> str:
+def render_race_pills(races: list[RaceRef]) -> str:
     """Group races by season; each season gets a row with year + race pills."""
     import html
 
-    races_sorted = sorted(races, key=lambda r: (int(r["season"]), int(r["round"])))
+    races_sorted = sorted(races, key=lambda r: (int(r.season), int(r.round)))
     parts: list[str] = []
-    for season, group in itertools.groupby(races_sorted, key=lambda r: r["season"]):
+    for season, group in itertools.groupby(races_sorted, key=lambda r: r.season):
         group_list = list(group)
         pills = "".join(
-            f'<a class="race-pill" href="{html.escape(wiki_url(r["season"], r["raceName"]), quote=True)}"'
+            f'<a class="race-pill" href="{html.escape(wiki_url(r.season, r.raceName), quote=True)}"'
             f' target="_blank" rel="noopener"'
-            f' title="{html.escape(r["season"] + " " + r["raceName"], quote=True)} &mdash; race report">'
-            f'<span class="round">R{html.escape(r["round"])}</span>'
-            f"{html.escape(short_race_name(r['raceName']))}"
+            f' title="{html.escape(r.season + " " + r.raceName, quote=True)} &mdash; race report">'
+            f'<span class="round">R{html.escape(r.round)}</span>'
+            f"{html.escape(short_race_name(r.raceName))}"
             f"</a>"
             for r in group_list
         )
@@ -62,23 +62,23 @@ def short_race_name(name: str) -> str:
     return name
 
 
-def render_combo(rank: int, combo: dict) -> str:
+def render_combo(rank: int, combo: Combo) -> str:
     import html
 
     drivers_html = '<span class="sep">/</span>'.join(
-        f'<span class="driver">{html.escape(d)}</span>' for d in combo["drivers"]
+        f'<span class="driver">{html.escape(d)}</span>' for d in combo.drivers
     )
-    drivers_data = " | ".join(combo["drivers"]).lower()
-    last = combo["lastRace"]
+    drivers_data = " | ".join(combo.drivers).lower()
+    last = combo.lastRace
     last_html = (
-        f'<span class="year">{html.escape(last["season"])}</span>'
-        f'<span class="race-name">{html.escape(last["raceName"])}</span>'
+        f'<span class="year">{html.escape(last.season)}</span>'
+        f'<span class="race-name">{html.escape(last.raceName)}</span>'
     )
-    n = combo["count"]
+    n = combo.count
 
     combo_row = (
         f'<tr class="combo" data-count="{n}"'
-        f' data-last="{combo["lastRaceKey"]}"'
+        f' data-last="{combo.lastRaceKey}"'
         f' data-drivers="{html.escape(drivers_data, quote=True)}">'
         f'<td class="rank">{rank}</td>'
         f'<td class="drivers">{drivers_html}</td>'
@@ -90,17 +90,17 @@ def render_combo(rank: int, combo: dict) -> str:
     detail_row = (
         f'<tr class="detail">'
         f'<td colspan="5">'
-        f'<div class="detail-inner">{render_race_pills(combo["races"])}</div>'
+        f'<div class="detail-inner">{render_race_pills(combo.races)}</div>'
         f"</td></tr>"
     )
     return combo_row + detail_row
 
 
 def main() -> int:
-    combos = json.loads(COMBOS_PATH.read_text(encoding="utf-8"))
-    podiums = json.loads(PODIUMS_PATH.read_text(encoding="utf-8"))
+    combos = load_combos()
+    podiums = load_podiums()
 
-    seasons = sorted({int(p["season"]) for p in podiums})
+    seasons = sorted({int(p.season) for p in podiums})
     total_podiums = len(podiums)
     unique_combos = len(combos)
     season_min, season_max = seasons[0], seasons[-1]

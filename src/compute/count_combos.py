@@ -6,6 +6,9 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from datalib import save_combos  # noqa: E402
+
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 IN_PATH = DATA_DIR / "podiums.json"
 OUT_PATH = DATA_DIR / "combos.json"
@@ -52,7 +55,7 @@ def main() -> int:
 
     out.sort(key=lambda c: (-c["count"], " | ".join(c["drivers"]).lower()))
 
-    OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_combos(out)
 
     total_races = sum(c["count"] for c in out)
     print(f"Wrote {OUT_PATH}")

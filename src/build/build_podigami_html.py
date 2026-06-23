@@ -15,16 +15,21 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(ROOT / "src"))
 from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
-PODIGAMI_PATH = ROOT / "data" / "podigami.json"
-COMBOS_PATH = ROOT / "data" / "combos.json"
-PODIUMS_PATH = ROOT / "data" / "podiums.json"
-CURRENT_DRIVERS_PATH = ROOT / "data" / "current_drivers.json"
-SCHEDULE_PATH = ROOT / "data" / "schedule.json"
-MODEL_EVAL_PATH = ROOT / "data" / "model_eval.json"
+from datalib import (  # noqa: E402
+    DATA_DIR,
+    load_combos,
+    load_current_drivers,
+    load_model_eval,
+    load_podigami,
+    load_podiums,
+    load_schedule,
+)
+
 OUT_PATH = ROOT / "dist" / "index.html"
 
 
@@ -57,7 +62,7 @@ def driver_view(entry: dict, meta: dict) -> dict:
         "number": m.get("number"),
         "color": color,
         "ink": text_on(color),
-        "team": entry.get("constructor", ""),
+        "team": entry.get("constructor") or "",  # absent/None off-season -> no team label
     }
 
 
@@ -347,7 +352,7 @@ def render_faq(data: dict, ev: dict) -> str:
 
 
 def main() -> int:
-    data = json.loads(PODIGAMI_PATH.read_text(encoding="utf-8"))
+    data = load_podigami().model_dump()
     season = data["currentSeason"]
     chance = data["chanceNextRaceNew"]
     as_of = data["asOf"]
@@ -356,22 +361,22 @@ def main() -> int:
 
     using_constructors = data.get("params", {}).get("usingConstructors", False)
 
-    total_combos = len(json.loads(COMBOS_PATH.read_text(encoding="utf-8")))
-    total_races = len(json.loads(PODIUMS_PATH.read_text(encoding="utf-8")))
+    total_combos = len(load_combos())
+    total_races = len(load_podiums())
     grid_size = data["gridSize"]
     possible_trios = grid_size * (grid_size - 1) * (grid_size - 2) // 6
 
-    grid_doc = json.loads(CURRENT_DRIVERS_PATH.read_text(encoding="utf-8"))
-    meta = {d["driverId"]: d for d in grid_doc["drivers"]}
+    grid_doc = load_current_drivers()
+    meta = {d.driverId: d.model_dump() for d in grid_doc.drivers}
 
     schedule = {}
-    if SCHEDULE_PATH.exists():
-        schedule = json.loads(SCHEDULE_PATH.read_text(encoding="utf-8"))
+    if (DATA_DIR / "schedule.json").exists():
+        schedule = load_schedule().model_dump()
     next_race = render_next_race(schedule) if schedule else ""
 
     model_eval = {}
-    if MODEL_EVAL_PATH.exists():
-        model_eval = json.loads(MODEL_EVAL_PATH.read_text(encoding="utf-8"))
+    if (DATA_DIR / "model_eval.json").exists():
+        model_eval = load_model_eval().model_dump()
 
     acc_badge = render_accuracy_badge(model_eval)
     as_of_html = (
