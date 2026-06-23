@@ -86,36 +86,26 @@ The score of a trio is the product of its three weights, normalised over **every
 A three-stage pipeline: **fetch → compute → build**. Each stage reads committed JSON and writes the next.
 
 ```mermaid
-flowchart LR
+flowchart TD
     classDef fetch fill:#15151E,stroke:#e10600,color:#fff
     classDef compute fill:#1f2630,stroke:#8b949e,color:#fff
     classDef build fill:#262d38,stroke:#f4c430,color:#fff
     classDef page fill:#0b0d12,stroke:#e10600,color:#fff
-    classDef data fill:#161b22,stroke:#58a6ff,color:#8b949e
+    classDef json fill:#161b22,stroke:#58a6ff,color:#8b949e
 
-    subgraph FETCH ["① Fetch"]
-        direction TB
+    API(("Jolpica F1 API"))
+
+    subgraph FETCH ["① Fetch  →  data/*.json"]
+        direction LR
         FP["fetch_podiums"]:::fetch
         FG["fetch_current_drivers"]:::fetch
         FS["fetch_schedule"]:::fetch
-        FC["fetch_constructor_standings"]:::fetch
-        FR["fetch_driver_races"]:::fetch
     end
 
-    subgraph DATA ["data/*.json"]
-        direction TB
-        D1["podiums"]:::data
-        D2["current_drivers"]:::data
-        D3["schedule"]:::data
-        D4["combos"]:::data
-        D5["podigami"]:::data
-        D6["overdue"]:::data
-        D7["soulmates"]:::data
-        D8["model_eval"]:::data
-    end
+    API -.-> FETCH
 
-    subgraph COMPUTE ["② Compute"]
-        direction TB
+    subgraph COMPUTE ["② Compute  →  data/*.json"]
+        direction LR
         CC["count_combos"]:::compute
         CP["compute_podigami"]:::compute
         CO["compute_overdue"]:::compute
@@ -123,27 +113,19 @@ flowchart LR
         BT["backtest"]:::compute
     end
 
-    subgraph BUILD ["③ Build"]
-        direction TB
-        BP["build_podigami_html"]:::build
-        BC["build_combos_html"]:::build
-        BO["build_overdue_html"]:::build
-        BS["build_soulmates_html"]:::build
+    FETCH ==> COMPUTE
+
+    subgraph BUILD ["③ Build  →  dist/"]
+        direction LR
+        BP["index.html"]:::build
+        BC["combos.html"]:::build
+        BO["overdue.html"]:::build
+        BS["soulmates.html"]:::build
     end
 
-    FP --> D1
-    FG --> D2
-    FS --> D3
-    D1 --> CC --> D4
-    D1 & D2 & D4 --> CP --> D5
-    D1 & D2 & D4 --> CO --> D6
-    D1 --> CM --> D7
-    D1 --> BT --> D8
+    COMPUTE ==> BUILD
 
-    D3 & D5 & D1 & D4 & D2 & D8 --> BP --> I([index.html]):::page
-    D4 --> BC --> C([combos.html]):::page
-    D6 --> BO --> O([overdue.html]):::page
-    D7 --> BS --> S([soulmates.html]):::page
+    BUILD ==> GH["GitHub Pages"]:::page
 ```
 
 All access to `data/*.json` goes through **`src/datalib/`** — Pydantic v2 schemas that validate every read and write. `load_*` returns typed model objects; `save_*` validates the payload and writes it byte-identical (so regenerating a dataset never reformats it).
