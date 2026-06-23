@@ -134,22 +134,26 @@ EVAL = {
 }
 
 
-def test_accuracy_badge_shows_top3_and_links():
+def test_accuracy_badge_shows_top3():
     out = bp.render_accuracy_badge(EVAL)
-    assert 'href="#model-accuracy"' in out
     assert "top-3 30%" in out
+    assert "Backtested" in out
     assert bp.render_accuracy_badge({}) == ""
 
 
-def test_accuracy_section_has_table_chart_and_caveats():
-    out = bp.render_accuracy(EVAL)
-    assert 'id="model-accuracy"' in out
-    assert 'class="acc-table"' in out
-    assert 'class="acc-chosen"' in out  # the chosen row is highlighted
-    assert "acc-rel" in out  # reliability chart
-    assert "What it can" in out  # honest limitations note
-    assert "2019" in out and "2026" in out  # test window disclosed
-    assert bp.render_accuracy({}) == ""
+def test_faq_section_has_questions_and_uses_eval():
+    out = bp.render_faq({}, EVAL)
+    assert "Frequently asked questions" in out
+    assert out.count('class="faq-item"') >= 4
+    assert "<summary" in out  # expandable details/summary
+    assert "Plackett" in out  # explains the model
+    assert "30%" in out  # accuracy figure pulled from EVAL
+
+
+def test_faq_section_works_without_eval():
+    out = bp.render_faq({}, {})
+    assert "Frequently asked questions" in out
+    assert out.count('class="faq-item"') >= 4
 
 
 def test_render_form_builds_timing_tower():

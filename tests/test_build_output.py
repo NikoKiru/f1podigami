@@ -105,12 +105,18 @@ def test_landing_page_has_broadcast_driver_treatment(dist):
     assert 'class="tr-num"' in html  # car-number chips
 
 
-def test_landing_page_has_accuracy_section(dist):
+def test_landing_page_has_faq_section(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
-    assert 'id="model-accuracy"' in html  # dedicated section
-    assert 'class="acc-badge"' in html  # compact badge
-    assert 'class="acc-table"' in html  # backtest ladder table
-    assert "Model accuracy" in html
+    assert "faq-section" in html  # dedicated FAQ section
+    assert "Frequently asked questions" in html
+    assert 'class="faq-item"' in html  # expandable items
+    assert 'class="acc-badge"' in html  # compact backtest badge still present
+
+
+def test_landing_page_has_info_tooltips(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'class="info-tip"' in html  # "i" info affordance
+    assert 'class="info-bubble"' in html  # hover/focus explanation
 
 
 def test_landing_page_has_next_race_box(dist):

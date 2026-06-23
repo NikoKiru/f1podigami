@@ -194,7 +194,7 @@ def render_candidates(cands: list[dict], meta: dict) -> str:
         )
     return (
         f'<section class="panel">'
-        f'  <h2>Most likely next combinations'
+        f"  <h2>Most likely next combinations"
         f'    <span class="info-tip" tabindex="0" aria-label="More info">'
         f'      <span class="info-icon">i</span>'
         f'      <span class="info-bubble">Trios that have never shared a podium, ranked by the model\'s probability they do it next.</span>'
@@ -228,7 +228,7 @@ def render_form(form: list[dict], using_constructors: bool, meta: dict) -> str:
     sub += "."
     return (
         f'<section class="panel">'
-        f'  <h2>Current form'
+        f"  <h2>Current form"
         f'    <span class="info-tip" tabindex="0" aria-label="More info">'
         f'      <span class="info-icon">i</span>'
         f'      <span class="info-bubble">{sub}</span>'
@@ -254,7 +254,7 @@ def render_timeline(data: dict) -> str:
         )
     return (
         f'<section class="panel timeline">'
-        f'  <h2>New podiums through the years'
+        f"  <h2>New podiums through the years"
         f'    <span class="info-tip" tabindex="0" aria-label="More info">'
         f'      <span class="info-icon">i</span>'
         f'      <span class="info-bubble">Every trio that debuted on a podium that season. Drag the slider or click a bar to explore.</span>'
@@ -293,13 +293,13 @@ def render_faq(data: dict, ev: dict) -> str:
             f"A <strong>Plackett&ndash;Luce model</strong> estimates each driver&rsquo;s current "
             f"strength from their recent podium finishes, weighted toward recency (halved every "
             f"~{half_life:.0f} races). It then calculates the probability of every possible trio and "
-            f"ranks the never-before-seen ones from most to least likely."
+            f"ranks the never-before-seen ones from most to least likely.",
         ),
         (
             "What does the headline percentage mean?",
             "It&rsquo;s the overall probability that <em>any</em> brand-new podium trio appears at "
             "the next race &mdash; not just the top-ranked one, but any combination that has never "
-            "happened before."
+            "happened before.",
         ),
         (
             "How accurate is the model?",
@@ -308,18 +308,18 @@ def render_faq(data: dict, ev: dict) -> str:
             f"F1 podiums are inherently high-variance, so exact-trio hits are rare by nature."
             if ev and ev.get("chosen")
             else "The model is backtested on historical seasons it never saw during tuning. "
-            "F1 podiums are inherently high-variance, so exact-trio hits are rare by nature."
+            "F1 podiums are inherently high-variance, so exact-trio hits are rare by nature.",
         ),
         (
             "What is &ldquo;current form&rdquo; based on?",
             "Each driver&rsquo;s podium weight uses a recency decay &mdash; recent podiums count "
             "more than older ones. The weight also includes a boost for the current season and "
-            "can factor in constructor strength."
+            "can factor in constructor strength.",
         ),
         (
             "Why haven&rsquo;t most trios happened yet?",
             "Even with decades of racing, the number of possible three-driver combinations from "
-            "a 20-driver grid is enormous. Most trios are still podigamis waiting to happen."
+            "a 20-driver grid is enormous. Most trios are still podigamis waiting to happen.",
         ),
     ]
     entries = []
@@ -333,7 +333,7 @@ def render_faq(data: dict, ev: dict) -> str:
     return (
         f'<section class="panel faq-section">'
         f"  <h2>Frequently asked questions</h2>"
-        f'  {"".join(entries)}'
+        f"  {''.join(entries)}"
         f"</section>"
     )
 
