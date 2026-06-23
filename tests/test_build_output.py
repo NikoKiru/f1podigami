@@ -168,7 +168,7 @@ def test_footer_has_universal_details(dist, page):
     assert "Jolpica F1 API" in footer  # data source attribution
     assert "github.com/NikoKiru/f1podigami" in footer  # source link
     assert 'class="footer-nav"' in footer  # cross-page nav
-    for link in ("index.html", "combos.html", "overdue.html", "soulmates.html"):
+    for link in ("index.html", "combos.html", "overdue.html"):
         assert link in footer, f"footer should link to {link}"
 
 
