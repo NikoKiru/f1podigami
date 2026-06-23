@@ -83,6 +83,14 @@ def test_missing_field_is_rejected():
         RaceRef.model_validate({"season": "2020", "round": "1"})
 
 
+def test_current_drivers_allows_missing_code_and_number():
+    """The API omits code/number for some drivers (fetch_current_drivers adds them
+    only when present), so the schema must accept a driver with neither — otherwise
+    save_current_drivers would crash on a legitimate fetch."""
+    payload = {"season": "2026", "drivers": [{"driverId": "x", "name": "Foo Bar"}]}
+    REGISTRY["current_drivers.json"].validate_python(payload)  # must not raise
+
+
 def test_validate_cli_succeeds_on_committed_data():
     from datalib import validate
 

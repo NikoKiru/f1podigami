@@ -25,6 +25,9 @@ from pathlib import Path
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from datalib import save_driver_races  # noqa: E402
+
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 SLEEP_BETWEEN = 1.0
 PAGE = 100
@@ -119,7 +122,7 @@ def main() -> int:
         time.sleep(SLEEP_BETWEEN)
 
     out = {"drivers": dict(sorted(drivers.items()))}
-    OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_driver_races(out)
     print(f"\nWrote {OUT_PATH}")
     print(f"  {len(drivers)} drivers ({fetched} fetched, {cached} cached)")
     return 0

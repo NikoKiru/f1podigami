@@ -86,8 +86,10 @@ class Soulmates(_Base):
 class CurrentDriver(_Base):
     driverId: str
     name: str
-    code: str
-    number: str
+    # code (3-letter TLA) and number (permanent car number) come straight from the API
+    # and either may be absent for some drivers, so fetch_current_drivers omits them.
+    code: str | None = None
+    number: str | None = None
 
 
 class CurrentDrivers(_Base):

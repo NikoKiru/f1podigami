@@ -21,6 +21,9 @@ from pathlib import Path
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from datalib import save_current_drivers  # noqa: E402
+
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 SLEEP_BETWEEN = 1.0
 MAX_BACKOFF_RETRIES = 6
@@ -91,7 +94,7 @@ def main() -> int:
 
     drivers = [{"driverId": k, **v} for k, v in sorted(grid.items())]
     out = {"season": str(season), "drivers": drivers}
-    OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_current_drivers(out)
     print(f"Wrote {OUT_PATH}")
     print(f"  season {season}, rounds {rounds}: {len(drivers)} drivers on the grid")
     return 0

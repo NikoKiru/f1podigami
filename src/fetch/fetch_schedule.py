@@ -23,7 +23,10 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from track_geo import VIEW_H, VIEW_W, geo_to_svg_path, nearest_circuit  # noqa: E402
+
+from datalib import save_schedule  # noqa: E402
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 MAX_BACKOFF_RETRIES = 6
@@ -100,7 +103,7 @@ def main() -> int:
         "totalRounds": len(races),
         "races": [build_race(r, features) for r in races],
     }
-    OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_schedule(out)
     print(f"Wrote {OUT_PATH}")
     print(f"  season {season}: {len(races)} rounds")
     n_tracks = sum(1 for r in out["races"] if r["trackPath"])
