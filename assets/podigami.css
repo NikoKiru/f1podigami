@@ -824,6 +824,11 @@ a.tl-where:hover {
         width: 64px;
     }
 
+    .tl-header {
+        flex-wrap: wrap;
+        gap: 2px 12px;
+    }
+
     .tl-item {
         flex-direction: column;
         gap: 2px;
@@ -831,5 +836,9 @@ a.tl-where:hover {
 
     .tl-where {
         white-space: normal;
+    }
+
+    .trio .sep {
+        margin: 0 4px;
     }
 }
