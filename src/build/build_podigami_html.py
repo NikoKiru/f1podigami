@@ -376,10 +376,10 @@ def render_timeline(data: dict) -> str:
         f"  </div>"
         f'  <div class="tl-spark">{"".join(bars)}</div>'
         f'  <div class="tl-controls">'
-        f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1">'
+        f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1" aria-label="Timeline year">'
         f"  </div>"
         f'  <div class="tl-select-wrap">'
-        f'    <select id="tl-select">{"".join(options)}</select>'
+        f'    <select id="tl-select" aria-label="Timeline year">{"".join(options)}</select>'
         f"  </div>"
         f'  <ul class="tl-list" id="tl-list"></ul>'
         f"</section>"
