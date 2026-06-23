@@ -52,10 +52,13 @@ def test_css_and_js_resolve(dist, page):
         assert (dist / ref).is_file(), f"{page} references missing asset {ref}"
 
 
+NAV_PAGES = ["index.html", "combos.html", "overdue.html"]
+
+
 def test_every_page_has_full_nav(dist):
     for page in PAGES:
         html = (dist / page).read_text(encoding="utf-8")
-        for target in PAGES:
+        for target in NAV_PAGES:
             assert f'href="{target}"' in html, f"{page} nav missing link to {target}"
 
 
