@@ -224,14 +224,11 @@ def render_last_race(
 
     return (
         f'<section class="last-race">'
-        f'  <span class="lr-tag">Last race</span>'
-        f'  <div class="lr-head">'
-        f"    {fl}"
-        f'    <span class="nr-round">Round {esc(rnd)} / {esc(schedule.get("totalRounds", ""))}</span>'
-        f"  </div>"
-        f'  <h3 class="lr-name">{name}</h3>'
-        f'  <div class="lr-trio">{trio_html}</div>'
-        f"  {status_html}"
+        f'<span class="lr-tag">Last race</span>'
+        f"{fl}"
+        f'<span class="lr-name">R{esc(rnd)} &middot; {name}</span>'
+        f'<span class="lr-trio">{trio_html}</span>'
+        f"{status_html}"
         f"</section>"
     )
 
