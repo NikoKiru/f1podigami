@@ -534,6 +534,22 @@ main {
     height: 4px;
 }
 
+.tl-select-wrap {
+    display: none;
+    margin-bottom: 16px;
+}
+
+#tl-select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    appearance: auto;
+}
+
 .tl-readout {
     text-align: right;
     white-space: nowrap;
@@ -822,6 +838,16 @@ a.tl-where:hover {
 
     .tr-bar {
         width: 64px;
+    }
+
+    .tl-spark,
+    .tl-controls,
+    .tl-readout {
+        display: none;
+    }
+
+    .tl-select-wrap {
+        display: block;
     }
 
     .tl-header {
