@@ -118,6 +118,51 @@
     render(slider.value);
 })();
 
+// Info tooltips: desktop reveals on hover (CSS), but touch has no hover, so a
+// tap toggles the .open class here. Tapping outside, tapping the same icon, or
+// pressing Escape all dismiss it — so a bubble is never stuck open on mobile.
+(function () {
+    const tips = Array.from(document.querySelectorAll('.info-tip'));
+    if (!tips.length) return;
+
+    function closeAll(except) {
+        tips.forEach(t => {
+            if (t !== except) {
+                t.classList.remove('open');
+                t.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    tips.forEach(tip => {
+        tip.setAttribute('role', 'button');
+        tip.setAttribute('aria-expanded', 'false');
+
+        tip.addEventListener('click', e => {
+            e.stopPropagation(); // don't let the document handler close it instantly
+            const willOpen = !tip.classList.contains('open');
+            closeAll(tip);
+            tip.classList.toggle('open', willOpen);
+            tip.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        });
+
+        tip.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                tip.click();
+            } else if (e.key === 'Escape') {
+                closeAll(null);
+                tip.blur();
+            }
+        });
+    });
+
+    document.addEventListener('click', () => closeAll(null));
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeAll(null);
+    });
+})();
+
 // Next-race box: show the race time in the visitor's local timezone and tick a
 // live countdown. Reads the ISO datetime baked into the box at build time.
 (function () {
