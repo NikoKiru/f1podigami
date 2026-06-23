@@ -154,8 +154,8 @@ def main() -> int:
                         <option value="count-asc">Count (low &rarr; high)</option>
                         <option value="last-desc">Last seen (newest)</option>
                         <option value="last-asc">Last seen (oldest)</option>
-                        <option value="drivers-asc">Drivers (A &rarr; Z)</option>
-                        <option value="drivers-desc">Drivers (Z &rarr; A)</option>
+                        <option value="drivers-asc">Trios (A &rarr; Z)</option>
+                        <option value="drivers-desc">Trios (Z &rarr; A)</option>
                     </select>
                 </div>
             </div>
@@ -179,7 +179,7 @@ def main() -> int:
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th data-sort="drivers">Drivers <span class="sort-ind">&#9662;</span></th>
+                        <th data-sort="drivers">Trios <span class="sort-ind">&#9662;</span></th>
                         <th data-sort="count">Count <span class="sort-ind">&#9662;</span></th>
                         <th data-sort="last">Last seen <span class="sort-ind">&#9662;</span></th>
                         <th></th>
