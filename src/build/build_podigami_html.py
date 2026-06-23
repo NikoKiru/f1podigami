@@ -80,6 +80,18 @@ def pick_next_race(schedule: dict, today: str | None = None) -> dict | None:
     return None
 
 
+def pick_last_race(schedule: dict, today: str | None = None) -> dict | None:
+    """Return the race immediately before the next upcoming one, else None."""
+    today = today or dt.date.today().isoformat()
+    races = sorted(schedule.get("races", []), key=lambda r: int(r["round"]))
+    prev = None
+    for r in races:
+        if r["date"] >= today:
+            return prev
+        prev = r
+    return prev
+
+
 def _iso_datetime(race: dict) -> str:
     return f"{race['date']}T{race.get('time') or '00:00:00Z'}"
 
@@ -133,6 +145,93 @@ def render_next_race(schedule: dict, today: str | None = None) -> str:
         f"    </div>"
         f"  </div>"
         f'  <div class="nr-art">{track}</div>'
+        f"</section>"
+    )
+
+
+def _combo_key(driver_ids: list[str]) -> tuple[str, ...]:
+    return tuple(sorted(driver_ids))
+
+
+def _lookup_combo(trio_ids: list[str], combos: list[dict]) -> dict | None:
+    key = _combo_key(trio_ids)
+    for c in combos:
+        if _combo_key(c["driverIds"]) == key:
+            return c
+    return None
+
+
+def render_last_race(
+    schedule: dict,
+    podiums: list[dict],
+    combos: list[dict],
+    meta: dict,
+    driver_form: list[dict],
+    today: str | None = None,
+) -> str:
+    last = pick_last_race(schedule, today)
+    if not last:
+        return ""
+    season = schedule.get("season", "")
+    rnd = last["round"]
+    pod = None
+    for p in reversed(podiums):
+        if p["season"] == season and p["round"] == rnd:
+            pod = p
+            break
+    if not pod:
+        return ""
+
+    fl = flag_svg(last["country"])
+    name = esc(last["raceName"])
+
+    constructor_map = {d["driverId"]: d.get("constructorId", "") for d in driver_form}
+    trio_ids = [pod["p1"]["driverId"], pod["p2"]["driverId"], pod["p3"]["driverId"]]
+    drivers_html = []
+    for pos, pid in enumerate(trio_ids, 1):
+        entry = {
+            "name": pod[f"p{pos}"]["name"],
+            "driverId": pid,
+            "constructorId": constructor_map.get(pid, ""),
+        }
+        v = driver_view(entry, meta)
+        drivers_html.append(
+            f'<span class="lr-driver" style="--team:{v["color"]}">'
+            f'<span class="cd-dot"></span>'
+            f'<span class="lr-code">{esc(v["code"])}</span>'
+            f"</span>"
+        )
+    trio_html = '<span class="lr-sep">/</span>'.join(drivers_html)
+
+    combo = _lookup_combo(trio_ids, combos)
+    if combo and combo["count"] == 1:
+        status_html = '<span class="lr-podigami">PODIGAMI</span>'
+    elif combo:
+        cnt = combo["count"]
+        lr = combo["lastRace"]
+        prev = combo.get("races", [])
+        if len(prev) >= 2:
+            second_last = prev[-2]
+        else:
+            second_last = lr
+        status_html = (
+            f'<span class="lr-status">Happened {cnt} time{"s" if cnt != 1 else ""}'
+            f" &middot; last time R{esc(second_last['round'])} &middot;"
+            f" {esc(second_last['raceName'])}</span>"
+        )
+    else:
+        status_html = '<span class="lr-podigami">PODIGAMI</span>'
+
+    return (
+        f'<section class="last-race">'
+        f'  <span class="lr-tag">Last race</span>'
+        f'  <div class="lr-head">'
+        f"    {fl}"
+        f'    <span class="nr-round">Round {esc(rnd)} / {esc(schedule.get("totalRounds", ""))}</span>'
+        f"  </div>"
+        f'  <h3 class="lr-name">{name}</h3>'
+        f'  <div class="lr-trio">{trio_html}</div>'
+        f"  {status_html}"
         f"</section>"
     )
 
@@ -370,8 +469,10 @@ def main() -> int:
 
     using_constructors = data.get("params", {}).get("usingConstructors", False)
 
-    total_combos = len(load_combos())
-    total_races = len(load_podiums())
+    combos_list = load_combos()
+    podiums_list = load_podiums()
+    total_combos = len(combos_list)
+    total_races = len(podiums_list)
     grid_size = data["gridSize"]
     possible_trios = grid_size * (grid_size - 1) * (grid_size - 2) // 6
 
@@ -382,6 +483,13 @@ def main() -> int:
     if (DATA_DIR / "schedule.json").exists():
         schedule = load_schedule().model_dump()
     next_race = render_next_race(schedule) if schedule else ""
+    combos_dicts = [c.model_dump() for c in combos_list]
+    podiums_dicts = [p.model_dump() for p in podiums_list]
+    last_race = (
+        render_last_race(schedule, podiums_dicts, combos_dicts, meta, data["driverForm"])
+        if schedule
+        else ""
+    )
 
     model_eval = {}
     if (DATA_DIR / "model_eval.json").exists():
@@ -441,6 +549,7 @@ def main() -> int:
 <main>
     <div class="container">
         {next_race}
+        {last_race}
         {hero}
         {as_of_row}
         {candidates}
