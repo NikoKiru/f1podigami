@@ -945,16 +945,49 @@ a.tl-where:hover {
     }
 
     .last-race {
-        gap: 6px 10px;
-        padding: 8px 14px;
+        gap: 4px 8px;
+        padding: 8px 12px;
+    }
+
+    .lr-tag {
+        font-size: 10px;
+    }
+
+    .last-race .nr-flag {
+        width: 20px;
     }
 
     .lr-name {
-        font-size: 13px;
+        flex: 1 1 auto;
+        font-size: 12px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lr-trio {
+        gap: 1px;
+    }
+
+    .lr-driver {
+        font-size: 12px;
+        gap: 3px;
+    }
+
+    .lr-sep {
+        margin: 0 2px;
+    }
+
+    .lr-podigami {
+        font-size: 10px;
+        padding: 2px 6px;
+        margin-left: 0;
     }
 
     .lr-status {
+        font-size: 11px;
         white-space: normal;
+        margin-left: 0;
     }
 
     /* timing tower: drop the surname and team name on narrow screens —
