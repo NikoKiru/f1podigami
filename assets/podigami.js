@@ -7,6 +7,7 @@
     const bySeason = data.bySeason || {};
 
     const slider = document.getElementById('tl-slider');
+    const select = document.getElementById('tl-select');
     const yearEl = document.getElementById('tl-year');
     const countEl = document.getElementById('tl-count');
     const listEl = document.getElementById('tl-list');
@@ -68,6 +69,7 @@
         }).join('');
 
         bars.forEach(b => b.classList.toggle('on', b.dataset.season === year));
+        if (select) select.value = year;
     }
 
     // Render a season, easing the list height from its current size to the new
@@ -124,6 +126,13 @@
         slider.value = b.dataset.season;
         render(b.dataset.season);
     }));
+
+    if (select) {
+        select.addEventListener('change', () => {
+            slider.value = select.value;
+            render(select.value);
+        });
+    }
 
     render(slider.value);
 })();

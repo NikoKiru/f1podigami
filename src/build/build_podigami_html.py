@@ -258,6 +258,7 @@ def render_timeline(data: dict) -> str:
     counts = data["seasonCounts"]
     mx = max(counts.values()) if counts else 1
     bars = []
+    options = []
     for y in range(lo, hi + 1):
         n = counts.get(str(y), 0)
         h = round(100 * n / mx) if mx else 0
@@ -265,6 +266,9 @@ def render_timeline(data: dict) -> str:
             f'<span class="tl-bar" data-season="{y}" title="{y}: {n} new trio(s)" '
             f'style="height:{max(h, 2)}%"></span>'
         )
+        sel = " selected" if y == current else ""
+        label = f"{y} — {n} new" if n else str(y)
+        options.append(f'<option value="{y}"{sel}>{label}</option>')
     return (
         f'<section class="panel timeline">'
         f'  <div class="tl-header">'
@@ -280,6 +284,9 @@ def render_timeline(data: dict) -> str:
         f'  <div class="tl-spark">{"".join(bars)}</div>'
         f'  <div class="tl-controls">'
         f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1">'
+        f"  </div>"
+        f'  <div class="tl-select-wrap">'
+        f'    <select id="tl-select">{"".join(options)}</select>'
         f"  </div>"
         f'  <ul class="tl-list" id="tl-list"></ul>'
         f"</section>"
