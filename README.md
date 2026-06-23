@@ -55,7 +55,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 ## 🔮 How the predictor works
 
 ![Backtested](https://img.shields.io/badge/backtested-1950–2026-1f6feb?style=flat-square)
-![Half-life](https://img.shields.io/badge/recency_half--life-8_races-e10600?style=flat-square)
+![Half-life](https://img.shields.io/badge/recency_half--life-6_races-e10600?style=flat-square)
 ![Top-1](https://img.shields.io/badge/exact_trio_top--1-13%25-brightgreen?style=flat-square)
 ![Top-5](https://img.shields.io/badge/trio_top--5-41%25-brightgreen?style=flat-square)
 ![Hold-outs](https://img.shields.io/badge/race_hold--outs-333-8957e5?style=flat-square)
@@ -69,15 +69,15 @@ weight(d) = α  +  Σ over past podiums of 0.5 ^ (races_ago / H)  +  boost · (p
             └ floor ┘   └──────── recency decay (half-life H) ────────┘   └── current-season nudge ──┘
 ```
 
-The score of a trio is the product of its three weights, normalised over **every** trio on the grid.
-`P(next race is new)` is the share of that mass sitting on trios that have never happened.
+Given every driver's weight, a **Plackett–Luce** model scores each trio: sum over the 6 podium orderings of sequential pick probabilities (λᵢ / Σ remaining λ).
+`P(next race is new)` is the total probability mass on trios that have never happened.
 
 > **Why this formula?** It was picked by backtesting candidate models over 1950–2026 (333 race hold-outs):
 > - 📉 Cumulative **career** counts barely beat random (top-1 ≈ 2%) — longevity ≠ current form.
-> - 📈 **Recency** (exponential decay, half-life ≈ 8 races) jumped to **top-1 ≈ 13%, top-5 ≈ 41%**.
+> - 📈 **Recency** (exponential decay, half-life of 6 races) jumped to **top-1 ≈ 13%, top-5 ≈ 42%**.
 > - ➕ A *mild* current-season boost helped; blending career rate back in **hurt**, so it was dropped.
 >
-> Tunable constants live in [`src/compute/compute_podigami.py`](src/compute/compute_podigami.py).
+> Tunable constants live in [`src/compute/model.py`](src/compute/model.py).
 
 ---
 
