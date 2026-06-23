@@ -98,6 +98,14 @@ Tests live in `tests/` (pytest). Notable files: `test_build_output.py` (generate
 
 The `conftest.py` `dist` fixture builds `dist/` once per session via `build_site.py`; tests then assert against the real generated output. When you change rendered HTML, update the corresponding assertions.
 
+## Pull Requests
+
+A PR template lives at `.github/pull_request_template.md`. When creating PRs via `gh pr create`, always follow this template structure in the body:
+- **Summary**: what changed and why.
+- **Changes**: bullet list of specific changes.
+- **Testing**: how the change was verified (e.g. `pytest -q`, `ruff check .`, manual).
+- **Checklist**: confirm lint, format, tests pass, and no security issues introduced.
+
 ## GitHub Issues
 
 Issue templates live in `.github/ISSUE_TEMPLATE/`. When creating issues via `gh issue create`, use the appropriate template:
