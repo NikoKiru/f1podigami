@@ -69,7 +69,7 @@ def head(
 <meta name="theme-color" content="#0b0d12">
 <meta name="google-site-verification" content="hLESDF63VKsCV-0eJeHsA00GDM6K4CRWjjBnPnB8Dr8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 {_THEME_INIT}
 <title>{title}</title>{seo}
 {links}
