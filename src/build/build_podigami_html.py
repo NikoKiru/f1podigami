@@ -132,7 +132,9 @@ def render_next_race(schedule: dict, today: str | None = None) -> str:
     )
 
 
-def render_hero(top: dict, chance: float, meta: dict) -> str:
+def render_hero(
+    top: dict, chance: float, meta: dict, as_of_html: str = "", acc_badge: str = ""
+) -> str:
     cards = []
     for p in top["perDriver"]:
         v = driver_view(p, meta)
@@ -146,6 +148,11 @@ def render_hero(top: dict, chance: float, meta: dict) -> str:
             f"</div>"
         )
     pd = "".join(cards)
+    # Provenance + backtest badge live as a footer of the prediction card so they
+    # read as a caption on the headline, not as loose text floating between cards.
+    meta_row = (
+        f'<div class="hero-meta">{as_of_html}{acc_badge}</div>' if (as_of_html or acc_badge) else ""
+    )
     return (
         f'<section class="hero">'
         f'  <div class="hero-head">'
@@ -162,6 +169,7 @@ def render_hero(top: dict, chance: float, meta: dict) -> str:
         f'    <div class="hero-drivers">{pd}</div>'
         f'    <div class="hp-prob">{top["prob"]:.1f}% of all possible podiums &mdash; the top never-before trio</div>'
         f"  </div>"
+        f"  {meta_row}"
         f"</section>"
     )
 
@@ -365,11 +373,18 @@ def main() -> int:
     if MODEL_EVAL_PATH.exists():
         model_eval = json.loads(MODEL_EVAL_PATH.read_text(encoding="utf-8"))
 
-    hero = render_hero(cands[0], chance, meta) if cands else ""
+    acc_badge = render_accuracy_badge(model_eval)
+    as_of_html = (
+        f'<p class="as-of">Model up to date through the {esc(as_of["season"])} '
+        f"{esc(as_of['raceName'])} (round {esc(as_of['round'])}).</p>"
+    )
+    # The provenance + badge ride inside the hero card; when there's no hero
+    # (no candidates), fall back to a standalone meta strip so they still show.
+    hero = render_hero(cands[0], chance, meta, as_of_html, acc_badge) if cands else ""
+    as_of_row = "" if cands else f'<div class="as-of-row">{as_of_html}{acc_badge}</div>'
     candidates = render_candidates(cands, meta)
     form = render_form(data["driverForm"], using_constructors, meta)
     timeline = render_timeline(data)
-    acc_badge = render_accuracy_badge(model_eval)
     faq = render_faq(data, model_eval)
 
     # Embedded data for the slider (only what the client needs).
@@ -413,12 +428,7 @@ def main() -> int:
     <div class="container">
         {next_race}
         {hero}
-        <div class="as-of-row">
-            <p class="as-of">Model up to date through the {esc(as_of["season"])} {
-        esc(as_of["raceName"])
-    } (round {esc(as_of["round"])}).</p>
-            {acc_badge}
-        </div>
+        {as_of_row}
         {candidates}
         {form}
         {timeline}

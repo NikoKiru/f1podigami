@@ -703,7 +703,23 @@ a.tl-where:hover {
     font-weight: 600;
 }
 
-/* model accuracy badge & as-of row */
+/* hero footer: model provenance + backtest badge, divided from the pick above */
+.hero-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.hero-meta .as-of {
+    margin: 0;
+}
+
+/* standalone meta strip — only used when there is no hero (no candidates) */
 .as-of-row {
     display: flex;
     align-items: center;
