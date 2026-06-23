@@ -574,7 +574,8 @@ a.tl-where:hover {
     text-decoration: underline;
 }
 
-/* info tooltip — "i" icon with hover/focus bubble */
+/* info tooltip — "i" icon. Desktop reveals on hover; touch/keyboard toggle the
+   .open class via JS (so a tap can close it again, unlike sticky :focus). */
 .info-tip {
     position: relative;
     display: inline-flex;
@@ -603,7 +604,8 @@ a.tl-where:hover {
 }
 
 .info-tip:hover .info-icon,
-.info-tip:focus .info-icon {
+.info-tip:focus-visible .info-icon,
+.info-tip.open .info-icon {
     border-color: var(--accent-bright);
     color: var(--accent-bright);
 }
@@ -634,7 +636,8 @@ a.tl-where:hover {
 }
 
 .info-tip:hover .info-bubble,
-.info-tip:focus .info-bubble {
+.info-tip:focus-visible .info-bubble,
+.info-tip.open .info-bubble {
     display: block;
 }
 
