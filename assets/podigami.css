@@ -485,6 +485,16 @@ main {
 }
 
 /* timeline */
+.tl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.tl-header h2 {
+    margin-bottom: 0;
+}
+
 .tl-spark {
     display: flex;
     align-items: flex-end;
@@ -526,7 +536,7 @@ main {
 
 .tl-readout {
     text-align: right;
-    margin-bottom: 8px;
+    white-space: nowrap;
 }
 
 #tl-year {
