@@ -854,7 +854,9 @@ a.tl-where:hover {
         max-height: 70px;
     }
 
-    /* timing tower: drop the team name and shrink the bar to fit narrow screens */
+    /* timing tower: drop the surname and team name on narrow screens —
+       number + TLA code + team colour bar is enough to identify a driver */
+    .tr-name,
     .tr-team {
         display: none;
     }
