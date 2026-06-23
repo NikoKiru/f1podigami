@@ -599,6 +599,7 @@ a.tl-where:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    text-transform: none;
     width: 18px;
     height: 18px;
     border-radius: 50%;
