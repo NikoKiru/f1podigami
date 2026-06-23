@@ -150,7 +150,12 @@ def render_hero(top: dict, chance: float, meta: dict) -> str:
         f'<section class="hero">'
         f'  <div class="hero-head">'
         f'    <div class="hero-chance"><span class="hc-num">{chance:.0f}%</span>'
-        f'      <span class="hc-label">chance the next race<br>delivers a brand-new trio</span></div>'
+        f'      <span class="hc-label">chance the next race<br>delivers a brand-new trio'
+        f'        <span class="info-tip info-tip-sm" tabindex="0" aria-label="More info">'
+        f'          <span class="info-icon">i</span>'
+        f'          <span class="info-bubble">The overall probability that any brand-new podium trio appears at the next race, not just the top-ranked one.</span>'
+        f"        </span>"
+        f"      </span></div>"
         f"  </div>"
         f'  <div class="hero-pick">'
         f'    <div class="hp-label">Most likely next <span class="accent">podigami</span></div>'
@@ -189,8 +194,12 @@ def render_candidates(cands: list[dict], meta: dict) -> str:
         )
     return (
         f'<section class="panel">'
-        f"  <h2>Most likely next combinations</h2>"
-        f'  <p class="panel-sub">Trios that have never shared a podium, ranked by the model\'s probability they do it next.</p>'
+        f'  <h2>Most likely next combinations'
+        f'    <span class="info-tip" tabindex="0" aria-label="More info">'
+        f'      <span class="info-icon">i</span>'
+        f'      <span class="info-bubble">Trios that have never shared a podium, ranked by the model\'s probability they do it next.</span>'
+        f"    </span>"
+        f"  </h2>"
         f'  <ol class="cand-list">{"".join(rows)}</ol>'
         f"</section>"
     )
@@ -219,8 +228,12 @@ def render_form(form: list[dict], using_constructors: bool, meta: dict) -> str:
     sub += "."
     return (
         f'<section class="panel">'
-        f"  <h2>Current form</h2>"
-        f'  <p class="panel-sub">{sub}</p>'
+        f'  <h2>Current form'
+        f'    <span class="info-tip" tabindex="0" aria-label="More info">'
+        f'      <span class="info-icon">i</span>'
+        f'      <span class="info-bubble">{sub}</span>'
+        f"    </span>"
+        f"  </h2>"
         f'  <div class="form-tower">{"".join(rows)}</div>'
         f"</section>"
     )
@@ -241,8 +254,12 @@ def render_timeline(data: dict) -> str:
         )
     return (
         f'<section class="panel timeline">'
-        f"  <h2>New podiums through the years</h2>"
-        f'  <p class="panel-sub">Every trio that debuted on a podium that season. Drag the slider or click a bar.</p>'
+        f'  <h2>New podiums through the years'
+        f'    <span class="info-tip" tabindex="0" aria-label="More info">'
+        f'      <span class="info-icon">i</span>'
+        f'      <span class="info-bubble">Every trio that debuted on a podium that season. Drag the slider or click a bar to explore.</span>'
+        f"    </span>"
+        f"  </h2>"
         f'  <div class="tl-spark">{"".join(bars)}</div>'
         f'  <div class="tl-controls">'
         f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1">'
@@ -259,79 +276,64 @@ def render_accuracy_badge(ev: dict) -> str:
         return ""
     top3 = round(100 * ev["chosen"]["top3"])
     return (
-        f'<a class="acc-badge" href="#model-accuracy" title="Backtested model accuracy">'
+        f'<span class="acc-badge" title="Backtested model accuracy">'
         f'<span class="acc-badge-k">Backtested</span>'
         f"<b>top-3 {top3}%</b>"
         f'<span class="acc-badge-sep">&middot;</span>calibrated'
-        f'<span class="acc-badge-go">method &rarr;</span>'
-        f"</a>"
+        f"</span>"
     )
 
 
-def _reliability_svg(cal: list[dict]) -> str:
-    pts = [(b["meanPred"], b["obsRate"]) for b in cal if b["n"] and b["meanPred"] is not None]
-    s = 180
-    dots = "".join(
-        f'<circle cx="{p * s:.1f}" cy="{(1 - o) * s:.1f}" r="3.5" class="acc-dot"/>' for p, o in pts
-    )
-    return (
-        f'<svg class="acc-rel" viewBox="-6 -8 {s + 16} {s + 26}" role="img" '
-        f'aria-label="P(new) calibration reliability">'
-        f'<rect x="0" y="0" width="{s}" height="{s}" class="acc-frame"/>'
-        f'<line x1="0" y1="{s}" x2="{s}" y2="0" class="acc-diag"/>'
-        f"{dots}"
-        f'<text x="{s / 2}" y="{s + 18}" class="acc-axis" text-anchor="middle">predicted &rarr;</text>'
-        f"</svg>"
-    )
-
-
-def render_accuracy(ev: dict) -> str:
-    if not ev:
-        return ""
-    ch = ev["chosen"]
-    tw = ev["evalWindow"]["test"]
-    mp = ev["modelParams"]
-    rows = ""
-    for r in ev["ladder"]:
-        cls = ' class="acc-chosen"' if r["model"].startswith("PL + tuned") else ""
-        rows += (
-            f"<tr{cls}><td>{esc(r['model'])}</td>"
-            f"<td>{round(100 * r['top1'])}%</td>"
-            f"<td>{round(100 * r['top3'])}%</td>"
-            f"<td>{round(100 * r['top5'])}%</td>"
-            f"<td>{r['logLoss']:.2f}</td></tr>"
+def render_faq(data: dict, ev: dict) -> str:
+    mp = ev.get("modelParams", {}) if ev else {}
+    half_life = mp.get("halfLife", 8)
+    items = [
+        (
+            "How does the prediction model work?",
+            f"A <strong>Plackett&ndash;Luce model</strong> estimates each driver&rsquo;s current "
+            f"strength from their recent podium finishes, weighted toward recency (halved every "
+            f"~{half_life:.0f} races). It then calculates the probability of every possible trio and "
+            f"ranks the never-before-seen ones from most to least likely."
+        ),
+        (
+            "What does the headline percentage mean?",
+            "It&rsquo;s the overall probability that <em>any</em> brand-new podium trio appears at "
+            "the next race &mdash; not just the top-ranked one, but any combination that has never "
+            "happened before."
+        ),
+        (
+            "How accurate is the model?",
+            f"Backtested on seasons it never saw during tuning, the model places the actual podium "
+            f"trio in its top&nbsp;3 predictions {round(100 * ev['chosen']['top3'])}% of the time. "
+            f"F1 podiums are inherently high-variance, so exact-trio hits are rare by nature."
+            if ev and ev.get("chosen")
+            else "The model is backtested on historical seasons it never saw during tuning. "
+            "F1 podiums are inherently high-variance, so exact-trio hits are rare by nature."
+        ),
+        (
+            "What is &ldquo;current form&rdquo; based on?",
+            "Each driver&rsquo;s podium weight uses a recency decay &mdash; recent podiums count "
+            "more than older ones. The weight also includes a boost for the current season and "
+            "can factor in constructor strength."
+        ),
+        (
+            "Why haven&rsquo;t most trios happened yet?",
+            "Even with decades of racing, the number of possible three-driver combinations from "
+            "a 20-driver grid is enormous. Most trios are still podigamis waiting to happen."
+        ),
+    ]
+    entries = []
+    for q, a in items:
+        entries.append(
+            f'<details class="faq-item">'
+            f'<summary class="faq-q">{q}</summary>'
+            f'<div class="faq-a"><p>{a}</p></div>'
+            f"</details>"
         )
-    base = ch.get("baseRateNew", 0.0)
-    bn = ch.get("brierNew", 0.0)
-    bnb = ch.get("brierNewBaseRate", 0.0)
     return (
-        f'<section class="panel" id="model-accuracy">'
-        f"  <h2>Model accuracy &amp; method</h2>"
-        f'  <p class="panel-sub">A Plackett-Luce model over recency-weighted driver strengths, '
-        f"tuned and then measured on the {tw[0]}&ndash;{tw[1]} seasons it never saw during "
-        f"tuning ({ch['n']} races). Lower log-loss is better.</p>"
-        f'  <div class="acc-grid">'
-        f'    <div class="acc-tablewrap">'
-        f'      <table class="acc-table"><thead><tr><th>Model</th><th>Top-1</th>'
-        f"<th>Top-3</th><th>Top-5</th><th>Log-loss</th></tr></thead><tbody>{rows}</tbody></table>"
-        f'      <p class="acc-cap">Top-k = how often the real podium trio landed in the model&rsquo;s '
-        f"k most likely. The highlighted row is the validated, shipped model.</p>"
-        f"    </div>"
-        f'    <div class="acc-calwrap">'
-        f"      {_reliability_svg(ev['calibration'])}"
-        f'      <p class="acc-cap">Calibration of the &ldquo;brand-new trio&rdquo; chance: dots near the '
-        f"line = honest. Base-rate {round(100 * base)}%; the headline only just beats it "
-        f"(Brier {bn:.3f} vs {bnb:.3f}) &mdash; the model&rsquo;s real edge is <em>ranking</em> "
-        f"which trio, not that single %.</p>"
-        f"    </div>"
-        f"  </div>"
-        f'  <p class="acc-note"><b>How it works:</b> each driver earns a strength from their recent '
-        f"podiums (halved every {mp['halfLife']:.0f} races, shrunk across winters); Plackett-Luce "
-        f"turns those into the probability each trio is the top three. "
-        f"<b>What it can&rsquo;t do:</b> F1 podiums are high-variance, so exact-trio hits are rare by "
-        f"nature; the live current-season car/teammate nudge is applied to today&rsquo;s grid but is "
-        f"<em>not</em> in these backtested figures (no historical team data), and qualifying "
-        f"isn&rsquo;t used yet.</p>"
+        f'<section class="panel faq-section">'
+        f"  <h2>Frequently asked questions</h2>"
+        f'  {"".join(entries)}'
         f"</section>"
     )
 
@@ -368,7 +370,7 @@ def main() -> int:
     form = render_form(data["driverForm"], using_constructors, meta)
     timeline = render_timeline(data)
     acc_badge = render_accuracy_badge(model_eval)
-    accuracy = render_accuracy(model_eval)
+    faq = render_faq(data, model_eval)
 
     # Embedded data for the slider (only what the client needs).
     embed = json.dumps(
@@ -398,37 +400,13 @@ def main() -> int:
 <header>
     <div class="container">
         <h1><span class="accent">F1</span> Podigami</h1>
-        <p class="tagline">Which never-before podium trio is most likely to happen next &mdash; a scorigami-style predictor for the {
-        season
-    } season, scored from {lo}&ndash;{hi} of podium history.</p>
-        <div class="about">
-            <div class="about-block">
-                <h2>What is Podigami?</h2>
-                <p>Podigami &mdash; a blend of &ldquo;podium&rdquo; and
-                &ldquo;<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>&rdquo;
-                &mdash; is the art of spotting F1 podium trios that have never happened before.
-                Every race crowns three drivers on the rostrum; a <strong>podigami</strong> occurs
-                when that exact combination of three is brand new.</p>
-            </div>
-            <div class="about-block">
-                <h2>Why does it happen?</h2>
-                <p>With {hi - lo + 1} years of racing and hundreds of drivers through the World Championship,
-                you might expect most trios to have appeared already. But only <strong>{
-        total_combos:,}</strong> unique
-                combinations have been seen in <strong>{total_races:,}</strong> races since {lo}.
-                Today&rsquo;s {grid_size}-driver grid produces <strong>{
-        possible_trios:,}</strong> possible
-                trios per race &mdash; the vast majority are podigamis waiting to happen.</p>
-            </div>
-            <div class="about-block">
-                <h2>How does the prediction work?</h2>
-                <p>A <a href="#model-accuracy">Plackett&ndash;Luce model</a> estimates each
-                driver&rsquo;s current strength from their recent podium finishes, weighted toward
-                recency. It then calculates the probability of every possible trio for the next
-                race and ranks the never-before-seen ones from most to least likely. The
-                headline number is the overall chance that <em>any</em> brand-new trio appears.</p>
-            </div>
-        </div>
+        <p class="tagline">Podigami &mdash; a blend of &ldquo;podium&rdquo; and
+        &ldquo;<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>&rdquo;
+        &mdash; tracks F1 podium trios that have never happened before. Only <strong>{
+        total_combos:,}</strong> unique combinations have appeared across <strong>{
+        total_races:,}</strong> races since {lo}, yet today&rsquo;s {grid_size}-driver grid
+        produces <strong>{possible_trios:,}</strong> possible trios per race. A statistical model
+        predicts which brand-new trio is most likely next in the {season} season.</p>
     </div>
 </header>
 <main>
@@ -444,7 +422,7 @@ def main() -> int:
         {candidates}
         {form}
         {timeline}
-        {accuracy}
+        {faq}
     </div>
 </main>
 {FOOTER}
