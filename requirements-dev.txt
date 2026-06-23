@@ -2,5 +2,5 @@
 # Runtime deps live in requirements.txt.
 -r requirements.txt
 ruff>=0.14
-pytest-cov>=7.0
+pytest-cov>=7.1.0
 pip-audit>=2.9
