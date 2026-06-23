@@ -27,11 +27,6 @@ main {
     font-weight: 500;
 }
 
-.as-of {
-    color: var(--muted);
-    font-size: 13px;
-    margin: 14px 2px 0;
-}
 
 /* next-race box */
 .next-race {
@@ -379,6 +374,10 @@ main {
 }
 
 .hp-prob {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 0;
     font-size: 13px;
     color: var(--muted);
     margin-top: 14px;
@@ -834,47 +833,18 @@ a.tl-where:hover {
     font-weight: 600;
 }
 
-/* hero footer: model provenance + backtest badge, divided from the pick above */
-.hero-meta {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-}
-
-.hero-meta .as-of {
-    margin: 0;
-}
-
-/* standalone meta strip — only used when there is no hero (no candidates) */
-.as-of-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 6px 14px;
-}
-
 .acc-badge {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    font-size: 12px;
+    gap: 5px;
+    font-size: 11px;
     color: var(--muted);
-    text-decoration: none;
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 4px 12px;
-    transition: border-color 0.15s, color 0.15s;
-}
-
-.acc-badge:hover {
-    border-color: var(--accent);
-    color: var(--text);
+    padding: 2px 10px;
+    margin-left: 10px;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
 .acc-badge b {
@@ -884,8 +854,8 @@ a.tl-where:hover {
 
 .acc-badge-k {
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 10px;
+    letter-spacing: 0.8px;
+    font-size: 9px;
     color: var(--muted-dim);
 }
 
