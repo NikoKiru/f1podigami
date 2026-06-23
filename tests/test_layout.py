@@ -46,10 +46,9 @@ def test_nav_has_brand_home_link():
 
 
 def test_nav_links_are_plain_labels_no_arrow():
-    # the old "Soulmates ->" arrow is gone in the tabbed header
-    sm = nav("soulmates.html")
-    assert "&rarr;" not in sm
-    assert '<a href="soulmates.html" class="active">Soulmates</a>' in sm
+    out = nav("overdue.html")
+    assert "&rarr;" not in out
+    assert '<a href="overdue.html" class="active">Overdue</a>' in out
 
 
 def test_footer_is_shared_constant():
