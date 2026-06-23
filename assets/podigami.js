@@ -19,10 +19,20 @@
     }
 
     // Broadcast-style full name: "First MIDDLE? LASTNAME" (surname uppercased).
+    // On narrow screens, abbreviate to "F. LASTNAME" so trios fit.
+    const narrowQ = window.matchMedia('(max-width: 600px)');
+    let narrow = narrowQ.matches;
+    narrowQ.addEventListener('change', e => {
+        narrow = e.matches;
+        render(slider.value);
+    });
+
     function displayName(name) {
         const parts = name.trim().split(/\s+/);
         if (parts.length === 0) return name;
-        parts[parts.length - 1] = parts[parts.length - 1].toUpperCase();
+        const surname = parts[parts.length - 1].toUpperCase();
+        if (narrow) return parts[0][0] + '. ' + surname;
+        parts[parts.length - 1] = surname;
         return parts.join(' ');
     }
 
