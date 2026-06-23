@@ -841,4 +841,8 @@ a.tl-where:hover {
     .trio .sep {
         margin: 0 4px;
     }
+
+    .trio .pdriver {
+        white-space: normal;
+    }
 }
