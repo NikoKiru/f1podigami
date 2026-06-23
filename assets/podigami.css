@@ -239,6 +239,18 @@ main {
     white-space: nowrap;
 }
 
+.lr-link {
+    color: var(--muted);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+}
+
+.lr-link:hover {
+    color: var(--accent-bright);
+    text-decoration-color: var(--accent-bright);
+}
+
 /* hero */
 .hero {
     display: grid;

@@ -208,16 +208,18 @@ def render_last_race(
         status_html = '<span class="lr-podigami">PODIGAMI</span>'
     elif combo:
         cnt = combo["count"]
-        lr = combo["lastRace"]
         prev = combo.get("races", [])
-        if len(prev) >= 2:
-            second_last = prev[-2]
-        else:
-            second_last = lr
+        second_last = prev[-2] if len(prev) >= 2 else combo["lastRace"]
+        wiki = (
+            "https://en.wikipedia.org/wiki/"
+            + f"{second_last['season']}_{second_last['raceName']}".replace(" ", "_")
+        )
         status_html = (
             f'<span class="lr-status">Happened {cnt} time{"s" if cnt != 1 else ""}'
-            f" &middot; last time R{esc(second_last['round'])} &middot;"
-            f" {esc(second_last['raceName'])}</span>"
+            f' &middot; last time <a class="lr-link" href="{esc(wiki)}"'
+            f' target="_blank" rel="noopener">'
+            f"R{esc(second_last['round'])} &middot;"
+            f" {esc(second_last['raceName'])}</a></span>"
         )
     else:
         status_html = '<span class="lr-podigami">PODIGAMI</span>'
