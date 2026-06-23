@@ -18,6 +18,9 @@ from pathlib import Path
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from datalib import save_podiums  # noqa: E402
+
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 PAGE_SIZE = 100
 SLEEP_BETWEEN = 1.0
@@ -152,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             incomplete.append(r)
 
-    OUT_PATH.write_text(json.dumps(complete, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_podiums(complete)
 
     seasons = sorted({int(r["season"]) for r in complete})
     print()

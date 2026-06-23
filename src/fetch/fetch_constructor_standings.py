@@ -24,6 +24,9 @@ from pathlib import Path
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from datalib import save_constructor_standings  # noqa: E402
+
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 SLEEP_BETWEEN = 1.0
 MAX_BACKOFF_RETRIES = 6
@@ -94,7 +97,7 @@ def main() -> int:
             "constructors": [],
             "driverConstructor": {},
         }
-        OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+        save_constructor_standings(out)
         print(f"Wrote empty {OUT_PATH}")
         return 0
 
@@ -122,7 +125,7 @@ def main() -> int:
         "constructors": constructors,
         "driverConstructor": driver_map,
     }
-    OUT_PATH.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_constructor_standings(out)
     print(f"Wrote {OUT_PATH}")
     print(
         f"  season {season} R{rounds[-1]}: {len(constructors)} constructors, {len(driver_map)} driver mappings"
