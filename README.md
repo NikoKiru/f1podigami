@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-107%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-192%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -32,9 +32,11 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 - 🔮 **Podigami predictor** — ranks the never-before podium trios most likely to debut next, with a scorigami-style *"% chance the next race is brand-new"*.
 - 🧮 **Backtested model** — the algorithm was *chosen by data*, not guesswork (see [the model](#-how-the-predictor-works)).
+- 🏁 **Next race + last race** — countdown to the upcoming GP, plus a compact recap of the last race's podium trio with its podigami status and linked history.
 - 🗓️ **Season timeline** — drag a year slider to see every trio that debuted on a podium in each season since 1950.
+- ⏳ **Overdue trios** — driver pairs whose individual form says they *should* share a podium, but haven't yet.
 - 🔗 **Cited sources** — every race links to its Wikipedia race report.
-- 📊 **Two more views** — the full combinations table and a soulmates heatmap of the most-paired drivers.
+- 📊 **Combinations table** — every unique 3-driver podium combination since 1950, sortable and filterable.
 - 📱 **Mobile-first** — fully responsive, dark theme, locked in by CSS regression tests.
 - ⚙️ **Zero-ops deploy** — rebuilds from committed JSON in CI and ships to GitHub Pages on every push.
 
@@ -44,11 +46,9 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 | | Page | What it shows |
 |---|---|---|
-| 🔮 | **`index.html`** | The **Podigami predictor** — most likely next brand-new podium trio + the season debut timeline |
-| 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 (order-independent) |
-| 💞 | `soulmates.html` | A symmetric heatmap of the 40 most decorated drivers — who shared the most podiums, clustered by era |
-
-> 📈 Career charts and season-alignment analysis live in a sibling repo, [`f1_seasons_charts`](../f1_seasons_charts).
+| 🔮 | **`index.html`** | The **Podigami predictor** — next/last race, most likely brand-new trio, candidate rankings, current form tower, season debut timeline, FAQ |
+| 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 — sortable, filterable, expandable |
+| ⏳ | `overdue.html` | Trios "overdue" to appear — driver pairs whose current form suggests a shared podium is imminent |
 
 ---
 
@@ -83,49 +83,86 @@ The score of a trio is the product of its three weights, normalised over **every
 
 ## 🧱 Architecture
 
-Each stage reads committed JSON and writes the next — **fetch → compute → build → pages**:
+A three-stage pipeline: **fetch → compute → build**. Each stage reads committed JSON and writes the next.
 
 ```mermaid
 flowchart LR
-    classDef fetch fill:#15151E,stroke:#e10600,color:#fff;
-    classDef compute fill:#1f2630,stroke:#8b949e,color:#fff;
-    classDef build fill:#262d38,stroke:#f4c430,color:#fff;
-    classDef page fill:#0b0d12,stroke:#e10600,color:#fff;
+    classDef fetch fill:#15151E,stroke:#e10600,color:#fff
+    classDef compute fill:#1f2630,stroke:#8b949e,color:#fff
+    classDef build fill:#262d38,stroke:#f4c430,color:#fff
+    classDef page fill:#0b0d12,stroke:#e10600,color:#fff
+    classDef data fill:#161b22,stroke:#58a6ff,color:#8b949e
 
-    FP[fetch_podiums]:::fetch
-    FG[fetch_current_drivers]:::fetch
+    subgraph FETCH ["① Fetch"]
+        direction TB
+        FP["fetch_podiums"]:::fetch
+        FG["fetch_current_drivers"]:::fetch
+        FS["fetch_schedule"]:::fetch
+        FC["fetch_constructor_standings"]:::fetch
+        FR["fetch_driver_races"]:::fetch
+    end
 
-    CC[count_combos]:::compute
-    CP[compute_podigami]:::compute
-    CM[compute_soulmates]:::compute
+    subgraph DATA ["data/*.json"]
+        direction TB
+        D1["podiums"]:::data
+        D2["current_drivers"]:::data
+        D3["schedule"]:::data
+        D4["combos"]:::data
+        D5["podigami"]:::data
+        D6["overdue"]:::data
+        D7["soulmates"]:::data
+        D8["model_eval"]:::data
+    end
 
-    BP[build_podigami_html]:::build
-    BC[build_combos_html]:::build
-    BM[build_soulmates_html]:::build
+    subgraph COMPUTE ["② Compute"]
+        direction TB
+        CC["count_combos"]:::compute
+        CP["compute_podigami"]:::compute
+        CO["compute_overdue"]:::compute
+        CM["compute_soulmates"]:::compute
+        BT["backtest"]:::compute
+    end
 
-    FP --> CC & CM & CP
-    CC --> CP
-    FG --> CP
+    subgraph BUILD ["③ Build"]
+        direction TB
+        BP["build_podigami_html"]:::build
+        BC["build_combos_html"]:::build
+        BO["build_overdue_html"]:::build
+        BS["build_soulmates_html"]:::build
+    end
 
-    CP --> BP --> I([index.html]):::page
-    CC --> BC --> O([combos.html]):::page
-    CM --> BM --> S([soulmates.html]):::page
+    FP --> D1
+    FG --> D2
+    FS --> D3
+    D1 --> CC --> D4
+    D1 & D2 & D4 --> CP --> D5
+    D1 & D2 & D4 --> CO --> D6
+    D1 --> CM --> D7
+    D1 --> BT --> D8
+
+    D3 & D5 & D1 & D4 & D2 & D8 --> BP --> I([index.html]):::page
+    D4 --> BC --> C([combos.html]):::page
+    D6 --> BO --> O([overdue.html]):::page
+    D7 --> BS --> S([soulmates.html]):::page
 ```
+
+All access to `data/*.json` goes through **`src/datalib/`** — Pydantic v2 schemas that validate every read and write. `load_*` returns typed model objects; `save_*` validates the payload and writes it byte-identical (so regenerating a dataset never reformats it).
 
 <details>
 <summary>📁 <strong>Repository layout</strong></summary>
 
 ```text
 src/
-  fetch/      API fetchers          → data/*.json
-  compute/    aggregation / model   → data/*.json
-  build/      page renderers        → dist/*.html
-  build_site.py   render all pages + copy assets → dist/
-  update.py       refresh data, then build
-assets/       source CSS + JS (copied into dist/ at build time)
-data/         committed JSON datasets the site builds from
-dist/         generated, deployable site (git-ignored)
-tests/        pytest suite (107 tests, run in CI)
+  fetch/        API fetchers              → data/*.json
+  compute/      aggregation / modelling   → data/*.json
+  build/        page renderers            → dist/*.html
+  datalib/      Pydantic schemas + typed load/save (the data contract)
+  build_site.py     render all pages + copy assets → dist/
+  update.py         refresh data, then build
+assets/         source CSS + JS (copied into dist/ at build time)
+data/           committed JSON datasets the site builds from
+dist/           generated, deployable site (git-ignored)
+tests/          pytest suite (192 tests, run in CI)
 ```
 
 </details>
@@ -157,6 +194,7 @@ python src/build_site.py
 | `python src/build_site.py` | Anytime (offline) | Re-render all pages from committed data → `dist/` |
 | `python src/update.py` | After each race | Incrementally fetch new podiums + grid, recompute, rebuild |
 | `python src/update.py --full` | First run / full rebuild | Re-fetch the entire podium history from 1950 (slow), then rebuild |
+| `PYTHONPATH=src python -m datalib.validate` | After editing data | Validate every dataset against its Pydantic schema |
 
 ---
 
@@ -165,12 +203,13 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 107 tests + coverage gate (≥70%)
+pytest --cov                          # 192 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
-from combos + grid…), **build determinism & link resolution**, **mobile-CSS regressions**, and the
-**prediction model** (including edge cases).
+from combos + grid…), **build determinism & link resolution**, **mobile-CSS regressions**, **schema
+fidelity** (byte-identical load/save round-trips), and the **prediction model** (including edge cases
+and backtesting).
 
 Every push and PR runs a hardened pipeline:
 
@@ -196,12 +235,13 @@ test fails the build job, so the deploy step is skipped and the live site stays 
 
 ```mermaid
 flowchart LR
-    classDef ok fill:#1f2630,stroke:#2ea043,color:#fff;
-    classDef bad fill:#1f2630,stroke:#e10600,color:#fff;
-    classDef gate fill:#262d38,stroke:#f4c430,color:#fff;
+    classDef ok fill:#1f2630,stroke:#2ea043,color:#fff
+    classDef bad fill:#1f2630,stroke:#e10600,color:#fff
+    classDef gate fill:#262d38,stroke:#f4c430,color:#fff
+    classDef ci fill:#161b22,stroke:#58a6ff,color:#8b949e
 
-    P[push to main] --> T{pytest -q}:::gate
-    T -- pass --> B[build dist/]:::ok --> D[(GitHub Pages)]:::ok
+    P[push to main] --> L[lint + format]:::ci --> T{tests<br/>py3.11–3.13}:::gate
+    T -- pass --> V[validate schemas]:::ci --> B[build dist/]:::ok --> D[(GitHub Pages)]:::ok
     T -- fail --> X[deploy skipped<br/>site unchanged]:::bad
 ```
 
@@ -213,14 +253,34 @@ flowchart LR
 
 | Script | Role |
 |---|---|
+| **Fetch** | |
 | `src/fetch/fetch_podiums.py` | Fetch P1/P2/P3 for every race → `data/podiums.json` |
 | `src/fetch/fetch_current_drivers.py` | Fetch the current racing grid → `data/current_drivers.json` |
+| `src/fetch/fetch_schedule.py` | Fetch race calendar + circuit track outlines → `data/schedule.json` |
+| `src/fetch/fetch_constructor_standings.py` | Fetch constructor championship standings → `data/constructor_standings.json` |
+| `src/fetch/fetch_driver_races.py` | Fetch per-driver race participation → `data/driver_races.json` |
+| `src/fetch/track_geo.py` | Resolve circuit SVG track paths from geo data |
+| **Compute** | |
 | `src/compute/count_combos.py` | Aggregate podiums into unique trios → `data/combos.json` |
 | `src/compute/compute_podigami.py` | 🔮 Predict the next brand-new trio → `data/podigami.json` |
+| `src/compute/compute_overdue.py` | Find trios overdue based on driver form → `data/overdue.json` |
 | `src/compute/compute_soulmates.py` | Shared-podium matrix for the top 40 → `data/soulmates.json` |
-| `src/build/build_podigami_html.py` | Render `dist/index.html` (the predictor) |
+| `src/compute/model.py` | Plackett–Luce strength model core |
+| `src/compute/backtest.py` | Backtest model accuracy across hold-out seasons → `data/model_eval.json` |
+| `src/compute/metrics.py` | Scoring metrics for model evaluation |
+| **Build** | |
+| `src/build/build_podigami_html.py` | Render `dist/index.html` (the predictor + next/last race) |
 | `src/build/build_combos_html.py` | Render `dist/combos.html` |
+| `src/build/build_overdue_html.py` | Render `dist/overdue.html` |
 | `src/build/build_soulmates_html.py` | Render `dist/soulmates.html` |
+| `src/build/_layout.py` | Shared page chrome: `head()`, `nav()`, footer |
+| `src/build/flags.py` | Country flag SVGs |
+| `src/build/team_colors.py` | Constructor colour lookup + contrast-safe text colour |
+| **Data layer** | |
+| `src/datalib/schemas.py` | Pydantic v2 schemas for every `data/*.json` |
+| `src/datalib/repository.py` | Typed `load_*` / `save_*` functions |
+| `src/datalib/validate.py` | CLI validator: `python -m datalib.validate` |
+| **Orchestrators** | |
 | `src/build_site.py` | Build `dist/` (render all pages + copy assets) |
 | `src/update.py` | Refresh data, then build the site |
 
