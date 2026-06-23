@@ -14,6 +14,9 @@ from itertools import combinations
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+from datalib import save_soulmates  # noqa: E402
+
 PODIUMS_PATH = ROOT / "data" / "podiums.json"
 OUT_PATH = ROOT / "data" / "soulmates.json"
 TOP_N = 40
@@ -91,7 +94,7 @@ def main() -> int:
         "topPairs": top_pairs[:TOP_PAIRS],
     }
 
-    OUT_PATH.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+    save_soulmates(output)
     print(f"Wrote {OUT_PATH}")
     if top_pairs:
         p = top_pairs[0]

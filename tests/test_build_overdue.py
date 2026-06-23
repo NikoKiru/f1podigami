@@ -1,19 +1,20 @@
 """Unit tests for the overdue page's pure render helpers (no IO)."""
 
 from build import build_overdue_html as bo
+from datalib import OverduePerDriver, OverdueTrio
 
 
 def entry(names, ids, races_together, score, rates):
-    return {
-        "driverIds": ids,
-        "names": names,
-        "racesTogether": races_together,
-        "score": score,
-        "perDriver": [
-            {"name": n, "podiums": 1, "starts": 10, "rate": r}
+    return OverdueTrio(
+        driverIds=ids,
+        names=names,
+        racesTogether=races_together,
+        score=score,
+        perDriver=[
+            OverduePerDriver(name=n, podiums=1, starts=10, rate=r)
             for n, r in zip(names, rates, strict=False)
         ],
-    }
+    )
 
 
 def test_render_trio_escapes_and_separates():

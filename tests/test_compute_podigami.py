@@ -232,6 +232,16 @@ def test_no_constructor_data_falls_back(scenario):
     assert "constructorStrength" not in form
 
 
+def test_no_constructor_payload_satisfies_schema(scenario):
+    """Off-season (no constructor data) the payload omits constructor/constructorStrength;
+    it must still validate, since save_podigami() validates before writing (regression guard)."""
+    from datalib import REGISTRY
+
+    podiums, combos, grid = scenario
+    res = cp.compute(podiums, combos, grid, constructor_data=None)
+    REGISTRY["podigami.json"].validate_python(res)  # must not raise
+
+
 def test_wrong_season_constructor_data_ignored(scenario):
     podiums, combos, grid = scenario
     con = _con_data(2020, [("teamA", 200)], {"alf": "teamA"})

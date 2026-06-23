@@ -23,7 +23,10 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import model  # noqa: E402
+
+from datalib import save_podigami  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
@@ -210,7 +213,7 @@ def main() -> int:
         constructor_data = json.loads(CONSTRUCTOR_PATH.read_text(encoding="utf-8"))
 
     payload = compute(podiums, combos, grid, constructor_data)
-    OUT_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_podigami(payload)
 
     print(f"Wrote {OUT_PATH}")
     print(f"  season {payload['currentSeason']} grid: {payload['gridSize']} drivers")

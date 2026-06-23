@@ -21,8 +21,11 @@ from itertools import combinations
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import metrics  # noqa: E402
 import model  # noqa: E402
+
+from datalib import save_model_eval  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
@@ -269,7 +272,7 @@ def main(argv: list[str] | None = None) -> int:
         "calibration": cal,
         "poolNote": "candidate pools = drivers active that race (driver_races) + the actual podium",
     }
-    OUT_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    save_model_eval(payload)
 
     print(f"Model params: {params}")
     print(f"Validation {val}  Test {test}  ({chosen['n']} test races)\n")
