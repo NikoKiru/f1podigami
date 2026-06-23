@@ -813,6 +813,29 @@ a.tl-where:hover {
         padding-top: 16px;
     }
 
+    .hero-drivers {
+        gap: 8px;
+    }
+
+    .hero-driver {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 8px 10px 10px;
+        text-align: center;
+    }
+
+    .hd-id {
+        justify-content: center;
+    }
+
+    .hd-name {
+        font-size: 14px;
+    }
+
+    .hd-stat {
+        display: none;
+    }
+
     .hc-num {
         font-size: 46px;
     }
