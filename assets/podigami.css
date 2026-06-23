@@ -862,7 +862,8 @@ a.tl-where:hover {
     }
 
     .tr-bar {
-        width: 64px;
+        flex: 1;
+        min-width: 40px;
     }
 
     .tl-spark,
