@@ -515,19 +515,18 @@ main {
 .tl-controls {
     display: flex;
     align-items: center;
-    gap: 16px;
     margin-bottom: 16px;
 }
 
 #tl-slider {
-    flex: 1;
+    width: 100%;
     accent-color: var(--accent);
     height: 4px;
 }
 
 .tl-readout {
-    min-width: 130px;
     text-align: right;
+    margin-bottom: 8px;
 }
 
 #tl-year {
@@ -537,9 +536,9 @@ main {
 }
 
 .tl-count {
-    display: block;
     font-size: 13px;
     color: var(--muted);
+    margin-left: 8px;
 }
 
 .tl-list {
@@ -812,10 +811,6 @@ a.tl-where:hover {
 
     .tr-bar {
         width: 64px;
-    }
-
-    .tl-readout {
-        min-width: 92px;
     }
 
     .tl-item {
