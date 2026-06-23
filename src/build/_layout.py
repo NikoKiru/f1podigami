@@ -61,6 +61,14 @@ def head(
     seo += '\n<meta property="og:type" content="website">'
     seo += f'\n<meta property="og:url" content="{canonical}">'
     seo += '\n<meta property="og:site_name" content="F1 Podigami">'
+    seo += f'\n<meta property="og:image" content="{SITE_URL}/og-image.png">'
+    seo += '\n<meta property="og:image:width" content="1200">'
+    seo += '\n<meta property="og:image:height" content="630">'
+    seo += '\n<meta name="twitter:card" content="summary_large_image">'
+    seo += f'\n<meta name="twitter:title" content="{title}">'
+    if description:
+        seo += f'\n<meta name="twitter:description" content="{description}">'
+    seo += f'\n<meta name="twitter:image" content="{SITE_URL}/og-image.png">'
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
