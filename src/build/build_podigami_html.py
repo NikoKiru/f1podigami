@@ -235,9 +235,7 @@ def render_last_race(
     )
 
 
-def render_hero(
-    top: dict, chance: float, meta: dict, as_of_html: str = "", acc_badge: str = ""
-) -> str:
+def render_hero(top: dict, chance: float, meta: dict, acc_badge: str = "") -> str:
     cards = []
     for p in top["perDriver"]:
         v = driver_view(p, meta)
@@ -251,11 +249,6 @@ def render_hero(
             f"</div>"
         )
     pd = "".join(cards)
-    # Provenance + backtest badge live as a footer of the prediction card so they
-    # read as a caption on the headline, not as loose text floating between cards.
-    meta_row = (
-        f'<div class="hero-meta">{as_of_html}{acc_badge}</div>' if (as_of_html or acc_badge) else ""
-    )
     return (
         f'<section class="hero">'
         f'  <div class="hero-head">'
@@ -270,9 +263,11 @@ def render_hero(
         f'  <div class="hero-pick">'
         f'    <div class="hp-label">Most likely next <span class="accent">podigami</span></div>'
         f'    <div class="hero-drivers">{pd}</div>'
-        f'    <div class="hp-prob">{top["prob"]:.1f}% of all possible podiums &mdash; the top never-before trio</div>'
+        f'    <div class="hp-prob">'
+        f"      {top['prob']:.1f}% of all possible podiums &mdash; the top never-before trio"
+        f"      {acc_badge}"
+        f"    </div>"
         f"  </div>"
-        f"  {meta_row}"
         f"</section>"
     )
 
@@ -462,7 +457,6 @@ def main() -> int:
     data = load_podigami().model_dump()
     season = data["currentSeason"]
     chance = data["chanceNextRaceNew"]
-    as_of = data["asOf"]
     cands = data["candidates"]
     lo, hi = data["seasonRange"]
 
@@ -495,14 +489,7 @@ def main() -> int:
         model_eval = load_model_eval().model_dump()
 
     acc_badge = render_accuracy_badge(model_eval)
-    as_of_html = (
-        f'<p class="as-of">Model up to date through the {esc(as_of["season"])} '
-        f"{esc(as_of['raceName'])} (round {esc(as_of['round'])}).</p>"
-    )
-    # The provenance + badge ride inside the hero card; when there's no hero
-    # (no candidates), fall back to a standalone meta strip so they still show.
-    hero = render_hero(cands[0], chance, meta, as_of_html, acc_badge) if cands else ""
-    as_of_row = "" if cands else f'<div class="as-of-row">{as_of_html}{acc_badge}</div>'
+    hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
     candidates = render_candidates(cands, meta)
     form = render_form(data["driverForm"], using_constructors, meta)
     timeline = render_timeline(data)
@@ -550,7 +537,6 @@ def main() -> int:
         {next_race}
         {last_race}
         {hero}
-        {as_of_row}
         {candidates}
         {form}
         {timeline}
