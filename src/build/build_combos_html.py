@@ -162,8 +162,7 @@ def main() -> int:
             <div class="hint">
                 Showing <strong id="visible-count">{
         unique_combos
-    }</strong> of <span id="total-count">{unique_combos}</span>
-                &middot; each field matches one distinct driver (AND)
+    }</strong> of <span id="total-count">{unique_combos}</span> unique podium trios
                 &middot; click a row to expand
             </div>
         </div>
