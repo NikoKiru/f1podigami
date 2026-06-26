@@ -180,7 +180,14 @@ def render_last_race(
             pod = p
             break
     if not pod:
-        return ""
+        if not podiums:
+            return ""
+        pod = max(podiums, key=lambda p: (int(p["season"]), int(p["round"])))
+        rnd = pod["round"]
+        last = next(
+            (r for r in schedule.get("races", []) if r["round"] == rnd),
+            {"country": "", "raceName": pod["raceName"], "round": rnd},
+        )
 
     fl = flag_svg(last["country"])
     name = esc(last["raceName"])
