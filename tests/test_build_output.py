@@ -200,3 +200,13 @@ def test_404_page_exists_with_chrome_and_home_link(dist):
 def test_404_not_in_sitemap(dist):
     sitemap = (dist / "sitemap.xml").read_text(encoding="utf-8")
     assert "404.html" not in sitemap
+
+
+def test_sitemap_lastmod_is_last_race_date(dist, data):
+    from datetime import date
+
+    today = date.today().isoformat()
+    past_dates = [r["date"] for r in data["schedule"]["races"] if r["date"] <= today]
+    expected = max(past_dates)
+    sitemap = (dist / "sitemap.xml").read_text(encoding="utf-8")
+    assert f"<lastmod>{expected}</lastmod>" in sitemap
