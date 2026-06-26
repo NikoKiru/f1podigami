@@ -15,6 +15,7 @@ Writes data/schedule.json:
 
 from __future__ import annotations
 
+import datetime
 import json
 import sys
 import time
@@ -33,7 +34,6 @@ MAX_BACKOFF_RETRIES = 6
 USER_AGENT = "f1podigami/0.2 (https://github.com/local/f1podigami)"
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
-PODIUMS_PATH = DATA_DIR / "podiums.json"
 CIRCUITS_PATH = DATA_DIR / "f1-circuits.geojson"
 OUT_PATH = DATA_DIR / "schedule.json"
 
@@ -54,11 +54,6 @@ def get(url: str, params: dict | None = None) -> dict:
             continue
         resp.raise_for_status()
     raise RuntimeError(f"giving up on {url}")
-
-
-def current_season() -> int:
-    podiums = json.loads(PODIUMS_PATH.read_text(encoding="utf-8"))
-    return max(int(p["season"]) for p in podiums)
 
 
 def build_race(race: dict, features: list[dict]) -> dict:
@@ -92,7 +87,7 @@ def build_race(race: dict, features: list[dict]) -> dict:
 
 def main() -> int:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    season = current_season()
+    season = datetime.date.today().year
 
     features = json.loads(CIRCUITS_PATH.read_text(encoding="utf-8"))["features"]
     data = get(f"{API_ROOT}/{season}.json", {"limit": 100})

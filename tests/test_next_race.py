@@ -129,3 +129,64 @@ def test_render_next_race_box_contents():
 def test_render_next_race_season_complete_fallback():
     html = bp.render_next_race(SCHED, today="2027-01-01")
     assert "Season complete" in html
+
+
+# --- render_last_race fallback -----------------------------------------------
+
+_SCHED_LAG = {
+    "season": "2026",
+    "totalRounds": 2,
+    "races": [
+        {
+            "round": "1",
+            "raceName": "Bahrain GP",
+            "date": "2026-03-01",
+            "country": "Bahrain",
+            "circuitName": "Bahrain International Circuit",
+            "locality": "Sakhir",
+            "url": "",
+            "time": "15:00:00Z",
+            "trackPath": "",
+            "trackViewBox": "0 0 120 72",
+            "lengthKm": None,
+        },
+        {
+            "round": "2",
+            "raceName": "Saudi GP",
+            "date": "2026-12-01",
+            "country": "Saudi Arabia",
+            "circuitName": "Jeddah Corniche Circuit",
+            "locality": "Jeddah",
+            "url": "",
+            "time": "",
+            "trackPath": "",
+            "trackViewBox": "0 0 120 72",
+            "lengthKm": None,
+        },
+    ],
+}
+
+_PODIUMS_LAG = [
+    {
+        "season": "2025",
+        "round": "22",
+        "raceName": "Abu Dhabi GP",
+        "p1": {"driverId": "norris", "name": "Lando Norris"},
+        "p2": {"driverId": "russell", "name": "George Russell"},
+        "p3": {"driverId": "antonelli", "name": "Andrea Kimi Antonelli"},
+    }
+]
+
+
+def test_render_last_race_falls_back_when_scheduled_round_has_no_podium():
+    # Round 1 is in the past (today=2026-04-01) but has no podium yet.
+    # Should fall back to the most recent podium in the dataset (2025 R22).
+    html = bp.render_last_race(_SCHED_LAG, _PODIUMS_LAG, [], {}, [], today="2026-04-01")
+    assert html != "", "should render a section, not return empty"
+    assert "Abu Dhabi GP" in html
+    assert 'class="last-race"' in html
+
+
+def test_render_last_race_returns_empty_when_no_podiums_at_all():
+    html = bp.render_last_race(_SCHED_LAG, [], [], {}, [], today="2026-04-01")
+    assert html == ""
