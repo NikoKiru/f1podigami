@@ -14,12 +14,9 @@ def test_fetch_schedule_has_no_podiums_dependency():
 
 def test_season_and_recent_rounds_returns_calendar_year_with_rounds(tmp_path, monkeypatch):
     podiums = [
-        {"season": "2025", "round": "21", "raceName": "Qatar GP",
-         "p1": {}, "p2": {}, "p3": {}},
-        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP",
-         "p1": {}, "p2": {}, "p3": {}},
-        {"season": "2026", "round": "1", "raceName": "Bahrain GP",
-         "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2025", "round": "21", "raceName": "Qatar GP", "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP", "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2026", "round": "1", "raceName": "Bahrain GP", "p1": {}, "p2": {}, "p3": {}},
     ]
     f = tmp_path / "podiums.json"
     f.write_text(json.dumps(podiums))
@@ -33,8 +30,7 @@ def test_season_and_recent_rounds_returns_calendar_year_with_rounds(tmp_path, mo
 
 def test_season_and_recent_rounds_empty_when_no_current_year_rounds(tmp_path, monkeypatch):
     podiums = [
-        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP",
-         "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP", "p1": {}, "p2": {}, "p3": {}},
     ]
     f = tmp_path / "podiums.json"
     f.write_text(json.dumps(podiums))
@@ -48,12 +44,9 @@ def test_season_and_recent_rounds_empty_when_no_current_year_rounds(tmp_path, mo
 
 def test_season_and_rounds_returns_calendar_year_with_rounds(tmp_path, monkeypatch):
     podiums = [
-        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP",
-         "p1": {}, "p2": {}, "p3": {}},
-        {"season": "2026", "round": "1", "raceName": "Bahrain GP",
-         "p1": {}, "p2": {}, "p3": {}},
-        {"season": "2026", "round": "2", "raceName": "Saudi GP",
-         "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP", "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2026", "round": "1", "raceName": "Bahrain GP", "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2026", "round": "2", "raceName": "Saudi GP", "p1": {}, "p2": {}, "p3": {}},
     ]
     f = tmp_path / "podiums.json"
     f.write_text(json.dumps(podiums))
@@ -67,8 +60,7 @@ def test_season_and_rounds_returns_calendar_year_with_rounds(tmp_path, monkeypat
 
 def test_season_and_rounds_empty_when_no_current_year_rounds(tmp_path, monkeypatch):
     podiums = [
-        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP",
-         "p1": {}, "p2": {}, "p3": {}},
+        {"season": "2025", "round": "22", "raceName": "Abu Dhabi GP", "p1": {}, "p2": {}, "p3": {}},
     ]
     f = tmp_path / "podiums.json"
     f.write_text(json.dumps(podiums))
