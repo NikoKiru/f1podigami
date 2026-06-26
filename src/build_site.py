@@ -29,6 +29,7 @@ PAGE_BUILDERS = [
     "build_combos_html.py",
     "build_overdue_html.py",
     "build_soulmates_html.py",
+    "build_404_html.py",
 ]
 
 PAGES = ["index.html", "combos.html", "overdue.html", "soulmates.html"]
