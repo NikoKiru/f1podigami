@@ -37,13 +37,12 @@ def main() -> int:
     out = []
     for combo in combos.values():
         names = [name_by_id[d] for d in combo["driverIds"]]
-        names_alpha = sorted(names)
         races_chrono = sorted(combo["races"], key=lambda r: (int(r["season"]), int(r["round"])))
         last = races_chrono[-1]
         first = races_chrono[0]
         out.append(
             {
-                "drivers": names_alpha,
+                "drivers": names,
                 "driverIds": combo["driverIds"],
                 "count": combo["count"],
                 "lastRace": last,
