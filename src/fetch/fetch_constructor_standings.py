@@ -17,6 +17,7 @@ constructors list so downstream code can detect and skip.
 
 from __future__ import annotations
 
+import datetime
 import json
 import sys
 import time
@@ -56,11 +57,11 @@ def get(url: str, params: dict | None = None) -> dict:
     raise RuntimeError(f"giving up on {url}")
 
 
-def season_and_rounds() -> tuple[int, list[int]]:
+def season_and_rounds(today_year: int | None = None) -> tuple[int, list[int]]:
+    year = today_year if today_year is not None else datetime.date.today().year
     podiums = json.loads(PODIUMS_PATH.read_text(encoding="utf-8"))
-    season = max(int(p["season"]) for p in podiums)
-    rounds = sorted({int(p["round"]) for p in podiums if int(p["season"]) == season})
-    return season, rounds
+    rounds = sorted({int(p["round"]) for p in podiums if int(p["season"]) == year})
+    return year, rounds
 
 
 def fetch_standings(season: int) -> list[dict]:

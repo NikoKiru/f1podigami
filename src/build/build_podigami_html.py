@@ -180,7 +180,14 @@ def render_last_race(
             pod = p
             break
     if not pod:
-        return ""
+        if not podiums:
+            return ""
+        pod = max(podiums, key=lambda p: (int(p["season"]), int(p["round"])))
+        rnd = pod["round"]
+        last = next(
+            (r for r in schedule.get("races", []) if r["round"] == rnd),
+            {"country": "", "raceName": pod["raceName"], "round": rnd},
+        )
 
     fl = flag_svg(last["country"])
     name = esc(last["raceName"])
@@ -311,7 +318,9 @@ def render_candidates(cands: list[dict], meta: dict) -> str:
     )
 
 
-def render_form(form: list[dict], using_constructors: bool, meta: dict) -> str:
+def render_form(
+    form: list[dict], using_constructors: bool, meta: dict, half_life: float = 6.0
+) -> str:
     show = [d for d in form if d["weight"] > 0][:14]
     mx = max((d["weight"] for d in show), default=1)
     rows = []
@@ -328,7 +337,7 @@ def render_form(form: list[dict], using_constructors: bool, meta: dict) -> str:
             f'<span class="tr-w">{d["weight"]:.1f}</span>'
             f"</div>"
         )
-    sub = "Each driver's podium weight &mdash; recent podiums decay over ~8 races, with a boost for this season"
+    sub = f"Each driver's podium weight &mdash; recent podiums decay over ~{half_life:.0f} races, with a boost for this season"
     if using_constructors:
         sub += " and constructor strength"
     sub += "."
@@ -401,7 +410,7 @@ def render_accuracy_badge(ev: dict) -> str:
 
 def render_faq(data: dict, ev: dict) -> str:
     mp = ev.get("modelParams", {}) if ev else {}
-    half_life = mp.get("halfLife", 8)
+    half_life = mp.get("halfLife", 6)
     items = [
         (
             "How does the prediction model work?",
@@ -491,7 +500,9 @@ def main() -> int:
     acc_badge = render_accuracy_badge(model_eval)
     hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
     candidates = render_candidates(cands, meta)
-    form = render_form(data["driverForm"], using_constructors, meta)
+    form = render_form(
+        data["driverForm"], using_constructors, meta, data["params"].get("halfLife", 6.0)
+    )
     timeline = render_timeline(data)
     faq = render_faq(data, model_eval)
 

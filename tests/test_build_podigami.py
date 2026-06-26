@@ -163,8 +163,23 @@ def test_render_form_builds_timing_tower():
         # zero-weight driver is filtered out of the tower
         {**pd("zzz", "Zed Zero", ""), "weight": 0.0},
     ]
-    out = bp.render_form(form, True, META)
+    out = bp.render_form(form, True, META, half_life=6.0)
     assert out.count('class="tower-row"') == 2
     assert "tr-num" in out and "tr-bar" in out
     assert 'class="tr-code">ANT' in out
     assert "constructor strength" in out  # using_constructors=True extends the sub
+    assert "~6 races" in out
+    assert "~8 races" not in out
+
+
+def test_render_form_half_life_default_is_six():
+    form = [{**pd("norris", "Lando Norris", "mclaren"), "weight": 5.0}]
+    out = bp.render_form(form, False, META)
+    assert "~6 races" in out
+    assert "~8 races" not in out
+
+
+def test_faq_fallback_half_life_is_six():
+    out = bp.render_faq({}, {})
+    assert "~6 races" in out
+    assert "~8 races" not in out
