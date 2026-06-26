@@ -40,10 +40,19 @@ def _write_robots_txt() -> None:
     (DIST / "robots.txt").write_text(content, encoding="utf-8")
 
 
+def _last_race_date() -> str:
+    from datalib import load_schedule
+
+    today = datetime.now(UTC).date().isoformat()
+    races = load_schedule().races
+    past = [r.date for r in races if r.date <= today]
+    return max(past) if past else today
+
+
 def _write_sitemap_xml() -> None:
-    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    lastmod = _last_race_date()
     urls = "\n".join(
-        f"  <url>\n    <loc>{SITE_URL}/{page}</loc>\n    <lastmod>{today}</lastmod>\n  </url>"
+        f"  <url>\n    <loc>{SITE_URL}/{page}</loc>\n    <lastmod>{lastmod}</lastmod>\n  </url>"
         for page in PAGES
     )
     content = (
