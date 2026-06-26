@@ -48,6 +48,24 @@ def test_podiums_seasons_are_year_digits():
         assert p.season.isdigit()
 
 
+def test_combo_drivers_aligned_with_driver_ids():
+    """drivers[i] must be the display name for driverIds[i] — parallel arrays must align."""
+    name_by_id: dict[str, str] = {}
+    for p in load_podiums():
+        for slot in (p.p1, p.p2, p.p3):
+            name_by_id[slot.driverId] = slot.name
+
+    for c in load_combos():
+        assert len(c.drivers) == len(c.driverIds)
+        for i, driver_id in enumerate(c.driverIds):
+            expected = name_by_id.get(driver_id)
+            assert expected is not None, f"unknown driverId {driver_id!r}"
+            assert c.drivers[i] == expected, (
+                f"drivers[{i}]={c.drivers[i]!r} does not match "
+                f"driverIds[{i}]={driver_id!r} (expected {expected!r})"
+            )
+
+
 def test_schedule_dates_well_formed_and_tracks_mostly_present():
     sched = load_schedule()
     assert sched.races, "schedule has no races"
