@@ -184,3 +184,19 @@ def test_overdue_has_two_ranked_lists(dist):
     assert html.count('class="cand-list"') == 2  # all-time + current grid
     assert "All-time near-misses" in html
     assert 'class="cand-meta"' in html  # "raced N times together"
+
+
+def test_404_page_exists_with_chrome_and_home_link(dist):
+    f = dist / "404.html"
+    assert f.is_file(), "dist/404.html was not generated"
+    html = f.read_text(encoding="utf-8")
+    assert "404" in html
+    assert "DNF" in html
+    assert 'href="index.html"' in html
+    assert 'class="nav"' in html
+    assert "<footer>" in html
+
+
+def test_404_not_in_sitemap(dist):
+    sitemap = (dist / "sitemap.xml").read_text(encoding="utf-8")
+    assert "404.html" not in sitemap

@@ -36,7 +36,7 @@ EVAL_START = 2010  # modern era
 VAL_END = 2018  # tune on [EVAL_START, VAL_END]; test on (VAL_END, latest]
 RECENT_WINDOW = 20  # races, for the recent-frequency baseline
 
-CURRENT_PARAMS = {  # replicates today's shipped model
+CURRENT_PARAMS = {  # legacy product baseline — ladder rung for head-to-head comparison
     "alpha": 0.1,
     "halfLife": 8.0,
     "offSeason": 1.0,
