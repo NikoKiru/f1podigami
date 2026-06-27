@@ -76,7 +76,7 @@ def render_combo(rank: int, combo: Combo) -> str:
         f'<span class="driver">'
         f'<span class="dn-full">{html.escape(d)}</span>'
         f'<span class="dn-abbr" aria-hidden="true">{html.escape(abbr_name(d))}</span>'
-        f'</span>'
+        f"</span>"
         for d in combo.drivers
     )
     drivers_data = " | ".join(combo.drivers).lower()
