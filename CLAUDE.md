@@ -59,6 +59,7 @@ src/datalib/  → Pydantic schemas + typed load/save: the validated data contrac
 Orchestrators:
 - `src/update.py` — runs fetch + compute + build via `subprocess` calls to individual scripts.
 - `src/build_site.py` — runs only the build stage, copies `assets/` into `dist/`, and writes `robots.txt` + `sitemap.xml`.
+- `src/check_update_due.py` — cheap, no-network CI guard (`is_update_due`) for the automated hourly refresh: decides from committed `schedule.json` + `podigami.json` `asOf` whether a finished race is newer than the data. See **Deployment → Automated data updates**.
 
 ### Four output pages
 
@@ -76,6 +77,8 @@ Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTE
 ### Prediction model
 
 `src/compute/model.py` + `compute_podigami.py` implement a **Plackett–Luce** model over recency-weighted driver strengths. `src/compute/backtest.py` produces `data/model_eval.json` (backtested top-k accuracy + calibration), surfaced on the landing page as a badge and in the FAQ.
+
+`compute_podigami.py` also folds in `data/constructor_standings.json` (via `_build_constructor_strength` → each driver's `constructorStrength`). Because of this, a refresh that picks up updated standings can rewrite most numeric values in `podigami.json` even when `asOf` is unchanged — that churn is expected, not a bug. Output is deterministic: same inputs → byte-identical JSON.
 
 ### Data flow
 
@@ -116,4 +119,21 @@ Always prefer these templates over blank issues so reports stay structured and a
 
 ## Deployment
 
-GitHub Actions (`.github/workflows/`) runs CI (lint, format, tests across py3.11–3.13, build + link-check, CodeQL, security scans) on every push/PR, and deploys to GitHub Pages on push to `main`. `dist/` is gitignored — it is built in CI, not committed.
+GitHub Actions (`.github/workflows/`) runs CI (lint, format, tests across py3.11–3.13, build + link-check, CodeQL, security scans) on every push/PR, and deploys to GitHub Pages on push to `main` (`deploy.yml`). `dist/` is gitignored — it is built in CI from committed `data/`, not committed.
+
+### Automated data updates (`update.yml`)
+
+Keeps the site fresh with no manual step, running the same pipeline as a local `python src/update.py` + push:
+
+- A cheap **`check` job** runs `src/check_update_due.py` **hourly** (`cron: 17 * * * *`; no network, no secret) and proceeds only when a race that should have results by now is newer than `podigami.json`'s `asOf`. A weekly run (`0 7 * * 1`) forces an unconditional `--full` reconciliation; `workflow_dispatch` takes `mode` (auto/full) + `force`.
+- When due, the **`update` job** runs `update.py`, validates + tests, then opens/updates a single `auto/update-data` PR and enables **squash auto-merge**. Once the full required checks pass it merges → `deploy.yml` ships it. One race ⇒ one PR (the guard stops once `asOf` advances on merge); re-running is idempotent (no churn).
+- Trigger on demand: `gh workflow run update.yml -f mode=auto -f force=true` (or `-f mode=full`).
+
+### ⚠️ CI cannot push to `main` with the built-in token
+
+`main` is a **protected branch** (9 required status checks, `enforce_admins=false`, no required reviews). For any Actions automation:
+
+1. A push with the built-in `GITHUB_TOKEN` is **rejected** (`GH006: protected branch update failed`).
+2. Even a successful `GITHUB_TOKEN` push/merge **does not trigger** downstream workflows like `deploy.yml`.
+
+So `update.yml` lands changes via the **PR + auto-merge** flow above, authenticated with repo secret **`DATA_PUSH_TOKEN`** — a fine-grained PAT (this repo; **Contents + Pull requests: read/write**; owned by an admin, so its merge bypasses required checks and, being a real-user action, triggers the deploy). **The PAT expires (≤1 yr); if it lapses, automated updates silently stop** — keep its expiry beyond the season and rotate as needed. Any future automation that must commit to `main` from Actions has to use this same PR-based path (not a direct `GITHUB_TOKEN` push).
