@@ -197,6 +197,8 @@ thead th {
 
 thead th[data-sort] {
     cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
     transition: color 0.15s;
 }
 
@@ -204,25 +206,34 @@ thead th[data-sort]:hover {
     color: var(--text);
 }
 
-thead th .sort-ind {
+thead th[data-sort]::after {
+    content: "";
     display: inline-block;
-    margin-left: 6px;
-    width: 8px;
-    color: var(--muted-dim);
-    font-size: 10px;
-    transition: transform 0.18s ease, color 0.15s;
-    transform-origin: 50% 55%;
+    margin-left: 7px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--muted-dim);
+    transition: transform 0.18s ease, border-top-color 0.15s;
+}
+
+thead th[data-sort]:hover::after {
+    border-top-color: var(--muted);
 }
 
 thead th.active {
     color: var(--text);
 }
 
-thead th.active .sort-ind {
-    color: var(--accent-bright);
+thead th.active::after {
+    border-top-color: var(--accent-bright);
 }
 
-thead th.active.dir-asc .sort-ind {
+thead th.active.dir-asc::after {
     transform: rotate(180deg);
 }
 

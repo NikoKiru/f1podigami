@@ -189,9 +189,9 @@ def main() -> int:
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th data-sort="drivers">Trios <span class="sort-ind">&#9662;</span></th>
-                        <th data-sort="count">Count <span class="sort-ind">&#9662;</span></th>
-                        <th data-sort="last">Last seen <span class="sort-ind">&#9662;</span></th>
+                        <th data-sort="drivers">Trios</th>
+                        <th data-sort="count">Count</th>
+                        <th data-sort="last">Last seen</th>
                         <th></th>
                     </tr>
                 </thead>
