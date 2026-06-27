@@ -149,8 +149,27 @@
             if (t !== except) {
                 t.classList.remove('open');
                 t.setAttribute('aria-expanded', 'false');
+                const b = t.querySelector('.info-bubble');
+                if (b) b.style.removeProperty('transform');
             }
         });
+    }
+
+    // Shift the bubble so it stays 8px inside the viewport on either side.
+    // Only needed on mobile — desktop uses CSS translateX(-50%) centering which
+    // already keeps bubbles in view.
+    function clampBubble(tip) {
+        if (window.innerWidth > 600) return;
+        const bubble = tip.querySelector('.info-bubble');
+        if (!bubble) return;
+        bubble.style.removeProperty('transform');
+        const rect = bubble.getBoundingClientRect();
+        const pad = 8;
+        if (rect.left < pad) {
+            bubble.style.transform = `translateX(${pad - rect.left}px)`;
+        } else if (rect.right > window.innerWidth - pad) {
+            bubble.style.transform = `translateX(${window.innerWidth - pad - rect.right}px)`;
+        }
     }
 
     tips.forEach(tip => {
@@ -163,6 +182,7 @@
             closeAll(tip);
             tip.classList.toggle('open', willOpen);
             tip.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen) requestAnimationFrame(() => clampBubble(tip));
         });
 
         tip.addEventListener('keydown', e => {
