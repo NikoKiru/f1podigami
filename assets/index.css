@@ -274,6 +274,8 @@ td.drivers .driver {
     white-space: nowrap;
 }
 
+td.drivers .dn-abbr { display: none; }
+
 td.drivers .sep {
     color: var(--muted-dim);
     margin: 0 8px;
@@ -588,6 +590,9 @@ a.race-pill:hover {
     tbody tr.combo td.drivers .driver {
         white-space: normal;
     }
+
+    tbody tr.combo td.drivers .dn-full { display: none; }
+    tbody tr.combo td.drivers .dn-abbr { display: inline; }
 
     tbody tr.combo td.drivers .sep {
         margin: 0 6px;
