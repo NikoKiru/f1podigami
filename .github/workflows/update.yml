@@ -2,11 +2,25 @@ name: Update Race Data
 
 on:
   schedule:
-    - cron: "0 7 * * 1" # Monday at 07:00 UTC
+    - cron: "17 * * * *" # hourly, guarded incremental refresh (off-the-hour to dodge load)
+    - cron: "0 7 * * 1" # Monday 07:00 UTC, unconditional --full reconciliation
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "auto = guarded incremental; full = unconditional --full reconciliation"
+        type: choice
+        options:
+          - auto
+          - full
+        default: auto
+      force:
+        description: "When mode=auto, run even if the guard says no update is due"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  pull-requests: write
 
 # Never run two data updates at once, and don't cancel one mid-commit.
 concurrency:
@@ -14,10 +28,57 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Cheap, no-network gate. Most hourly runs stop here in ~15s.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      due: ${{ steps.decide.outputs.due }}
+      mode: ${{ steps.decide.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Decide whether an update is due
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_FORCE: ${{ inputs.force }}
+        run: |
+          # Weekly cron OR an explicit full dispatch => unconditional --full.
+          if [ "$CRON" = "0 7 * * 1" ] || { [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$INPUT_MODE" = "full" ]; }; then
+            {
+              echo "mode=full"
+              echo "due=true"
+            } >> "$GITHUB_OUTPUT"
+            echo "Unconditional full reconciliation -> due=true mode=full"
+            exit 0
+          fi
+          echo "mode=normal" >> "$GITHUB_OUTPUT"
+          # A forced normal dispatch bypasses the guard.
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$INPUT_FORCE" = "true" ]; then
+            echo "due=true" >> "$GITHUB_OUTPUT"
+            echo "Forced normal run -> due=true mode=normal"
+            exit 0
+          fi
+          # Hourly cron (or an unforced auto dispatch): consult the cheap local
+          # guard, which appends due=true|false to $GITHUB_OUTPUT (no network).
+          python src/check_update_due.py
+
+  # Full refresh: only runs when the guard (or an unconditional trigger) says so.
   update:
+    needs: check
+    if: needs.check.outputs.due == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # PAT (not the built-in token) so the branch push + PR trigger CI, and
+          # the eventual squash-merge is attributed to a real user so deploy fires.
+          token: ${{ secrets.DATA_PUSH_TOKEN }}
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -30,15 +91,37 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Fetch latest data and rebuild site
-        run: python src/update.py
+        run: |
+          if [ "${{ needs.check.outputs.mode }}" = "full" ]; then
+            python src/update.py --full
+          else
+            python src/update.py
+          fi
       - name: Validate datasets
         run: PYTHONPATH=src python -m datalib.validate
       - name: Run tests
         run: pytest -q
-      - name: Commit and push if data changed
+      - name: Open or update the data PR and enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.DATA_PUSH_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
-          git diff --cached --quiet || git commit -m "Update race data $(date -u +%Y-%m-%d)"
-          git push
+          if git diff --cached --quiet; then
+            echo "No data changes; nothing to do."
+            exit 0
+          fi
+          BRANCH="auto/update-data"
+          DATE="$(date -u +%Y-%m-%dT%H:%MZ)"
+          # Dedicated bot-only branch, serialized by the workflow concurrency group,
+          # so a plain force-push is safe.
+          git checkout -B "$BRANCH"
+          git commit -m "Update race data $DATE"
+          git push --force origin "$BRANCH"
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "Update race data $DATE" \
+              --body "Automated race-data refresh. Auto-merges once all required checks pass."
+          fi
+          gh pr merge --auto --squash --delete-branch "$BRANCH"
