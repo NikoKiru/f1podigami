@@ -161,6 +161,7 @@ FOOTER = f"""<footer>
             &middot; For fun, not betting
             &middot; Circuit outlines <a href="https://github.com/bacinger/f1-circuits" target="_blank" rel="noopener">f1-circuits</a> (ODbL)
             &middot; <a href="{REPO_URL}" target="_blank" rel="noopener">Source on GitHub</a>
+            &middot; <a href="{REPO_URL}/blob/main/RELEASE_NOTES.md" target="_blank" rel="noopener">Release Notes</a>
         </p>
     </div>
 </footer>"""
