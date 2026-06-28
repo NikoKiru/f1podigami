@@ -2,7 +2,7 @@
 
 The guard decides, with no network call, whether a race that should have results
 by now is newer than what the committed data already reflects (podigami.json's
-``asOf``). Only then does the hourly workflow run the full update.
+``asOf``). Only then does the scheduled workflow run the full update.
 """
 
 from datetime import UTC, datetime

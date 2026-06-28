@@ -59,7 +59,7 @@ src/datalib/  → Pydantic schemas + typed load/save: the validated data contrac
 Orchestrators:
 - `src/update.py` — runs fetch + compute + build via `subprocess` calls to individual scripts.
 - `src/build_site.py` — runs only the build stage, copies `assets/` into `dist/`, and writes `robots.txt` + `sitemap.xml`.
-- `src/check_update_due.py` — cheap, no-network CI guard (`is_update_due`) for the automated hourly refresh: decides from committed `schedule.json` + `podigami.json` `asOf` whether a finished race is newer than the data. See **Deployment → Automated data updates**.
+- `src/check_update_due.py` — cheap, no-network CI guard (`is_update_due`) for the automated refresh (polls every 15 min): decides from committed `schedule.json` + `podigami.json` `asOf` whether a finished race is newer than the data. See **Deployment → Automated data updates**.
 
 ### Four output pages
 
@@ -125,7 +125,7 @@ GitHub Actions (`.github/workflows/`) runs CI (lint, format, tests across py3.11
 
 Keeps the site fresh with no manual step, running the same pipeline as a local `python src/update.py` + push:
 
-- A cheap **`check` job** runs `src/check_update_due.py` **hourly** (`cron: 17 * * * *`; no network, no secret) and proceeds only when a race that should have results by now is newer than `podigami.json`'s `asOf`. A weekly run (`0 7 * * 1`) forces an unconditional `--full` reconciliation; `workflow_dispatch` takes `mode` (auto/full) + `force`.
+- A cheap **`check` job** runs `src/check_update_due.py` **every 15 min** (`cron: 2,17,32,47 * * * *`; offset off the hour to dodge GitHub's top-of-hour load, which often drops scheduled runs; no network, no secret) and proceeds only when a race that should have results by now is newer than `podigami.json`'s `asOf`. A weekly run (`0 7 * * 1`) forces an unconditional `--full` reconciliation; `workflow_dispatch` takes `mode` (auto/full) + `force`.
 - When due, the **`update` job** runs `update.py`, validates + tests, then opens/updates a single `auto/update-data` PR and enables **squash auto-merge**. Once the full required checks pass it merges → `deploy.yml` ships it. One race ⇒ one PR (the guard stops once `asOf` advances on merge); re-running is idempotent (no churn).
 - Trigger on demand: `gh workflow run update.yml -f mode=auto -f force=true` (or `-f mode=full`).
 

@@ -1,6 +1,6 @@
 """Decide whether a new race result is due — a cheap, no-network CI guard.
 
-The hourly poll runs this first: it reads the committed schedule and the latest
+The scheduled poll runs this first: it reads the committed schedule and the latest
 race already reflected in the data, and reports whether a race that *should have
 results by now* is newer than what we have. Only then does the workflow run the
 full (network) update. Pure logic lives in :func:`is_update_due` (takes loaded
