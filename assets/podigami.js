@@ -43,6 +43,14 @@
             encodeURIComponent((season + ' ' + name).replace(/ /g, '_'));
     }
 
+    // Combos-page URL pre-filtered to a specific trio (driver full names).
+    // Mirrors combos_link() in build_podigami_html.py.
+    function combosLink(names) {
+        const params = new URLSearchParams();
+        names.forEach(n => params.append('d', n));
+        return 'combos.html?' + params.toString();
+    }
+
     const prefersReduced =
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let settleTimer = null;
@@ -61,8 +69,11 @@
                 .join('<span class="sep">/</span>');
             const fr = e.firstRace;
             const url = wikiUrl(year, fr.raceName);
+            // This trio has happened -> link it to its stats on the combos page.
+            const comboUrl = combosLink(e.names).replace(/&/g, '&amp;');
             return `<li class="tl-item">
-                <span class="trio trio-sm">${names}</span>
+                <a class="combo-link" href="${comboUrl}"
+                   title="See this trio on the combos page"><span class="trio trio-sm">${names}</span></a>
                 <a class="tl-where" href="${url}" target="_blank" rel="noopener"
                    title="${esc(year + ' ' + fr.raceName)} &mdash; race report">R${esc(fr.round)} &middot; ${esc(fr.raceName)}</a>
             </li>`;
