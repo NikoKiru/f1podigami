@@ -402,8 +402,11 @@ def render_timeline(data: dict) -> str:
         sel = " selected" if y == current else ""
         label = f"{y} — {n} new" if n else str(y)
         options.append(f'<option value="{y}"{sel}>{label}</option>')
+    # --tl-n drives the CSS that aligns the slider thumb with the bar centers:
+    # one bar (and one slider step) per season, so the count must match exactly.
+    n_seasons = hi - lo + 1
     return (
-        f'<section class="panel timeline">'
+        f'<section class="panel timeline" style="--tl-n:{n_seasons}">'
         f'  <div class="tl-header">'
         f"    <h2>New podiums through the years"
         f'      <span class="info-tip" tabindex="0" aria-label="More info">'
