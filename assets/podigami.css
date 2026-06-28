@@ -622,10 +622,20 @@ main {
     margin-bottom: 0;
 }
 
+.timeline {
+    /* Geometry shared by the sparkline and the slider so the thumb lines up
+       with the bars. --tl-n (bar/season count) is injected per-page at build
+       time; --tl-barw mirrors the flex bar width: full width minus the gaps
+       between N bars, divided by N. */
+    --tl-gap: 2px;
+    --tl-thumb: 14px;
+    --tl-barw: calc((100% - (var(--tl-n, 77) - 1) * var(--tl-gap)) / var(--tl-n, 77));
+}
+
 .tl-spark {
     display: flex;
     align-items: flex-end;
-    gap: 2px;
+    gap: var(--tl-gap);
     height: 70px;
     padding: 6px 0;
     border-bottom: 1px solid var(--border);
@@ -650,15 +660,62 @@ main {
 }
 
 .tl-controls {
-    display: flex;
-    align-items: center;
     margin-bottom: 16px;
 }
 
+/* The bar centers sit half a bar-width in from each edge; the thumb travels
+   half a thumb-width in from each track end. Offset the slider by their
+   difference and widen it to match so the thumb center runs exactly from the
+   first bar center to the last. */
 #tl-slider {
-    width: 100%;
-    accent-color: var(--accent);
+    display: block;
+    box-sizing: border-box;
+    margin-left: calc((var(--tl-barw) - var(--tl-thumb)) / 2);
+    width: calc(100% - var(--tl-barw) + var(--tl-thumb));
+    height: var(--tl-thumb);
+    background: transparent;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+#tl-slider::-webkit-slider-runnable-track {
     height: 4px;
+    border-radius: 2px;
+    background: var(--surface-3);
+}
+
+#tl-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--surface-3);
+}
+
+#tl-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--tl-thumb);
+    height: var(--tl-thumb);
+    /* Center the thumb on the 4px track. */
+    margin-top: calc((4px - var(--tl-thumb)) / 2);
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+}
+
+#tl-slider::-moz-range-thumb {
+    width: var(--tl-thumb);
+    height: var(--tl-thumb);
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+}
+
+#tl-slider:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
 }
 
 .tl-select-wrap {
