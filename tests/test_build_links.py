@@ -45,11 +45,18 @@ def test_internal_html_links_resolve(dist, page):
 @pytest.mark.parametrize("page", PAGES)
 def test_css_and_js_resolve(dist, page):
     html = (dist / page).read_text(encoding="utf-8")
-    refs = re.findall(r'href="([^"]+\.css)"', html) + re.findall(r'src="([^"]+\.js)"', html)
+    # refs carry a cache-busting query (e.g. style.css?v=ab12cd34); capture both.
+    refs = re.findall(r'href="([^"]+\.css(?:\?[^"]*)?)"', html) + re.findall(
+        r'src="([^"]+\.js(?:\?[^"]*)?)"', html
+    )
+    assert refs, f"{page} should reference at least one css/js asset"
     for ref in refs:
         if ref.startswith("http"):
             continue
-        assert (dist / ref).is_file(), f"{page} references missing asset {ref}"
+        path, _, query = ref.partition("?")
+        assert (dist / path).is_file(), f"{page} references missing asset {path}"
+        # local code assets must be cache-busted so deploys can't serve stale JS/CSS
+        assert query.startswith("v="), f"{page} asset {ref} is not cache-busted"
 
 
 NAV_PAGES = ["index.html", "combos.html", "overdue.html"]

@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
+from _layout import FOOTER, asset, head, nav  # noqa: E402  (needs the sys.path entry above)
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
@@ -587,8 +587,8 @@ def main() -> int:
 </main>
 {FOOTER}
 <script type="application/json" id="podigami-data">{embed}</script>
-<script src="podigami.js"></script>
-<script src="theme.js"></script>
+<script src="{asset("podigami.js")}"></script>
+<script src="{asset("theme.js")}"></script>
 </body>
 </html>
 """

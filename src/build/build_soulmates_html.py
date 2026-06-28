@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, head, nav  # noqa: E402  (needs the sys.path entry above)
+from _layout import FOOTER, asset, head, nav  # noqa: E402  (needs the sys.path entry above)
 
 from datalib import SoulmatePair, Soulmates, load_soulmates  # noqa: E402
 
@@ -242,7 +242,7 @@ def main() -> int:
     </div>
 </main>
 {FOOTER}
-<script src="theme.js"></script>
+<script src="{asset("theme.js")}"></script>
 </body>
 </html>
 """

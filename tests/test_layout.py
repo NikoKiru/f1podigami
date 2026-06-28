@@ -1,6 +1,28 @@
 """Unit tests for the shared page-chrome helpers in build/_layout.py."""
 
-from build._layout import FOOTER, NAV_LINKS, head, nav
+import hashlib
+import re
+from pathlib import Path
+
+from build._layout import FOOTER, NAV_LINKS, asset, head, nav
+
+ASSETS = Path(__file__).resolve().parents[1] / "assets"
+
+
+def test_asset_appends_content_hash_version():
+    out = asset("style.css")
+    expected = hashlib.sha1((ASSETS / "style.css").read_bytes()).hexdigest()[:8]
+    assert out == f"style.css?v={expected}"
+
+
+def test_asset_version_is_per_file():
+    # distinct files get distinct cache-busting tokens (content-based)
+    assert asset("style.css") != asset("podigami.css")
+    assert re.fullmatch(r"podigami\.css\?v=[0-9a-f]{8}", asset("podigami.css"))
+
+
+def test_asset_unknown_file_falls_back_to_bare_name():
+    assert asset("does-not-exist.css") == "does-not-exist.css"
 
 
 def test_head_links_style_first_then_page_css():
@@ -13,14 +35,16 @@ def test_head_links_style_first_then_page_css():
     # no-flash theme script applies the stored/OS theme before paint
     assert 'setAttribute("data-theme"' in out
     assert "prefers-color-scheme: light" in out
-    # style.css must come before the page-specific sheet
-    assert out.index('href="style.css"') < out.index('href="podigami.css"')
+    # CSS is linked with a cache-busting ?v= token, style.css before the page sheet
+    assert 'href="style.css?v=' in out
+    assert 'href="podigami.css?v=' in out
+    assert out.index('href="style.css?v=') < out.index('href="podigami.css?v=')
     assert out.rstrip().endswith("</head>")
 
 
 def test_head_without_extra_css_still_links_base():
     out = head("Bare")
-    assert 'href="style.css"' in out
+    assert 'href="style.css?v=' in out
 
 
 def test_nav_marks_only_the_active_link():
