@@ -16,6 +16,9 @@ Deployed to GitHub Pages: https://nikokiru.github.io/f1podigami
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     ```
 - Primary shell is PowerShell 7+ on Windows; a Bash tool is also available.
+- **Local MCP servers are available — reach for them when they bring more value than the CLI/scripts:**
+  - **`playwright`** — drive a real browser to verify browser-only behaviour (JS-rendered timeline, asset cache-busting, mobile layout) against the live site or a locally-served `dist/`. Preferred over hand-rolled checks when a change is only observable in a rendered page.
+  - **`github`** — structured GitHub access (PRs, issues, reviews, code search) when its typed results are clearer than parsing `gh` output. For routine git/PR/merge operations, `gh` remains the default (see above); use the MCP when it genuinely simplifies the task.
 
 ## Commands
 
