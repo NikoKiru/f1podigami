@@ -6,7 +6,8 @@ from the edges. Left uncorrected the thumb drifts inward of the bars at both
 ends. We size the thumb to a known width and offset the slider so the thumb's
 center travels exactly from the first bar center to the last bar center.
 
-Requires Playwright + Chromium (skipped in CI environments without them).
+Requires Playwright + Chromium. In CI this runs in the dedicated e2e job.
+On a dev machine without Playwright installed the test is skipped gracefully.
 """
 
 import pytest

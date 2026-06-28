@@ -53,6 +53,22 @@ jobs:
           echo "## Coverage" >> "$GITHUB_STEP_SUMMARY"
           coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
 
+  e2e:
+    name: E2E (browser)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pip install playwright
+      - run: playwright install --with-deps chromium
+      - name: Run e2e tests
+        run: pytest tests/test_slider_alignment.py
+
   build:
     name: Build & link-check
     runs-on: ubuntu-latest
