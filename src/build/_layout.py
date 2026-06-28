@@ -10,6 +10,12 @@ them). The import works both when a builder is run as a script
 
 from __future__ import annotations
 
+import hashlib
+from functools import cache
+from pathlib import Path
+
+_ASSETS_DIR = Path(__file__).resolve().parents[2] / "assets"
+
 REPO_URL = "https://github.com/NikoKiru/f1podigami"
 DATA_URL = "https://api.jolpi.ca/ergast/f1/"
 SITE_URL = "https://nikokiru.github.io/f1podigami"
@@ -34,6 +40,30 @@ _THEME_INIT = (
 )
 
 
+@cache
+def _asset_version(name: str) -> str:
+    """Short content hash of an asset in ``assets/``, or "" if it isn't there."""
+    try:
+        digest = hashlib.sha1((_ASSETS_DIR / name).read_bytes()).hexdigest()
+    except OSError:
+        return ""
+    return digest[:8]
+
+
+def asset(name: str) -> str:
+    """Asset URL carrying a content-hash ``?v=`` token.
+
+    GitHub Pages serves static assets with ``Cache-Control: max-age=600`` and no
+    fingerprinting, so a freshly deployed HTML page can pair with a stale cached
+    script/stylesheet for up to 10 minutes. Versioning the URL by content makes
+    every deploy bust the cache immediately and rules out that HTML/asset skew.
+    Unknown files fall back to the bare name (e.g. for assets generated outside
+    ``assets/``).
+    """
+    version = _asset_version(name)
+    return f"{name}?v={version}" if version else name
+
+
 def head(
     title: str,
     *css_files: str,
@@ -47,7 +77,7 @@ def head(
     stylesheets (e.g. ``"podigami.css"``).
     """
     links = "\n".join(
-        f'<link rel="stylesheet" href="{href}">' for href in ("style.css", *css_files)
+        f'<link rel="stylesheet" href="{asset(href)}">' for href in ("style.css", *css_files)
     )
     canonical = f"{SITE_URL}/{page_path}" if page_path else f"{SITE_URL}/"
     seo = ""

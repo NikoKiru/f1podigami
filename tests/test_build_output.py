@@ -42,7 +42,8 @@ def test_page_head_essentials(dist, page):
     assert "<!DOCTYPE html>" in html
     assert 'name="viewport"' in html
     assert "width=device-width, initial-scale=1.0" in html
-    assert '<link rel="stylesheet" href="style.css">' in html
+    # style.css is linked with a cache-busting ?v= token
+    assert '<link rel="stylesheet" href="style.css?v=' in html
 
 
 def test_landing_h1_keyword_has_real_space(dist):
