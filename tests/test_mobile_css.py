@@ -29,6 +29,15 @@ def test_index_table_becomes_cards():
     assert 'content: "Last"' in s
 
 
+def test_combos_stats_collapse_to_strip_on_mobile():
+    # On phones the three stat cards become one inline strip, not tappable-looking
+    # blocks: the card accent bar is removed and stats are separated by a dot.
+    s = css("index.css")
+    assert "@media (max-width: 600px)" in s
+    assert ".stat:not(:last-child)::after" in s  # inline "·" separators
+    assert "content: none" in s  # accent bar removed
+
+
 def test_index_inputs_prevent_ios_zoom():
     # >=16px font-size on inputs stops iOS auto-zoom on focus
     assert "font-size: 16px" in css("index.css")
