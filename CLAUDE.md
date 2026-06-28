@@ -140,3 +140,12 @@ Keeps the site fresh with no manual step, running the same pipeline as a local `
 2. Even a successful `GITHUB_TOKEN` push/merge **does not trigger** downstream workflows like `deploy.yml`.
 
 So `update.yml` lands changes via the **PR + auto-merge** flow above, authenticated with repo secret **`DATA_PUSH_TOKEN`** — a fine-grained PAT (this repo; **Contents + Pull requests: read/write**; owned by an admin, so its merge bypasses required checks and, being a real-user action, triggers the deploy). **The PAT expires (≤1 yr); if it lapses, automated updates silently stop** — keep its expiry beyond the season and rotate as needed. Any future automation that must commit to `main` from Actions has to use this same PR-based path (not a direct `GITHUB_TOKEN` push).
+
+## Release Notes
+
+`RELEASE_NOTES.md` in the repo root is the project changelog, linked from every page's footer. **Every PR must include an update to this file.** When creating a PR:
+
+1. Add a new entry under the current date heading (create one if it doesn't exist yet, format: `## YYYY-MM-DD`).
+2. Categorise the change under `### Features`, `### Improvements`, or `### Fixes` as appropriate.
+3. Keep entries concise — one line per change, referencing the PR/issue number (e.g. `(#123)`).
+4. Automated data-update PRs (`auto/update-data`) are excluded — they don't need release note entries.
