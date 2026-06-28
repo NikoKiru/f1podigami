@@ -97,25 +97,39 @@ SCHED = {
 }
 
 
-def test_pick_next_race_returns_first_upcoming():
-    nxt = bp.pick_next_race(SCHED, today="2026-04-01")
+def test_pick_next_race_returns_round_after_latest_result():
+    # We have results through round 1 -> the next race is round 2.
+    nxt = bp.pick_next_race(SCHED, asof={"season": "2026", "round": "1"})
     assert nxt["round"] == "2"
 
 
-def test_pick_next_race_on_race_day_picks_that_race():
-    nxt = bp.pick_next_race(SCHED, today="2026-06-28")
-    assert nxt["round"] == "2"
+def test_pick_next_race_rolls_over_once_result_is_in():
+    # The just-finished race (round 2) is now in the data -> roll over to round 3,
+    # instead of clinging to round 2 until the calendar day flips. This is the bug.
+    nxt = bp.pick_next_race(SCHED, asof={"season": "2026", "round": "2"})
+    assert nxt["round"] == "3"
 
 
-def test_pick_next_race_none_after_season():
-    assert bp.pick_next_race(SCHED, today="2026-12-01") is None
+def test_pick_next_race_no_results_yet_returns_first():
+    assert bp.pick_next_race(SCHED, asof=None)["round"] == "1"
+    assert bp.pick_next_race(SCHED, asof={})["round"] == "1"
+
+
+def test_pick_next_race_none_when_final_round_done():
+    assert bp.pick_next_race(SCHED, asof={"season": "2026", "round": "3"}) is None
+
+
+def test_pick_next_race_previous_season_result_returns_first():
+    # Off-season: latest result is last year's finale -> next is round 1 this year.
+    nxt = bp.pick_next_race(SCHED, asof={"season": "2025", "round": "24"})
+    assert nxt["round"] == "1"
 
 
 # --- rendering ----------------------------------------------------------------
 
 
 def test_render_next_race_box_contents():
-    html = bp.render_next_race(SCHED, today="2026-04-01")
+    html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
     assert 'class="next-race"' in html
     assert 'data-datetime="2026-06-28T13:00:00Z"' in html
     assert "Round 2 / 3" in html
@@ -127,7 +141,7 @@ def test_render_next_race_box_contents():
 
 
 def test_render_next_race_season_complete_fallback():
-    html = bp.render_next_race(SCHED, today="2027-01-01")
+    html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "3"})
     assert "Season complete" in html
 
 
@@ -179,14 +193,32 @@ _PODIUMS_LAG = [
 
 
 def test_render_last_race_falls_back_when_scheduled_round_has_no_podium():
-    # Round 1 is in the past (today=2026-04-01) but has no podium yet.
-    # Should fall back to the most recent podium in the dataset (2025 R22).
-    html = bp.render_last_race(_SCHED_LAG, _PODIUMS_LAG, [], {}, [], today="2026-04-01")
+    # This season's rounds have no podium yet; the latest result we hold is last
+    # season's finale (2025 R22). The box should show that, not return empty.
+    html = bp.render_last_race(_SCHED_LAG, _PODIUMS_LAG, [], {}, [])
     assert html != "", "should render a section, not return empty"
     assert "Abu Dhabi GP" in html
     assert 'class="last-race"' in html
 
 
 def test_render_last_race_returns_empty_when_no_podiums_at_all():
-    html = bp.render_last_race(_SCHED_LAG, [], [], {}, [], today="2026-04-01")
+    html = bp.render_last_race(_SCHED_LAG, [], [], {}, [])
     assert html == ""
+
+
+def test_render_last_race_uses_latest_podium_in_current_season():
+    # We have a podium for round 2 (B GP) this season -> the last-race box shows it,
+    # enriched from the schedule entry (its real race name).
+    podiums = [
+        {
+            "season": "2026",
+            "round": "2",
+            "raceName": "B GP",
+            "p1": {"driverId": "russell", "name": "George Russell"},
+            "p2": {"driverId": "verstappen", "name": "Max Verstappen"},
+            "p3": {"driverId": "antonelli", "name": "Andrea Kimi Antonelli"},
+        }
+    ]
+    html = bp.render_last_race(SCHED, podiums, [], {}, [])
+    assert 'class="last-race"' in html
+    assert "B GP" in html
