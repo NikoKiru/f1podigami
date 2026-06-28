@@ -222,3 +222,61 @@ def test_render_last_race_uses_latest_podium_in_current_season():
     html = bp.render_last_race(SCHED, podiums, [], {}, [])
     assert 'class="last-race"' in html
     assert "B GP" in html
+
+
+# --- combos_link helper + last-race trio links -------------------------------
+
+
+def test_combos_link_builds_prefilled_combos_url():
+    url = bp.combos_link(["Max Verstappen", "Lando Norris", "Charles Leclerc"])
+    assert url == "combos.html?d=Max+Verstappen&d=Lando+Norris&d=Charles+Leclerc"
+
+
+_PODIUM_TRIO = {
+    "season": "2026",
+    "round": "2",
+    "raceName": "B GP",
+    "p1": {"driverId": "russell", "name": "George Russell"},
+    "p2": {"driverId": "verstappen", "name": "Max Verstappen"},
+    "p3": {"driverId": "antonelli", "name": "Andrea Kimi Antonelli"},
+}
+
+
+def _combo_for_trio(count: int) -> dict:
+    races = [{"season": "2026", "round": "2", "raceName": "B GP"}] * count
+    return {
+        "driverIds": ["antonelli", "russell", "verstappen"],
+        "drivers": ["George Russell", "Max Verstappen", "Andrea Kimi Antonelli"],
+        "count": count,
+        "races": races,
+        "lastRace": {"season": "2026", "round": "2", "raceName": "B GP"},
+        "lastRaceKey": 202602,
+    }
+
+
+def test_render_last_race_trio_links_to_combos_page_when_combo_exists():
+    # The trio exists in combos.json -> the whole trio becomes a link that
+    # pre-filters the combos page to exactly that trio (drivers in podium order).
+    html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [_combo_for_trio(3)], {}, [])
+    assert 'class="combo-link"' in html
+    assert "combos.html?d=George+Russell" in html
+    assert "d=Max+Verstappen" in html
+    assert "d=Andrea+Kimi+Antonelli" in html
+    # the link wraps the trio (codes live inside the anchor)
+    anchor = html.split('class="combo-link"', 1)[1]
+    assert "lr-trio" in anchor.split("</a>", 1)[0]
+
+
+def test_render_last_race_trio_links_even_for_brand_new_podigami():
+    # A brand-new trio (count == 1) has still happened -> still linkable.
+    html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [_combo_for_trio(1)], {}, [])
+    assert "lr-podigami" in html  # status still says PODIGAMI
+    assert 'class="combo-link"' in html
+    assert "combos.html?d=George+Russell" in html
+
+
+def test_render_last_race_trio_not_linked_when_combo_missing():
+    # No matching combo in the data -> no link (nothing to point at).
+    html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [], {}, [])
+    assert 'class="combo-link"' not in html
+    assert "combos.html?d=" not in html

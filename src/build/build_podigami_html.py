@@ -11,6 +11,7 @@ import datetime as dt
 import html
 import json
 import sys
+import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -162,6 +163,16 @@ def render_next_race(schedule: dict, asof: dict | None = None) -> str:
     )
 
 
+def combos_link(names: list[str]) -> str:
+    """Combos-page URL pre-filtered to a specific trio (driver full names).
+
+    The combos page reads these ``d`` params into its three driver filters, so
+    the table lands filtered down to exactly this trio.
+    """
+    query = urllib.parse.urlencode([("d", n) for n in names])
+    return f"combos.html?{query}"
+
+
 def _combo_key(driver_ids: list[str]) -> tuple[str, ...]:
     return tuple(sorted(driver_ids))
 
@@ -204,6 +215,7 @@ def render_last_race(
 
     constructor_map = {d["driverId"]: d.get("constructorId", "") for d in driver_form}
     trio_ids = [pod["p1"]["driverId"], pod["p2"]["driverId"], pod["p3"]["driverId"]]
+    trio_names = [pod[f"p{pos}"]["name"] for pos in (1, 2, 3)]
     drivers_html = []
     for pos, pid in enumerate(trio_ids, 1):
         entry = {
@@ -221,6 +233,15 @@ def render_last_race(
     trio_html = '<span class="lr-sep">/</span>'.join(drivers_html)
 
     combo = _lookup_combo(trio_ids, combos)
+
+    # If this trio is in the data, link it to its stats on the combos page.
+    trio_block = f'<span class="lr-trio">{trio_html}</span>'
+    if combo:
+        trio_block = (
+            f'<a class="combo-link" href="{esc(combos_link(trio_names))}"'
+            f' aria-label="See this trio on the combos page"'
+            f' title="See this trio on the combos page">{trio_block}</a>'
+        )
     if combo and combo["count"] == 1:
         status_html = '<span class="lr-podigami">PODIGAMI</span>'
     elif combo:
@@ -246,7 +267,7 @@ def render_last_race(
         f'<span class="lr-tag">Last race</span>'
         f"{fl}"
         f'<span class="lr-name">R{esc(rnd)} &middot; {name}</span>'
-        f'<span class="lr-trio">{trio_html}</span>'
+        f"{trio_block}"
         f"{status_html}"
         f"</section>"
     )

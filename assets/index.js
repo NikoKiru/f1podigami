@@ -114,5 +114,12 @@ clearBtn.addEventListener('click', () => {
     filterInputs[0].focus();
 });
 
+// Deep link: ?d=Name&d=Name&d=Name (e.g. from a trio elsewhere on the site)
+// pre-fills the driver filters so the table lands on that exact combo.
+const presetDrivers = new URLSearchParams(location.search).getAll('d');
+if (presetDrivers.length) {
+    presetDrivers.slice(0, filterInputs.length).forEach((v, i) => { filterInputs[i].value = v; });
+}
+
 applySort();
 applyFilter();

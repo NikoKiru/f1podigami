@@ -27,6 +27,32 @@ main {
     font-weight: 500;
 }
 
+/* A trio that has happened links to its stats on the combos page. The link
+   inherits the surrounding text colour (so contrast holds in both themes) and
+   only reveals its affordance — an accent underline + tint — on hover/focus. */
+.combo-link {
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: box-shadow 0.15s;
+}
+
+.combo-link:hover {
+    box-shadow: inset 0 -1px 0 var(--accent-bright);
+}
+
+.combo-link:hover .lr-code,
+.combo-link:hover .pdriver {
+    color: var(--accent-bright);
+}
+
+.combo-link:focus-visible {
+    outline: 2px solid var(--accent-bright);
+    outline-offset: 2px;
+}
 
 /* next-race box */
 .next-race {
