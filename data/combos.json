@@ -3194,6 +3194,47 @@
   },
   {
     "drivers": [
+      "Andrea Kimi Antonelli",
+      "Max Verstappen",
+      "George Russell"
+    ],
+    "driverIds": [
+      "antonelli",
+      "max_verstappen",
+      "russell"
+    ],
+    "count": 3,
+    "lastRace": {
+      "season": "2026",
+      "round": "8",
+      "raceName": "Austrian Grand Prix"
+    },
+    "firstRace": {
+      "season": "2025",
+      "round": "10",
+      "raceName": "Canadian Grand Prix"
+    },
+    "lastRaceKey": 2026008,
+    "races": [
+      {
+        "season": "2025",
+        "round": "10",
+        "raceName": "Canadian Grand Prix"
+      },
+      {
+        "season": "2025",
+        "round": "22",
+        "raceName": "Las Vegas Grand Prix"
+      },
+      {
+        "season": "2026",
+        "round": "8",
+        "raceName": "Austrian Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
       "Charles Leclerc",
       "Lando Norris",
       "Carlos Sainz"
@@ -4614,42 +4655,6 @@
         "season": "1952",
         "round": "7",
         "raceName": "Dutch Grand Prix"
-      }
-    ]
-  },
-  {
-    "drivers": [
-      "Andrea Kimi Antonelli",
-      "Max Verstappen",
-      "George Russell"
-    ],
-    "driverIds": [
-      "antonelli",
-      "max_verstappen",
-      "russell"
-    ],
-    "count": 2,
-    "lastRace": {
-      "season": "2025",
-      "round": "22",
-      "raceName": "Las Vegas Grand Prix"
-    },
-    "firstRace": {
-      "season": "2025",
-      "round": "10",
-      "raceName": "Canadian Grand Prix"
-    },
-    "lastRaceKey": 2025022,
-    "races": [
-      {
-        "season": "2025",
-        "round": "10",
-        "raceName": "Canadian Grand Prix"
-      },
-      {
-        "season": "2025",
-        "round": "22",
-        "raceName": "Las Vegas Grand Prix"
       }
     ]
   },

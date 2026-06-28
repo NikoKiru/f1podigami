@@ -1,32 +1,32 @@
 {
   "season": "2026",
-  "round": "7",
+  "round": "8",
   "constructors": [
     {
       "constructorId": "mercedes",
       "name": "Mercedes",
-      "points": 262.0,
+      "points": 302.0,
       "position": 1,
-      "wins": 6
+      "wins": 7
     },
     {
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 190.0,
+      "points": 204.0,
       "position": 2,
       "wins": 1
     },
     {
       "constructorId": "mclaren",
       "name": "McLaren",
-      "points": 141.0,
+      "points": 159.0,
       "position": 3,
       "wins": 0
     },
     {
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 89.0,
+      "points": 115.0,
       "position": 4,
       "wins": 0
     },
@@ -40,7 +40,7 @@
     {
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 41.0,
+      "points": 44.0,
       "position": 6,
       "wins": 0
     },
@@ -81,27 +81,27 @@
     }
   ],
   "driverConstructor": {
-    "hamilton": "ferrari",
     "russell": "mercedes",
-    "norris": "mclaren",
     "max_verstappen": "red_bull",
+    "antonelli": "mercedes",
     "piastri": "mclaren",
+    "hamilton": "ferrari",
     "hadjar": "red_bull",
-    "gasly": "alpine",
+    "norris": "mclaren",
+    "leclerc": "ferrari",
     "lawson": "rb",
     "arvid_lindblad": "rb",
-    "colapinto": "alpine",
     "bortoleto": "audi",
-    "sainz": "williams",
-    "ocon": "haas",
-    "perez": "cadillac",
-    "leclerc": "ferrari",
-    "antonelli": "mercedes",
+    "hulkenberg": "audi",
+    "gasly": "alpine",
     "bearman": "haas",
+    "colapinto": "alpine",
+    "ocon": "haas",
     "albon": "williams",
     "alonso": "aston_martin",
-    "hulkenberg": "audi",
-    "bottas": "cadillac",
-    "stroll": "aston_martin"
+    "stroll": "aston_martin",
+    "sainz": "williams",
+    "perez": "cadillac",
+    "bottas": "cadillac"
   }
 }
