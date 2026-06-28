@@ -19650,5 +19650,22 @@
       "driverId": "norris",
       "name": "Lando Norris"
     }
+  },
+  {
+    "season": "2026",
+    "round": "8",
+    "raceName": "Austrian Grand Prix",
+    "p1": {
+      "driverId": "russell",
+      "name": "George Russell"
+    },
+    "p2": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p3": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    }
   }
 ]

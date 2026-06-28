@@ -23,56 +23,56 @@
   "ladder": [
     {
       "model": "recent-frequency",
-      "n": 159,
-      "top1": 0.1258,
-      "top3": 0.2704,
-      "top5": 0.3648,
-      "logLoss": 4.3069,
-      "brierSet": 0.9556,
-      "brierNew": 0.2366
+      "n": 160,
+      "top1": 0.125,
+      "top3": 0.2687,
+      "top5": 0.3625,
+      "logLoss": 4.3028,
+      "brierSet": 0.9557,
+      "brierNew": 0.2367
     },
     {
       "model": "current (product)",
-      "n": 159,
-      "top1": 0.1321,
-      "top3": 0.283,
-      "top5": 0.3962,
-      "logLoss": 4.1965,
-      "brierSet": 0.954,
-      "brierNew": 0.242
+      "n": 160,
+      "top1": 0.1313,
+      "top3": 0.2812,
+      "top5": 0.3937,
+      "logLoss": 4.1935,
+      "brierSet": 0.9541,
+      "brierNew": 0.2425
     },
     {
       "model": "plackett-luce",
-      "n": 159,
-      "top1": 0.1321,
-      "top3": 0.2704,
-      "top5": 0.3962,
-      "logLoss": 4.1787,
-      "brierSet": 0.9497,
-      "brierNew": 0.2381
+      "n": 160,
+      "top1": 0.1313,
+      "top3": 0.2687,
+      "top5": 0.3937,
+      "logLoss": 4.1753,
+      "brierSet": 0.9498,
+      "brierNew": 0.2385
     },
     {
       "model": "PL + tuned (chosen)",
-      "n": 159,
-      "top1": 0.1258,
-      "top3": 0.2956,
-      "top5": 0.4151,
-      "logLoss": 4.0811,
-      "brierSet": 0.9468,
-      "brierNew": 0.2387
+      "n": 160,
+      "top1": 0.125,
+      "top3": 0.2938,
+      "top5": 0.4125,
+      "logLoss": 4.0783,
+      "brierSet": 0.9469,
+      "brierNew": 0.2396
     }
   ],
   "chosen": {
-    "n": 159,
-    "top1": 0.1258,
-    "top3": 0.2956,
-    "top5": 0.4151,
-    "logLoss": 4.0811,
-    "brierSet": 0.9468,
-    "brierNew": 0.2387,
-    "baseRateNew": 0.4088,
-    "brierNewBaseRate": 0.2417,
-    "ece": 0.0858
+    "n": 160,
+    "top1": 0.125,
+    "top3": 0.2938,
+    "top5": 0.4125,
+    "logLoss": 4.0783,
+    "brierSet": 0.9469,
+    "brierNew": 0.2396,
+    "baseRateNew": 0.4062,
+    "brierNewBaseRate": 0.2412,
+    "ece": 0.0892
   },
   "calibration": [
     {
@@ -120,9 +120,9 @@
     {
       "lo": 0.6,
       "hi": 0.7,
-      "n": 12,
-      "meanPred": 0.6338,
-      "obsRate": 0.5833
+      "n": 13,
+      "meanPred": 0.6326,
+      "obsRate": 0.5385
     },
     {
       "lo": 0.7,
