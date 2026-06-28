@@ -70,26 +70,39 @@ def _num_chip(v: dict) -> str:
     return f'<span class="d-num">{esc(v["number"])}</span>' if v["number"] else ""
 
 
-def pick_next_race(schedule: dict, today: str | None = None) -> dict | None:
-    """Return the next race whose date is today or later, else None."""
-    today = today or dt.date.today().isoformat()
+def _to_int(value: object) -> int | None:
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def pick_next_race(schedule: dict, asof: dict | None = None) -> dict | None:
+    """Return the next race after the latest one we have results for, else None.
+
+    Selection is data-driven, not calendar-driven: ``asof`` is the latest race
+    reflected in the data (``podigami.json``'s ``asOf``: ``{"season", "round"}``).
+    A race stays "next" until its result is actually in the data, at which point
+    the box rolls over to the following round. This keeps the hero correct from
+    the moment new data deploys, instead of waiting for the UTC day to flip.
+    """
     races = sorted(schedule.get("races", []), key=lambda r: int(r["round"]))
+    if not races:
+        return None
+
+    have_season = _to_int((asof or {}).get("season"))
+    have_round = _to_int((asof or {}).get("round"))
+    if have_round is None:
+        return races[0]  # no results yet this season -> the opener is next
+
+    sched_season = _to_int(schedule.get("season"))
+    if sched_season is not None and have_season is not None and have_season < sched_season:
+        return races[0]  # latest result is from a prior season -> round 1 is next
+
     for r in races:
-        if r["date"] >= today:
+        if int(r["round"]) > have_round:
             return r
-    return None
-
-
-def pick_last_race(schedule: dict, today: str | None = None) -> dict | None:
-    """Return the race immediately before the next upcoming one, else None."""
-    today = today or dt.date.today().isoformat()
-    races = sorted(schedule.get("races", []), key=lambda r: int(r["round"]))
-    prev = None
-    for r in races:
-        if r["date"] >= today:
-            return prev
-        prev = r
-    return prev
+    return None  # we have the final round -> season complete
 
 
 def _iso_datetime(race: dict) -> str:
@@ -103,8 +116,8 @@ def _fallback_when(race: dict) -> str:
     return f"{base} &middot; {t[:5]} UTC" if t else base
 
 
-def render_next_race(schedule: dict, today: str | None = None) -> str:
-    nxt = pick_next_race(schedule, today)
+def render_next_race(schedule: dict, asof: dict | None = None) -> str:
+    nxt = pick_next_race(schedule, asof)
     if not nxt:
         return (
             '<section class="next-race nr-empty">'
@@ -167,27 +180,24 @@ def render_last_race(
     combos: list[dict],
     meta: dict,
     driver_form: list[dict],
-    today: str | None = None,
 ) -> str:
-    last = pick_last_race(schedule, today)
-    if not last:
+    # The last race is the most recent one we actually have a podium for; this is
+    # the same source of truth as podigami.json's asOf, so the box rolls over the
+    # instant new results land rather than at the next UTC midnight.
+    if not podiums:
         return ""
-    season = schedule.get("season", "")
-    rnd = last["round"]
-    pod = None
-    for p in reversed(podiums):
-        if p["season"] == season and p["round"] == rnd:
-            pod = p
-            break
-    if not pod:
-        if not podiums:
-            return ""
-        pod = max(podiums, key=lambda p: (int(p["season"]), int(p["round"])))
-        rnd = pod["round"]
-        last = next(
-            (r for r in schedule.get("races", []) if r["round"] == rnd),
-            {"country": "", "raceName": pod["raceName"], "round": rnd},
-        )
+    pod = max(podiums, key=lambda p: (int(p["season"]), int(p["round"])))
+    rnd = pod["round"]
+    # Enrich with the schedule entry (flag/country) when the race is on this
+    # season's calendar; otherwise fall back to the podium's own race name.
+    last = next(
+        (
+            r
+            for r in schedule.get("races", [])
+            if r["round"] == rnd and schedule.get("season") == pod["season"]
+        ),
+        {"country": "", "raceName": pod["raceName"], "round": rnd},
+    )
 
     fl = flag_svg(last["country"])
     name = esc(last["raceName"])
@@ -484,7 +494,7 @@ def main() -> int:
     schedule = {}
     if (DATA_DIR / "schedule.json").exists():
         schedule = load_schedule().model_dump()
-    next_race = render_next_race(schedule) if schedule else ""
+    next_race = render_next_race(schedule, data.get("asOf")) if schedule else ""
     combos_dicts = [c.model_dump() for c in combos_list]
     podiums_dicts = [p.model_dump() for p in podiums_list]
     last_race = (

@@ -223,10 +223,18 @@
         } catch (e) { /* keep the server-rendered UTC fallback */ }
     }
 
+    // A race runs well under 3h; after that it is clearly over even if the
+    // result hasn't been published (and folded into the next-race box) yet.
+    const RACE_WINDOW = 3 * 3600;
+
     function tick() {
         let diff = Math.floor((when.getTime() - Date.now()) / 1000);
         if (diff <= 0) {
-            if (cdEl) cdEl.textContent = 'Lights out — race underway';
+            const sinceStart = Math.floor((Date.now() - when.getTime()) / 1000);
+            if (cdEl) {
+                cdEl.textContent =
+                    sinceStart < RACE_WINDOW ? 'Lights out — race underway' : 'Awaiting results';
+            }
             return false;
         }
         const d = Math.floor(diff / 86400); diff -= d * 86400;
