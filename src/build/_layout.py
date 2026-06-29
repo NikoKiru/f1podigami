@@ -48,6 +48,14 @@ def wiki_url(season: str, race_name: str) -> str:
     return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(title)
 
 
+def abbr_name(name: str) -> str:
+    """ "Esteban Ocon" -> "E. Ocon": first initial + surname, for narrow screens."""
+    parts = name.strip().split()
+    if len(parts) < 2:
+        return name
+    return parts[0][0] + ". " + parts[-1]
+
+
 @cache
 def _asset_version(name: str) -> str:
     """Short content hash of an asset in ``assets/``, or "" if it isn't there."""

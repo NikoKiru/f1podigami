@@ -336,27 +336,156 @@ main {
     color: var(--accent);
 }
 
-/* Unlikeliest-page hero: the single most improbable podium that happened.
-   Reuses the .hero shell; the right column carries the trio + the why. */
-.unlikely-hero .cand-names {
-    font-size: 20px;
-    margin-top: 2px;
+/* ── Unlikeliest page: uniform improbability cards ───────────────────────────
+   Every entry is the same card; #1 (.uncard-hero) is a larger, accented version
+   of the identical structure so each field sits in the same place on every card. */
+.uncard-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
 }
 
-.hero-why {
-    margin: 12px 0 0;
-    color: var(--muted);
+.uncard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* The #1 card spans the full width and gets the accent treatment. */
+.uncard-hero {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--bg-2) 100%);
+    border-color: var(--border-strong);
+    border-left: 4px solid var(--accent-bright);
+    padding: 24px;
+}
+
+.un-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.un-rank {
     font-size: 14px;
-    line-height: 1.6;
-}
-
-.hero-why b {
-    color: var(--text-dim);
+    font-weight: 800;
+    color: var(--muted);
     font-variant-numeric: tabular-nums;
 }
 
-/* Inline race-report links (hero + list): match the site's tagline/footer
-   link convention rather than the browser default blue. */
+.un-rank::before {
+    content: "#";
+    color: var(--accent);
+}
+
+.uncard-hero .un-rank {
+    font-size: 18px;
+}
+
+.un-race {
+    font-size: 13px;
+    text-align: right;
+}
+
+.un-drivers {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.35;
+}
+
+.uncard-hero .un-drivers {
+    font-size: 24px;
+}
+
+.un-drivers .sep {
+    color: var(--muted-dim);
+    margin: 0 7px;
+    font-weight: 400;
+}
+
+.un-drivers .dn-abbr {
+    display: none;
+}
+
+/* Headline odds — the one number every card leads with. */
+.un-odds {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.un-odds-num {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent-bright);
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.uncard-hero .un-odds-num {
+    font-size: 46px;
+}
+
+.un-odds-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+/* Three labelled stat cells, always in the same order/place. */
+.un-stats {
+    display: grid;
+    /* rates cell gets extra width so "0% · 29% · 36%" stays on one line */
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    margin-top: auto;
+}
+
+.un-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.un-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    line-height: 1.2;
+    /* reserve two lines so a wrapped label never pushes its value out of line
+       with the neighbouring cells' values */
+    min-height: 2.4em;
+}
+
+.uncard-hero .un-stat-label {
+    min-height: 0;
+}
+
+.un-stat-val {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Inline race-report links: match the site's tagline/footer link convention
+   rather than the browser default blue. */
 .race-link {
     color: var(--text-dim);
     text-decoration: none;
@@ -997,6 +1126,28 @@ a.tl-where:hover {
 }
 
 @media (max-width: 600px) {
+    /* Unlikeliest cards: abbreviate driver names (E. Ocon) and dial the hero
+       numbers down so the #1 card still fits a phone column. */
+    .un-drivers .dn-full {
+        display: none;
+    }
+
+    .un-drivers .dn-abbr {
+        display: inline;
+    }
+
+    .uncard-hero {
+        padding: 18px;
+    }
+
+    .uncard-hero .un-drivers {
+        font-size: 20px;
+    }
+
+    .uncard-hero .un-odds-num {
+        font-size: 38px;
+    }
+
     .info-bubble {
         left: auto;
         right: -8px;
