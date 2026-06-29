@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-06-29
+
+### Improvements
+- Remove redundant stat boxes from combos page header — info already lives on the landing page
+
 ## 2026-06-28
 
 ### Improvements
