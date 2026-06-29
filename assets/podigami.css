@@ -592,6 +592,105 @@ main {
     font-size: 13px;
 }
 
+/* candidate list */
+.cand-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.cand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.cand:last-child {
+    border-bottom: none;
+}
+
+.cand-rank {
+    width: 22px;
+    text-align: right;
+    color: var(--muted-dim);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+
+.cand-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cand-names {
+    margin-bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* candidate trio: team-colour dot + TLA code (full name on hover) */
+.cd {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cd-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--team, var(--muted));
+    flex: 0 0 auto;
+}
+
+.cd-code {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--text-dim);
+}
+
+.cd-sep {
+    color: var(--muted-dim);
+    margin: 0 9px;
+}
+
+.cand-meta {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.cand-meta b {
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+.cand-bar-wrap {
+    background: var(--surface-3);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+}
+
+.cand-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent-bright));
+    border-radius: 99px;
+}
+
+.cand-prob {
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 600;
+    min-width: 56px;
+    text-align: right;
+}
+
 /* ── Overdue page: uniform overdue cards ──────────────────────────────────────
    Mirrors the Unlikeliest card system. Every entry is the same card; #1 in each
    section (.odcard-hero) is a larger, accented version so each field sits in the
