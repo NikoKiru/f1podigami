@@ -532,54 +532,6 @@ a.race-pill:hover {
 
 /* <=600px: each combo row becomes a self-contained card (no sideways scroll) */
 @media (max-width: 600px) {
-    /* Collapse the three stat cards into one compact inline strip so they stop
-       reading as tappable buttons and the combinations table is the first thing
-       you see. Desktop keeps the cards (this is inside the phone breakpoint). */
-    .stats {
-        display: block;
-        margin-top: 8px;
-        font-size: 13px;
-        line-height: 1.5;
-    }
-
-    .stat {
-        display: inline;
-        background: none;
-        padding: 0;
-        border-radius: 0;
-        overflow: visible;
-    }
-
-    .stat::before {
-        content: none;
-        /* remove the card accent bar */
-    }
-
-    .stat:not(:last-child)::after {
-        content: " \00b7";
-        color: var(--muted);
-        margin-left: 3px;
-    }
-
-    .stat .num,
-    .stat .label {
-        display: inline;
-        font-size: 13px;
-        letter-spacing: 0;
-        text-transform: none;
-    }
-
-    .stat .num {
-        font-weight: 700;
-        color: var(--text);
-    }
-
-    .stat .label {
-        font-weight: 500;
-        color: var(--muted);
-        margin-left: 3px;
-    }
-
     .table-wrap {
         background: transparent;
         border: none;
