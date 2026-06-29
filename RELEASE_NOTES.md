@@ -2,6 +2,9 @@
 
 ## 2026-06-29
 
+### Features
+- Add Playwright e2e suite for interactive JS: slider, combos filter/sort, theme, tooltips (#113)
+
 ### Improvements
 - Remove redundant stat boxes from combos page header — info already lives on the landing page
 
