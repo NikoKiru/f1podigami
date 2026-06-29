@@ -2,6 +2,9 @@
 
 ## 2026-06-29
 
+### Improvements
+- Rework the Overdue page into uniform cards matching the Unlikeliest design: each leads with the expected co-podiums score ("8.2×"), driver names abbreviate to `E. Ocon` on narrow screens, and the meaningless bar and raw decimal score are gone
+
 ### Features
 - Add **Unlikeliest** page: the most statistically improbable podium trios that actually happened, ranked by races-together × career podium rates, with a hero for the single biggest fluke (2020 Sakhir GP) and a per-trio breakdown of why the maths said no
 - Add Playwright e2e suite for interactive JS: slider, combos filter/sort, theme, tooltips (#113)
