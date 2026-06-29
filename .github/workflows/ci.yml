@@ -67,7 +67,7 @@ jobs:
       - run: pip install playwright
       - run: playwright install --with-deps chromium
       - name: Run e2e tests
-        run: pytest tests/test_slider_alignment.py
+        run: pytest tests/test_slider_alignment.py tests/test_e2e.py -v
 
   build:
     name: Build & link-check
