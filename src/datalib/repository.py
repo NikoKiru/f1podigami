@@ -25,6 +25,7 @@ from .schemas import (
     Podium,
     Schedule,
     Soulmates,
+    Unlikeliest,
 )
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
@@ -37,6 +38,7 @@ REGISTRY: dict[str, TypeAdapter] = {
     "current_drivers.json": TypeAdapter(CurrentDrivers),
     "driver_races.json": TypeAdapter(DriverRaces),
     "overdue.json": TypeAdapter(Overdue),
+    "unlikeliest.json": TypeAdapter(Unlikeliest),
     "schedule.json": TypeAdapter(Schedule),
     "podigami.json": TypeAdapter(Podigami),
     "model_eval.json": TypeAdapter(ModelEval),
@@ -101,6 +103,14 @@ def load_overdue() -> Overdue:
 
 def save_overdue(data: Any) -> None:
     _save("overdue.json", data)
+
+
+def load_unlikeliest() -> Unlikeliest:
+    return _load("unlikeliest.json")
+
+
+def save_unlikeliest(data: Any) -> None:
+    _save("unlikeliest.json", data)
 
 
 def load_schedule() -> Schedule:

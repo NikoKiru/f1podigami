@@ -29,6 +29,7 @@ STEPS = [
     ("Computing podigami", "compute/compute_podigami.py"),
     ("Fetching driver races", "fetch/fetch_driver_races.py"),
     ("Computing overdue podiums", "compute/compute_overdue.py"),
+    ("Computing unlikeliest podiums", "compute/compute_unlikeliest.py"),
     ("Backtesting predictor accuracy", "compute/backtest.py"),
 ]
 

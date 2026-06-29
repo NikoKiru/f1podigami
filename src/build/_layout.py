@@ -11,6 +11,7 @@ them). The import works both when a builder is run as a script
 from __future__ import annotations
 
 import hashlib
+import urllib.parse
 from functools import cache
 from pathlib import Path
 
@@ -26,6 +27,7 @@ NAV_LINKS = [
     ("index.html", "Podigami"),
     ("combos.html", "Combinations"),
     ("overdue.html", "Overdue"),
+    ("unlikeliest.html", "Unlikeliest"),
 ]
 
 # Applied before first paint so the stored/OS theme never flashes. Kept as a
@@ -38,6 +40,12 @@ _THEME_INIT = (
     'document.documentElement.setAttribute("data-theme",t);}'
     "catch(e){}})();</script>"
 )
+
+
+def wiki_url(season: str, race_name: str) -> str:
+    """Wikipedia race-report URL — the same source the Ergast/Jolpica API cites."""
+    title = f"{season} {race_name}".replace(" ", "_")
+    return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(title)
 
 
 @cache
@@ -154,6 +162,7 @@ FOOTER = f"""<footer>
             <a href="index.html">Podigami</a>
             <a href="combos.html">Combinations</a>
             <a href="overdue.html">Overdue</a>
+            <a href="unlikeliest.html">Unlikeliest</a>
         </nav>
         <p class="footer-meta">
             Data from <a href="{DATA_URL}" target="_blank" rel="noopener">Jolpica F1 API</a> (Ergast)

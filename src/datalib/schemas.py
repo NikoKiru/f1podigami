@@ -140,6 +140,36 @@ class Overdue(_Base):
     currentGrid: list[OverdueTrio]
 
 
+# --- unlikeliest.json --------------------------------------------------------
+
+
+class UnlikeliestPerDriver(_Base):
+    name: str
+    podiums: int
+    starts: int
+    rate: float
+
+
+class UnlikeliestTrio(_Base):
+    driverIds: list[str]
+    names: list[str]
+    racesTogether: int
+    score: float
+    count: int
+    happened: RaceRef
+    perDriver: list[UnlikeliestPerDriver]
+
+
+class UnlikeliestParams(_Base):
+    topN: int
+
+
+class Unlikeliest(_Base):
+    params: UnlikeliestParams
+    asOf: RaceRef
+    trios: list[UnlikeliestTrio]
+
+
 # --- schedule.json -----------------------------------------------------------
 
 
