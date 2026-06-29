@@ -946,6 +946,23 @@ a.tl-where:hover {
     color: var(--muted-dim);
 }
 
+@media (max-width: 720px) {
+    /* The container padding narrows to 14px at 720px (style.css), leaving the
+       hero's right column too narrow for 3 driver cards side by side. Collapse
+       the hero to a single column here so the driver cards get the full width. */
+    .hero {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .hero-pick {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-left: 0;
+        padding-top: 14px;
+    }
+}
+
 @media (max-width: 600px) {
     .info-bubble {
         left: auto;
