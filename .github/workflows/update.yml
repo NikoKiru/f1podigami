@@ -35,8 +35,8 @@ jobs:
       due: ${{ steps.decide.outputs.due }}
       mode: ${{ steps.decide.outputs.mode }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
       - name: Decide whether an update is due
@@ -73,14 +73,14 @@ jobs:
     if: needs.check.outputs.due == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           # PAT (not the built-in token) so the branch push + PR trigger CI, and
           # the eventual squash-merge is attributed to a real user so deploy fires.
           token: ${{ secrets.DATA_PUSH_TOKEN }}
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: pip
