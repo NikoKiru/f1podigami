@@ -37,3 +37,20 @@ def test_index_inputs_prevent_ios_zoom():
 @pytest.mark.parametrize("name", ["soulmates.css", "podigami.css"])
 def test_secondary_pages_have_phone_breakpoint(name):
     assert "@media (max-width: 600px)" in css(name)
+
+
+def test_podigami_hero_collapses_at_720px():
+    """Hero switches to single-column at 720px to fix the 601-720px dead zone.
+
+    Without this, the container already has 14px padding from the 720px nav rule
+    (style.css) but the hero grid stays in 2-column desktop mode until 600px,
+    leaving the right column too narrow for 3 driver cards side by side.
+    """
+    import re
+
+    s = css("podigami.css")
+    assert re.search(
+        r"@media \(max-width: 720px\).*?grid-template-columns:\s*1fr",
+        s,
+        re.DOTALL,
+    ), "Hero must switch to single-column grid inside a max-width:720px block (fixes #116)"
