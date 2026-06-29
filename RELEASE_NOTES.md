@@ -10,6 +10,7 @@
 - Fix hero layout at ~602px: collapse hero to single column at 720px so driver cards are side by side in the nav-wrap dead zone (#116)
 
 ### Improvements
+- Adopt a `develop` → `main` branching workflow (develop is the default branch; main remains the release/deploy branch) and document it in CLAUDE.md
 - Remove redundant stat boxes from combos page header — info already lives on the landing page
 - Harden CI: add `datalib.validate` gate to `deploy.yml`, `actionlint` workflow linter, and SHA-pin all action refs (#114)
 
