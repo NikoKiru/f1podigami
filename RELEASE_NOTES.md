@@ -7,6 +7,7 @@
 
 ### Improvements
 - Remove redundant stat boxes from combos page header — info already lives on the landing page
+- Harden CI: add `datalib.validate` gate to `deploy.yml`, `actionlint` workflow linter, and SHA-pin all action refs (#114)
 
 ## 2026-06-28
 
