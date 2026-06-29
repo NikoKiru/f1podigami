@@ -10,6 +10,7 @@
 - Add Playwright e2e suite for interactive JS: slider, combos filter/sort, theme, tooltips (#113)
 
 ### Fixes
+- Fix doubled numbering in "Most likely next combinations" list — `.cand-*` CSS was accidentally removed in #127 (#128)
 - Fix hero layout at ~602px: collapse hero to single column at 720px so driver cards are side by side in the nav-wrap dead zone (#116)
 
 ### Improvements
