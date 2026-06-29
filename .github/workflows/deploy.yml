@@ -32,6 +32,8 @@ jobs:
           pip install -r requirements.txt
       - name: Run tests (deploy is blocked if these fail)
         run: pytest -q
+      - name: Validate datasets
+        run: PYTHONPATH=src python -m datalib.validate
       - name: Build site
         run: python src/build_site.py
       - name: Upload Pages artifact
