@@ -1,19 +1,25 @@
 """Render data/overdue.json into dist/overdue.html.
 
-Two ranked lists of podium trios that have never happened, ordered by how
-statistically overdue they are (races together x podium rates).
+Two ranked sections — all-time near-misses and current-grid candidates — each
+a grid of uniform cards. Every card leads with the expected number of shared
+podiums (racesTogether × rates) shown as "X.Y×", which makes the overdue-ness
+concrete: a score of 8 means statistics expected this to happen roughly eight
+times already. A "chance by now" stat converts the same number to a probability
+(Poisson tail: 1 − e^−score) so readers can see just how likely it should have
+been.
 """
 
 from __future__ import annotations
 
 import html
+import math
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, asset, head, nav  # noqa: E402  (needs the sys.path entry above)
+from _layout import FOOTER, abbr_name, asset, head, nav  # noqa: E402
 
 from datalib import OverdueTrio, load_overdue  # noqa: E402
 
@@ -24,34 +30,74 @@ def esc(s: str) -> str:
     return html.escape(str(s))
 
 
+def format_score(score: float) -> str:
+    """Expected co-podium count formatted as '8.2×'."""
+    return f"{score:.1f}×"
+
+
+def format_probability(score: float) -> str:
+    """Probability trio would have shared a podium by now, as integer %.
+
+    Uses the Poisson tail: P(≥1) = 1 − e^−score.
+    """
+    p = 1.0 - math.exp(-score)
+    return f"{p * 100:.0f}%"
+
+
 def render_trio(names: list[str]) -> str:
-    parts = '<span class="sep">/</span>'.join(
-        f'<span class="pdriver">{esc(n)}</span>' for n in names
+    """Three drivers with full and abbreviated forms for CSS to swap on narrow screens."""
+    sep = '<span class="sep">&middot;</span>'
+    driver = (
+        '<span class="oddriver">'
+        '<span class="dn-full">{full}</span>'
+        '<span class="dn-abbr" aria-hidden="true">{abbr}</span>'
+        "</span>"
     )
-    return f'<span class="trio trio-sm">{parts}</span>'
+    return sep.join(driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in names)
 
 
-def render_list(entries: list[OverdueTrio]) -> str:
+def _rates_cells(e: OverdueTrio) -> str:
+    return " &middot; ".join(f"{p.rate * 100:.0f}%" for p in e.perDriver)
+
+
+def _stat(label: str, value: str) -> str:
+    return (
+        f'<div class="od-stat">'
+        f'<span class="od-stat-label">{label}</span>'
+        f'<span class="od-stat-val">{value}</span>'
+        f"</div>"
+    )
+
+
+def render_card(rank: int, e: OverdueTrio, hero: bool = False) -> str:
+    """One uniform card. ``hero`` makes it the larger, accented #1 variant."""
+    cls = "odcard odcard-hero" if hero else "odcard"
+    drivers = f'<div class="od-drivers">{render_trio(e.names)}</div>'
+    stats = (
+        _stat("Podium rates", _rates_cells(e))
+        + _stat("Raced together", f"{e.racesTogether}&times;")
+        + _stat("Chance by now", format_probability(e.score))
+    )
+    return (
+        f'<li class="{cls}">'
+        f'<div class="od-top">'
+        f'<span class="od-rank">{rank}</span>'
+        f"</div>"
+        f"{drivers}"
+        f'<div class="od-score">'
+        f'<span class="od-score-num">{format_score(e.score)}</span>'
+        f'<span class="od-score-label">expected co-podiums</span>'
+        f"</div>"
+        f'<div class="od-stats">{stats}</div>'
+        f"</li>"
+    )
+
+
+def render_cards(entries: list[OverdueTrio]) -> str:
     if not entries:
         return '<p class="panel-sub">No candidates.</p>'
-    top = entries[0].score or 1
-    rows = []
-    for i, e in enumerate(entries, 1):
-        pct = round(100 * e.score / top)
-        rates = " / ".join(f"{p.rate * 100:.0f}%" for p in e.perDriver)
-        rows.append(
-            f'<li class="cand">'
-            f'<span class="cand-rank">{i}</span>'
-            f'<div class="cand-body">'
-            f'  <div class="cand-names">{render_trio(e.names)}</div>'
-            f'  <div class="cand-bar-wrap"><div class="cand-bar" style="width:{pct}%"></div></div>'
-            f'  <div class="cand-meta">raced <b>{e.racesTogether}</b> times together '
-            f"&middot; {rates} podium rates</div>"
-            f"</div>"
-            f'<span class="cand-prob" title="overdue score = races together x podium rates">{e.score:.2f}</span>'
-            f"</li>"
-        )
-    return f'<ol class="cand-list">{"".join(rows)}</ol>'
+    cards = [render_card(i, e, hero=(i == 1)) for i, e in enumerate(entries, 1)]
+    return f'<ol class="odcard-list">{"".join(cards)}</ol>'
 
 
 def panel(title: str, sub: str, entries: list[OverdueTrio]) -> str:
@@ -59,7 +105,7 @@ def panel(title: str, sub: str, entries: list[OverdueTrio]) -> str:
         f'<section class="panel">'
         f"  <h2>{title}</h2>"
         f'  <p class="panel-sub">{sub}</p>'
-        f"  {render_list(entries)}"
+        f"  {render_cards(entries)}"
         f"</section>"
     )
 
@@ -71,12 +117,13 @@ def main() -> int:
     all_time = panel(
         "All-time near-misses",
         "Trios from across F1 history that raced together often and each podiumed often "
-        "&mdash; yet never all three on the same podium. Ranked by races together &times; podium rates.",
+        "&mdash; yet never all three on the same podium. Expected co-podiums = races together "
+        "&times; each driver&rsquo;s career podium rate.",
         data.allTime,
     )
     grid = panel(
         "Current grid &mdash; still possible",
-        "The most overdue trios among this season's drivers. These could still happen.",
+        "The most overdue trios among this season&rsquo;s drivers. These could still happen.",
         data.currentGrid,
     )
 
@@ -101,7 +148,7 @@ def main() -> int:
     <div class="container">
         {all_time}
         {grid}
-        <p class="as-of">Score is a ranking heuristic (races together &times; each driver's career podium rate); the concrete numbers are the shared-race count and rates. Up to date through the {
+        <p class="as-of">Expected co-podiums = races together &times; each driver&rsquo;s career podium rate; chance by now is the Poisson tail P(&ge;1) = 1&minus;e<sup>&minus;score</sup>. Up to date through the {
         esc(as_of.season)
     } {esc(as_of.raceName)} (round {esc(as_of.round)}).</p>
     </div>

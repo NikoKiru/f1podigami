@@ -182,9 +182,9 @@ def test_stylesheet_defines_light_theme(dist):
 def test_overdue_has_two_ranked_lists(dist):
     html = (dist / "overdue.html").read_text(encoding="utf-8")
     assert 'class="nav"' in html
-    assert html.count('class="cand-list"') == 2  # all-time + current grid
+    assert html.count('class="odcard-list"') == 2  # all-time + current grid
     assert "All-time near-misses" in html
-    assert 'class="cand-meta"' in html  # "raced N times together"
+    assert 'class="od-drivers"' in html
 
 
 def test_404_page_exists_with_chrome_and_home_link(dist):
