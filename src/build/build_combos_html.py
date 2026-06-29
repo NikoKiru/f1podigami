@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
 from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
+    abbr_name,
     asset,
     head,
     nav,
@@ -59,13 +60,6 @@ def short_race_name(name: str) -> str:
     if name.endswith(" Grand Prix"):
         return name[: -len(" Grand Prix")] + " GP"
     return name
-
-
-def abbr_name(name: str) -> str:
-    parts = name.strip().split()
-    if len(parts) < 2:
-        return name
-    return parts[0][0] + ". " + parts[-1]
 
 
 def render_combo(rank: int, combo: Combo) -> str:

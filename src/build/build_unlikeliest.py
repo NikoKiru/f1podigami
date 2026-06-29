@@ -1,21 +1,29 @@
 """Render data/unlikeliest.json into dist/unlikeliest.html.
 
 The mirror of the Overdue page: podium trios that *did* happen, ranked by how
-statistically unlikely they were (races together x career podium rates). #1 is
-the single most improbable podium in F1 history, shown as a hero; the rest follow
-as a ranked list, each carrying the breakdown of why the maths said no.
+statistically unlikely they were. Every entry is a uniform card with the same
+fields in the same place — drivers, the odds it would ever happen, each driver's
+career podium rate, how often they raced together, and how many times it hit.
+The #1 card (the single most improbable podium in F1 history) is a larger,
+accented version of the identical layout.
+
+The headline "1 in N" is the odds the trio would *ever* share a podium, derived
+from the expected co-podium count s = racesTogether x rates via the Poisson
+tail P(at least once) = 1 - e^-s. More shared races push the odds up (more
+chances), so a trio that did it in few shared races is the bigger fluke.
 """
 
 from __future__ import annotations
 
 import html
+import math
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, asset, head, nav, wiki_url  # noqa: E402
+from _layout import FOOTER, abbr_name, asset, head, nav, wiki_url  # noqa: E402
 
 from datalib import UnlikeliestTrio, load_unlikeliest  # noqa: E402
 
@@ -26,15 +34,43 @@ def esc(s: str) -> str:
     return html.escape(str(s))
 
 
+def ever_prob(score: float) -> float:
+    """Probability the trio would share a podium at least once, from the expected
+    co-podium count ``score`` (Poisson tail): P(>=1) = 1 - e^-score."""
+    return 1.0 - math.exp(-score)
+
+
+def _round_sig2(n: float) -> int:
+    """Round to 2 significant figures (e.g. 154 -> 150, 1234 -> 1200); integers
+    below 10 are returned as-is so we never print '1 in 5.8'."""
+    if n < 10:
+        return round(n)
+    factor = 10 ** (math.floor(math.log10(n)) - 1)
+    return int(round(n / factor) * factor)
+
+
+def format_odds(score: float) -> str:
+    """'1 in N' odds the trio would ever share a podium."""
+    p = ever_prob(score)
+    n = _round_sig2(1.0 / p) if p > 0 else 0
+    return f"1 in {n:,}"
+
+
 def render_trio(names: list[str]) -> str:
-    parts = '<span class="sep">/</span>'.join(
-        f'<span class="pdriver">{esc(n)}</span>' for n in names
+    """The three drivers, each carrying a full and an abbreviated form so CSS can
+    swap to 'E. Ocon' on narrow screens (matching the combos table)."""
+    sep = '<span class="sep">&middot;</span>'
+    driver = (
+        '<span class="undriver">'
+        '<span class="dn-full">{full}</span>'
+        '<span class="dn-abbr" aria-hidden="true">{abbr}</span>'
+        "</span>"
     )
-    return f'<span class="trio trio-sm">{parts}</span>'
+    return sep.join(driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in names)
 
 
-def _rates(e: UnlikeliestTrio) -> str:
-    return " / ".join(f"{p.rate * 100:.0f}%" for p in e.perDriver)
+def _rates_cells(e: UnlikeliestTrio) -> str:
+    return " &middot; ".join(f"{p.rate * 100:.0f}%" for p in e.perDriver)
 
 
 def _race_link(e: UnlikeliestTrio) -> str:
@@ -47,69 +83,51 @@ def _race_link(e: UnlikeliestTrio) -> str:
     )
 
 
-def render_hero(e: UnlikeliestTrio) -> str:
-    note = f" &mdash; and did it {e.count}&times; in all" if e.count > 1 else ""
+def _stat(label: str, value: str) -> str:
     return (
-        f'<section class="hero unlikely-hero">'
-        f'  <div class="hero-chance">'
-        f'    <span class="hc-num">{e.score:g}</span>'
-        f'    <span class="hc-label">expected co-podiums</span>'
-        f"  </div>"
-        f'  <div class="hero-pick">'
-        f'    <div class="hp-label"><span class="accent">#1</span> Most improbable podium in F1 history</div>'
-        f'    <div class="cand-names">{render_trio(e.names)}</div>'
-        f'    <p class="hero-why">Raced together <b>{e.racesTogether}</b> times '
-        f"&middot; career podium rates {_rates(e)} &middot; yet all three reached the "
-        f"rostrum together at the {_race_link(e)}{note}.</p>"
-        f"  </div>"
-        f"</section>"
+        f'<div class="un-stat">'
+        f'<span class="un-stat-label">{label}</span>'
+        f'<span class="un-stat-val">{value}</span>'
+        f"</div>"
     )
 
 
-def render_list(entries: list[UnlikeliestTrio], start_rank: int = 2) -> str:
+def render_card(rank: int, e: UnlikeliestTrio, hero: bool = False) -> str:
+    """One uniform card. ``hero`` makes it the larger, accented #1 variant."""
+    cls = "uncard uncard-hero" if hero else "uncard"
+    drivers = f'<div class="un-drivers">{render_trio(e.names)}</div>'
+    stats = (
+        _stat("Podium rates", _rates_cells(e))
+        + _stat("Raced together", f"{e.racesTogether}&times;")
+        + _stat("Times it happened", str(e.count))
+    )
+    return (
+        f'<li class="{cls}">'
+        f'<div class="un-top">'
+        f'<span class="un-rank">{rank}</span>'
+        f'<span class="un-race">{_race_link(e)}</span>'
+        f"</div>"
+        f"{drivers}"
+        f'<div class="un-odds">'
+        f'<span class="un-odds-num">{format_odds(e.score)}</span>'
+        f'<span class="un-odds-label">chance it ever happened</span>'
+        f"</div>"
+        f'<div class="un-stats">{stats}</div>'
+        f"</li>"
+    )
+
+
+def render_cards(entries: list[UnlikeliestTrio]) -> str:
     if not entries:
         return '<p class="panel-sub">No trios.</p>'
-    top = max(e.score for e in entries) or 1
-    rows = []
-    for i, e in enumerate(entries, start_rank):
-        pct = round(100 * e.score / top)
-        rows.append(
-            f'<li class="cand">'
-            f'<span class="cand-rank">{i}</span>'
-            f'<div class="cand-body">'
-            f'  <div class="cand-names">{render_trio(e.names)}</div>'
-            f'  <div class="cand-bar-wrap"><div class="cand-bar" style="width:{pct}%"></div></div>'
-            f'  <div class="cand-meta">raced <b>{e.racesTogether}</b>&times; together '
-            f"&middot; {_rates(e)} podium rates &middot; expected <b>{e.score:g}</b> "
-            f"vs actual <b>{e.count}</b> &middot; {_race_link(e)}</div>"
-            f"</div>"
-            f'<span class="cand-prob" title="unlikeliness score = races together &times; podium rates (lower = more improbable)">{e.score:g}</span>'
-            f"</li>"
-        )
-    return f'<ol class="cand-list" start="{start_rank}">{"".join(rows)}</ol>'
+    cards = [render_card(i, e, hero=(i == 1)) for i, e in enumerate(entries, 1)]
+    return f'<ol class="uncard-list">{"".join(cards)}</ol>'
 
 
 def main() -> int:
     data = load_unlikeliest()
     as_of = data.asOf
-    trios = data.trios
-
-    if not trios:
-        body = '<p class="panel-sub">No data.</p>'
-    else:
-        hero = render_hero(trios[0])
-        rest = render_list(trios[1:], start_rank=2)
-        body = (
-            f"{hero}"
-            f'<section class="panel">'
-            f"  <h2>The rest of the improbable</h2>"
-            f'  <p class="panel-sub">Podiums that happened against the odds, '
-            f"most improbable first. Each shows the three drivers' career podium rates, "
-            f"how often they raced together, and the expected co-podium count the maths gave "
-            f"&mdash; versus how many times it actually happened.</p>"
-            f"  {rest}"
-            f"</section>"
-        )
+    body = render_cards(data.trios)
 
     page = f"""{
         head(
@@ -131,7 +149,7 @@ def main() -> int:
 <main>
     <div class="container">
         {body}
-        <p class="as-of">Unlikeliness is a ranking heuristic (races together &times; each driver's career podium rate); a low score that nonetheless happened is the surprise. Up to date through the {
+        <p class="as-of">The odds are the chance a trio would <em>ever</em> share a podium, from each driver's career podium rate and how often the three raced together (more shared races &rarr; better odds). A long-shot that happened anyway is the surprise. Up to date through the {
         esc(as_of.season)
     } {esc(as_of.raceName)} (round {esc(as_of.round)}).</p>
     </div>
@@ -145,7 +163,7 @@ def main() -> int:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(page, encoding="utf-8")
     print(f"Wrote {OUT_PATH}")
-    print(f"  trios: {len(trios)}")
+    print(f"  trios: {len(data.trios)}")
     return 0
 
 
