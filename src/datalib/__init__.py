@@ -19,6 +19,7 @@ from .repository import (
     load_podiums,
     load_schedule,
     load_soulmates,
+    load_unlikeliest,
     save_combos,
     save_constructor_standings,
     save_current_drivers,
@@ -29,6 +30,7 @@ from .repository import (
     save_podiums,
     save_schedule,
     save_soulmates,
+    save_unlikeliest,
 )
 from .schemas import (
     CalibrationBin,
@@ -62,6 +64,10 @@ from .schemas import (
     SoulmateDriver,
     SoulmatePair,
     Soulmates,
+    Unlikeliest,
+    UnlikeliestParams,
+    UnlikeliestPerDriver,
+    UnlikeliestTrio,
 )
 
 __all__ = [
@@ -80,6 +86,8 @@ __all__ = [
     "save_driver_races",
     "load_overdue",
     "save_overdue",
+    "load_unlikeliest",
+    "save_unlikeliest",
     "load_schedule",
     "save_schedule",
     "load_podigami",
@@ -104,6 +112,10 @@ __all__ = [
     "OverdueTrio",
     "OverdueParams",
     "Overdue",
+    "UnlikeliestPerDriver",
+    "UnlikeliestTrio",
+    "UnlikeliestParams",
+    "Unlikeliest",
     "ScheduleRace",
     "Schedule",
     "PodigamiParams",

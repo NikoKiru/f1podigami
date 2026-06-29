@@ -336,6 +336,39 @@ main {
     color: var(--accent);
 }
 
+/* Unlikeliest-page hero: the single most improbable podium that happened.
+   Reuses the .hero shell; the right column carries the trio + the why. */
+.unlikely-hero .cand-names {
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.hero-why {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.hero-why b {
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Inline race-report links (hero + list): match the site's tagline/footer
+   link convention rather than the browser default blue. */
+.race-link {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.race-link:hover {
+    color: var(--accent-bright);
+    border-color: var(--accent);
+}
+
 .hero-drivers {
     display: flex;
     flex-wrap: wrap;

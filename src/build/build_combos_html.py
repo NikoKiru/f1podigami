@@ -8,23 +8,22 @@ from __future__ import annotations
 
 import itertools
 import sys
-import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, asset, head, nav  # noqa: E402  (needs the sys.path entry above)
+from _layout import (  # noqa: E402  (needs the sys.path entry above)
+    FOOTER,
+    asset,
+    head,
+    nav,
+    wiki_url,
+)
 
 from datalib import Combo, RaceRef, load_combos, load_podiums  # noqa: E402
 
 OUT_PATH = ROOT / "dist" / "combos.html"
-
-
-def wiki_url(season: str, race_name: str) -> str:
-    """Wikipedia race-report URL — the same source the Ergast/Jolpica API cites."""
-    title = f"{season} {race_name}".replace(" ", "_")
-    return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(title)
 
 
 def render_race_pills(races: list[RaceRef]) -> str:

@@ -28,11 +28,12 @@ PAGE_BUILDERS = [
     "build_podigami_html.py",
     "build_combos_html.py",
     "build_overdue_html.py",
+    "build_unlikeliest.py",
     "build_soulmates_html.py",
     "build_404_html.py",
 ]
 
-PAGES = ["index.html", "combos.html", "overdue.html", "soulmates.html"]
+PAGES = ["index.html", "combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"]
 
 
 def _write_robots_txt() -> None:

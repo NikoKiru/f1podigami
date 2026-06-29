@@ -1,0 +1,1212 @@
+{
+  "params": {
+    "topN": 30
+  },
+  "asOf": {
+    "season": "2026",
+    "round": "8",
+    "raceName": "Austrian Grand Prix"
+  },
+  "trios": [
+    {
+      "driverIds": [
+        "ocon",
+        "perez",
+        "stroll"
+      ],
+      "names": [
+        "Esteban Ocon",
+        "Sergio Pérez",
+        "Lance Stroll"
+      ],
+      "racesTogether": 152,
+      "score": 0.0065,
+      "count": 1,
+      "happened": {
+        "season": "2020",
+        "round": "16",
+        "raceName": "Sakhir Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Esteban Ocon",
+          "podiums": 4,
+          "starts": 188,
+          "rate": 0.0213
+        },
+        {
+          "name": "Sergio Pérez",
+          "podiums": 39,
+          "starts": 291,
+          "rate": 0.134
+        },
+        {
+          "name": "Lance Stroll",
+          "podiums": 3,
+          "starts": 199,
+          "rate": 0.0151
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "gasly",
+        "sainz",
+        "stroll"
+      ],
+      "names": [
+        "Pierre Gasly",
+        "Carlos Sainz",
+        "Lance Stroll"
+      ],
+      "racesTogether": 183,
+      "score": 0.0108,
+      "count": 1,
+      "happened": {
+        "season": "2020",
+        "round": "8",
+        "raceName": "Italian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Pierre Gasly",
+          "podiums": 6,
+          "starts": 186,
+          "rate": 0.0323
+        },
+        {
+          "name": "Carlos Sainz",
+          "podiums": 29,
+          "starts": 240,
+          "rate": 0.1208
+        },
+        {
+          "name": "Lance Stroll",
+          "podiums": 3,
+          "starts": 199,
+          "rate": 0.0151
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "hulkenberg",
+        "norris",
+        "piastri"
+      ],
+      "names": [
+        "Nico Hülkenberg",
+        "Lando Norris",
+        "Oscar Piastri"
+      ],
+      "racesTogether": 78,
+      "score": 0.0307,
+      "count": 1,
+      "happened": {
+        "season": "2025",
+        "round": "12",
+        "raceName": "British Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Nico Hülkenberg",
+          "podiums": 1,
+          "starts": 262,
+          "rate": 0.0038
+        },
+        {
+          "name": "Lando Norris",
+          "podiums": 46,
+          "starts": 160,
+          "rate": 0.2875
+        },
+        {
+          "name": "Oscar Piastri",
+          "podiums": 28,
+          "starts": 78,
+          "rate": 0.359
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "gasly",
+        "max_verstappen",
+        "ocon"
+      ],
+      "names": [
+        "Pierre Gasly",
+        "Max Verstappen",
+        "Esteban Ocon"
+      ],
+      "racesTogether": 164,
+      "score": 0.0602,
+      "count": 1,
+      "happened": {
+        "season": "2024",
+        "round": "21",
+        "raceName": "São Paulo Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Pierre Gasly",
+          "podiums": 6,
+          "starts": 186,
+          "rate": 0.0323
+        },
+        {
+          "name": "Max Verstappen",
+          "podiums": 129,
+          "starts": 241,
+          "rate": 0.5353
+        },
+        {
+          "name": "Esteban Ocon",
+          "podiums": 4,
+          "starts": 188,
+          "rate": 0.0213
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "bottas",
+        "ricciardo",
+        "stroll"
+      ],
+      "names": [
+        "Valtteri Bottas",
+        "Daniel Ricciardo",
+        "Lance Stroll"
+      ],
+      "racesTogether": 147,
+      "score": 0.0725,
+      "count": 1,
+      "happened": {
+        "season": "2017",
+        "round": "8",
+        "raceName": "Azerbaijan Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Valtteri Bottas",
+          "podiums": 67,
+          "starts": 255,
+          "rate": 0.2627
+        },
+        {
+          "name": "Daniel Ricciardo",
+          "podiums": 32,
+          "starts": 257,
+          "rate": 0.1245
+        },
+        {
+          "name": "Lance Stroll",
+          "podiums": 3,
+          "starts": 199,
+          "rate": 0.0151
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "mario_andretti",
+        "mclaren",
+        "stewart"
+      ],
+      "names": [
+        "Mario Andretti",
+        "Bruce McLaren",
+        "Jackie Stewart"
+      ],
+      "racesTogether": 6,
+      "score": 0.1004,
+      "count": 1,
+      "happened": {
+        "season": "1970",
+        "round": "2",
+        "raceName": "Spanish Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Mario Andretti",
+          "podiums": 19,
+          "starts": 128,
+          "rate": 0.1484
+        },
+        {
+          "name": "Bruce McLaren",
+          "podiums": 27,
+          "starts": 103,
+          "rate": 0.2621
+        },
+        {
+          "name": "Jackie Stewart",
+          "podiums": 43,
+          "starts": 100,
+          "rate": 0.43
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "gasly",
+        "hamilton"
+      ],
+      "names": [
+        "Andrea Kimi Antonelli",
+        "Pierre Gasly",
+        "Lewis Hamilton"
+      ],
+      "racesTogether": 32,
+      "score": 0.1713,
+      "count": 1,
+      "happened": {
+        "season": "2026",
+        "round": "6",
+        "raceName": "Monaco Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Andrea Kimi Antonelli",
+          "podiums": 10,
+          "starts": 32,
+          "rate": 0.3125
+        },
+        {
+          "name": "Pierre Gasly",
+          "podiums": 6,
+          "starts": 186,
+          "rate": 0.0323
+        },
+        {
+          "name": "Lewis Hamilton",
+          "podiums": 206,
+          "starts": 388,
+          "rate": 0.5309
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "mario_andretti",
+        "regazzoni",
+        "stewart"
+      ],
+      "names": [
+        "Mario Andretti",
+        "Clay Regazzoni",
+        "Jackie Stewart"
+      ],
+      "racesTogether": 13,
+      "score": 0.1774,
+      "count": 1,
+      "happened": {
+        "season": "1971",
+        "round": "1",
+        "raceName": "South African Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Mario Andretti",
+          "podiums": 19,
+          "starts": 128,
+          "rate": 0.1484
+        },
+        {
+          "name": "Clay Regazzoni",
+          "podiums": 28,
+          "starts": 131,
+          "rate": 0.2137
+        },
+        {
+          "name": "Jackie Stewart",
+          "podiums": 43,
+          "starts": 100,
+          "rate": 0.43
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "gasly",
+        "perez",
+        "vettel"
+      ],
+      "names": [
+        "Pierre Gasly",
+        "Sergio Pérez",
+        "Sebastian Vettel"
+      ],
+      "racesTogether": 104,
+      "score": 0.1828,
+      "count": 1,
+      "happened": {
+        "season": "2021",
+        "round": "6",
+        "raceName": "Azerbaijan Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Pierre Gasly",
+          "podiums": 6,
+          "starts": 186,
+          "rate": 0.0323
+        },
+        {
+          "name": "Sergio Pérez",
+          "podiums": 39,
+          "starts": 291,
+          "rate": 0.134
+        },
+        {
+          "name": "Sebastian Vettel",
+          "podiums": 122,
+          "starts": 300,
+          "rate": 0.4067
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "lauda",
+        "patrese",
+        "peterson"
+      ],
+      "names": [
+        "Niki Lauda",
+        "Riccardo Patrese",
+        "Ronnie Peterson"
+      ],
+      "racesTogether": 20,
+      "score": 0.19,
+      "count": 1,
+      "happened": {
+        "season": "1978",
+        "round": "8",
+        "raceName": "Swedish Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Niki Lauda",
+          "podiums": 54,
+          "starts": 173,
+          "rate": 0.3121
+        },
+        {
+          "name": "Riccardo Patrese",
+          "podiums": 37,
+          "starts": 257,
+          "rate": 0.144
+        },
+        {
+          "name": "Ronnie Peterson",
+          "podiums": 26,
+          "starts": 123,
+          "rate": 0.2114
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "hadjar",
+        "max_verstappen",
+        "piastri"
+      ],
+      "names": [
+        "Isack Hadjar",
+        "Max Verstappen",
+        "Oscar Piastri"
+      ],
+      "racesTogether": 32,
+      "score": 0.1921,
+      "count": 1,
+      "happened": {
+        "season": "2025",
+        "round": "15",
+        "raceName": "Dutch Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Isack Hadjar",
+          "podiums": 1,
+          "starts": 32,
+          "rate": 0.0312
+        },
+        {
+          "name": "Max Verstappen",
+          "podiums": 129,
+          "starts": 241,
+          "rate": 0.5353
+        },
+        {
+          "name": "Oscar Piastri",
+          "podiums": 28,
+          "starts": 78,
+          "rate": 0.359
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "berger",
+        "damon_hill",
+        "patrese"
+      ],
+      "names": [
+        "Gerhard Berger",
+        "Damon Hill",
+        "Riccardo Patrese"
+      ],
+      "racesTogether": 18,
+      "score": 0.2145,
+      "count": 1,
+      "happened": {
+        "season": "1993",
+        "round": "11",
+        "raceName": "Hungarian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Gerhard Berger",
+          "podiums": 48,
+          "starts": 210,
+          "rate": 0.2286
+        },
+        {
+          "name": "Damon Hill",
+          "podiums": 42,
+          "starts": 116,
+          "rate": 0.3621
+        },
+        {
+          "name": "Riccardo Patrese",
+          "podiums": 37,
+          "starts": 257,
+          "rate": 0.144
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "albon",
+        "bottas",
+        "hamilton"
+      ],
+      "names": [
+        "Alexander Albon",
+        "Valtteri Bottas",
+        "Lewis Hamilton"
+      ],
+      "racesTogether": 112,
+      "score": 0.2281,
+      "count": 1,
+      "happened": {
+        "season": "2020",
+        "round": "9",
+        "raceName": "Tuscan Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Alexander Albon",
+          "podiums": 2,
+          "starts": 137,
+          "rate": 0.0146
+        },
+        {
+          "name": "Valtteri Bottas",
+          "podiums": 67,
+          "starts": 255,
+          "rate": 0.2627
+        },
+        {
+          "name": "Lewis Hamilton",
+          "podiums": 206,
+          "starts": 388,
+          "rate": 0.5309
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "hamilton",
+        "ocon",
+        "sainz"
+      ],
+      "names": [
+        "Lewis Hamilton",
+        "Esteban Ocon",
+        "Carlos Sainz"
+      ],
+      "racesTogether": 186,
+      "score": 0.2539,
+      "count": 1,
+      "happened": {
+        "season": "2021",
+        "round": "11",
+        "raceName": "Hungarian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Lewis Hamilton",
+          "podiums": 206,
+          "starts": 388,
+          "rate": 0.5309
+        },
+        {
+          "name": "Esteban Ocon",
+          "podiums": 4,
+          "starts": 188,
+          "rate": 0.0213
+        },
+        {
+          "name": "Carlos Sainz",
+          "podiums": 29,
+          "starts": 240,
+          "rate": 0.1208
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "arnoux",
+        "lauda",
+        "watson"
+      ],
+      "names": [
+        "René Arnoux",
+        "Niki Lauda",
+        "John Watson"
+      ],
+      "racesTogether": 48,
+      "score": 0.2872,
+      "count": 1,
+      "happened": {
+        "season": "1983",
+        "round": "2",
+        "raceName": "United States Grand Prix West"
+      },
+      "perDriver": [
+        {
+          "name": "René Arnoux",
+          "podiums": 22,
+          "starts": 151,
+          "rate": 0.1457
+        },
+        {
+          "name": "Niki Lauda",
+          "podiums": 54,
+          "starts": 173,
+          "rate": 0.3121
+        },
+        {
+          "name": "John Watson",
+          "podiums": 20,
+          "starts": 152,
+          "rate": 0.1316
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "berger",
+        "hakkinen",
+        "villeneuve"
+      ],
+      "names": [
+        "Gerhard Berger",
+        "Mika Häkkinen",
+        "Jacques Villeneuve"
+      ],
+      "racesTogether": 30,
+      "score": 0.2991,
+      "count": 1,
+      "happened": {
+        "season": "1996",
+        "round": "10",
+        "raceName": "British Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Gerhard Berger",
+          "podiums": 48,
+          "starts": 210,
+          "rate": 0.2286
+        },
+        {
+          "name": "Mika Häkkinen",
+          "podiums": 51,
+          "starts": 163,
+          "rate": 0.3129
+        },
+        {
+          "name": "Jacques Villeneuve",
+          "podiums": 23,
+          "starts": 165,
+          "rate": 0.1394
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "alonso",
+        "fisichella",
+        "massa"
+      ],
+      "names": [
+        "Fernando Alonso",
+        "Giancarlo Fisichella",
+        "Felipe Massa"
+      ],
+      "racesTogether": 100,
+      "score": 0.3025,
+      "count": 1,
+      "happened": {
+        "season": "2006",
+        "round": "17",
+        "raceName": "Japanese Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Fernando Alonso",
+          "podiums": 106,
+          "starts": 436,
+          "rate": 0.2431
+        },
+        {
+          "name": "Giancarlo Fisichella",
+          "podiums": 19,
+          "starts": 231,
+          "rate": 0.0823
+        },
+        {
+          "name": "Felipe Massa",
+          "podiums": 41,
+          "starts": 271,
+          "rate": 0.1513
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "alboreto",
+        "lauda",
+        "patrese"
+      ],
+      "names": [
+        "Michele Alboreto",
+        "Niki Lauda",
+        "Riccardo Patrese"
+      ],
+      "racesTogether": 58,
+      "score": 0.309,
+      "count": 1,
+      "happened": {
+        "season": "1984",
+        "round": "14",
+        "raceName": "Italian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Michele Alboreto",
+          "podiums": 23,
+          "starts": 194,
+          "rate": 0.1186
+        },
+        {
+          "name": "Niki Lauda",
+          "podiums": 54,
+          "starts": 173,
+          "rate": 0.3121
+        },
+        {
+          "name": "Riccardo Patrese",
+          "podiums": 37,
+          "starts": 257,
+          "rate": 0.144
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "laffite",
+        "mansell",
+        "reutemann"
+      ],
+      "names": [
+        "Jacques Laffite",
+        "Nigel Mansell",
+        "Carlos Reutemann"
+      ],
+      "racesTogether": 18,
+      "score": 0.3212,
+      "count": 1,
+      "happened": {
+        "season": "1981",
+        "round": "5",
+        "raceName": "Belgian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Jacques Laffite",
+          "podiums": 33,
+          "starts": 177,
+          "rate": 0.1864
+        },
+        {
+          "name": "Nigel Mansell",
+          "podiums": 59,
+          "starts": 190,
+          "rate": 0.3105
+        },
+        {
+          "name": "Carlos Reutemann",
+          "podiums": 45,
+          "starts": 146,
+          "rate": 0.3082
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "hunt",
+        "mario_andretti",
+        "watson"
+      ],
+      "names": [
+        "James Hunt",
+        "Mario Andretti",
+        "John Watson"
+      ],
+      "racesTogether": 68,
+      "score": 0.3285,
+      "count": 1,
+      "happened": {
+        "season": "1977",
+        "round": "9",
+        "raceName": "French Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "James Hunt",
+          "podiums": 23,
+          "starts": 93,
+          "rate": 0.2473
+        },
+        {
+          "name": "Mario Andretti",
+          "podiums": 19,
+          "starts": 128,
+          "rate": 0.1484
+        },
+        {
+          "name": "John Watson",
+          "podiums": 20,
+          "starts": 152,
+          "rate": 0.1316
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "laffite",
+        "mario_andretti",
+        "peterson"
+      ],
+      "names": [
+        "Jacques Laffite",
+        "Mario Andretti",
+        "Ronnie Peterson"
+      ],
+      "racesTogether": 57,
+      "score": 0.3334,
+      "count": 1,
+      "happened": {
+        "season": "1978",
+        "round": "7",
+        "raceName": "Spanish Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Jacques Laffite",
+          "podiums": 33,
+          "starts": 177,
+          "rate": 0.1864
+        },
+        {
+          "name": "Mario Andretti",
+          "podiums": 19,
+          "starts": 128,
+          "rate": 0.1484
+        },
+        {
+          "name": "Ronnie Peterson",
+          "podiums": 26,
+          "starts": 123,
+          "rate": 0.2114
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "emerson_fittipaldi",
+        "patrese",
+        "piquet"
+      ],
+      "names": [
+        "Emerson Fittipaldi",
+        "Riccardo Patrese",
+        "Nelson Piquet"
+      ],
+      "racesTogether": 34,
+      "score": 0.3434,
+      "count": 1,
+      "happened": {
+        "season": "1980",
+        "round": "4",
+        "raceName": "United States Grand Prix West"
+      },
+      "perDriver": [
+        {
+          "name": "Emerson Fittipaldi",
+          "podiums": 35,
+          "starts": 146,
+          "rate": 0.2397
+        },
+        {
+          "name": "Riccardo Patrese",
+          "podiums": 37,
+          "starts": 257,
+          "rate": 0.144
+        },
+        {
+          "name": "Nelson Piquet",
+          "podiums": 60,
+          "starts": 205,
+          "rate": 0.2927
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "irvine",
+        "ralf_schumacher",
+        "villeneuve"
+      ],
+      "names": [
+        "Eddie Irvine",
+        "Ralf Schumacher",
+        "Jacques Villeneuve"
+      ],
+      "racesTogether": 99,
+      "score": 0.3661,
+      "count": 1,
+      "happened": {
+        "season": "1997",
+        "round": "3",
+        "raceName": "Argentine Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Eddie Irvine",
+          "podiums": 26,
+          "starts": 147,
+          "rate": 0.1769
+        },
+        {
+          "name": "Ralf Schumacher",
+          "podiums": 27,
+          "starts": 180,
+          "rate": 0.15
+        },
+        {
+          "name": "Jacques Villeneuve",
+          "podiums": 23,
+          "starts": 165,
+          "rate": 0.1394
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "gasly",
+        "max_verstappen",
+        "sainz"
+      ],
+      "names": [
+        "Pierre Gasly",
+        "Max Verstappen",
+        "Carlos Sainz"
+      ],
+      "racesTogether": 185,
+      "score": 0.386,
+      "count": 1,
+      "happened": {
+        "season": "2019",
+        "round": "20",
+        "raceName": "Brazilian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Pierre Gasly",
+          "podiums": 6,
+          "starts": 186,
+          "rate": 0.0323
+        },
+        {
+          "name": "Max Verstappen",
+          "podiums": 129,
+          "starts": 241,
+          "rate": 0.5353
+        },
+        {
+          "name": "Carlos Sainz",
+          "podiums": 29,
+          "starts": 240,
+          "rate": 0.1208
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "alesi",
+        "mansell",
+        "patrese"
+      ],
+      "names": [
+        "Jean Alesi",
+        "Nigel Mansell",
+        "Riccardo Patrese"
+      ],
+      "racesTogether": 55,
+      "score": 0.3895,
+      "count": 1,
+      "happened": {
+        "season": "1991",
+        "round": "9",
+        "raceName": "German Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Jean Alesi",
+          "podiums": 32,
+          "starts": 202,
+          "rate": 0.1584
+        },
+        {
+          "name": "Nigel Mansell",
+          "podiums": 59,
+          "starts": 190,
+          "rate": 0.3105
+        },
+        {
+          "name": "Riccardo Patrese",
+          "podiums": 37,
+          "starts": 257,
+          "rate": 0.144
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "fisichella",
+        "hakkinen",
+        "irvine"
+      ],
+      "names": [
+        "Giancarlo Fisichella",
+        "Mika Häkkinen",
+        "Eddie Irvine"
+      ],
+      "racesTogether": 90,
+      "score": 0.4097,
+      "count": 2,
+      "happened": {
+        "season": "1998",
+        "round": "6",
+        "raceName": "Monaco Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Giancarlo Fisichella",
+          "podiums": 19,
+          "starts": 231,
+          "rate": 0.0823
+        },
+        {
+          "name": "Mika Häkkinen",
+          "podiums": 51,
+          "starts": 163,
+          "rate": 0.3129
+        },
+        {
+          "name": "Eddie Irvine",
+          "podiums": 26,
+          "starts": 147,
+          "rate": 0.1769
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "depailler",
+        "peterson",
+        "watson"
+      ],
+      "names": [
+        "Patrick Depailler",
+        "Ronnie Peterson",
+        "John Watson"
+      ],
+      "racesTogether": 75,
+      "score": 0.4172,
+      "count": 1,
+      "happened": {
+        "season": "1978",
+        "round": "3",
+        "raceName": "South African Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Patrick Depailler",
+          "podiums": 19,
+          "starts": 95,
+          "rate": 0.2
+        },
+        {
+          "name": "Ronnie Peterson",
+          "podiums": 26,
+          "starts": 123,
+          "rate": 0.2114
+        },
+        {
+          "name": "John Watson",
+          "podiums": 20,
+          "starts": 152,
+          "rate": 0.1316
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "fisichella",
+        "raikkonen",
+        "vettel"
+      ],
+      "names": [
+        "Giancarlo Fisichella",
+        "Kimi Räikkönen",
+        "Sebastian Vettel"
+      ],
+      "racesTogether": 43,
+      "score": 0.4209,
+      "count": 1,
+      "happened": {
+        "season": "2009",
+        "round": "12",
+        "raceName": "Belgian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Giancarlo Fisichella",
+          "podiums": 19,
+          "starts": 231,
+          "rate": 0.0823
+        },
+        {
+          "name": "Kimi Räikkönen",
+          "podiums": 103,
+          "starts": 352,
+          "rate": 0.2926
+        },
+        {
+          "name": "Sebastian Vettel",
+          "podiums": 122,
+          "starts": 300,
+          "rate": 0.4067
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "alesi",
+        "damon_hill",
+        "ralf_schumacher"
+      ],
+      "names": [
+        "Jean Alesi",
+        "Damon Hill",
+        "Ralf Schumacher"
+      ],
+      "racesTogether": 49,
+      "score": 0.4216,
+      "count": 1,
+      "happened": {
+        "season": "1998",
+        "round": "13",
+        "raceName": "Belgian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Jean Alesi",
+          "podiums": 32,
+          "starts": 202,
+          "rate": 0.1584
+        },
+        {
+          "name": "Damon Hill",
+          "podiums": 42,
+          "starts": 116,
+          "rate": 0.3621
+        },
+        {
+          "name": "Ralf Schumacher",
+          "podiums": 27,
+          "starts": 180,
+          "rate": 0.15
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "patrese",
+        "piquet",
+        "watson"
+      ],
+      "names": [
+        "Riccardo Patrese",
+        "Nelson Piquet",
+        "John Watson"
+      ],
+      "racesTogether": 77,
+      "score": 0.4269,
+      "count": 1,
+      "happened": {
+        "season": "1982",
+        "round": "8",
+        "raceName": "Canadian Grand Prix"
+      },
+      "perDriver": [
+        {
+          "name": "Riccardo Patrese",
+          "podiums": 37,
+          "starts": 257,
+          "rate": 0.144
+        },
+        {
+          "name": "Nelson Piquet",
+          "podiums": 60,
+          "starts": 205,
+          "rate": 0.2927
+        },
+        {
+          "name": "John Watson",
+          "podiums": 20,
+          "starts": 152,
+          "rate": 0.1316
+        }
+      ]
+    }
+  ]
+}
