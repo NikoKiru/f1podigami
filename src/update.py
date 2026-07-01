@@ -25,6 +25,7 @@ STEPS = [
     ("Computing soulmates", "compute/compute_soulmates.py"),
     ("Fetching current grid", "fetch/fetch_current_drivers.py"),
     ("Fetching race schedule", "fetch/fetch_schedule.py"),
+    ("Fetching official race links", "fetch/fetch_race_links.py"),
     ("Fetching constructor standings", "fetch/fetch_constructor_standings.py"),
     ("Computing podigami", "compute/compute_podigami.py"),
     ("Fetching driver races", "fetch/fetch_driver_races.py"),
@@ -47,6 +48,8 @@ def main() -> None:
         cmd = [PYTHON, str(SRC / script)]
         if args.full and script.endswith("fetch_podiums.py"):
             cmd.append("--full")
+        if args.full and script.endswith("fetch_race_links.py"):
+            cmd.append("--backfill")
         result = subprocess.run(cmd)
         if result.returncode != 0:
             print(f"\nFailed at step {i}: {label}", file=sys.stderr)

@@ -23,9 +23,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, abbr_name, asset, head, nav, wiki_url  # noqa: E402
+from _layout import FOOTER, abbr_name, asset, head, nav, race_url  # noqa: E402
 
-from datalib import UnlikeliestTrio, load_unlikeliest  # noqa: E402
+from datalib import UnlikeliestTrio, load_race_links, load_unlikeliest  # noqa: E402
 
 OUT_PATH = ROOT / "dist" / "unlikeliest.html"
 
@@ -73,9 +73,9 @@ def _rates_cells(e: UnlikeliestTrio) -> str:
     return " &middot; ".join(f"{p.rate * 100:.0f}%" for p in e.perDriver)
 
 
-def _race_link(e: UnlikeliestTrio) -> str:
+def _race_link(e: UnlikeliestTrio, links: dict | None = None) -> str:
     h = e.happened
-    url = wiki_url(h.season, h.raceName)
+    url = race_url(links or {}, h.season, h.round, h.raceName)
     label = f"{esc(h.season)} {esc(h.raceName)}"
     return (
         f'<a class="race-link" href="{html.escape(url, quote=True)}" target="_blank" '
@@ -92,7 +92,9 @@ def _stat(label: str, value: str) -> str:
     )
 
 
-def render_card(rank: int, e: UnlikeliestTrio, hero: bool = False) -> str:
+def render_card(
+    rank: int, e: UnlikeliestTrio, hero: bool = False, links: dict | None = None
+) -> str:
     """One uniform card. ``hero`` makes it the larger, accented #1 variant."""
     cls = "uncard uncard-hero" if hero else "uncard"
     drivers = f'<div class="un-drivers">{render_trio(e.names)}</div>'
@@ -105,7 +107,7 @@ def render_card(rank: int, e: UnlikeliestTrio, hero: bool = False) -> str:
         f'<li class="{cls}">'
         f'<div class="un-top">'
         f'<span class="un-rank">{rank}</span>'
-        f'<span class="un-race">{_race_link(e)}</span>'
+        f'<span class="un-race">{_race_link(e, links)}</span>'
         f"</div>"
         f"{drivers}"
         f'<div class="un-odds">'
@@ -117,17 +119,17 @@ def render_card(rank: int, e: UnlikeliestTrio, hero: bool = False) -> str:
     )
 
 
-def render_cards(entries: list[UnlikeliestTrio]) -> str:
+def render_cards(entries: list[UnlikeliestTrio], links: dict | None = None) -> str:
     if not entries:
         return '<p class="panel-sub">No trios.</p>'
-    cards = [render_card(i, e, hero=(i == 1)) for i, e in enumerate(entries, 1)]
+    cards = [render_card(i, e, hero=(i == 1), links=links) for i, e in enumerate(entries, 1)]
     return f'<ol class="uncard-list">{"".join(cards)}</ol>'
 
 
 def main() -> int:
     data = load_unlikeliest()
     as_of = data.asOf
-    body = render_cards(data.trios)
+    body = render_cards(data.trios, load_race_links())
 
     page = f"""{
         head(

@@ -17,7 +17,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, asset, head, nav  # noqa: E402  (needs the sys.path entry above)
+from _layout import (  # noqa: E402  (needs the sys.path entry above)
+    FOOTER,
+    asset,
+    head,
+    nav,
+    race_url,
+)
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
@@ -28,6 +34,7 @@ from datalib import (  # noqa: E402
     load_model_eval,
     load_podigami,
     load_podiums,
+    load_race_links,
     load_schedule,
 )
 
@@ -117,7 +124,7 @@ def _fallback_when(race: dict) -> str:
     return f"{base} &middot; {t[:5]} UTC" if t else base
 
 
-def render_next_race(schedule: dict, asof: dict | None = None) -> str:
+def render_next_race(schedule: dict, asof: dict | None = None, links: dict | None = None) -> str:
     nxt = pick_next_race(schedule, asof)
     if not nxt:
         return (
@@ -128,11 +135,8 @@ def render_next_race(schedule: dict, asof: dict | None = None) -> str:
         )
     fl = flag_svg(nxt["country"])
     name = esc(nxt["raceName"])
-    name_html = (
-        f'<a href="{esc(nxt["url"])}" target="_blank" rel="noopener">{name}</a>'
-        if nxt.get("url")
-        else name
-    )
+    url = race_url(links or {}, schedule.get("season", ""), nxt["round"], nxt["raceName"])
+    name_html = f'<a href="{esc(url)}" target="_blank" rel="noopener">{name}</a>'
     parts = [esc(nxt["circuitName"]), esc(f"{nxt['locality']}, {nxt['country']}")]
     if nxt.get("lengthKm"):
         parts.append(f"{nxt['lengthKm']} km")
@@ -191,7 +195,9 @@ def render_last_race(
     combos: list[dict],
     meta: dict,
     driver_form: list[dict],
+    links: dict | None = None,
 ) -> str:
+    links = links or {}
     # The last race is the most recent one we actually have a podium for; this is
     # the same source of truth as podigami.json's asOf, so the box rolls over the
     # instant new results land rather than at the next UTC midnight.
@@ -212,9 +218,7 @@ def render_last_race(
 
     fl = flag_svg(last["country"])
     name = esc(last["raceName"])
-    wiki_url = last.get("url") or (
-        "https://en.wikipedia.org/wiki/" + f"{pod['season']}_{pod['raceName']}".replace(" ", "_")
-    )
+    name_url = race_url(links, pod["season"], last["round"], last["raceName"])
 
     constructor_map = {d["driverId"]: d.get("constructorId", "") for d in driver_form}
     trio_ids = [pod["p1"]["driverId"], pod["p2"]["driverId"], pod["p3"]["driverId"]]
@@ -251,13 +255,12 @@ def render_last_race(
         cnt = combo["count"]
         prev = combo.get("races", [])
         second_last = prev[-2] if len(prev) >= 2 else combo["lastRace"]
-        wiki = (
-            "https://en.wikipedia.org/wiki/"
-            + f"{second_last['season']}_{second_last['raceName']}".replace(" ", "_")
+        repeat_url = race_url(
+            links, second_last["season"], second_last["round"], second_last["raceName"]
         )
         status_html = (
             f'<span class="lr-status">Happened {cnt} time{"s" if cnt != 1 else ""}'
-            f' &middot; last time <a class="lr-link" href="{esc(wiki)}"'
+            f' &middot; last time <a class="lr-link" href="{esc(repeat_url)}"'
             f' target="_blank" rel="noopener">'
             f"R{esc(second_last['round'])} &middot;"
             f" {esc(second_last['raceName'])}</a></span>"
@@ -269,7 +272,7 @@ def render_last_race(
         f'<section class="last-race">'
         f'<span class="lr-tag">Last race</span>'
         f"{fl}"
-        f'<a class="lr-name" href="{esc(wiki_url)}" target="_blank" rel="noopener">'
+        f'<a class="lr-name" href="{esc(name_url)}" target="_blank" rel="noopener">'
         f"R{esc(rnd)} &middot; {name}</a>"
         f"{trio_block}"
         f"{status_html}"
@@ -522,11 +525,12 @@ def main() -> int:
     schedule = {}
     if (DATA_DIR / "schedule.json").exists():
         schedule = load_schedule().model_dump()
-    next_race = render_next_race(schedule, data.get("asOf")) if schedule else ""
+    links = load_race_links()
+    next_race = render_next_race(schedule, data.get("asOf"), links) if schedule else ""
     combos_dicts = [c.model_dump() for c in combos_list]
     podiums_dicts = [p.model_dump() for p in podiums_list]
     last_race = (
-        render_last_race(schedule, podiums_dicts, combos_dicts, meta, data["driverForm"])
+        render_last_race(schedule, podiums_dicts, combos_dicts, meta, data["driverForm"], links)
         if schedule
         else ""
     )

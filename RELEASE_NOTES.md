@@ -4,6 +4,7 @@
 
 ### Improvements
 - Sync README.md with the current pipeline (Unlikeliest/Soulmates pages, file map, test count, update.yml cadence) and add a CLAUDE.md rule keeping it current on future PRs
+- Race-report links across the site now point to official Formula 1 result pages instead of Wikipedia, with a per-race Wikipedia fallback (#138)
 
 ### Fixes
 - Make the "Last race" name on the landing page clickable, linking out to Wikipedia just like the "Next race" name does

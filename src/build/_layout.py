@@ -48,6 +48,21 @@ def wiki_url(season: str, race_name: str) -> str:
     return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(title)
 
 
+def race_url(links: dict, season: str, rnd, race_name: str) -> str:
+    """Official F1 result-page URL for a race, falling back to Wikipedia.
+
+    ``links`` is the ``season -> round -> RaceLink`` map from
+    ``datalib.load_race_links``. A race absent from the map (data gap, brand-new
+    race, or a season F1 and we disagree on) falls back to its Wikipedia report.
+    """
+    link = links.get(season, {}).get(str(rnd))
+    if link is not None:
+        return (
+            f"https://www.formula1.com/en/results/{season}/races/{link.id}/{link.slug}/race-result"
+        )
+    return wiki_url(season, race_name)
+
+
 def abbr_name(name: str) -> str:
     """ "Esteban Ocon" -> "E. Ocon": first initial + surname, for narrow screens."""
     parts = name.strip().split()

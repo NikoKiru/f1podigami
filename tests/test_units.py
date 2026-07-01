@@ -2,6 +2,7 @@
 
 import pytest
 
+from build import _layout  # noqa: E402
 from build import build_combos_html as bc
 from compute import compute_podigami as cp
 from fetch import fetch_podiums as fp
@@ -26,11 +27,11 @@ from fetch import fetch_podiums as fp
     ],
 )
 def test_wiki_url_builds_article_title(season, name, expected):
-    assert bc.wiki_url(season, name) == expected
+    assert _layout.wiki_url(season, name) == expected
 
 
 def test_wiki_url_percent_encodes_accents():
-    url = bc.wiki_url("2021", "São Paulo Grand Prix")
+    url = _layout.wiki_url("2021", "São Paulo Grand Prix")
     assert url == "https://en.wikipedia.org/wiki/2021_S%C3%A3o_Paulo_Grand_Prix"
     assert " " not in url  # spaces must never survive into a URL
 
