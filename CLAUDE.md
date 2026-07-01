@@ -151,6 +151,10 @@ Keeps the site fresh with no manual step, running the same pipeline as a local `
 
 So `update.yml` lands changes via the **PR + auto-merge** flow above, authenticated with repo secret **`DATA_PUSH_TOKEN`** — a fine-grained PAT (this repo; **Contents + Pull requests: read/write**; owned by an admin, so its merge bypasses required checks and, being a real-user action, triggers the deploy). **The PAT expires (≤1 yr); if it lapses, automated updates silently stop** — keep its expiry beyond the season and rotate as needed. Any future automation that must commit to `main` from Actions has to use this same PR-based path (not a direct `GITHUB_TOKEN` push).
 
+## Keeping README.md current
+
+`README.md` is user-facing documentation, not generated — it drifts silently. Whenever a change affects something the README describes (page list/nav, feature bullets, architecture diagram, file map, test count, workflow behavior, badges), update the relevant README section as part of that same PR. Treat it like `RELEASE_NOTES.md`: a checklist item on every PR that touches pipeline stages, pages, or CI, not a periodic cleanup task.
+
 ## Release Notes
 
 `RELEASE_NOTES.md` in the repo root is the project changelog, linked from every page's footer. **Every PR must include an update to this file.** When creating a PR:
