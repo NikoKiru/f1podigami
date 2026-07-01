@@ -14,6 +14,7 @@
 - Point the landing-page timeline slider's race links to official F1 pages too — they were still linking to Wikipedia (#140)
 - Remove stale `_layout.py` comment describing a Soulmates nav "trailing arrow" that was removed along with the nav link itself (#151)
 - Escape dynamic strings in `build_soulmates_html.py` with `esc()`, matching every sibling builder, and neutralize `</script>` in the landing page's embedded JSON blob so it can't prematurely close its `<script>` tag (#150)
+- Truncate long team names (e.g. "Cadillac F1 Team") to a single line in the mobile hero driver cards, so one card no longer grows taller than its siblings (#149)
 
 ## 2026-06-29
 

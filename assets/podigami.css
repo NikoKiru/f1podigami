@@ -1346,6 +1346,12 @@ a.tl-where:hover {
         font-size: 14px;
     }
 
+    .hd-team {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .hd-stat {
         display: none;
     }
