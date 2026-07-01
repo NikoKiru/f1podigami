@@ -70,7 +70,7 @@ Orchestrators:
 
 | Page | Builder | Description |
 |------|---------|-------------|
-| `index.html` | `build/build_podigami_html.py` | Landing page: next race, last race result (with podigami/repeat status + wiki link), prediction hero, current form, timeline, FAQ |
+| `index.html` | `build/build_podigami_html.py` | Landing page: next race, last race result (with podigami/repeat status + official F1 result link), prediction hero, current form, timeline, FAQ |
 | `combos.html` | `build/build_combos_html.py` | Every unique 3-driver podium combination |
 | `overdue.html` | `build/build_overdue_html.py` | Trios "overdue" to appear |
 | `soulmates.html` | `build/build_soulmates_html.py` | Driver shared-podium relationships |

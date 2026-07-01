@@ -136,7 +136,7 @@ def test_render_next_race_box_contents():
     assert "Red Bull Ring" in html and "4.318 km" in html
     assert "<svg" in html  # flag + track outline
     assert "nr-track" in html
-    assert 'href="http://x"' in html  # wiki link
+    assert 'href="https://en.wikipedia.org/wiki/2026_B_GP"' in html  # race_url wiki fallback
     assert "data-countdown" in html
 
 
@@ -224,10 +224,8 @@ def test_render_last_race_uses_latest_podium_in_current_season():
     assert "B GP" in html
 
 
-def test_render_last_race_name_links_to_schedule_url_when_present():
-    # Same behavior as the next-race box: the race name should be clickable,
-    # linking out to the schedule's wiki URL when the race is on this season's
-    # calendar and has one.
+def test_render_last_race_name_links_via_race_url_fallback():
+    # With no links map, the last-race name falls back to the Wikipedia report.
     podiums = [
         {
             "season": "2026",
@@ -239,7 +237,28 @@ def test_render_last_race_name_links_to_schedule_url_when_present():
         }
     ]
     html = bp.render_last_race(SCHED, podiums, [], {}, [])
-    assert '<a class="lr-name" href="http://x"' in html
+    assert '<a class="lr-name" href="https://en.wikipedia.org/wiki/2026_B_GP"' in html
+
+
+def test_render_last_race_name_links_to_official_f1_when_mapped():
+    from datalib import RaceLink
+
+    podiums = [
+        {
+            "season": "2026",
+            "round": "2",
+            "raceName": "B GP",
+            "p1": {"driverId": "russell", "name": "George Russell"},
+            "p2": {"driverId": "verstappen", "name": "Max Verstappen"},
+            "p3": {"driverId": "antonelli", "name": "Andrea Kimi Antonelli"},
+        }
+    ]
+    links = {"2026": {"2": RaceLink(id="1280", slug="china")}}
+    html = bp.render_last_race(SCHED, podiums, [], {}, [], links=links)
+    assert (
+        '<a class="lr-name" href="https://www.formula1.com/en/results/2026/races/1280/china/race-result"'
+        in html
+    )
 
 
 def test_render_last_race_name_links_to_constructed_wiki_url_when_off_schedule():

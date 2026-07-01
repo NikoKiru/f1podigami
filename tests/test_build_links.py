@@ -72,13 +72,19 @@ def test_every_page_has_full_nav(dist):
 # --- external race-report sources ---------------------------------------------
 
 
-def test_race_report_links_are_wikipedia(dist):
+def test_race_report_links_are_official_f1(dist):
     html = (dist / "combos.html").read_text(encoding="utf-8")
     links = re.findall(r'<a class="race-pill" href="([^"]+)"', html)
     assert links, "combos page should have race-report links"
     for url in links:
-        assert url.startswith("https://en.wikipedia.org/wiki/")
+        # every pill links to F1's result page, or (rarely) the wiki fallback
+        assert url.startswith("https://www.formula1.com/en/results/") or url.startswith(
+            "https://en.wikipedia.org/wiki/"
+        )
         assert " " not in url
+    # the whole point of the feature: the vast majority resolve to F1
+    f1 = [u for u in links if "formula1.com" in u]
+    assert len(f1) > len(links) // 2, "expected most race links to be official F1 URLs"
 
 
 # --- determinism ---------------------------------------------------------------
