@@ -3,6 +3,7 @@
 ## 2026-07-01
 
 ### Improvements
+- Enlarge the next-race track map on desktop so it fills the full height of its hero box instead of being capped at 88px, while keeping the box size and mobile layout unchanged
 - Sync README.md with the current pipeline (Unlikeliest/Soulmates pages, file map, test count, update.yml cadence) and add a CLAUDE.md rule keeping it current on future PRs
 - Race-report links across the site now point to official Formula 1 result pages instead of Wikipedia, with a per-race Wikipedia fallback (#138)
 - Extend the official F1 links to the 2023 season by skipping the cancelled, never-held Emilia Romagna GP that had blocked the season's count match (#140)
