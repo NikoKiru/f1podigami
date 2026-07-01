@@ -113,9 +113,19 @@ Standalone script (runnable alone, like the other fetchers).
 - **Modes:**
   - *default (incremental):* load existing map; (re)fetch **only the current
     season**'s index (IDs can appear/shift as a season is set up); leave historic
-    years untouched.
-  - *`--backfill`:* fetch **every** season from 1950 → current. Run once to seed
-    the committed file; also usable to rebuild from scratch.
+    years untouched. This is what the automated pipeline runs every time.
+  - *`--backfill`:* refresh the current season **plus** fetch any season
+    1950→current that is **missing or incomplete** in the committed map; skip
+    seasons already complete (historic years are immutable). Used by the weekly
+    `--full` reconciliation — once seeded it finds nothing historic to do, so it
+    stays light (just the current season).
+  - *`--refetch-all`:* force re-fetch of **every** season (manual only; for a
+    clean rebuild if F1 changes its URL scheme). Never invoked by automation.
+- **Failure is non-fatal (critical for auto-deploy — see integration section).**
+  Any network / HTTP / parse failure is caught: log a warning, keep the existing
+  committed map, and **exit 0**. The script only exits non-zero on a genuine
+  internal bug (e.g. a `save_race_links()` validation failure), never on F1.com
+  being slow or unreachable.
 - **Per season:** GET `…/results/{year}/races` → regex-extract → dedupe → sort by
   numeric ID → assign rounds (see parsing nuance).
 - **Cross-validation (per-race, max coverage).** Note the data available differs
@@ -167,11 +177,42 @@ def race_url(season: str, round: str, race_name: str) -> str:
 
 ### 5. Pipeline wiring
 
-- `src/update.py`: add a `fetch_race_links.py` (incremental) step alongside the
-  other fetchers so new-season/new-race IDs are picked up automatically. The
-  automated `update.yml` inherits this (≈1 F1 index page per run, current season
-  only).
-- One-time: run `--backfill`, commit `data/f1_race_links.json`.
+- `src/update.py`: add `fetch_race_links.py` to `STEPS` **immediately after
+  "Fetching race schedule"** (it cross-validates the current season against
+  `schedule.json`). Pass `--backfill` when `update.py` is invoked with `--full`
+  (mirrors how `--full` maps to `fetch_podiums --full`); otherwise run
+  incrementally.
+- One-time: run `--backfill` (or `--refetch-all` for the initial seed), commit
+  `data/f1_race_links.json`.
+
+### 6. Post-race auto-deploy integration (`update.yml`)
+
+This is the flow that runs when a race finishes, so it must be bullet-proof.
+Verified behavior of the existing pipeline and how this feature fits:
+
+- **A failed fetch must never block the podium-results deploy.** `update.py`
+  aborts the whole run on any step's non-zero exit (`update.py:51-53`), and a
+  failed `update` job means no PR and no deploy. Because `fetch_race_links.py`
+  **exits 0 on any network/parse failure** (keeping the committed map), a
+  transient F1.com outage during the post-race run cannot stop the podium data
+  from shipping — the brand-new race's link simply uses the Wikipedia fallback
+  until the next successful run.
+- **The new race's F1 link is available immediately.** Verified: F1's
+  current-season index already carries every race's ID/slug at calendar
+  publication (2026 lists 1279→1302 months ahead). So on the post-race run the
+  last-race link resolves straight to F1; the fallback is only a safety net.
+- **No PR churn / idempotent.** The `update` job commits via `git add data/` and
+  skips the PR when there's no diff (`update.yml:110-114`). `f1_race_links.json`
+  lives in `data/`, so it is picked up automatically, **and** re-fetching an
+  unchanged current season yields byte-identical output (stable IDs + deterministic
+  key ordering) → no spurious diff, preserving "one race ⇒ one PR".
+- **CI gates still pass.** The committed map validates under
+  `python -m datalib.validate`, and tests are written to tolerate wiki fallbacks
+  (assert URL *shape*, not fixed IDs beyond fixtures), so a fallback situation
+  never reds the auto-update's test step.
+- **The deploy job stays offline.** `deploy.yml` builds from committed
+  `data/f1_race_links.json` only — no network in the deploy path; all F1 access is
+  confined to the `update` job.
 
 ## Testing strategy ("make sure it works")
 
