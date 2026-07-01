@@ -262,7 +262,7 @@ def render_last_race(
             f'<span class="lr-status">Happened {cnt} time{"s" if cnt != 1 else ""}'
             f' &middot; last time <a class="lr-link" href="{esc(repeat_url)}"'
             f' target="_blank" rel="noopener">'
-            f"R{esc(second_last['round'])} &middot;"
+            f"{esc(second_last['season'])} R{esc(second_last['round'])} &middot;"
             f" {esc(second_last['raceName'])}</a></span>"
         )
     else:
