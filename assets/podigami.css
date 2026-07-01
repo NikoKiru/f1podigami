@@ -214,6 +214,11 @@ main {
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
+    text-decoration: none;
+}
+
+.lr-name:hover {
+    color: var(--accent-bright);
 }
 
 .lr-trio {
@@ -689,145 +694,6 @@ main {
     font-weight: 600;
     min-width: 56px;
     text-align: right;
-}
-
-/* ── Overdue page: uniform overdue cards ──────────────────────────────────────
-   Mirrors the Unlikeliest card system. Every entry is the same card; #1 in each
-   section (.odcard-hero) is a larger, accented version so each field sits in the
-   same place on every card. */
-.odcard-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px;
-}
-
-.odcard {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 18px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.odcard-hero {
-    grid-column: 1 / -1;
-    background: linear-gradient(135deg, var(--surface) 0%, var(--bg-2) 100%);
-    border-color: var(--border-strong);
-    border-left: 4px solid var(--accent-bright);
-    padding: 24px;
-}
-
-.od-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.od-rank {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.od-rank::before {
-    content: "#";
-    color: var(--accent);
-}
-
-.odcard-hero .od-rank {
-    font-size: 18px;
-}
-
-.od-drivers {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.35;
-}
-
-.odcard-hero .od-drivers {
-    font-size: 24px;
-}
-
-.od-drivers .sep {
-    color: var(--muted-dim);
-    margin: 0 7px;
-    font-weight: 400;
-}
-
-.od-drivers .dn-abbr {
-    display: none;
-}
-
-/* Headline score — the expected number of shared podiums. */
-.od-score {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.od-score-num {
-    font-size: 30px;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--accent-bright);
-    letter-spacing: -0.5px;
-    font-variant-numeric: tabular-nums;
-}
-
-.odcard-hero .od-score-num {
-    font-size: 46px;
-}
-
-.od-score-label {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--muted);
-}
-
-/* Three labelled stat cells, always in the same order/place. */
-.od-stats {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr;
-    gap: 10px;
-    border-top: 1px solid var(--border);
-    padding-top: 12px;
-    margin-top: auto;
-}
-
-.od-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.od-stat-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    line-height: 1.2;
-    min-height: 2.4em;
-}
-
-.odcard-hero .od-stat-label {
-    min-height: 0;
-}
-
-.od-stat-val {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-dim);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
 }
 
 /* ── Overdue page: uniform overdue cards ──────────────────────────────────────

@@ -212,6 +212,9 @@ def render_last_race(
 
     fl = flag_svg(last["country"])
     name = esc(last["raceName"])
+    wiki_url = last.get("url") or (
+        "https://en.wikipedia.org/wiki/" + f"{pod['season']}_{pod['raceName']}".replace(" ", "_")
+    )
 
     constructor_map = {d["driverId"]: d.get("constructorId", "") for d in driver_form}
     trio_ids = [pod["p1"]["driverId"], pod["p2"]["driverId"], pod["p3"]["driverId"]]
@@ -266,7 +269,8 @@ def render_last_race(
         f'<section class="last-race">'
         f'<span class="lr-tag">Last race</span>'
         f"{fl}"
-        f'<span class="lr-name">R{esc(rnd)} &middot; {name}</span>'
+        f'<a class="lr-name" href="{esc(wiki_url)}" target="_blank" rel="noopener">'
+        f"R{esc(rnd)} &middot; {name}</a>"
         f"{trio_block}"
         f"{status_html}"
         f"</section>"
