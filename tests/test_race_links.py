@@ -27,3 +27,25 @@ def test_f1_race_links_roundtrips_through_loader():
         for rnd, entry in rounds.items():
             assert links[season][rnd].id == entry["id"]
             assert links[season][rnd].slug == entry["slug"]
+
+
+from build import _layout  # noqa: E402  (RaceLink is already imported at the top of this file)
+
+# --- race_url helper ----------------------------------------------------------
+
+_LINKS = {"2026": {"8": RaceLink(id="1288", slug="austria")}}
+
+
+def test_race_url_builds_official_f1_url_when_mapped():
+    url = _layout.race_url(_LINKS, "2026", "8", "Austrian Grand Prix")
+    assert url == "https://www.formula1.com/en/results/2026/races/1288/austria/race-result"
+
+
+def test_race_url_falls_back_to_wikipedia_when_unmapped():
+    url = _layout.race_url(_LINKS, "2026", "9", "British Grand Prix")
+    assert url == "https://en.wikipedia.org/wiki/2026_British_Grand_Prix"
+
+
+def test_race_url_accepts_int_round():
+    url = _layout.race_url(_LINKS, "2026", 8, "Austrian Grand Prix")
+    assert url.endswith("/races/1288/austria/race-result")
