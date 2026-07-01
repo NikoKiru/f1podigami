@@ -557,6 +557,7 @@ def main() -> int:
     faq = render_faq(data, model_eval)
 
     # Embedded data for the slider (only what the client needs).
+    # `</script>`-neutralized so an embedded string can never prematurely close the tag.
     embed = json.dumps(
         {
             "bySeason": data["bySeason"],
@@ -564,7 +565,7 @@ def main() -> int:
             "currentSeason": season,
         },
         ensure_ascii=False,
-    )
+    ).replace("</", "<\\/")
 
     page = f"""{
         head(

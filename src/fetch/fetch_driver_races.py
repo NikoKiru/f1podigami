@@ -5,7 +5,10 @@ how many races a set of drivers actually started together, and each driver's
 career start count (the denominator for a podium rate).
 
 Driver pool = the top POOL_N drivers by career podium count (for the all-time
-near-misses list) plus the current grid (for the still-possible list).
+near-misses list) plus the current grid (for the still-possible list) plus
+every driver who appears in any combos.json trio (so "Unlikeliest" — which
+scores trios that *did* happen, not a generated candidate pool — never has
+to silently skip a historical combo for lacking race-history data; see #147).
 
 Incremental: a historical driver's race list never changes, so drivers already
 cached and not on the current grid are skipped. Only the current grid (whose
@@ -37,6 +40,7 @@ POOL_N = 60  # top drivers by career podiums included for the all-time list
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
+COMBOS_PATH = DATA_DIR / "combos.json"
 GRID_PATH = DATA_DIR / "current_drivers.json"
 OUT_PATH = DATA_DIR / "driver_races.json"
 
@@ -84,23 +88,43 @@ def fetch_driver(driver_id: str) -> dict:
     return {"name": name, "starts": total or len(races), "races": sorted(set(races))}
 
 
+def target_driver_ids(
+    podiums: list[dict],
+    grid_drivers: list[dict],
+    combos: list[dict],
+    pool_n: int = POOL_N,
+) -> set[str]:
+    """Every driverId that needs a race-history entry: the top ``pool_n`` by
+    career podiums, the current grid, and every driver in any combos.json
+    trio (so a real historical combo is never skipped for lacking data)."""
+    podium_count: Counter[str] = Counter()
+    for r in podiums:
+        for slot in ("p1", "p2", "p3"):
+            podium_count[r[slot]["driverId"]] += 1
+
+    top_pool = {d for d, _ in podium_count.most_common(pool_n)}
+    grid_ids = {d["driverId"] for d in grid_drivers}
+    combo_ids: set[str] = set()
+    for c in combos:
+        combo_ids.update(c["driverIds"])
+    return top_pool | grid_ids | combo_ids
+
+
 def main() -> int:
     podiums = json.loads(PODIUMS_PATH.read_text(encoding="utf-8"))
     grid_doc = json.loads(GRID_PATH.read_text(encoding="utf-8"))
+    combos = json.loads(COMBOS_PATH.read_text(encoding="utf-8"))
 
-    podium_count: Counter[str] = Counter()
     name_by_id: dict[str, str] = {}
     for r in podiums:
         for slot in ("p1", "p2", "p3"):
             d = r[slot]
-            podium_count[d["driverId"]] += 1
             name_by_id[d["driverId"]] = d["name"]
 
-    top_pool = [d for d, _ in podium_count.most_common(POOL_N)]
     grid_ids = {d["driverId"] for d in grid_doc["drivers"]}
     for d in grid_doc["drivers"]:
         name_by_id.setdefault(d["driverId"], d["name"])
-    targets = sorted(set(top_pool) | grid_ids)
+    targets = sorted(target_driver_ids(podiums, grid_doc["drivers"], combos))
 
     existing = {}
     if OUT_PATH.exists():

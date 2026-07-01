@@ -86,3 +86,46 @@ def test_rank_and_new_splits_seen_and_new():
     ranked, p_new = model.rank_and_new(probs, seen)
     assert ranked[0][1] >= ranked[-1][1]  # sorted desc
     assert p_new == pytest.approx(sum(p for t, p in probs.items() if t not in seen))
+
+
+# --- car / teammate overlay ---------------------------------------------------
+
+
+def test_two_teammates_blend_toward_each_other():
+    lam = {"a": 1.0, "b": 2.0}
+    driver_cid = {"a": "teamX", "b": "teamX"}
+    strength01 = {"a": 0.0, "b": 0.0}
+    out = model.apply_car_overlay(lam, driver_cid, strength01, factor=0.0, teammate_beta=0.15)
+    assert out["a"] == pytest.approx(0.85 * 1.0 + 0.15 * 2.0)
+    assert out["b"] == pytest.approx(0.85 * 2.0 + 0.15 * 1.0)
+
+
+def test_three_teammates_still_get_blended():
+    """A mid-season driver swap can put 3 driverIds on one constructor for the
+    few races the current_drivers.json union window spans (#148). The halo
+    overlay must not silently no-op for the whole team in that window."""
+    lam = {"a": 1.0, "b": 2.0, "c": 4.0, "d": 1.0}
+    driver_cid = {"a": "teamX", "b": "teamX", "c": "teamX", "d": "teamY"}
+    strength01 = {"a": 0.5, "b": 0.5, "c": 0.5, "d": 0.5}
+    out = model.apply_car_overlay(lam, driver_cid, strength01, factor=0.0, teammate_beta=0.15)
+    assert out["a"] != 1.0
+    assert out["b"] != 2.0
+    assert out["c"] != 4.0
+
+
+def test_three_teammates_blend_toward_average_of_others():
+    lam = {"a": 1.0, "b": 2.0, "c": 3.0}
+    driver_cid = {"a": "teamX", "b": "teamX", "c": "teamX"}
+    strength01 = {"a": 0.0, "b": 0.0, "c": 0.0}
+    out = model.apply_car_overlay(lam, driver_cid, strength01, factor=0.0, teammate_beta=0.15)
+    assert out["a"] == pytest.approx(0.85 * 1.0 + 0.15 * ((2.0 + 3.0) / 2))
+    assert out["b"] == pytest.approx(0.85 * 2.0 + 0.15 * ((1.0 + 3.0) / 2))
+    assert out["c"] == pytest.approx(0.85 * 3.0 + 0.15 * ((1.0 + 2.0) / 2))
+
+
+def test_driver_without_constructor_mapping_unblended():
+    lam = {"a": 1.0, "b": 2.0}
+    driver_cid = {"a": "teamX"}  # b has no mapping
+    strength01 = {"a": 0.0, "b": 0.0}
+    out = model.apply_car_overlay(lam, driver_cid, strength01, factor=0.0, teammate_beta=0.15)
+    assert out["b"] == pytest.approx(2.0)
