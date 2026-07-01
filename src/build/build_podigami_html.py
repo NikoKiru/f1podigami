@@ -585,13 +585,8 @@ def main() -> int:
 <header>
     <div class="container">
         <h1><span class="accent">F1</span> Podigami</h1>
-        <p class="tagline">Podigami &mdash; a blend of &ldquo;podium&rdquo; and
-        &ldquo;<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>&rdquo;
-        &mdash; tracks F1 podium trios that have never happened before. Only <strong>{
-        total_combos:,}</strong> unique combinations have appeared across <strong>{
-        total_races:,}</strong> races since {lo}, yet today&rsquo;s {grid_size}-driver grid
-        produces <strong>{possible_trios:,}</strong> possible trios per race. A statistical model
-        predicts which brand-new trio is most likely next in the {season} season.</p>
+        <p class="tagline">Spotting the podium trio F1 has never seen &mdash;
+        and predicting who&rsquo;s about to make it happen.</p>
     </div>
 </header>
 <main>
