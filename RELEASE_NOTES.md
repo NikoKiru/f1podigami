@@ -2,6 +2,9 @@
 
 ## 2026-07-01
 
+### Improvements
+- Sync README.md with the current pipeline (Unlikeliest/Soulmates pages, file map, test count, update.yml cadence) and add a CLAUDE.md rule keeping it current on future PRs
+
 ### Fixes
 - Make the "Last race" name on the landing page clickable, linking out to Wikipedia just like the "Next race" name does
 

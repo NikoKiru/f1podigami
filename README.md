@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-192%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-277%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -35,10 +35,12 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 - 🏁 **Next race + last race** — countdown to the upcoming GP, plus a compact recap of the last race's podium trio with its podigami status and linked history.
 - 🗓️ **Season timeline** — drag a year slider to see every trio that debuted on a podium in each season since 1950.
 - ⏳ **Overdue trios** — driver pairs whose individual form says they *should* share a podium, but haven't yet.
+- 🎲 **Unlikeliest podiums** — the mirror of Overdue: trios that *did* happen despite the odds, ranked by how big a fluke they were.
+- 🤝 **Soulmates** — the shared-podium matrix showing which drivers have stood on the box together most.
 - 🔗 **Cited sources** — every race links to its Wikipedia race report.
 - 📊 **Combinations table** — every unique 3-driver podium combination since 1950, sortable and filterable.
 - 📱 **Mobile-first** — fully responsive, dark theme, locked in by CSS regression tests.
-- ⚙️ **Zero-ops deploy** — rebuilds from committed JSON in CI and ships to GitHub Pages on every push.
+- ⚙️ **Zero-ops deploy** — rebuilds from committed JSON in CI; a guarded 15-minute poll auto-opens and merges a data-refresh PR after each race, which ships straight to GitHub Pages.
 
 ---
 
@@ -49,6 +51,8 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 | 🔮 | **`index.html`** | The **Podigami predictor** — next/last race, most likely brand-new trio, candidate rankings, current form tower, season debut timeline, FAQ |
 | 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 — sortable, filterable, expandable |
 | ⏳ | `overdue.html` | Trios "overdue" to appear — driver pairs whose current form suggests a shared podium is imminent |
+| 🎲 | `unlikeliest.html` | The mirror of Overdue — podium trios that *did* happen ranked by how statistically improbable they were, led by the single biggest fluke in F1 history |
+| 🤝 | `soulmates.html` | Shared-podium matrix — which drivers have stood on the box together most often |
 
 ---
 
@@ -109,6 +113,7 @@ flowchart TD
         CC["count_combos"]:::compute
         CP["compute_podigami"]:::compute
         CO["compute_overdue"]:::compute
+        CU["compute_unlikeliest"]:::compute
         CM["compute_soulmates"]:::compute
         BT["backtest"]:::compute
     end
@@ -120,6 +125,7 @@ flowchart TD
         BP["index.html"]:::build
         BC["combos.html"]:::build
         BO["overdue.html"]:::build
+        BU["unlikeliest.html"]:::build
         BS["soulmates.html"]:::build
     end
 
@@ -144,7 +150,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (192 tests, run in CI)
+tests/          pytest suite (277 tests, run in CI)
 ```
 
 </details>
@@ -185,7 +191,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 192 tests + coverage gate (≥70%)
+pytest --cov                          # 277 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
@@ -201,7 +207,7 @@ Every push and PR runs a hardened pipeline:
 | [`codeql.yml`](.github/workflows/codeql.yml) | **CodeQL** static analysis of Python *and* the workflow files (weekly + on PRs) |
 | [`security.yml`](.github/workflows/security.yml) | **pip-audit** for vulnerable dependencies · **gitleaks** secret scanning |
 | [`deploy.yml`](.github/workflows/deploy.yml) | Test-gated publish to **GitHub Pages** |
-| [`update.yml`](.github/workflows/update.yml) | Scheduled weekly **data refresh** (auto-commits new race results) |
+| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — polls every 15 min for a newly-finished race, opens an auto-merging PR when due; a weekly run forces a full reconciliation |
 | [`dependabot.yml`](.github/dependabot.yml) + [auto-merge](.github/workflows/dependabot-automerge.yml) | Weekly dependency PRs; patch/minor bumps auto-merge once CI is green |
 
 All workflows run with **least-privilege permissions**, **concurrency cancellation**, and **pip
@@ -246,6 +252,7 @@ flowchart LR
 | `src/compute/count_combos.py` | Aggregate podiums into unique trios → `data/combos.json` |
 | `src/compute/compute_podigami.py` | 🔮 Predict the next brand-new trio → `data/podigami.json` |
 | `src/compute/compute_overdue.py` | Find trios overdue based on driver form → `data/overdue.json` |
+| `src/compute/compute_unlikeliest.py` | Rank podium trios that happened despite the odds → `data/unlikeliest.json` |
 | `src/compute/compute_soulmates.py` | Shared-podium matrix for the top 40 → `data/soulmates.json` |
 | `src/compute/model.py` | Plackett–Luce strength model core |
 | `src/compute/backtest.py` | Backtest model accuracy across hold-out seasons → `data/model_eval.json` |
@@ -254,7 +261,9 @@ flowchart LR
 | `src/build/build_podigami_html.py` | Render `dist/index.html` (the predictor + next/last race) |
 | `src/build/build_combos_html.py` | Render `dist/combos.html` |
 | `src/build/build_overdue_html.py` | Render `dist/overdue.html` |
+| `src/build/build_unlikeliest.py` | Render `dist/unlikeliest.html` |
 | `src/build/build_soulmates_html.py` | Render `dist/soulmates.html` |
+| `src/build/build_404_html.py` | Render `dist/404.html` |
 | `src/build/_layout.py` | Shared page chrome: `head()`, `nav()`, footer |
 | `src/build/flags.py` | Country flag SVGs |
 | `src/build/team_colors.py` | Constructor colour lookup + contrast-safe text colour |
