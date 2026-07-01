@@ -325,3 +325,24 @@ def test_render_last_race_trio_not_linked_when_combo_missing():
     html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [], {}, [])
     assert 'class="combo-link"' not in html
     assert "combos.html?d=" not in html
+
+
+def test_render_last_race_repeat_link_names_the_year():
+    # The "last time" pill points at a *previous* season, so it must show the
+    # year -- otherwise "R22" reads as the current season (#158 follow-up).
+    combo = {
+        "driverIds": ["antonelli", "russell", "verstappen"],
+        "drivers": ["George Russell", "Max Verstappen", "Andrea Kimi Antonelli"],
+        "count": 3,
+        "races": [
+            {"season": "2025", "round": "10", "raceName": "Canadian Grand Prix"},
+            {"season": "2025", "round": "22", "raceName": "Las Vegas Grand Prix"},
+            {"season": "2026", "round": "2", "raceName": "B GP"},
+        ],
+        "lastRace": {"season": "2026", "round": "2", "raceName": "B GP"},
+        "lastRaceKey": 202602,
+    }
+    html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [combo], {}, [])
+    anchor = html.split('class="lr-link"', 1)[1].split("</a>", 1)[0]
+    assert "2025 R22" in anchor
+    assert "Las Vegas Grand Prix" in anchor
