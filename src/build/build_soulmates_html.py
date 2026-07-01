@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import sys
 from pathlib import Path
 
@@ -13,6 +14,10 @@ from _layout import FOOTER, asset, head, nav  # noqa: E402  (needs the sys.path 
 from datalib import SoulmatePair, Soulmates, load_soulmates  # noqa: E402
 
 OUT_PATH = ROOT / "dist" / "soulmates.html"
+
+
+def esc(s: str) -> str:
+    return html.escape(str(s))
 
 
 def _last(name: str) -> str:
@@ -31,7 +36,7 @@ def _render_pairs(pairs: list[SoulmatePair]) -> str:
             f'<li class="pl-row">'
             f'<span class="pl-rank">{i}</span>'
             f'<div class="pl-body">'
-            f'  <div class="pl-names"><b>{p.a}</b> &amp; <b>{p.b}</b></div>'
+            f'  <div class="pl-names"><b>{esc(p.a)}</b> &amp; <b>{esc(p.b)}</b></div>'
             f'  <div class="pl-bar-wrap"><div class="pl-bar" style="width:{pct}%"></div></div>'
             f"</div>"
             f'<div class="pl-meta">'
@@ -63,7 +68,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
             "num": str(best_cnt),
             "unit": "connections",
             "label": "Most connected driver",
-            "detail": f"<b>{best_name}</b> shared at least one podium with {best_cnt} different "
+            "detail": f"<b>{esc(best_name)}</b> shared at least one podium with {best_cnt} different "
             f"drivers from the all-time top 40 — more than anyone else.",
         }
     )
@@ -77,7 +82,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
                 "num": str(span),
                 "unit": "seasons",
                 "label": "Longest partnership",
-                "detail": f"<b>{longest.a}</b> &amp; <b>{longest.b}</b> shared podiums "
+                "detail": f"<b>{esc(longest.a)}</b> &amp; <b>{esc(longest.b)}</b> shared podiums "
                 f"across {span} seasons ({longest.firstYear}&ndash;{longest.lastYear}), "
                 f"the longest-running pairing in the top 30.",
             }
@@ -97,7 +102,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
                 "num": f"{rate:.1f}",
                 "unit": "per season",
                 "label": "Most intense rivalry",
-                "detail": f"<b>{hot.a}</b> &amp; <b>{hot.b}</b> averaged "
+                "detail": f"<b>{esc(hot.a)}</b> &amp; <b>{esc(hot.b)}</b> averaged "
                 f"{rate:.1f} shared podiums per season over their "
                 f"{seasons}-season overlap — the densest podium partnership on record.",
             }
@@ -123,7 +128,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
                 "unit": "year era gap",
                 "label": "Biggest cross-era connection",
                 "detail": (
-                    f"<b>{older}</b> (peak ~{older_med}) and <b>{younger}</b> "
+                    f"<b>{esc(older)}</b> (peak ~{older_med}) and <b>{esc(younger)}</b> "
                     f"(peak ~{younger_med}) still shared {cross.count} podiums "
                     f"despite their careers being {gap_years} years apart."
                 ),
@@ -150,7 +155,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
             "num": str(least_cnt),
             "unit": "connections",
             "label": "Solo legend",
-            "detail": f"Despite {least_total} career podiums, <b>{least_name}</b> shared the box "
+            "detail": f"Despite {least_total} career podiums, <b>{esc(least_name)}</b> shared the box "
             f"with only {least_cnt} other driver{'s' if least_cnt != 1 else ''} "
             f"from the top 40 &mdash; a testament to era dominance.",
         }
@@ -190,7 +195,7 @@ def main() -> int:
             </div>
             <div class="stat">
                 <div class="num">{top.count} <small>shared podiums</small></div>
-                <div class="label">{_last(top.a)} &amp; {_last(top.b)} &mdash; #1 pair</div>
+                <div class="label">{esc(_last(top.a))} &amp; {esc(_last(top.b))} &mdash; #1 pair</div>
             </div>
             <div class="stat">
                 <div class="num">{len(top_pairs)}</div>
