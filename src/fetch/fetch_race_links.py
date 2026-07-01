@@ -13,11 +13,14 @@ Design notes:
 - Historic years are immutable: --backfill fetches only seasons missing or
   incomplete in the committed map; the default run refreshes only the current
   season. --refetch-all forces every season (manual, e.g. a URL-scheme change).
-- Correctness rests on a count guard, not slug matching: F1 lists a year's races
-  with monotonically increasing IDs, so sorting deduped IDs recovers round order.
-  A season is trusted only when its race count matches ours; otherwise that whole
-  season falls back to Wikipedia at render time. Slugs are NOT matched to our
-  race names — they aren't derivable ("great-britain" vs "British Grand Prix").
+- Correctness rests on SLUG IDENTITY, not ID or page order (issue #158). F1's
+  internal race IDs are NOT assigned in round order (rescheduled/late-added races
+  get out-of-order IDs), and the index's DOM order pins the "latest race" first
+  for the current season — so neither recovers the round. Instead we pair each of
+  our rounds with the slug whose identity matches its race name
+  (``race_identity.match_season``, backed by ``ACCEPTABLE_SLUGS``). A season is
+  trusted only when every round matches exactly one slug with none left over;
+  otherwise that whole season falls back to Wikipedia at render time.
 - Network failures are non-fatal: the script keeps the committed map and exits 0,
   so a transient F1 outage can never block the automated post-race deploy.
 """
@@ -34,6 +37,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from datalib import DATA_DIR, load_podiums, load_schedule, save_race_links  # noqa: E402
+from fetch.race_identity import match_season  # noqa: E402
 
 INDEX_URL = "https://www.formula1.com/en/results/{year}/races"
 RESULT_RE = re.compile(r"/en/results/(\d{4})/races/(\d+)/([a-z0-9-]+)/race-result")
@@ -51,26 +55,28 @@ CANCELLED_RACES: dict[int, frozenset[str]] = {
 
 
 def parse_race_links(html_text: str, year: int) -> list[tuple[str, str]]:
-    """(id, slug) pairs for ``year``, deduped and sorted ascending by numeric id.
+    """(id, slug) pairs for ``year``, deduped in first-seen order.
 
-    The raw index repeats races (a "latest race" selector) and is not in round
-    order, but IDs increase with round within a year, so the sort recovers order.
-    """
+    Order is intentionally NOT relied upon: the raw index repeats races (a "latest
+    race" selector) and neither its DOM order nor the numeric IDs track round
+    order. Rounds are assigned later by slug identity (see module docstring)."""
     seen: dict[str, str] = {}
     for y, rid, slug in RESULT_RE.findall(html_text):
         if int(y) == year and rid not in seen:
             seen[rid] = slug
-    return sorted(seen.items(), key=lambda t: int(t[0]))
+    return list(seen.items())
 
 
-def build_season_map(
-    pairs: list[tuple[str, str]], expected_count: int
-) -> dict[str, dict[str, str]]:
-    """round -> {id, slug}. Empty (→ wiki fallback for the whole season) unless the
-    race count matches ours, which is what proves the positional mapping correct."""
-    if expected_count <= 0 or len(pairs) != expected_count:
-        return {}
-    return {str(i): {"id": rid, "slug": slug} for i, (rid, slug) in enumerate(pairs, 1)}
+def season_round_names(schedule: dict, podiums: list[dict]) -> dict[int, dict[str, str]]:
+    """season -> {round: raceName}: the full calendar for the current season
+    (schedule), completed races for historic seasons (podiums)."""
+    names: dict[int, dict[str, str]] = {}
+    for p in podiums:
+        names.setdefault(int(p["season"]), {})[str(p["round"])] = p["raceName"]
+    names.setdefault(int(schedule["season"]), {}).update(
+        {str(r["round"]): r["raceName"] for r in schedule["races"]}
+    )
+    return names
 
 
 def season_counts(schedule: dict, podiums: list[dict]) -> dict[int, int]:
@@ -121,10 +127,15 @@ def fetch_index(year: int) -> str:
 
 
 def update_map(
-    existing: dict, targets: list[tuple[int, int]], fetch_fn, sleep: float = 1.0
+    existing: dict,
+    targets: list[tuple[int, int]],
+    fetch_fn,
+    round_names: dict[int, dict[str, str]],
+    sleep: float = 1.0,
 ) -> dict:
-    """Refresh each (year, expected_count) target. A per-year failure or count
-    mismatch never discards existing data or aborts — the year is left as-is."""
+    """Refresh each (year, expected_count) target. A per-year failure or an
+    identity mismatch never discards existing data or aborts — the year is left
+    as-is. Rounds are assigned by slug identity, not ID/page order."""
     result = {k: dict(v) for k, v in existing.items()}
     for i, (year, expected) in enumerate(targets):
         try:
@@ -136,16 +147,17 @@ def update_map(
                 for rid, slug in parse_race_links(fetch_fn(year), year)
                 if slug not in skip
             ]
-            season_map = build_season_map(pairs, expected)
+            season_map = match_season(round_names.get(year, {}), pairs)
         except Exception as exc:  # noqa: BLE001 - a bad fetch must not abort the run
             print(f"  warn: {year} fetch failed ({exc}); keeping existing", file=sys.stderr)
             continue
         if season_map:
-            result[str(year)] = season_map
+            result[str(year)] = {str(r): season_map[str(r)] for r in sorted(season_map, key=int)}
             print(f"  {year}: mapped {len(season_map)}/{expected}")
         else:
             print(
-                f"  warn: {year} race-count mismatch (F1 vs ours); wiki fallback for the season",
+                f"  warn: {year} slugs don't match our races (F1 vs ours);"
+                " wiki fallback for the season",
                 file=sys.stderr,
             )
     return result
@@ -183,11 +195,12 @@ def main() -> int:
     schedule = load_schedule().model_dump()
     podiums = [p.model_dump() for p in load_podiums()]
     counts = season_counts(schedule, podiums)
+    round_names = season_round_names(schedule, podiums)
     current_year = int(schedule["season"])
 
     targets = compute_targets(mode, existing, counts, current_year)
     print(f"fetch_race_links: mode={mode}, {len(targets)} season(s)")
-    new_map = _ordered(update_map(existing, targets, fetch_index))
+    new_map = _ordered(update_map(existing, targets, fetch_index, round_names))
     save_race_links(new_map)
     print(f"Wrote {LINKS_PATH} ({len(new_map)} seasons)")
     return 0
