@@ -19,24 +19,25 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     asset,
     head,
     nav,
-    wiki_url,
+    race_url,
 )
 
-from datalib import Combo, RaceRef, load_combos, load_podiums  # noqa: E402
+from datalib import Combo, RaceRef, load_combos, load_podiums, load_race_links  # noqa: E402
 
 OUT_PATH = ROOT / "dist" / "combos.html"
 
 
-def render_race_pills(races: list[RaceRef]) -> str:
+def render_race_pills(races: list[RaceRef], links: dict | None = None) -> str:
     """Group races by season; each season gets a row with year + race pills."""
     import html
 
+    links = links or {}
     races_sorted = sorted(races, key=lambda r: (int(r.season), int(r.round)))
     parts: list[str] = []
     for season, group in itertools.groupby(races_sorted, key=lambda r: r.season):
         group_list = list(group)
         pills = "".join(
-            f'<a class="race-pill" href="{html.escape(wiki_url(r.season, r.raceName), quote=True)}"'
+            f'<a class="race-pill" href="{html.escape(race_url(links, r.season, r.round, r.raceName), quote=True)}"'
             f' target="_blank" rel="noopener"'
             f' title="{html.escape(r.season + " " + r.raceName, quote=True)} &mdash; race report">'
             f'<span class="round">R{html.escape(r.round)}</span>'
@@ -62,7 +63,7 @@ def short_race_name(name: str) -> str:
     return name
 
 
-def render_combo(rank: int, combo: Combo) -> str:
+def render_combo(rank: int, combo: Combo, links: dict | None = None) -> str:
     import html
 
     drivers_html = '<span class="sep">/</span>'.join(
@@ -94,7 +95,7 @@ def render_combo(rank: int, combo: Combo) -> str:
     detail_row = (
         f'<tr class="detail">'
         f'<td colspan="5">'
-        f'<div class="detail-inner">{render_race_pills(combo.races)}</div>'
+        f'<div class="detail-inner">{render_race_pills(combo.races, links)}</div>'
         f"</td></tr>"
     )
     return combo_row + detail_row
@@ -109,7 +110,8 @@ def main() -> int:
     unique_combos = len(combos)
     season_min, season_max = seasons[0], seasons[-1]
 
-    rows_html = "\n".join(render_combo(i, c) for i, c in enumerate(combos, 1))
+    links = load_race_links()
+    rows_html = "\n".join(render_combo(i, c, links) for i, c in enumerate(combos, 1))
 
     page = f"""{
         head(
