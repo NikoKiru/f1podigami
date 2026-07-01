@@ -68,7 +68,8 @@
                 .map(n => `<span class="pdriver">${esc(displayName(n))}</span>`)
                 .join('<span class="sep">/</span>');
             const fr = e.firstRace;
-            const url = wikiUrl(year, fr.raceName);
+            // Official F1 result URL embedded at build time; wiki as fallback.
+            const url = fr.url || wikiUrl(year, fr.raceName);
             // This trio has happened -> link it to its stats on the combos page.
             const comboUrl = combosLink(e.names).replace(/&/g, '&amp;');
             return `<li class="tl-item">

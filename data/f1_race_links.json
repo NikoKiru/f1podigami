@@ -4461,6 +4461,96 @@
       "slug": "abu-dhabi"
     }
   },
+  "2023": {
+    "1": {
+      "id": "1141",
+      "slug": "bahrain"
+    },
+    "2": {
+      "id": "1142",
+      "slug": "saudi-arabia"
+    },
+    "3": {
+      "id": "1143",
+      "slug": "australia"
+    },
+    "4": {
+      "id": "1207",
+      "slug": "azerbaijan"
+    },
+    "5": {
+      "id": "1208",
+      "slug": "miami"
+    },
+    "6": {
+      "id": "1210",
+      "slug": "monaco"
+    },
+    "7": {
+      "id": "1211",
+      "slug": "spain"
+    },
+    "8": {
+      "id": "1212",
+      "slug": "canada"
+    },
+    "9": {
+      "id": "1213",
+      "slug": "austria"
+    },
+    "10": {
+      "id": "1214",
+      "slug": "great-britain"
+    },
+    "11": {
+      "id": "1215",
+      "slug": "hungary"
+    },
+    "12": {
+      "id": "1216",
+      "slug": "belgium"
+    },
+    "13": {
+      "id": "1217",
+      "slug": "netherlands"
+    },
+    "14": {
+      "id": "1218",
+      "slug": "italy"
+    },
+    "15": {
+      "id": "1219",
+      "slug": "singapore"
+    },
+    "16": {
+      "id": "1220",
+      "slug": "japan"
+    },
+    "17": {
+      "id": "1221",
+      "slug": "qatar"
+    },
+    "18": {
+      "id": "1222",
+      "slug": "united-states"
+    },
+    "19": {
+      "id": "1223",
+      "slug": "mexico"
+    },
+    "20": {
+      "id": "1224",
+      "slug": "brazil"
+    },
+    "21": {
+      "id": "1225",
+      "slug": "las-vegas"
+    },
+    "22": {
+      "id": "1226",
+      "slug": "abu-dhabi"
+    }
+  },
   "2024": {
     "1": {
       "id": "1229",

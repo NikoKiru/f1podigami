@@ -123,3 +123,17 @@ def test_update_map_adds_season_on_success():
 
     out = frl.update_map({}, [(2026, 3)], ok, sleep=0)
     assert out["2026"]["1"] == {"id": "1279", "slug": "australia"}
+
+
+def test_update_map_drops_cancelled_race_so_season_aligns():
+    # F1's archive lists a race that never happened (cancelled). Dropping it lets
+    # the season match our round count and map 1:1 instead of wiki-falling-back.
+    slugs = ["bahrain", "emilia-romagna", "monaco"]  # emilia-romagna = cancelled
+    html = "".join(
+        f'<a href="/en/results/2023/races/{i}/{slug}/race-result"></a>'
+        for i, slug in enumerate(slugs, start=100)
+    )
+    out = frl.update_map({}, [(2023, 2)], lambda y: html, sleep=0)
+    mapped = [v["slug"] for v in out["2023"].values()]
+    assert mapped == ["bahrain", "monaco"]  # cancelled dropped, rounds re-aligned
+    assert "emilia-romagna" in frl.CANCELLED_RACES[2023]

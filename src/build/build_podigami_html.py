@@ -526,6 +526,14 @@ def main() -> int:
     if (DATA_DIR / "schedule.json").exists():
         schedule = load_schedule().model_dump()
     links = load_race_links()
+    # Enrich the timeline entries with official F1 result URLs (wiki fallback) so the
+    # client-side slider (podigami.js) links out to F1 like the rest of the page.
+    # Build-time only — the committed podigami.json is left untouched.
+    for _season, _trios in data["bySeason"].items():
+        for _trio in _trios:
+            fr = _trio.get("firstRace")
+            if fr:
+                fr["url"] = race_url(links, _season, fr["round"], fr["raceName"])
     next_race = render_next_race(schedule, data.get("asOf"), links) if schedule else ""
     combos_dicts = [c.model_dump() for c in combos_list]
     podiums_dicts = [p.model_dump() for p in podiums_list]

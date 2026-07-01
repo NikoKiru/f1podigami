@@ -87,6 +87,15 @@ def test_race_report_links_are_official_f1(dist):
     assert len(f1) > len(links) // 2, "expected most race links to be official F1 URLs"
 
 
+def test_timeline_embed_uses_official_f1_urls(dist):
+    # The landing-page timeline is rendered client-side by podigami.js from the
+    # embedded bySeason data; that data must carry official F1 result URLs so the
+    # slider links out to F1, not Wikipedia.
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert '"url": "https://www.formula1.com/en/results/' in html
+    assert '"url": "https://en.wikipedia.org/wiki/' not in html  # no wiki fallback in the embed
+
+
 # --- determinism ---------------------------------------------------------------
 
 
