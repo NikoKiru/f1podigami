@@ -82,6 +82,15 @@ def test_render_card_has_every_field_in_place():
     assert "Esteban Ocon" in html and "E. Ocon" in html
 
 
+def test_render_card_uses_official_f1_url_when_links_present():
+    from datalib import RaceLink
+
+    e = trio(["A B", "C D", "E F"], ["a", "b", "c"], 10, 0.01, 1, [0.1, 0.1, 0.1])
+    links = {"2020": {"1": RaceLink(id="1045", slug="austria")}}
+    html = bu.render_card(1, e, links=links)
+    assert "https://www.formula1.com/en/results/2020/races/1045/austria/race-result" in html
+
+
 def test_render_card_hero_variant_is_flagged():
     e = trio(["A B", "C D", "E F"], ["a", "b", "c"], 10, 0.01, 1, [0.1, 0.1, 0.1])
     assert "uncard-hero" in bu.render_card(1, e, hero=True)
