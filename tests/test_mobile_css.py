@@ -39,6 +39,20 @@ def test_secondary_pages_have_phone_breakpoint(name):
     assert "@media (max-width: 600px)" in css(name)
 
 
+def test_hero_team_name_truncates_on_mobile():
+    """.hd-team must stay single-line on mobile so long team names ("Cadillac F1
+    Team") don't wrap and grow one hero card taller than its siblings (#149).
+    """
+    import re
+
+    s = css("podigami.css")
+    assert re.search(
+        r"@media \(max-width: 600px\).*?\.hd-team\s*\{[^}]*white-space:\s*nowrap",
+        s,
+        re.DOTALL,
+    ), "Hero .hd-team must be forced to a single line inside the mobile breakpoint (fixes #149)"
+
+
 def test_podigami_hero_collapses_at_720px():
     """Hero switches to single-column at 720px to fix the 601-720px dead zone.
 
