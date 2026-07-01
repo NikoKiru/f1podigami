@@ -3,6 +3,7 @@
 ## 2026-07-01
 
 ### Improvements
+- Trim the landing page hero to a short slogan and move the podigami explainer (scorigami etymology, trio/race counts) into a new FAQ entry; also drop the same "only N have happened" framing from the page's meta description
 - Show the year in the landing page's "last time" repeat pill (e.g. "last time 2025 R22 · Las Vegas Grand Prix") so a historical round isn't mistaken for the current season
 - Raise unit-test coverage for `build_combos_html.py` and `backtest.py` from ~38% to ~98% with render-structure and numeric/shape assertions (#115)
 - Enlarge the next-race track map on desktop so it fills the full height of its hero box instead of being capped at 88px, while keeping the box size and mobile layout unchanged

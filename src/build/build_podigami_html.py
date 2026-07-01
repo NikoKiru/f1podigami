@@ -449,7 +449,15 @@ def render_accuracy_badge(ev: dict) -> str:
     )
 
 
-def render_faq(data: dict, ev: dict) -> str:
+def render_faq(
+    data: dict,
+    ev: dict,
+    total_combos: int,
+    total_races: int,
+    possible_trios: int,
+    grid_size: int,
+    lo: int,
+) -> str:
     mp = ev.get("modelParams", {}) if ev else {}
     half_life = mp.get("halfLife", 6)
     items = [
@@ -482,9 +490,14 @@ def render_faq(data: dict, ev: dict) -> str:
             "can factor in constructor strength.",
         ),
         (
-            "Why haven&rsquo;t most trios happened yet?",
-            "Even with decades of racing, the number of possible three-driver combinations from "
-            "a 20-driver grid is enormous. Most trios are still podigamis waiting to happen.",
+            "What does &ldquo;podigami&rdquo; mean?",
+            f"Podigami blends &ldquo;podium&rdquo; and &ldquo;"
+            f'<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>'
+            f"&rdquo; &mdash; it&rsquo;s the practice of tracking F1 podium trios that have never "
+            f"happened before. Since {lo}, <strong>{total_combos:,}</strong> unique trios have "
+            f"appeared across <strong>{total_races:,}</strong> races. Today&rsquo;s {grid_size}-driver "
+            f"grid can produce <strong>{possible_trios:,}</strong> different trios per race, so most "
+            f"combinations simply haven&rsquo;t come up yet.",
         ),
     ]
     entries = []
@@ -554,7 +567,7 @@ def main() -> int:
         data["driverForm"], using_constructors, meta, data["params"].get("halfLife", 6.0)
     )
     timeline = render_timeline(data)
-    faq = render_faq(data, model_eval)
+    faq = render_faq(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)
 
     # Embedded data for the slider (only what the client needs).
     # `</script>`-neutralized so an embedded string can never prematurely close the tag.
@@ -573,7 +586,6 @@ def main() -> int:
             "podigami.css",
             description=(
                 f"Podigami is the art of spotting F1 podium trios that have never happened before. "
-                f"Only {total_combos:,} unique trios have appeared in {total_races:,} races since {lo}. "
                 f"A statistical model predicts which brand-new trio is most likely next in the {season} season."
             ),
             page_path="index.html",
@@ -585,13 +597,8 @@ def main() -> int:
 <header>
     <div class="container">
         <h1><span class="accent">F1</span> Podigami</h1>
-        <p class="tagline">Podigami &mdash; a blend of &ldquo;podium&rdquo; and
-        &ldquo;<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>&rdquo;
-        &mdash; tracks F1 podium trios that have never happened before. Only <strong>{
-        total_combos:,}</strong> unique combinations have appeared across <strong>{
-        total_races:,}</strong> races since {lo}, yet today&rsquo;s {grid_size}-driver grid
-        produces <strong>{possible_trios:,}</strong> possible trios per race. A statistical model
-        predicts which brand-new trio is most likely next in the {season} season.</p>
+        <p class="tagline">Spotting the podium trio F1 has never seen &mdash;
+        and predicting who&rsquo;s about to make it happen.</p>
     </div>
 </header>
 <main>

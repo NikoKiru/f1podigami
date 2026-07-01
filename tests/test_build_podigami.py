@@ -142,7 +142,7 @@ def test_accuracy_badge_shows_top3():
 
 
 def test_faq_section_has_questions_and_uses_eval():
-    out = bp.render_faq({}, EVAL)
+    out = bp.render_faq({}, EVAL, 123, 456, 789, 20, 1950)
     assert "Frequently asked questions" in out
     assert out.count('class="faq-item"') >= 4
     assert "<summary" in out  # expandable details/summary
@@ -151,7 +151,7 @@ def test_faq_section_has_questions_and_uses_eval():
 
 
 def test_faq_section_works_without_eval():
-    out = bp.render_faq({}, {})
+    out = bp.render_faq({}, {}, 123, 456, 789, 20, 1950)
     assert "Frequently asked questions" in out
     assert out.count('class="faq-item"') >= 4
 
@@ -180,6 +180,6 @@ def test_render_form_half_life_default_is_six():
 
 
 def test_faq_fallback_half_life_is_six():
-    out = bp.render_faq({}, {})
+    out = bp.render_faq({}, {}, 123, 456, 789, 20, 1950)
     assert "~6 races" in out
     assert "~8 races" not in out
