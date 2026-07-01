@@ -214,6 +214,11 @@ main {
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
+    text-decoration: none;
+}
+
+.lr-name:hover {
+    color: var(--accent-bright);
 }
 
 .lr-trio {

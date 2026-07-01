@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-01
+
+### Fixes
+- Make the "Last race" name on the landing page clickable, linking out to Wikipedia just like the "Next race" name does
+
 ## 2026-06-29
 
 ### Improvements

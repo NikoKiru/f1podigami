@@ -224,6 +224,32 @@ def test_render_last_race_uses_latest_podium_in_current_season():
     assert "B GP" in html
 
 
+def test_render_last_race_name_links_to_schedule_url_when_present():
+    # Same behavior as the next-race box: the race name should be clickable,
+    # linking out to the schedule's wiki URL when the race is on this season's
+    # calendar and has one.
+    podiums = [
+        {
+            "season": "2026",
+            "round": "2",
+            "raceName": "B GP",
+            "p1": {"driverId": "russell", "name": "George Russell"},
+            "p2": {"driverId": "verstappen", "name": "Max Verstappen"},
+            "p3": {"driverId": "antonelli", "name": "Andrea Kimi Antonelli"},
+        }
+    ]
+    html = bp.render_last_race(SCHED, podiums, [], {}, [])
+    assert '<a class="lr-name" href="http://x"' in html
+
+
+def test_render_last_race_name_links_to_constructed_wiki_url_when_off_schedule():
+    # The fallback path (last race isn't on this season's schedule) has no
+    # schedule "url" field -> fall back to a constructed Wikipedia URL, the
+    # same trick already used for the "last time" link elsewhere in this box.
+    html = bp.render_last_race(_SCHED_LAG, _PODIUMS_LAG, [], {}, [])
+    assert '<a class="lr-name" href="https://en.wikipedia.org/wiki/2025_Abu_Dhabi_GP"' in html
+
+
 # --- combos_link helper + last-race trio links -------------------------------
 
 
