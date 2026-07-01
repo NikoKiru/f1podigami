@@ -15,6 +15,7 @@
 - Remove stale `_layout.py` comment describing a Soulmates nav "trailing arrow" that was removed along with the nav link itself (#151)
 - Escape dynamic strings in `build_soulmates_html.py` with `esc()`, matching every sibling builder, and neutralize `</script>` in the landing page's embedded JSON blob so it can't prematurely close its `<script>` tag (#150)
 - Truncate long team names (e.g. "Cadillac F1 Team") to a single line in the mobile hero driver cards, so one card no longer grows taller than its siblings (#149)
+- Fix the prediction model's teammate "halo" blend silently no-oping for a whole constructor when 3 driverIds are tracked for it during a mid-season driver-swap window — it now blends each driver toward the average of their teammates instead of requiring exactly 2 (#148)
 
 ## 2026-06-29
 
