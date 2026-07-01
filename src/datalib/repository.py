@@ -23,6 +23,7 @@ from .schemas import (
     Overdue,
     Podigami,
     Podium,
+    RaceLink,
     Schedule,
     Soulmates,
     Unlikeliest,
@@ -43,6 +44,7 @@ REGISTRY: dict[str, TypeAdapter] = {
     "podigami.json": TypeAdapter(Podigami),
     "model_eval.json": TypeAdapter(ModelEval),
     "constructor_standings.json": TypeAdapter(ConstructorStandings),
+    "f1_race_links.json": TypeAdapter(dict[str, dict[str, RaceLink]]),
 }
 
 
@@ -143,3 +145,11 @@ def load_constructor_standings() -> ConstructorStandings:
 
 def save_constructor_standings(data: Any) -> None:
     _save("constructor_standings.json", data)
+
+
+def load_race_links() -> dict[str, dict[str, RaceLink]]:
+    return _load("f1_race_links.json")
+
+
+def save_race_links(data: Any) -> None:
+    _save("f1_race_links.json", data)

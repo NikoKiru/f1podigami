@@ -26,6 +26,13 @@ class RaceRef(_Base):
     raceName: str
 
 
+class RaceLink(_Base):
+    """Official F1 result-page identifiers for one race (see fetch_race_links)."""
+
+    id: str
+    slug: str
+
+
 class DriverRef(_Base):
     driverId: str
     name: str
