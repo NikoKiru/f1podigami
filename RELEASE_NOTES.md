@@ -12,6 +12,7 @@
 ### Fixes
 - Make the "Last race" name on the landing page clickable, linking out to Wikipedia just like the "Next race" name does
 - Point the landing-page timeline slider's race links to official F1 pages too — they were still linking to Wikipedia (#140)
+- Remove stale `_layout.py` comment describing a Soulmates nav "trailing arrow" that was removed along with the nav link itself (#151)
 
 ## 2026-06-29
 

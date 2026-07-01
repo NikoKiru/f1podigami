@@ -21,8 +21,7 @@ REPO_URL = "https://github.com/NikoKiru/f1podigami"
 DATA_URL = "https://api.jolpi.ca/ergast/f1/"
 SITE_URL = "https://nikokiru.github.io/f1podigami"
 
-# Nav links in order: (href, label). The label shown for the active page is
-# rendered without the trailing arrow that the Soulmates link otherwise carries.
+# Nav links in order: (href, label).
 NAV_LINKS = [
     ("index.html", "Podigami"),
     ("combos.html", "Combinations"),
