@@ -5,9 +5,11 @@
 ### Improvements
 - Sync README.md with the current pipeline (Unlikeliest/Soulmates pages, file map, test count, update.yml cadence) and add a CLAUDE.md rule keeping it current on future PRs
 - Race-report links across the site now point to official Formula 1 result pages instead of Wikipedia, with a per-race Wikipedia fallback (#138)
+- Extend the official F1 links to the 2023 season by skipping the cancelled, never-held Emilia Romagna GP that had blocked the season's count match (#140)
 
 ### Fixes
 - Make the "Last race" name on the landing page clickable, linking out to Wikipedia just like the "Next race" name does
+- Point the landing-page timeline slider's race links to official F1 pages too — they were still linking to Wikipedia (#140)
 
 ## 2026-06-29
 

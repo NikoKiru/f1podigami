@@ -41,6 +41,14 @@ MAX_BACKOFF_RETRIES = 6
 USER_AGENT = "f1podigami/0.2 (https://github.com/NikoKiru/f1podigami)"
 LINKS_PATH = DATA_DIR / "f1_race_links.json"
 
+# Races F1's results archive lists but that were never actually held (cancelled),
+# so they have no result and no round in our podium data. Dropping them before the
+# count guard lets the season align 1:1 with our rounds instead of falling back to
+# Wikipedia. Keyed by year -> slugs.
+CANCELLED_RACES: dict[int, frozenset[str]] = {
+    2023: frozenset({"emilia-romagna"}),  # Imola — cancelled due to flooding, never held
+}
+
 
 def parse_race_links(html_text: str, year: int) -> list[tuple[str, str]]:
     """(id, slug) pairs for ``year``, deduped and sorted ascending by numeric id.
@@ -122,7 +130,13 @@ def update_map(
         try:
             if i and sleep:
                 time.sleep(sleep)
-            season_map = build_season_map(parse_race_links(fetch_fn(year), year), expected)
+            skip = CANCELLED_RACES.get(year, frozenset())
+            pairs = [
+                (rid, slug)
+                for rid, slug in parse_race_links(fetch_fn(year), year)
+                if slug not in skip
+            ]
+            season_map = build_season_map(pairs, expected)
         except Exception as exc:  # noqa: BLE001 - a bad fetch must not abort the run
             print(f"  warn: {year} fetch failed ({exc}); keeping existing", file=sys.stderr)
             continue
