@@ -1028,17 +1028,35 @@ git commit -m "feat(pipeline): fetch official race links in update.py"
 ## Task 9: Release notes + final verification + PR
 
 **Files:**
-- Modify: `RELEASE_NOTES.md`
+- Modify: `RELEASE_NOTES.md`, `README.md`, `CLAUDE.md`
 
-- [ ] **Step 1: Add a release-notes entry**
+- [ ] **Step 1: Update the changelog and sync user-facing docs**
 
-In `RELEASE_NOTES.md`, under today's date heading (`## 2026-07-01`, create it if absent) under `### Improvements`:
+These are mandated by the repo's "Keeping README.md current" and "Release Notes" rules — this feature changes behavior all three docs describe (they currently say race links go to Wikipedia).
+
+**RELEASE_NOTES.md** — the `## 2026-07-01` heading already exists; add this line under its existing `### Improvements` (repo style: no trailing period):
 
 ```markdown
-- Race-report links now point to official Formula 1 result pages instead of Wikipedia, with a Wikipedia fallback for any unmapped race (#<PR>).
+- Race-report links across the site now point to official Formula 1 result pages instead of Wikipedia, with a per-race Wikipedia fallback (#<PR>)
 ```
+(Replace `<PR>` with the PR number once the PR is opened.)
 
-(Replace `<PR>` with the PR number once opened.)
+**README.md** — replace the "Cited sources" feature bullet (line ~40):
+- Old: `- 🔗 **Cited sources** — every race links to its Wikipedia race report.`
+- New: `- 🔗 **Cited sources** — every race links to its official Formula 1 result page, with a Wikipedia fallback.`
+
+**README.md** — replace the data-source sentence (line ~283):
+- Old: `endpoint, no API key required. Race reports link to **Wikipedia**, the same source the API cites.`
+- New: `endpoint, no API key required. Race reports link to the **official Formula 1** result pages (with a Wikipedia fallback for any race not yet mapped).`
+
+**CLAUDE.md** — update the `index.html` row of the "Four output pages" table (line ~73), changing `+ wiki link` to `+ official F1 result link`:
+- Old: `| \`index.html\` | \`build/build_podigami_html.py\` | Landing page: next race, last race result (with podigami/repeat status + wiki link), prediction hero, current form, timeline, FAQ |`
+- New: `| \`index.html\` | \`build/build_podigami_html.py\` | Landing page: next race, last race result (with podigami/repeat status + official F1 result link), prediction hero, current form, timeline, FAQ |`
+
+**README.md test counts** — this feature adds tests, so bump the three `277` references. First get the real number:
+
+Run: `PYTHONPATH=src python -m pytest -q 2>&1 | tail -1`
+Note the passing count `N`, then set it in all three places: the badge (line ~19, `tests-277%20passing` → `tests-N%20passing`), the file-map line (`pytest suite (277 tests, run in CI)`), and the dev-workflow line (`# 277 tests + coverage gate`).
 
 - [ ] **Step 2: Run the full CI-equivalent gate locally**
 
@@ -1056,11 +1074,11 @@ Expected: ruff clean, `Validated 12 datasets OK.`, all tests pass, build returns
 
 Serve `dist/` and confirm on `index.html`, `combos.html`, and `unlikeliest.html` that race links go to `formula1.com` (hover to see the URL). The Playwright MCP can drive this against the locally-served `dist/` if desired.
 
-- [ ] **Step 4: Commit release notes**
+- [ ] **Step 4: Commit docs**
 
 ```bash
-git add RELEASE_NOTES.md
-git commit -m "docs: release note for official F1 race links"
+git add RELEASE_NOTES.md README.md CLAUDE.md
+git commit -m "docs: release note + sync README/CLAUDE for official F1 race links"
 ```
 
 - [ ] **Step 5: Push + open the PR into develop**
