@@ -157,9 +157,12 @@ def apply_car_overlay(
                 teams.setdefault(cid, []).append(d)
         blended = dict(out)
         for mates in teams.values():
-            if len(mates) == 2:
-                a, b = mates
-                blended[a] = (1 - teammate_beta) * out[a] + teammate_beta * out[b]
-                blended[b] = (1 - teammate_beta) * out[b] + teammate_beta * out[a]
+            if len(mates) < 2:
+                continue
+            for d in mates:
+                others = [out[m] for m in mates if m != d]
+                blended[d] = (1 - teammate_beta) * out[d] + teammate_beta * (
+                    sum(others) / len(others)
+                )
         out = blended
     return out
