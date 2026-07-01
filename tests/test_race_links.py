@@ -55,6 +55,8 @@ from fetch import fetch_race_links as frl  # noqa: E402
 
 # --- fetch_race_links pure logic ----------------------------------------------
 
+# "austria" is pinned first (the current-season "latest race" highlight) even
+# though it is round 3 — proof that neither DOM order nor ID order gives the round.
 _SAMPLE_HTML = """
 <a href="/en/results/2026/races/1288/austria/race-result">latest</a>
 <ul>
@@ -66,25 +68,34 @@ _SAMPLE_HTML = """
 </ul>
 """
 
+# round -> raceName, the identity source rounds are assigned from.
+_NAMES_2026 = {
+    2026: {"1": "Australian Grand Prix", "2": "Miami Grand Prix", "3": "Austrian Grand Prix"}
+}
 
-def test_parse_race_links_dedupes_and_sorts_by_id():
+
+def test_parse_race_links_dedupes_first_seen_and_filters_year():
     pairs = frl.parse_race_links(_SAMPLE_HTML, 2026)
-    assert pairs == [("1279", "australia"), ("1284", "miami"), ("1288", "austria")]
+    assert sorted(pairs) == [("1279", "australia"), ("1284", "miami"), ("1288", "austria")]
+    # first-seen order, NOT round order: the pinned latest race comes first.
+    assert pairs[0] == ("1288", "austria")
 
 
-def test_build_season_map_assigns_rounds_when_count_matches():
-    pairs = [("1279", "australia"), ("1284", "miami"), ("1288", "austria")]
-    m = frl.build_season_map(pairs, expected_count=3)
-    assert m == {
+def test_update_map_assigns_rounds_by_identity_not_order():
+    out = frl.update_map({}, [(2026, 3)], lambda y: _SAMPLE_HTML, _NAMES_2026, sleep=0)
+    assert out["2026"] == {
         "1": {"id": "1279", "slug": "australia"},
         "2": {"id": "1284", "slug": "miami"},
-        "3": {"id": "1288", "slug": "austria"},
+        "3": {"id": "1288", "slug": "austria"},  # round 3, despite appearing first
     }
 
 
-def test_build_season_map_empty_on_count_mismatch():
-    pairs = [("1279", "australia"), ("1288", "austria")]
-    assert frl.build_season_map(pairs, expected_count=3) == {}
+def test_update_map_wiki_fallback_when_a_slug_has_no_round():
+    # F1 lists a slug we can't identify -> the whole season is left unmapped and
+    # falls back to Wikipedia at render time (never a wrong link).
+    html = '<a href="/en/results/2020/races/1/mystery/race-result"></a>'
+    out = frl.update_map({}, [(2020, 1)], lambda y: html, {2020: {"1": "Austrian Grand Prix"}}, 0)
+    assert "2020" not in out
 
 
 def test_season_counts_uses_schedule_for_current_and_podiums_for_history():
@@ -93,6 +104,14 @@ def test_season_counts_uses_schedule_for_current_and_podiums_for_history():
     counts = frl.season_counts(schedule, podiums)
     assert counts[1950] == 2
     assert counts[2026] == 2  # schedule wins for the current season
+
+
+def test_season_round_names_uses_schedule_for_current_and_podiums_for_history():
+    schedule = {"season": "2026", "races": [{"round": "1", "raceName": "Australian Grand Prix"}]}
+    podiums = [{"season": "1950", "round": "1", "raceName": "British Grand Prix"}]
+    names = frl.season_round_names(schedule, podiums)
+    assert names[1950] == {"1": "British Grand Prix"}
+    assert names[2026] == {"1": "Australian Grand Prix"}
 
 
 def test_compute_targets_modes():
@@ -113,27 +132,22 @@ def test_update_map_keeps_existing_on_fetch_failure():
         raise RuntimeError("network down")
 
     existing = {"2025": {"1": {"id": "9", "slug": "x"}}}
-    out = frl.update_map(existing, [(2026, 22)], boom, sleep=0)
+    out = frl.update_map(existing, [(2026, 22)], boom, {}, sleep=0)
     assert out == existing  # unchanged; no crash
 
 
-def test_update_map_adds_season_on_success():
-    def ok(year):
-        return _SAMPLE_HTML
-
-    out = frl.update_map({}, [(2026, 3)], ok, sleep=0)
-    assert out["2026"]["1"] == {"id": "1279", "slug": "australia"}
-
-
-def test_update_map_drops_cancelled_race_so_season_aligns():
+def test_update_map_drops_cancelled_race_so_season_matches():
     # F1's archive lists a race that never happened (cancelled). Dropping it lets
-    # the season match our round count and map 1:1 instead of wiki-falling-back.
+    # the remaining slugs match our rounds 1:1 instead of wiki-falling-back.
     slugs = ["bahrain", "emilia-romagna", "monaco"]  # emilia-romagna = cancelled
     html = "".join(
         f'<a href="/en/results/2023/races/{i}/{slug}/race-result"></a>'
         for i, slug in enumerate(slugs, start=100)
     )
-    out = frl.update_map({}, [(2023, 2)], lambda y: html, sleep=0)
-    mapped = [v["slug"] for v in out["2023"].values()]
-    assert mapped == ["bahrain", "monaco"]  # cancelled dropped, rounds re-aligned
+    names = {2023: {"1": "Bahrain Grand Prix", "2": "Monaco Grand Prix"}}
+    out = frl.update_map({}, [(2023, 2)], lambda y: html, names, sleep=0)
+    assert out["2023"] == {
+        "1": {"id": "100", "slug": "bahrain"},
+        "2": {"id": "102", "slug": "monaco"},  # emilia-romagna dropped
+    }
     assert "emilia-romagna" in frl.CANCELLED_RACES[2023]

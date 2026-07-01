@@ -10,6 +10,7 @@
 - Extend the official F1 links to the 2023 season by skipping the cancelled, never-held Emilia Romagna GP that had blocked the season's count match (#140)
 
 ### Fixes
+- Fix official F1 race-report links pointing at the **wrong race**: rounds were mapped to slugs by sorting F1's internal race IDs, which are not assigned in round order, scrambling ~83 links across 7+ seasons (e.g. 2021/2022/2025 and the "last race" box). Rounds are now paired with slugs by race identity (`race_identity.match_season`), a whole-dataset guardrail test blocks any wrong link, and the committed map is corrected (#158)
 - Make the "Last race" name on the landing page clickable, linking out to Wikipedia just like the "Next race" name does
 - Point the landing-page timeline slider's race links to official F1 pages too — they were still linking to Wikipedia (#140)
 - Remove stale `_layout.py` comment describing a Soulmates nav "trailing arrow" that was removed along with the nav link itself (#151)

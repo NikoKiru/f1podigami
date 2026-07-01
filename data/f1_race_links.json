@@ -1559,32 +1559,32 @@
   },
   "1983": {
     "1": {
-      "id": "8",
-      "slug": "detroit"
-    },
-    "2": {
       "id": "9",
       "slug": "brazil"
     },
-    "3": {
+    "2": {
       "id": "453",
       "slug": "usa-west"
     },
-    "4": {
+    "3": {
       "id": "454",
       "slug": "france"
     },
-    "5": {
+    "4": {
       "id": "455",
       "slug": "san-marino"
     },
-    "6": {
+    "5": {
       "id": "456",
       "slug": "monaco"
     },
-    "7": {
+    "6": {
       "id": "457",
       "slug": "belgium"
+    },
+    "7": {
+      "id": "8",
+      "slug": "detroit"
     },
     "8": {
       "id": "458",
@@ -2215,40 +2215,40 @@
   },
   "1993": {
     "1": {
-      "id": "3",
-      "slug": "great-britain"
-    },
-    "2": {
       "id": "590",
       "slug": "south-africa"
     },
-    "3": {
+    "2": {
       "id": "591",
       "slug": "brazil"
     },
-    "4": {
+    "3": {
       "id": "592",
       "slug": "europe"
     },
-    "5": {
+    "4": {
       "id": "593",
       "slug": "san-marino"
     },
-    "6": {
+    "5": {
       "id": "594",
       "slug": "spain"
     },
-    "7": {
+    "6": {
       "id": "595",
       "slug": "monaco"
     },
-    "8": {
+    "7": {
       "id": "596",
       "slug": "canada"
     },
-    "9": {
+    "8": {
       "id": "597",
       "slug": "france"
+    },
+    "9": {
+      "id": "3",
+      "slug": "great-britain"
     },
     "10": {
       "id": "598",
@@ -3557,48 +3557,48 @@
   },
   "2012": {
     "1": {
-      "id": "1",
-      "slug": "hungary"
-    },
-    "2": {
-      "id": "4",
-      "slug": "great-britain"
-    },
-    "3": {
       "id": "10",
       "slug": "australia"
     },
-    "4": {
+    "2": {
       "id": "11",
       "slug": "malaysia"
     },
-    "5": {
+    "3": {
       "id": "12",
       "slug": "china"
     },
-    "6": {
+    "4": {
       "id": "13",
       "slug": "bahrain"
     },
-    "7": {
+    "5": {
       "id": "14",
       "slug": "spain"
     },
-    "8": {
+    "6": {
       "id": "15",
       "slug": "monaco"
     },
-    "9": {
+    "7": {
       "id": "16",
       "slug": "canada"
     },
-    "10": {
+    "8": {
       "id": "17",
       "slug": "europe"
     },
-    "11": {
+    "9": {
+      "id": "4",
+      "slug": "great-britain"
+    },
+    "10": {
       "id": "18",
       "slug": "germany"
+    },
+    "11": {
+      "id": "1",
+      "slug": "hungary"
     },
     "12": {
       "id": "19",
@@ -3901,60 +3901,60 @@
       "slug": "canada"
     },
     "8": {
+      "id": "958",
+      "slug": "europe"
+    },
+    "9": {
       "id": "945",
       "slug": "austria"
     },
-    "9": {
+    "10": {
       "id": "946",
       "slug": "great-britain"
     },
-    "10": {
+    "11": {
       "id": "947",
       "slug": "hungary"
     },
-    "11": {
+    "12": {
       "id": "948",
       "slug": "germany"
     },
-    "12": {
+    "13": {
       "id": "949",
       "slug": "belgium"
     },
-    "13": {
+    "14": {
       "id": "950",
       "slug": "italy"
     },
-    "14": {
+    "15": {
       "id": "951",
       "slug": "singapore"
     },
-    "15": {
+    "16": {
       "id": "952",
       "slug": "malaysia"
     },
-    "16": {
+    "17": {
       "id": "953",
       "slug": "japan"
     },
-    "17": {
+    "18": {
       "id": "954",
       "slug": "united-states"
     },
-    "18": {
+    "19": {
       "id": "955",
       "slug": "mexico"
     },
-    "19": {
+    "20": {
       "id": "956",
       "slug": "brazil"
     },
-    "20": {
+    "21": {
       "id": "957",
       "slug": "abu-dhabi"
-    },
-    "21": {
-      "id": "958",
-      "slug": "europe"
     }
   },
   "2017": {
@@ -4295,56 +4295,56 @@
       "slug": "portugal"
     },
     "4": {
-      "id": "1067",
-      "slug": "monaco"
-    },
-    "5": {
-      "id": "1068",
-      "slug": "azerbaijan"
-    },
-    "6": {
-      "id": "1070",
-      "slug": "france"
-    },
-    "7": {
-      "id": "1071",
-      "slug": "austria"
-    },
-    "8": {
-      "id": "1072",
-      "slug": "great-britain"
-    },
-    "9": {
-      "id": "1073",
-      "slug": "hungary"
-    },
-    "10": {
-      "id": "1074",
-      "slug": "belgium"
-    },
-    "11": {
-      "id": "1075",
-      "slug": "netherlands"
-    },
-    "12": {
-      "id": "1076",
-      "slug": "italy"
-    },
-    "13": {
-      "id": "1077",
-      "slug": "russia"
-    },
-    "14": {
-      "id": "1078",
-      "slug": "turkey"
-    },
-    "15": {
       "id": "1086",
       "slug": "spain"
     },
-    "16": {
+    "5": {
+      "id": "1067",
+      "slug": "monaco"
+    },
+    "6": {
+      "id": "1068",
+      "slug": "azerbaijan"
+    },
+    "7": {
+      "id": "1070",
+      "slug": "france"
+    },
+    "8": {
       "id": "1092",
       "slug": "styria"
+    },
+    "9": {
+      "id": "1071",
+      "slug": "austria"
+    },
+    "10": {
+      "id": "1072",
+      "slug": "great-britain"
+    },
+    "11": {
+      "id": "1073",
+      "slug": "hungary"
+    },
+    "12": {
+      "id": "1074",
+      "slug": "belgium"
+    },
+    "13": {
+      "id": "1075",
+      "slug": "netherlands"
+    },
+    "14": {
+      "id": "1076",
+      "slug": "italy"
+    },
+    "15": {
+      "id": "1077",
+      "slug": "russia"
+    },
+    "16": {
+      "id": "1078",
+      "slug": "turkey"
     },
     "17": {
       "id": "1102",
@@ -4373,68 +4373,68 @@
   },
   "2022": {
     "1": {
-      "id": "1108",
-      "slug": "australia"
-    },
-    "2": {
-      "id": "1109",
-      "slug": "emilia-romagna"
-    },
-    "3": {
-      "id": "1110",
-      "slug": "miami"
-    },
-    "4": {
-      "id": "1111",
-      "slug": "spain"
-    },
-    "5": {
-      "id": "1112",
-      "slug": "monaco"
-    },
-    "6": {
-      "id": "1113",
-      "slug": "canada"
-    },
-    "7": {
-      "id": "1114",
-      "slug": "great-britain"
-    },
-    "8": {
-      "id": "1115",
-      "slug": "austria"
-    },
-    "9": {
-      "id": "1116",
-      "slug": "france"
-    },
-    "10": {
-      "id": "1117",
-      "slug": "hungary"
-    },
-    "11": {
-      "id": "1118",
-      "slug": "belgium"
-    },
-    "12": {
-      "id": "1119",
-      "slug": "netherlands"
-    },
-    "13": {
-      "id": "1120",
-      "slug": "italy"
-    },
-    "14": {
       "id": "1124",
       "slug": "bahrain"
     },
-    "15": {
+    "2": {
       "id": "1125",
       "slug": "saudi-arabia"
     },
-    "16": {
+    "3": {
+      "id": "1108",
+      "slug": "australia"
+    },
+    "4": {
+      "id": "1109",
+      "slug": "emilia-romagna"
+    },
+    "5": {
+      "id": "1110",
+      "slug": "miami"
+    },
+    "6": {
+      "id": "1111",
+      "slug": "spain"
+    },
+    "7": {
+      "id": "1112",
+      "slug": "monaco"
+    },
+    "8": {
       "id": "1126",
       "slug": "azerbaijan"
+    },
+    "9": {
+      "id": "1113",
+      "slug": "canada"
+    },
+    "10": {
+      "id": "1114",
+      "slug": "great-britain"
+    },
+    "11": {
+      "id": "1115",
+      "slug": "austria"
+    },
+    "12": {
+      "id": "1116",
+      "slug": "france"
+    },
+    "13": {
+      "id": "1117",
+      "slug": "hungary"
+    },
+    "14": {
+      "id": "1118",
+      "slug": "belgium"
+    },
+    "15": {
+      "id": "1119",
+      "slug": "netherlands"
+    },
+    "16": {
+      "id": "1120",
+      "slug": "italy"
     },
     "17": {
       "id": "1133",
@@ -4695,56 +4695,56 @@
       "slug": "austria"
     },
     "12": {
+      "id": "1277",
+      "slug": "great-britain"
+    },
+    "13": {
       "id": "1265",
       "slug": "belgium"
     },
-    "13": {
+    "14": {
       "id": "1266",
       "slug": "hungary"
     },
-    "14": {
+    "15": {
       "id": "1267",
       "slug": "netherlands"
     },
-    "15": {
+    "16": {
       "id": "1268",
       "slug": "italy"
     },
-    "16": {
+    "17": {
       "id": "1269",
       "slug": "azerbaijan"
     },
-    "17": {
+    "18": {
       "id": "1270",
       "slug": "singapore"
     },
-    "18": {
+    "19": {
       "id": "1271",
       "slug": "united-states"
     },
-    "19": {
+    "20": {
       "id": "1272",
       "slug": "mexico"
     },
-    "20": {
+    "21": {
       "id": "1273",
       "slug": "brazil"
     },
-    "21": {
+    "22": {
       "id": "1274",
       "slug": "las-vegas"
     },
-    "22": {
+    "23": {
       "id": "1275",
       "slug": "qatar"
     },
-    "23": {
+    "24": {
       "id": "1276",
       "slug": "abu-dhabi"
-    },
-    "24": {
-      "id": "1277",
-      "slug": "great-britain"
     }
   },
   "2026": {
