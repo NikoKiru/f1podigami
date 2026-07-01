@@ -586,7 +586,6 @@ def main() -> int:
             "podigami.css",
             description=(
                 f"Podigami is the art of spotting F1 podium trios that have never happened before. "
-                f"Only {total_combos:,} unique trios have appeared in {total_races:,} races since {lo}. "
                 f"A statistical model predicts which brand-new trio is most likely next in the {season} season."
             ),
             page_path="index.html",
