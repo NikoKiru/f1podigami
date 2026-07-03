@@ -1,5 +1,17 @@
 # Release Notes
 
+## 2026-07-03
+
+### Fixes
+- Season-rollover proofing for the data pipeline: off-season updates no longer wipe `current_drivers.json` (which emptied the prediction hero, contenders and current-form panels all winter) or `constructor_standings.json` (which dropped team labels and the car overlay) — both now fall back to the latest season that actually has results
+- `fetch_schedule` can no longer write an empty schedule in early January before the new calendar is published (that broke the next-race box and failed the data-integrity CI gate, stalling the automated updates); it falls back to the previous season instead
+- Circuit outline matching now rejects matches beyond ~5 km, so a future circuit missing from the bundled f1-circuits dataset shows no track map instead of silently borrowing the nearest existing track's outline and length
+
+### Improvements
+- Once a season is complete, the schedule looks ahead to the next season's published calendar, so the landing page counts down to the new season opener over the winter instead of showing "season complete"
+- Official F1 race-link matching is now partial per round: a brand-new race name (e.g. a 2027 venue) degrades only its own round to the Wikipedia fallback instead of the whole season, and the hardcoded cancelled-race table is no longer needed
+- Pre-map flags for plausible future host countries (Thailand, Rwanda, Argentina, Vietnam, South Korea) and add a CI check that every mapped country has a committed flag SVG
+
 ## 2026-07-01
 
 ### Improvements
