@@ -56,18 +56,40 @@ def test_match_season_ignores_input_order():
     }
 
 
-def test_match_season_none_when_slug_has_no_matching_round():
-    # An F1-listed race we don't have a round for (e.g. a cancelled event) makes
-    # the season unmatchable -> the caller falls back to Wikipedia.
+def test_match_season_skips_slug_with_no_matching_round():
+    # An F1-listed race we don't have a round for (a cancelled event, or a
+    # brand-new race name our table doesn't know yet) must not cost the rest of
+    # the season its links — only that slug is skipped.
     round_names = {"1": "Bahrain Grand Prix", "2": "Monaco Grand Prix"}
     pairs = [("1", "bahrain"), ("2", "monaco"), ("3", "emilia-romagna")]
-    assert ri.match_season(round_names, pairs) is None
+    assert ri.match_season(round_names, pairs) == {
+        "1": {"id": "1", "slug": "bahrain"},
+        "2": {"id": "2", "slug": "monaco"},
+    }
 
 
-def test_match_season_none_when_a_round_is_unmatched():
+def test_match_season_maps_partially_when_a_round_is_unmatched():
+    # A round F1 has no slug for (e.g. a new race name we can't identify) simply
+    # gets no link — race_url falls back to Wikipedia for that round alone.
     round_names = {"1": "Bahrain Grand Prix", "2": "Monaco Grand Prix"}
     pairs = [("1", "bahrain")]  # nothing for round 2
-    assert ri.match_season(round_names, pairs) is None
+    assert ri.match_season(round_names, pairs) == {"1": {"id": "1", "slug": "bahrain"}}
+
+
+def test_match_season_drops_round_claimed_by_two_slugs():
+    # Two different slugs identity-matching the same round is an ambiguity; a
+    # wrong link must never ship, so that round gets no link at all.
+    round_names = {"1": "United States Grand Prix", "2": "Monaco Grand Prix"}
+    pairs = [("7", "united-states"), ("8", "usa-east"), ("9", "monaco")]
+    assert ri.match_season(round_names, pairs) == {"2": {"id": "9", "slug": "monaco"}}
+
+
+def test_match_season_skips_slug_matching_two_rounds():
+    # One slug acceptable for two rounds cannot be placed -> skipped, both
+    # rounds fall back to Wikipedia.
+    round_names = {"1": "United States Grand Prix", "2": "United States Grand Prix"}
+    pairs = [("7", "united-states")]
+    assert ri.match_season(round_names, pairs) == {}
 
 
 def test_match_season_resolves_us_east_west_pair():

@@ -58,9 +58,19 @@ def get(url: str, params: dict | None = None) -> dict:
 
 
 def season_and_rounds(today_year: int | None = None) -> tuple[int, list[int]]:
+    """(season, completed rounds) the standings should reflect.
+
+    Off-season the calendar year has no completed rounds yet, so fall back to the
+    latest season that has podiums — the final standings stay meaningful (compute
+    matches them against the same latest-podium season) instead of being replaced
+    by an empty file that switches the car overlay and team labels off.
+    """
     year = today_year if today_year is not None else datetime.date.today().year
     podiums = json.loads(PODIUMS_PATH.read_text(encoding="utf-8"))
     rounds = sorted({int(p["round"]) for p in podiums if int(p["season"]) == year})
+    if not rounds and podiums:
+        year = max(int(p["season"]) for p in podiums)
+        rounds = sorted({int(p["round"]) for p in podiums if int(p["season"]) == year})
     return year, rounds
 
 

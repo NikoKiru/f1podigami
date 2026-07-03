@@ -85,13 +85,41 @@ def build_race(race: dict, features: list[dict]) -> dict:
     return entry
 
 
+def choose_season_races(fetch_races, year: int, today: datetime.date) -> tuple[int, list[dict]]:
+    """Pick which season's calendar to publish, handling the season rollover.
+
+    ``fetch_races(year) -> list`` returns the API's race list for a season.
+
+    - Mid-season: the calendar year's schedule, unchanged.
+    - Season complete (every race date passed): try ``year + 1`` so the site
+      counts down to the next opener as soon as F1 publishes the calendar.
+    - Calendar year not in the API yet (early January): fall back to ``year - 1``
+      so we never write an empty schedule — an empty one breaks the next-race box
+      and fails the data-integrity CI gate, stalling the update automation.
+    """
+    races = fetch_races(year)
+    if not races:
+        prev = fetch_races(year - 1)
+        return (year - 1, prev) if prev else (year, races)
+    if all(r["date"] < today.isoformat() for r in races):
+        nxt = fetch_races(year + 1)
+        if nxt:
+            return year + 1, nxt
+    return year, races
+
+
 def main() -> int:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    season = datetime.date.today().year
 
     features = json.loads(CIRCUITS_PATH.read_text(encoding="utf-8"))["features"]
-    data = get(f"{API_ROOT}/{season}.json", {"limit": 100})
-    races = data["MRData"]["RaceTable"]["Races"]
+
+    def fetch_races(year: int) -> list[dict]:
+        data = get(f"{API_ROOT}/{year}.json", {"limit": 100})
+        return data["MRData"]["RaceTable"]["Races"]
+
+    season, races = choose_season_races(
+        fetch_races, datetime.date.today().year, datetime.date.today()
+    )
 
     out = {
         "season": str(season),

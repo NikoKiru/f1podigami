@@ -55,9 +55,18 @@ def get(url: str, params: dict | None = None) -> dict:
 
 
 def season_and_recent_rounds(today_year: int | None = None) -> tuple[int, list[int]]:
+    """(season, last completed rounds) to build the grid from.
+
+    Off-season the calendar year has no completed rounds yet, so fall back to the
+    latest season that has podiums — otherwise the grid (and with it the landing
+    page's prediction hero) would be wiped empty until round 1 of the new season.
+    """
     year = today_year if today_year is not None else datetime.date.today().year
     podiums = json.loads(PODIUMS_PATH.read_text(encoding="utf-8"))
     rounds = sorted({int(p["round"]) for p in podiums if int(p["season"]) == year})
+    if not rounds and podiums:
+        year = max(int(p["season"]) for p in podiums)
+        rounds = sorted({int(p["round"]) for p in podiums if int(p["season"]) == year})
     return year, rounds[-ROUNDS_BACK:]
 
 
