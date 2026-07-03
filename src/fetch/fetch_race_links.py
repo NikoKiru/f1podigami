@@ -18,9 +18,10 @@ Design notes:
   get out-of-order IDs), and the index's DOM order pins the "latest race" first
   for the current season — so neither recovers the round. Instead we pair each of
   our rounds with the slug whose identity matches its race name
-  (``race_identity.match_season``, backed by ``ACCEPTABLE_SLUGS``). A season is
-  trusted only when every round matches exactly one slug with none left over;
-  otherwise that whole season falls back to Wikipedia at render time.
+  (``race_identity.match_season``, backed by ``ACCEPTABLE_SLUGS``). Matching is
+  partial per round: an unidentifiable slug (a brand-new race name not in the
+  table yet, or a cancelled event) costs only its own round, which falls back to
+  Wikipedia at render time — never a wrong link, and never the whole season.
 - Network failures are non-fatal: the script keeps the committed map and exits 0,
   so a transient F1 outage can never block the automated post-race deploy.
 """
@@ -44,14 +45,6 @@ RESULT_RE = re.compile(r"/en/results/(\d{4})/races/(\d+)/([a-z0-9-]+)/race-resul
 MAX_BACKOFF_RETRIES = 6
 USER_AGENT = "f1podigami/0.2 (https://github.com/NikoKiru/f1podigami)"
 LINKS_PATH = DATA_DIR / "f1_race_links.json"
-
-# Races F1's results archive lists but that were never actually held (cancelled),
-# so they have no result and no round in our podium data. Dropping them before the
-# count guard lets the season align 1:1 with our rounds instead of falling back to
-# Wikipedia. Keyed by year -> slugs.
-CANCELLED_RACES: dict[int, frozenset[str]] = {
-    2023: frozenset({"emilia-romagna"}),  # Imola — cancelled due to flooding, never held
-}
 
 
 def parse_race_links(html_text: str, year: int) -> list[tuple[str, str]]:
@@ -135,25 +128,31 @@ def update_map(
 ) -> dict:
     """Refresh each (year, expected_count) target. A per-year failure or an
     identity mismatch never discards existing data or aborts — the year is left
-    as-is. Rounds are assigned by slug identity, not ID/page order."""
+    as-is. Rounds are assigned by slug identity, not ID/page order; identity
+    matching is partial, so an unidentifiable slug (new race name, cancelled
+    event) costs only its own round, and a refresh merges over what a year
+    already has rather than replacing it."""
     result = {k: dict(v) for k, v in existing.items()}
     for i, (year, expected) in enumerate(targets):
         try:
             if i and sleep:
                 time.sleep(sleep)
-            skip = CANCELLED_RACES.get(year, frozenset())
-            pairs = [
-                (rid, slug)
-                for rid, slug in parse_race_links(fetch_fn(year), year)
-                if slug not in skip
-            ]
+            pairs = parse_race_links(fetch_fn(year), year)
             season_map = match_season(round_names.get(year, {}), pairs)
         except Exception as exc:  # noqa: BLE001 - a bad fetch must not abort the run
             print(f"  warn: {year} fetch failed ({exc}); keeping existing", file=sys.stderr)
             continue
         if season_map:
-            result[str(year)] = {str(r): season_map[str(r)] for r in sorted(season_map, key=int)}
-            print(f"  {year}: mapped {len(season_map)}/{expected}")
+            merged = {**result.get(str(year), {}), **season_map}
+            result[str(year)] = {str(r): merged[str(r)] for r in sorted(merged, key=int)}
+            if len(season_map) < expected:
+                print(
+                    f"  warn: {year} mapped only {len(season_map)}/{expected};"
+                    " wiki fallback for the unmatched rounds",
+                    file=sys.stderr,
+                )
+            else:
+                print(f"  {year}: mapped {len(season_map)}/{expected}")
         else:
             print(
                 f"  warn: {year} slugs don't match our races (F1 vs ours);"

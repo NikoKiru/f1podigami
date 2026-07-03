@@ -9,8 +9,9 @@ season -- so neither ID sort nor page position reliably recovers the round. What
 *is* reliable is the slug's identity: "spain" is the Spanish GP, "great-britain"
 is the British GP. We already know each round's race name (schedule for the
 current season, podiums for history), so we assign each round the slug whose
-identity matches, and refuse (fall back to Wikipedia) when it can't be done
-cleanly. See issue #158.
+identity matches, and refuse (fall back to Wikipedia) for any round that can't
+be matched cleanly — a new race name degrades only its own round, never the
+whole season. See issue #158.
 
 ``ACCEPTABLE_SLUGS`` maps each race name to the set of slugs F1 may use for it.
 It is a set (not a single value) only because a race name can legitimately map to
@@ -96,27 +97,31 @@ def slug_matches(slug: str, race_name: str) -> bool:
 
 def match_season(
     round_names: dict[str, str], pairs: Iterable[tuple[str, str]]
-) -> dict[str, dict[str, str]] | None:
+) -> dict[str, dict[str, str]]:
     """Assign each round its ``{id, slug}`` by matching slug identity.
 
     ``round_names`` maps ``round -> raceName`` for one season; ``pairs`` is that
     season's ``(id, slug)`` pairs from F1, in any order. Returns
-    ``{round: {"id", "slug"}}`` only when every round is matched by exactly one
-    slug and no slug is left over; otherwise ``None`` (the caller then falls back
-    to Wikipedia for the whole season). This is deliberately strict: a partial or
-    ambiguous match is treated as no match so a wrong link can never ship.
+    ``{round: {"id", "slug"}}`` for every round matched by exactly one slug.
+
+    Matching is *partial* by design: an unplaceable slug (a cancelled event, or a
+    brand-new race name the table doesn't know yet) or an unmatched round costs
+    only itself — the rest of the season keeps its links, and ``race_url`` falls
+    back to Wikipedia per round. The per-round safety of issue #158 is preserved
+    absolutely: a slug is only ever assigned to a round whose race name accepts
+    it, and any ambiguity (a slug matching two rounds, or two slugs claiming one
+    round) yields no link rather than a possibly-wrong one.
     """
     result: dict[str, dict[str, str]] = {}
-    claimed: set[str] = set()
+    ambiguous: set[str] = set()
     for rid, slug in pairs:
         rounds = [rnd for rnd, name in round_names.items() if slug in acceptable_slugs(name)]
         if len(rounds) != 1:
-            return None  # slug matches no round (unknown/cancelled) or is ambiguous
+            continue  # slug matches no round (unknown/cancelled) or two rounds
         rnd = rounds[0]
-        if rnd in claimed:
-            return None  # two slugs claim the same round
-        claimed.add(rnd)
+        if rnd in result or rnd in ambiguous:
+            ambiguous.add(rnd)  # two slugs claim the same round -> trust neither
+            result.pop(rnd, None)
+            continue
         result[rnd] = {"id": rid, "slug": slug}
-    if claimed != set(round_names):
-        return None  # some round had no matching slug
     return result

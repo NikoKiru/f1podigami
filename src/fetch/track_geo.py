@@ -13,6 +13,12 @@ VIEW_W = 120
 VIEW_H = 72
 PAD = 6
 
+# Max centroid distance (degrees) for a circuit to count as "the same circuit".
+# Every legitimate match in the current dataset is within ~0.013 deg (~1.4 km);
+# beyond this, the race is at a circuit the geojson doesn't have yet, and it is
+# better to draw no outline than the wrong track's.
+MAX_MATCH_DEG = 0.05
+
 
 def circuit_centroid(coords: list[list[float]]) -> tuple[float, float]:
     """Return (lat, lon) centroid of a LineString of [lon, lat] points."""
@@ -22,8 +28,14 @@ def circuit_centroid(coords: list[list[float]]) -> tuple[float, float]:
     return lat, lon
 
 
-def nearest_circuit(lat: float, lon: float, features: list[dict]) -> dict | None:
-    """Pick the geojson feature whose centroid is closest to (lat, lon)."""
+def nearest_circuit(
+    lat: float, lon: float, features: list[dict], max_deg: float = MAX_MATCH_DEG
+) -> dict | None:
+    """Pick the geojson feature whose centroid is closest to (lat, lon).
+
+    Returns ``None`` when no centroid is within ``max_deg`` degrees — a race at a
+    circuit the dataset doesn't cover must not borrow another track's outline.
+    """
     best = None
     best_d = None
     for f in features:
@@ -34,6 +46,8 @@ def nearest_circuit(lat: float, lon: float, features: list[dict]) -> dict | None
         d = (clat - lat) ** 2 + (clon - lon) ** 2
         if best_d is None or d < best_d:
             best, best_d = f, d
+    if best_d is not None and best_d > max_deg**2:
+        return None
     return best
 
 

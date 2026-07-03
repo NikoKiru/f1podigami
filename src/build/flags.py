@@ -16,6 +16,7 @@ from pathlib import Path
 _FLAG_DIR = Path(__file__).resolve().parents[2] / "data" / "flags"
 
 COUNTRY_ISO: dict[str, str] = {
+    "Argentina": "AR",
     "Australia": "AU",
     "Austria": "AT",
     "Azerbaijan": "AZ",
@@ -38,12 +39,15 @@ COUNTRY_ISO: dict[str, str] = {
     "Portugal": "PT",
     "Qatar": "QA",
     "Russia": "RU",
+    "Rwanda": "RW",
     "Saudi Arabia": "SA",
     "Singapore": "SG",
     "South Africa": "ZA",
+    "South Korea": "KR",
     "Spain": "ES",
     "Sweden": "SE",
     "Switzerland": "CH",
+    "Thailand": "TH",
     "Turkey": "TR",
     "UAE": "AE",
     "United Arab Emirates": "AE",
@@ -51,6 +55,7 @@ COUNTRY_ISO: dict[str, str] = {
     "United Kingdom": "GB",
     "United States": "US",
     "USA": "US",
+    "Vietnam": "VN",
 }
 
 

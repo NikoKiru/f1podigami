@@ -91,11 +91,41 @@ def test_update_map_assigns_rounds_by_identity_not_order():
 
 
 def test_update_map_wiki_fallback_when_a_slug_has_no_round():
-    # F1 lists a slug we can't identify -> the whole season is left unmapped and
-    # falls back to Wikipedia at render time (never a wrong link).
+    # F1 lists only a slug we can't identify -> nothing mapped for the season,
+    # so it falls back to Wikipedia at render time (never a wrong link).
     html = '<a href="/en/results/2020/races/1/mystery/race-result"></a>'
     out = frl.update_map({}, [(2020, 1)], lambda y: html, {2020: {"1": "Austrian Grand Prix"}}, 0)
     assert "2020" not in out
+
+
+def test_update_map_maps_known_races_even_with_an_unknown_new_name():
+    # A season gaining a brand-new race name (e.g. a 2027 venue our identity
+    # table doesn't know yet) must not cost every other race its official link.
+    html = (
+        '<a href="/en/results/2027/races/1300/bahrain/race-result"></a>'
+        '<a href="/en/results/2027/races/1301/gotham-city/race-result"></a>'
+        '<a href="/en/results/2027/races/1302/monaco/race-result"></a>'
+    )
+    names = {
+        2027: {"1": "Bahrain Grand Prix", "2": "Gotham City Grand Prix", "3": "Monaco Grand Prix"}
+    }
+    out = frl.update_map({}, [(2027, 3)], lambda y: html, names, sleep=0)
+    assert out["2027"] == {
+        "1": {"id": "1300", "slug": "bahrain"},
+        "3": {"id": "1302", "slug": "monaco"},  # round 2 -> Wikipedia fallback
+    }
+
+
+def test_update_map_refresh_keeps_previously_mapped_rounds():
+    # A partial refresh must merge with what we already know, never drop it.
+    existing = {"2026": {"3": {"id": "999", "slug": "japan"}}}
+    html = '<a href="/en/results/2026/races/1279/australia/race-result"></a>'
+    names = {2026: {"1": "Australian Grand Prix", "3": "Japanese Grand Prix"}}
+    out = frl.update_map(existing, [(2026, 2)], lambda y: html, names, sleep=0)
+    assert out["2026"] == {
+        "1": {"id": "1279", "slug": "australia"},
+        "3": {"id": "999", "slug": "japan"},
+    }
 
 
 def test_season_counts_uses_schedule_for_current_and_podiums_for_history():
@@ -136,9 +166,10 @@ def test_update_map_keeps_existing_on_fetch_failure():
     assert out == existing  # unchanged; no crash
 
 
-def test_update_map_drops_cancelled_race_so_season_matches():
-    # F1's archive lists a race that never happened (cancelled). Dropping it lets
-    # the remaining slugs match our rounds 1:1 instead of wiki-falling-back.
+def test_update_map_skips_cancelled_race_so_season_matches():
+    # F1's archive lists a race that never happened (2023 Imola, cancelled).
+    # Identity matching skips it — it matches no round of ours — and the
+    # remaining slugs still map 1:1, no hardcoded cancellation table needed.
     slugs = ["bahrain", "emilia-romagna", "monaco"]  # emilia-romagna = cancelled
     html = "".join(
         f'<a href="/en/results/2023/races/{i}/{slug}/race-result"></a>'
@@ -148,6 +179,5 @@ def test_update_map_drops_cancelled_race_so_season_matches():
     out = frl.update_map({}, [(2023, 2)], lambda y: html, names, sleep=0)
     assert out["2023"] == {
         "1": {"id": "100", "slug": "bahrain"},
-        "2": {"id": "102", "slug": "monaco"},  # emilia-romagna dropped
+        "2": {"id": "102", "slug": "monaco"},  # emilia-romagna skipped
     }
-    assert "emilia-romagna" in frl.CANCELLED_RACES[2023]

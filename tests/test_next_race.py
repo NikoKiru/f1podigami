@@ -32,8 +32,20 @@ def test_nearest_circuit_picks_closest():
         {"geometry": {"type": "LineString", "coordinates": [[0, 0], [0, 1], [1, 1]]}, "id": "a"},
         {"geometry": {"type": "LineString", "coordinates": [[50, 50], [50, 51]]}, "id": "b"},
     ]
-    near = track_geo.nearest_circuit(0.3, 0.3, feats)
+    near = track_geo.nearest_circuit(0.66, 0.34, feats)  # by feature "a"'s centroid
     assert near["id"] == "a"
+
+
+def test_nearest_circuit_rejects_matches_beyond_threshold():
+    # A brand-new circuit that isn't in the bundled geojson yet must yield no
+    # outline instead of silently borrowing the nearest existing track (a wrong
+    # map + wrong length). Every legitimate match today is within ~0.013 deg.
+    feats = [
+        {"geometry": {"type": "LineString", "coordinates": [[50, 50], [50, 51]]}, "id": "b"},
+    ]
+    assert track_geo.nearest_circuit(0.3, 0.3, feats) is None
+    # ...but a plausibly-near feature still matches.
+    assert track_geo.nearest_circuit(50.49, 50.01, feats)["id"] == "b"
 
 
 # --- flags --------------------------------------------------------------------
@@ -46,6 +58,24 @@ def test_flag_svg_returns_markup_for_known_country():
 
 def test_flag_svg_blank_for_unknown_country():
     assert flags.flag_svg("Atlantis") == ""
+
+
+def test_every_mapped_country_has_a_committed_flag():
+    # A COUNTRY_ISO entry without its SVG in data/flags/ silently renders no
+    # flag — catch the drift at CI time instead.
+    missing = [
+        country
+        for country, iso in flags.COUNTRY_ISO.items()
+        if not (flags._FLAG_DIR / f"{iso.lower()}.svg").exists()
+    ]
+    assert not missing, f"mapped countries without a committed flag SVG: {missing}"
+
+
+def test_plausible_future_hosts_have_flags():
+    # Countries with announced/likely F1 bids, so a new venue gets its flag the
+    # moment it appears in the schedule instead of a blank spot.
+    for country in ("Thailand", "Rwanda", "Argentina", "Vietnam", "South Korea"):
+        assert flags.flag_svg(country).startswith("<svg"), f"no flag for {country}"
 
 
 # --- race picker --------------------------------------------------------------
