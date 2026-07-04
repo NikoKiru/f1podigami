@@ -24,6 +24,13 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     nav,
     race_url,
 )
+from _hooks import (  # noqa: E402
+    combos_hook,
+    explore_grid,
+    overdue_hook,
+    soulmates_hook,
+    unlikeliest_hook,
+)
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
@@ -32,10 +39,13 @@ from datalib import (  # noqa: E402
     load_combos,
     load_current_drivers,
     load_model_eval,
+    load_overdue,
     load_podigami,
     load_podiums,
     load_race_links,
     load_schedule,
+    load_soulmates,
+    load_unlikeliest,
 )
 
 OUT_PATH = ROOT / "dist" / "index.html"
@@ -560,6 +570,20 @@ def main() -> int:
     if (DATA_DIR / "model_eval.json").exists():
         model_eval = load_model_eval().model_dump()
 
+    # Discovery hooks: tolerant loads (like schedule/model_eval above) so a
+    # missing dataset degrades to a stat-less card instead of failing the build.
+    soulmates_data = load_soulmates() if (DATA_DIR / "soulmates.json").exists() else None
+    overdue_data = load_overdue() if (DATA_DIR / "overdue.json").exists() else None
+    unlikeliest_data = load_unlikeliest() if (DATA_DIR / "unlikeliest.json").exists() else None
+
+    hook_combos = combos_hook(total_combos, lo)
+    hook_soulmates = soulmates_hook(soulmates_data)
+    hook_row = (
+        f'<div class="hook-row">{overdue_hook(overdue_data)}'
+        f"{unlikeliest_hook(unlikeliest_data)}</div>"
+    )
+    explore = explore_grid()
+
     acc_badge = render_accuracy_badge(model_eval)
     hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
     candidates = render_candidates(cands, meta)
@@ -607,9 +631,13 @@ def main() -> int:
         {last_race}
         {hero}
         {candidates}
+        {hook_combos}
         {form}
+        {hook_soulmates}
         {timeline}
+        {hook_row}
         {faq}
+        {explore}
     </div>
 </main>
 {FOOTER}

@@ -187,6 +187,27 @@ def test_every_page_links_soulmates_in_nav_and_footer(dist, page):
     assert 'href="soulmates.html"' in footer, f"{page} footer is missing Soulmates"
 
 
+def test_landing_page_discovery_hooks_in_flow(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+        assert f'<a class="hook-card" href="{href}"' in html, f"missing hook to {href}"
+    # each in-flow hook sits after its related section
+    assert html.index('class="cand-list"') < html.index('class="hook-card" href="combos.html"')
+    assert html.index('class="form-tower"') < html.index('class="hook-card" href="soulmates.html"')
+    assert html.index('id="tl-slider"') < html.index('class="hook-card" href="overdue.html"')
+    assert 'class="hook-row"' in html  # overdue + unlikeliest side by side
+
+
+def test_landing_page_explore_grid_is_last_section(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert "Keep exploring" in html
+    grid = html[html.index('class="explore-grid"') :]
+    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+        assert f'href="{href}"' in grid, f"explore grid missing {href}"
+    # explore grid comes after the FAQ
+    assert html.index("faq-section") < html.index('class="explore-grid"')
+
+
 def test_stylesheet_defines_light_theme(dist):
     css = (dist / "style.css").read_text(encoding="utf-8")
     assert '[data-theme="light"]' in css, "style.css must define a light theme"

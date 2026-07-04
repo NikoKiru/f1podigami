@@ -1464,3 +1464,84 @@ a.tl-where:hover {
         white-space: normal;
     }
 }
+/* ---- Discovery hooks & explore grid ------------------------------------ */
+
+.hook-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.hook-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.hook-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--accent-bright);
+}
+
+.hook-stat {
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.hook-stat b {
+    color: var(--text);
+}
+
+.hook-cta {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.hook-card:hover .hook-cta {
+    color: var(--text);
+}
+
+.hook-arrow {
+    display: inline-block;
+    transition: transform 0.15s ease;
+}
+
+.hook-card:hover .hook-arrow {
+    transform: translateX(3px);
+}
+
+.hook-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.explore-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.explore-grid .hook-card {
+    margin-top: 0;
+}
+
+@media (max-width: 600px) {
+    .hook-row,
+    .explore-grid {
+        grid-template-columns: 1fr;
+    }
+}
