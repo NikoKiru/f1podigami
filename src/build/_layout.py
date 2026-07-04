@@ -27,6 +27,7 @@ NAV_LINKS = [
     ("combos.html", "Combinations"),
     ("overdue.html", "Overdue"),
     ("unlikeliest.html", "Unlikeliest"),
+    ("soulmates.html", "Soulmates"),
 ]
 
 # Applied before first paint so the stored/OS theme never flashes. Kept as a
@@ -155,17 +156,44 @@ _BRAND_MARK = (
 )
 
 
+# Progressive enhancement for the mobile drawer: the checkbox hack works with
+# no JS at all; this layer only adds aria state, Escape-to-close, keyboard
+# toggling on the burger label, and a body scroll lock while open.
+_DRAWER_SCRIPT = (
+    "<script>(function(){"
+    'var t=document.getElementById("nav-drawer-toggle");if(!t)return;'
+    'var b=document.querySelector(".nav-burger");'
+    "function sync(){"
+    'b.setAttribute("aria-expanded",t.checked?"true":"false");'
+    'document.documentElement.classList.toggle("drawer-open",t.checked);}'
+    't.addEventListener("change",sync);sync();'
+    'b.addEventListener("keydown",function(e){'
+    'if(e.key==="Enter"||e.key===" "){e.preventDefault();t.checked=!t.checked;sync();}});'
+    'document.addEventListener("keydown",function(e){'
+    'if(e.key==="Escape"&&t.checked){t.checked=false;sync();}});'
+    "})();</script>"
+)
+
+
 def nav(active: str) -> str:
     """Return the sticky site header: brand (logo + wordmark), uppercase nav
     with ``active`` (an href like ``"index.html"``) underlined, and the
-    light/dark theme toggle."""
+    light/dark theme toggle. On mobile the links collapse behind a burger that
+    opens a left slide-out drawer (pure-CSS checkbox core + JS a11y layer)."""
     items = []
+    drawer_items = []
     for href, label in NAV_LINKS:
         cls = ' class="active"' if href == active else ""
         items.append(f'            <a href="{href}"{cls}>{label}</a>')
+        drawer_items.append(f'            <a href="{href}"{cls}>{label}</a>')
     links = "\n".join(items)
+    drawer_links = "\n".join(drawer_items)
     return f"""<nav class="nav">
     <div class="container nav-inner">
+        <input type="checkbox" id="nav-drawer-toggle" class="nav-drawer-toggle">
+        <label for="nav-drawer-toggle" class="nav-burger" role="button" tabindex="0" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">
+            <span></span><span></span><span></span>
+        </label>
         <a class="brand" href="index.html" aria-label="F1 Podigami home">
             {_BRAND_MARK}
             <span class="brand-name"><span class="accent">F1</span> Podigami</span>
@@ -174,8 +202,17 @@ def nav(active: str) -> str:
 {links}
         </div>
         <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle light/dark theme"></button>
+        <label for="nav-drawer-toggle" class="nav-scrim" aria-hidden="true"></label>
+        <aside class="nav-drawer" id="nav-drawer" aria-label="Site navigation">
+            <div class="nav-drawer-head">
+                {_BRAND_MARK}
+                <span class="brand-name"><span class="accent">F1</span> Podigami</span>
+            </div>
+{drawer_links}
+        </aside>
     </div>
-</nav>"""
+</nav>
+{_DRAWER_SCRIPT}"""
 
 
 FOOTER = f"""<footer>
@@ -185,6 +222,7 @@ FOOTER = f"""<footer>
             <a href="combos.html">Combinations</a>
             <a href="overdue.html">Overdue</a>
             <a href="unlikeliest.html">Unlikeliest</a>
+            <a href="soulmates.html">Soulmates</a>
         </nav>
         <p class="footer-meta">
             Data from <a href="{DATA_URL}" target="_blank" rel="noopener">Jolpica F1 API</a> (Ergast)
