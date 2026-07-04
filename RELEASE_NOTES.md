@@ -2,6 +2,9 @@
 
 ## 2026-07-04
 
+### Improvements
+- Mobile nav is now a burger-button drawer that slides in from the left (pure-CSS core so it works without JS, with keyboard/aria/scroll-lock enhancements), replacing the cramped horizontal scroll strip (#168)
+
 ### Features
 - Landing-page engagement overhaul: live-stat discovery hooks after each section, a "Keep exploring" grid, timeline quick-pick chips (first/record/current season), hero chance count-up and scroll-reveal (both honouring reduced-motion), FAQ deep links, and the previously orphaned Soulmates page added to the site nav and footer (#167)
 

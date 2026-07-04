@@ -15,12 +15,6 @@ def css(name: str) -> str:
     return (ASSETS / name).read_text(encoding="utf-8")
 
 
-def test_shared_nav_is_scroll_strip_on_mobile():
-    s = css("style.css")
-    assert "@media (max-width: 720px)" in s
-    assert "overflow-x: auto" in s  # nav becomes a horizontal scroll strip
-
-
 def test_index_table_becomes_cards():
     s = css("index.css")
     assert "@media (max-width: 600px)" in s
@@ -81,3 +75,23 @@ def test_podigami_hero_collapses_at_720px():
         s,
         re.DOTALL,
     ), "Hero must switch to single-column grid inside a max-width:720px block (fixes #116)"
+
+
+def test_shared_nav_collapses_to_drawer_on_mobile():
+    """At <=720px the inline nav links hide behind a burger that opens a left
+    slide-out drawer (CSS checkbox core, so it works without JS)."""
+    import re
+
+    s = css("style.css")
+    m = re.search(r"@media \(max-width: 720px\)[\s\S]*", s)
+    assert m, "style.css must keep the 720px breakpoint"
+    mobile = m.group(0)
+    assert re.search(r"\.nav-links\s*\{[^}]*display:\s*none", mobile), (
+        "inline nav links must hide on mobile"
+    )
+    assert re.search(r"\.nav-burger\s*\{[^}]*display:\s*(inline-)?flex", mobile), (
+        "burger must appear on mobile"
+    )
+    # drawer starts off-canvas left and slides in when the checkbox is checked
+    assert re.search(r"\.nav-drawer\s*\{[^}]*translateX\(-", s)
+    assert ".nav-drawer-toggle:checked" in s
