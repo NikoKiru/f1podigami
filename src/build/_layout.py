@@ -1,7 +1,7 @@
 """Shared page chrome used by every page builder.
 
-Centralising the ``<head>``, nav, and footer here guarantees all four pages
-share identical chrome (and stops the drift bugs that come from copy-pasting
+Centralising the ``<head>``, nav, and footer here guarantees every page
+shares identical chrome (and stops the drift bugs that come from copy-pasting
 them). The import works both when a builder is run as a script
 (``python src/build/build_*.py``) and when the builders are imported as
 ``build.*`` by the test-suite, because each builder adds its own directory to
