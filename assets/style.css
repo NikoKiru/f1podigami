@@ -206,6 +206,130 @@ body {
     /* moon: shown in light mode (click for dark) */
 }
 
+/* mobile nav drawer: pure-CSS checkbox core (works with no JS), burger label
+   toggles it, scrim label closes it. Everything is display:none on desktop
+   and switched on inside the 720px breakpoint below. */
+.nav-drawer-toggle {
+    display: none;
+}
+
+.nav-burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 36px;
+    height: 34px;
+    padding: 0 8px;
+    align-self: center;
+    flex: 0 0 auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.nav-burger span {
+    display: block;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--text);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-drawer-toggle:checked ~ .nav-burger span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.nav-drawer-toggle:checked ~ .nav-burger span:nth-child(2) {
+    opacity: 0;
+}
+
+.nav-drawer-toggle:checked ~ .nav-burger span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+.nav-scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.nav-drawer {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 70;
+    width: min(78vw, 300px);
+    padding: 0 0 20px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+}
+
+.nav-drawer-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+}
+
+.nav-drawer a {
+    display: block;
+    padding: 13px 18px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-left: 3px solid transparent;
+    transition: color 0.15s, background 0.15s;
+}
+
+.nav-drawer a:hover {
+    color: var(--text);
+    background: var(--surface-2);
+}
+
+.nav-drawer a.active {
+    color: var(--text);
+    border-left-color: var(--accent);
+    background: var(--surface-2);
+}
+
+.nav-drawer-toggle:checked ~ .nav-scrim {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.nav-drawer-toggle:checked ~ .nav-drawer {
+    transform: translateX(0);
+}
+
+/* JS enhancement: lock page scroll while the drawer is open */
+html.drawer-open {
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-drawer,
+    .nav-scrim,
+    .nav-burger span {
+        transition: none;
+    }
+}
+
 /* page-title strip (slim, integrated with the bar above) */
 header {
     background: var(--bg-2);
@@ -361,47 +485,30 @@ footer a:hover {
         padding: 0 14px;
     }
 
-    /* brand + toggle on the top row; nav links become a scroll strip beneath */
+    /* single row: burger + brand on the left, theme toggle on the right;
+       the inline links hide behind the left slide-out drawer */
     .nav-inner {
-        flex-wrap: wrap;
         align-items: center;
         min-height: 0;
         padding: 8px 0;
-        gap: 6px 12px;
+        gap: 12px;
     }
 
-    .brand {
-        order: 1;
-    }
-
-    .theme-toggle {
-        order: 2;
-        margin-left: auto;
+    .nav-burger {
+        display: inline-flex;
     }
 
     .nav-links {
-        order: 3;
-        flex-basis: 100%;
-        margin-left: 0;
-        gap: 0;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-
-    .nav-links::-webkit-scrollbar {
         display: none;
     }
 
-    .nav-links a {
-        flex: 0 0 auto;
-        white-space: nowrap;
-        padding: 10px 11px;
+    .nav-scrim,
+    .nav-drawer {
+        display: block;
     }
 
-    .nav-links a.active::after {
-        left: 11px;
-        right: 11px;
+    .theme-toggle {
+        margin-left: auto;
     }
 
     header {

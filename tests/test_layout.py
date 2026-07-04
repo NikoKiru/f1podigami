@@ -54,7 +54,19 @@ def test_nav_marks_only_the_active_link():
     for href, _ in NAV_LINKS:
         if href != "combos.html":
             assert f'<a href="{href}">' in out
-    assert out.count('class="active"') == 1
+    # exactly one active link in the inline nav and one in the mobile drawer
+    assert out.count('class="active"') == 2
+    drawer = out[out.index('<aside class="nav-drawer"') : out.index("</aside>")]
+    assert drawer.count('class="active"') == 1
+
+
+def test_nav_has_mobile_drawer_machinery():
+    out = nav("index.html")
+    assert 'id="nav-drawer-toggle"' in out  # pure-CSS checkbox core
+    assert 'class="nav-burger"' in out
+    assert 'class="nav-scrim"' in out
+    assert 'aria-controls="nav-drawer"' in out
+    assert "Escape" in out  # a11y enhancement script ships with the nav
 
 
 def test_nav_includes_theme_toggle():

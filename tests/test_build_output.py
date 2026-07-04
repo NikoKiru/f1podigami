@@ -279,3 +279,21 @@ def test_podigami_js_motion_is_progressive_enhancement(repo):
     # timeline easing + count-up + scroll-reveal each honour reduced motion
     assert js.count("prefers-reduced-motion") >= 3
     assert js.count("IntersectionObserver") >= 2  # count-up + reveal guard on support
+
+
+@pytest.mark.parametrize("page", ALL_PAGES)
+def test_every_page_has_mobile_nav_drawer(dist, page):
+    """Mobile nav: burger + checkbox toggle + scrim + left drawer with all pages."""
+    html = (dist / page).read_text(encoding="utf-8")
+    assert 'id="nav-drawer-toggle"' in html, f"{page} missing drawer toggle"
+    assert 'class="nav-burger"' in html, f"{page} missing burger"
+    assert 'class="nav-scrim"' in html, f"{page} missing scrim"
+    drawer = html[html.index('<aside class="nav-drawer"') : html.index("</aside>")]
+    for href in ALL_PAGES:
+        assert f'href="{href}"' in drawer, f"{page} drawer missing link to {href}"
+
+
+def test_drawer_marks_active_page(dist):
+    html = (dist / "combos.html").read_text(encoding="utf-8")
+    drawer = html[html.index('<aside class="nav-drawer"') : html.index("</aside>")]
+    assert 'href="combos.html" class="active"' in drawer, "drawer should highlight the current page"
