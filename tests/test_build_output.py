@@ -208,6 +208,14 @@ def test_landing_page_explore_grid_is_last_section(dist):
     assert html.index("faq-section") < html.index('class="explore-grid"')
 
 
+def test_landing_faq_deep_links_all_pages(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    faq = html[html.index("faq-section") : html.index('class="explore-grid"')]
+    assert "What else is on this site?" in faq
+    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+        assert f'href="{href}"' in faq, f"FAQ should deep-link {href}"
+
+
 def test_stylesheet_defines_light_theme(dist):
     css = (dist / "style.css").read_text(encoding="utf-8")
     assert '[data-theme="light"]' in css, "style.css must define a light theme"

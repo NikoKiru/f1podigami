@@ -504,10 +504,18 @@ def render_faq(
             f"Podigami blends &ldquo;podium&rdquo; and &ldquo;"
             f'<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>'
             f"&rdquo; &mdash; it&rsquo;s the practice of tracking F1 podium trios that have never "
-            f"happened before. Since {lo}, <strong>{total_combos:,}</strong> unique trios have "
+            f'happened before. Since {lo}, <a href="combos.html"><strong>{total_combos:,}</strong></a> unique trios have '
             f"appeared across <strong>{total_races:,}</strong> races. Today&rsquo;s {grid_size}-driver "
             f"grid can produce <strong>{possible_trios:,}</strong> different trios per race, so most "
             f"combinations simply haven&rsquo;t come up yet.",
+        ),
+        (
+            "What else is on this site?",
+            'Four deeper dives: <a href="combos.html">Combinations</a> lists every unique '
+            'podium trio in history; <a href="overdue.html">Overdue</a> ranks the trios that '
+            'keep almost happening; <a href="unlikeliest.html">Unlikeliest</a> celebrates the '
+            'podiums that defied the odds; and <a href="soulmates.html">Soulmates</a> maps '
+            "which drivers keep meeting on the podium.",
         ),
     ]
     entries = []
