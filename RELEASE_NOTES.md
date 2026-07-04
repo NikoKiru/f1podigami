@@ -3,6 +3,7 @@
 ## 2026-07-04
 
 ### Improvements
+- Docs: CLAUDE.md page table now lists all five pages (`unlikeliest.html` was missing) and the new `_hooks.py` helper; stale "four pages" wording fixed there and in the `_layout.py` docstring (#170)
 - Mobile nav is now a burger-button drawer that slides in from the left (pure-CSS core so it works without JS, with keyboard/aria/scroll-lock enhancements), replacing the cramped horizontal scroll strip (#168)
 
 ### Features

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-F1 Podigami is a Python static site generator that transforms Formula 1 race data (1950–present) into four interactive HTML pages. No backend server or framework — just Python, `requests`, and committed JSON datasets. The "podigami" concept is podium scorigami: spotting 3-driver podium trios that have never happened before, and predicting which brand-new trio is most likely next.
+F1 Podigami is a Python static site generator that transforms Formula 1 race data (1950–present) into five interactive HTML pages (plus a 404 page). No backend server or framework — just Python, `requests`, and committed JSON datasets. The "podigami" concept is podium scorigami: spotting 3-driver podium trios that have never happened before, and predicting which brand-new trio is most likely next.
 
 Deployed to GitHub Pages: https://nikokiru.github.io/f1podigami
 
@@ -64,18 +64,19 @@ Orchestrators:
 - `src/build_site.py` — runs only the build stage, copies `assets/` into `dist/`, and writes `robots.txt` + `sitemap.xml`.
 - `src/check_update_due.py` — cheap, no-network CI guard (`is_update_due`) for the automated refresh (polls every 15 min): decides from committed `schedule.json` + `podigami.json` `asOf` whether a finished race is newer than the data. See **Deployment → Automated data updates**.
 
-### Four output pages
+### Five output pages
 
-`src/build_site.py` is the source of truth for the page → builder mapping:
+`src/build_site.py` is the source of truth for the page → builder mapping (it also builds `404.html` via `build/build_404_html.py`):
 
 | Page | Builder | Description |
 |------|---------|-------------|
-| `index.html` | `build/build_podigami_html.py` | Landing page: next race, last race result (with podigami/repeat status + official F1 result link), prediction hero, current form, timeline, FAQ |
+| `index.html` | `build/build_podigami_html.py` | Landing page: next race, last race result (with podigami/repeat status + official F1 result link), prediction hero, current form, discovery hook cards, timeline, FAQ |
 | `combos.html` | `build/build_combos_html.py` | Every unique 3-driver podium combination |
 | `overdue.html` | `build/build_overdue_html.py` | Trios "overdue" to appear |
+| `unlikeliest.html` | `build/build_unlikeliest.py` | Trios that happened despite the odds, ranked by improbability |
 | `soulmates.html` | `build/build_soulmates_html.py` | Driver shared-podium relationships |
 
-Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTER`), `build/flags.py` (country flag SVGs), `build/team_colors.py` (`team_color()`, `text_on()`).
+Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTER`), `build/_hooks.py` (cross-page discovery hook cards), `build/flags.py` (country flag SVGs), `build/team_colors.py` (`team_color()`, `text_on()`).
 
 ### Prediction model
 
