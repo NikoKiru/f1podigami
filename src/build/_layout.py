@@ -27,6 +27,7 @@ NAV_LINKS = [
     ("combos.html", "Combinations"),
     ("overdue.html", "Overdue"),
     ("unlikeliest.html", "Unlikeliest"),
+    ("soulmates.html", "Soulmates"),
 ]
 
 # Applied before first paint so the stored/OS theme never flashes. Kept as a
@@ -185,6 +186,7 @@ FOOTER = f"""<footer>
             <a href="combos.html">Combinations</a>
             <a href="overdue.html">Overdue</a>
             <a href="unlikeliest.html">Unlikeliest</a>
+            <a href="soulmates.html">Soulmates</a>
         </nav>
         <p class="footer-meta">
             Data from <a href="{DATA_URL}" target="_blank" rel="noopener">Jolpica F1 API</a> (Ergast)
