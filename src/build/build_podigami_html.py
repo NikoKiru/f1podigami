@@ -17,19 +17,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import (  # noqa: E402  (needs the sys.path entry above)
-    FOOTER,
-    asset,
-    head,
-    nav,
-    race_url,
-)
 from _hooks import (  # noqa: E402
     combos_hook,
     explore_grid,
     overdue_hook,
     soulmates_hook,
     unlikeliest_hook,
+)
+from _layout import (  # noqa: E402  (needs the sys.path entry above)
+    FOOTER,
+    asset,
+    head,
+    nav,
+    race_url,
 )
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
@@ -414,8 +414,7 @@ def _quickpicks(lo: int, current: int, counts: dict) -> str:
     if current != lo:
         picks.append((current, "this season"))
     chips = "".join(
-        f'<button type="button" class="tl-chip" data-year="{y}">'
-        f"{y} &middot; {esc(label)}</button>"
+        f'<button type="button" class="tl-chip" data-year="{y}">{y} &middot; {esc(label)}</button>'
         for y, label in picks
     )
     return f'<div class="tl-chips">{chips}</div>'
