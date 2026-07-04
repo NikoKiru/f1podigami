@@ -264,3 +264,18 @@ def test_landing_timeline_has_quickpick_chips(dist, data):
     counts = data["podigami"]["seasonCounts"]
     record = max(counts.items(), key=lambda kv: (kv[1], -int(kv[0])))[0]
     assert f'data-year="{record}"' in html
+
+
+def test_landing_raw_html_never_hides_content(dist):
+    """Scroll-reveal must be JS-applied only: no hiding class in the built HTML,
+    so no-JS visitors (and crawlers) always get the full page."""
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'class="reveal"' not in html
+    assert "reveal-in" not in html
+
+
+def test_podigami_js_motion_is_progressive_enhancement(repo):
+    js = (repo / "assets" / "podigami.js").read_text(encoding="utf-8")
+    # timeline easing + count-up + scroll-reveal each honour reduced motion
+    assert js.count("prefers-reduced-motion") >= 3
+    assert js.count("IntersectionObserver") >= 2  # count-up + reveal guard on support

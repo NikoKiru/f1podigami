@@ -1572,3 +1572,22 @@ a.tl-where:hover {
     border-color: var(--accent);
     color: var(--text);
 }
+
+/* Scroll-reveal (class applied by JS only — raw HTML never hides content). */
+.reveal {
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+.reveal.reveal-in {
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal {
+        opacity: 1;
+        transform: none;
+    }
+}
