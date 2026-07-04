@@ -265,3 +265,15 @@
         const id = setInterval(() => { if (!tick()) clearInterval(id); }, 1000);
     }
 })();
+
+// Timeline quick-picks: chips that jump the year slider to notable seasons
+// (first ever, record year, current). They just drive the existing slider.
+(function () {
+    const chips = Array.from(document.querySelectorAll('.tl-chip'));
+    const slider = document.getElementById('tl-slider');
+    if (!chips.length || !slider) return;
+    chips.forEach(chip => chip.addEventListener('click', () => {
+        slider.value = chip.dataset.year;
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+    }));
+})();

@@ -402,6 +402,25 @@ def render_form(
     )
 
 
+def _quickpicks(lo: int, current: int, counts: dict) -> str:
+    """One-tap year chips for the timeline: first season, record season
+    (earliest wins ties), and the current season. Duplicates collapse."""
+    picks: list[tuple[int, str]] = [(lo, "first season")]
+    if counts:
+        rec_year_s, rec_n = max(counts.items(), key=lambda kv: (kv[1], -int(kv[0])))
+        rec_year = int(rec_year_s)
+        if rec_year not in {lo, current}:
+            picks.append((rec_year, f"record: {rec_n} new"))
+    if current != lo:
+        picks.append((current, "this season"))
+    chips = "".join(
+        f'<button type="button" class="tl-chip" data-year="{y}">'
+        f"{y} &middot; {esc(label)}</button>"
+        for y, label in picks
+    )
+    return f'<div class="tl-chips">{chips}</div>'
+
+
 def render_timeline(data: dict) -> str:
     lo, hi = data["seasonRange"]
     current = int(data["currentSeason"])
@@ -434,6 +453,7 @@ def render_timeline(data: dict) -> str:
         f'    <div class="tl-readout"><span id="tl-year">{current}</span>'
         f'      <span class="tl-count" id="tl-count"></span></div>'
         f"  </div>"
+        f"  {_quickpicks(lo, current, counts)}"
         f'  <div class="tl-spark">{"".join(bars)}</div>'
         f'  <div class="tl-controls">'
         f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1" aria-label="Timeline year">'

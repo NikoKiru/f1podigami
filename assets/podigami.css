@@ -1545,3 +1545,30 @@ a.tl-where:hover {
         grid-template-columns: 1fr;
     }
 }
+
+/* ---- Timeline quick-pick chips ------------------------------------------ */
+
+.tl-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 2px;
+}
+
+.tl-chip {
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.tl-chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}

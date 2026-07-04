@@ -254,3 +254,13 @@ def test_sitemap_lastmod_is_last_race_date(dist, data):
     expected = max(past_dates)
     sitemap = (dist / "sitemap.xml").read_text(encoding="utf-8")
     assert f"<lastmod>{expected}</lastmod>" in sitemap
+
+
+def test_landing_timeline_has_quickpick_chips(dist, data):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'class="tl-chips"' in html
+    lo = data["podigami"]["seasonRange"][0]
+    assert f'data-year="{lo}"' in html
+    counts = data["podigami"]["seasonCounts"]
+    record = max(counts.items(), key=lambda kv: (kv[1], -int(kv[0])))[0]
+    assert f'data-year="{record}"' in html
