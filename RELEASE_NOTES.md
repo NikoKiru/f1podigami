@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-04
+
+### Features
+- Landing-page engagement overhaul: live-stat discovery hooks after each section, a "Keep exploring" grid, timeline quick-pick chips (first/record/current season), hero chance count-up and scroll-reveal (both honouring reduced-motion), FAQ deep links, and the previously orphaned Soulmates page added to the site nav and footer (#PR)
+
 ## 2026-07-03
 
 ### Fixes
