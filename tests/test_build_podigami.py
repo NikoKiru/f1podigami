@@ -183,3 +183,23 @@ def test_faq_fallback_half_life_is_six():
     out = bp.render_faq({}, {}, 123, 456, 789, 20, 1950)
     assert "~6 races" in out
     assert "~8 races" not in out
+
+
+def test_quickpicks_first_record_current():
+    out = bp._quickpicks(1950, 2026, {"1950": 3, "1982": 17, "2026": 5})
+    assert 'data-year="1950"' in out and "first season" in out
+    assert 'data-year="1982"' in out and "17 new" in out
+    assert 'data-year="2026"' in out and "this season" in out
+
+
+def test_quickpicks_record_tie_prefers_earliest_and_dedupes():
+    # tie between 1950 and 1982 -> earliest (1950) wins; 1950 is already the
+    # "first season" chip, so no separate record chip is emitted
+    out = bp._quickpicks(1950, 2026, {"1950": 17, "1982": 17})
+    assert out.count('data-year="1950"') == 1
+    assert 'data-year="1982"' not in out
+
+
+def test_quickpicks_empty_counts_and_single_season():
+    out = bp._quickpicks(2026, 2026, {})
+    assert out.count('class="tl-chip"') == 1  # just the first-season chip

@@ -265,3 +265,67 @@
         const id = setInterval(() => { if (!tick()) clearInterval(id); }, 1000);
     }
 })();
+
+// Timeline quick-picks: chips that jump the year slider to notable seasons
+// (first ever, record year, current). They just drive the existing slider.
+(function () {
+    const chips = Array.from(document.querySelectorAll('.tl-chip'));
+    const slider = document.getElementById('tl-slider');
+    if (!chips.length || !slider) return;
+    chips.forEach(chip => chip.addEventListener('click', () => {
+        slider.value = chip.dataset.year;
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+    }));
+})();
+
+// Hero count-up: the headline chance % climbs from 0 on first view. The
+// server-rendered number stays in the HTML for SEO/no-JS and is restored
+// verbatim when the animation lands.
+(function () {
+    const el = document.querySelector('.hc-num');
+    if (!el || !('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const finalText = el.textContent;
+    const target = parseFloat(finalText);
+    if (isNaN(target)) return;
+    const DURATION = 900;
+    const io = new IntersectionObserver(entries => {
+        if (!entries.some(e => e.isIntersecting)) return;
+        io.disconnect();
+        const t0 = performance.now();
+        (function frame(now) {
+            const p = Math.min((now - t0) / DURATION, 1);
+            const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+            if (p < 1) {
+                el.textContent = Math.round(target * eased) + '%';
+                requestAnimationFrame(frame);
+            } else {
+                el.textContent = finalText;
+            }
+        })(t0);
+    }, { threshold: 0.4 });
+    io.observe(el);
+})();
+
+// Scroll-reveal: sections fade up as they enter the viewport. The hiding
+// class is added HERE, never in the HTML, so content is never hidden without
+// JS; above-the-fold elements are left untouched to avoid a first-paint flash.
+(function () {
+    if (!('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const els = document.querySelectorAll(
+        'main .panel, main .hook-row, main .container > .hook-card');
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            e.target.classList.add('reveal-in');
+            io.unobserve(e.target);
+        });
+    }, { threshold: 0.08 });
+    els.forEach(el => {
+        if (el.getBoundingClientRect().top > window.innerHeight * 0.9) {
+            el.classList.add('reveal');
+            io.observe(el);
+        }
+    });
+})();

@@ -53,6 +53,19 @@ def test_hero_team_name_truncates_on_mobile():
     ), "Hero .hd-team must be forced to a single line inside the mobile breakpoint (fixes #149)"
 
 
+def test_hook_grids_collapse_on_mobile():
+    """The 2-up hook row and 2x2 explore grid must stack to one column on phones."""
+    import re
+
+    s = css("podigami.css")
+    assert ".hook-card" in s and ".explore-grid" in s
+    assert re.search(
+        r"@media \(max-width: 600px\).*?\.hook-row[\s\S]*?grid-template-columns:\s*1fr",
+        s,
+        re.DOTALL,
+    ), "hook-row/explore-grid must collapse to 1 column inside the 600px breakpoint"
+
+
 def test_podigami_hero_collapses_at_720px():
     """Hero switches to single-column at 720px to fix the 601-720px dead zone.
 

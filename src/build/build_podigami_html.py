@@ -17,6 +17,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
+from _hooks import (  # noqa: E402
+    combos_hook,
+    explore_grid,
+    overdue_hook,
+    soulmates_hook,
+    unlikeliest_hook,
+)
 from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
     asset,
@@ -32,10 +39,13 @@ from datalib import (  # noqa: E402
     load_combos,
     load_current_drivers,
     load_model_eval,
+    load_overdue,
     load_podigami,
     load_podiums,
     load_race_links,
     load_schedule,
+    load_soulmates,
+    load_unlikeliest,
 )
 
 OUT_PATH = ROOT / "dist" / "index.html"
@@ -392,6 +402,24 @@ def render_form(
     )
 
 
+def _quickpicks(lo: int, current: int, counts: dict) -> str:
+    """One-tap year chips for the timeline: first season, record season
+    (earliest wins ties), and the current season. Duplicates collapse."""
+    picks: list[tuple[int, str]] = [(lo, "first season")]
+    if counts:
+        rec_year_s, rec_n = max(counts.items(), key=lambda kv: (kv[1], -int(kv[0])))
+        rec_year = int(rec_year_s)
+        if rec_year not in {lo, current}:
+            picks.append((rec_year, f"record: {rec_n} new"))
+    if current != lo:
+        picks.append((current, "this season"))
+    chips = "".join(
+        f'<button type="button" class="tl-chip" data-year="{y}">{y} &middot; {esc(label)}</button>'
+        for y, label in picks
+    )
+    return f'<div class="tl-chips">{chips}</div>'
+
+
 def render_timeline(data: dict) -> str:
     lo, hi = data["seasonRange"]
     current = int(data["currentSeason"])
@@ -424,6 +452,7 @@ def render_timeline(data: dict) -> str:
         f'    <div class="tl-readout"><span id="tl-year">{current}</span>'
         f'      <span class="tl-count" id="tl-count"></span></div>'
         f"  </div>"
+        f"  {_quickpicks(lo, current, counts)}"
         f'  <div class="tl-spark">{"".join(bars)}</div>'
         f'  <div class="tl-controls">'
         f'    <input type="range" id="tl-slider" min="{lo}" max="{hi}" value="{current}" step="1" aria-label="Timeline year">'
@@ -494,10 +523,18 @@ def render_faq(
             f"Podigami blends &ldquo;podium&rdquo; and &ldquo;"
             f'<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>'
             f"&rdquo; &mdash; it&rsquo;s the practice of tracking F1 podium trios that have never "
-            f"happened before. Since {lo}, <strong>{total_combos:,}</strong> unique trios have "
+            f'happened before. Since {lo}, <a href="combos.html"><strong>{total_combos:,}</strong></a> unique trios have '
             f"appeared across <strong>{total_races:,}</strong> races. Today&rsquo;s {grid_size}-driver "
             f"grid can produce <strong>{possible_trios:,}</strong> different trios per race, so most "
             f"combinations simply haven&rsquo;t come up yet.",
+        ),
+        (
+            "What else is on this site?",
+            'Four deeper dives: <a href="combos.html">Combinations</a> lists every unique '
+            'podium trio in history; <a href="overdue.html">Overdue</a> ranks the trios that '
+            'keep almost happening; <a href="unlikeliest.html">Unlikeliest</a> celebrates the '
+            'podiums that defied the odds; and <a href="soulmates.html">Soulmates</a> maps '
+            "which drivers keep meeting on the podium.",
         ),
     ]
     entries = []
@@ -560,6 +597,20 @@ def main() -> int:
     if (DATA_DIR / "model_eval.json").exists():
         model_eval = load_model_eval().model_dump()
 
+    # Discovery hooks: tolerant loads (like schedule/model_eval above) so a
+    # missing dataset degrades to a stat-less card instead of failing the build.
+    soulmates_data = load_soulmates() if (DATA_DIR / "soulmates.json").exists() else None
+    overdue_data = load_overdue() if (DATA_DIR / "overdue.json").exists() else None
+    unlikeliest_data = load_unlikeliest() if (DATA_DIR / "unlikeliest.json").exists() else None
+
+    hook_combos = combos_hook(total_combos, lo)
+    hook_soulmates = soulmates_hook(soulmates_data)
+    hook_row = (
+        f'<div class="hook-row">{overdue_hook(overdue_data)}'
+        f"{unlikeliest_hook(unlikeliest_data)}</div>"
+    )
+    explore = explore_grid()
+
     acc_badge = render_accuracy_badge(model_eval)
     hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
     candidates = render_candidates(cands, meta)
@@ -607,9 +658,13 @@ def main() -> int:
         {last_race}
         {hero}
         {candidates}
+        {hook_combos}
         {form}
+        {hook_soulmates}
         {timeline}
+        {hook_row}
         {faq}
+        {explore}
     </div>
 </main>
 {FOOTER}

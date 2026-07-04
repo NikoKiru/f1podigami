@@ -169,8 +169,51 @@ def test_footer_has_universal_details(dist, page):
     assert "Jolpica F1 API" in footer  # data source attribution
     assert "github.com/NikoKiru/f1podigami" in footer  # source link
     assert 'class="footer-nav"' in footer  # cross-page nav
-    for link in ("index.html", "combos.html", "overdue.html"):
+    for link in ("index.html", "combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
         assert link in footer, f"footer should link to {link}"
+
+
+# All five generated pages must carry identical chrome with all five links.
+ALL_PAGES = ["index.html", "combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"]
+
+
+@pytest.mark.parametrize("page", ALL_PAGES)
+def test_every_page_links_soulmates_in_nav_and_footer(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    nav = html[html.index('<nav class="nav">') : html.index("</nav>")]
+    assert 'href="soulmates.html"' in nav, f"{page} nav is missing Soulmates"
+    assert ">Soulmates<" in nav
+    footer = _footer_block(html)
+    assert 'href="soulmates.html"' in footer, f"{page} footer is missing Soulmates"
+
+
+def test_landing_page_discovery_hooks_in_flow(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+        assert f'<a class="hook-card" href="{href}"' in html, f"missing hook to {href}"
+    # each in-flow hook sits after its related section
+    assert html.index('class="cand-list"') < html.index('class="hook-card" href="combos.html"')
+    assert html.index('class="form-tower"') < html.index('class="hook-card" href="soulmates.html"')
+    assert html.index('id="tl-slider"') < html.index('class="hook-card" href="overdue.html"')
+    assert 'class="hook-row"' in html  # overdue + unlikeliest side by side
+
+
+def test_landing_page_explore_grid_is_last_section(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert "Keep exploring" in html
+    grid = html[html.index('class="explore-grid"') :]
+    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+        assert f'href="{href}"' in grid, f"explore grid missing {href}"
+    # explore grid comes after the FAQ
+    assert html.index("faq-section") < html.index('class="explore-grid"')
+
+
+def test_landing_faq_deep_links_all_pages(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    faq = html[html.index("faq-section") : html.index('class="explore-grid"')]
+    assert "What else is on this site?" in faq
+    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+        assert f'href="{href}"' in faq, f"FAQ should deep-link {href}"
 
 
 def test_stylesheet_defines_light_theme(dist):
@@ -211,3 +254,28 @@ def test_sitemap_lastmod_is_last_race_date(dist, data):
     expected = max(past_dates)
     sitemap = (dist / "sitemap.xml").read_text(encoding="utf-8")
     assert f"<lastmod>{expected}</lastmod>" in sitemap
+
+
+def test_landing_timeline_has_quickpick_chips(dist, data):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'class="tl-chips"' in html
+    lo = data["podigami"]["seasonRange"][0]
+    assert f'data-year="{lo}"' in html
+    counts = data["podigami"]["seasonCounts"]
+    record = max(counts.items(), key=lambda kv: (kv[1], -int(kv[0])))[0]
+    assert f'data-year="{record}"' in html
+
+
+def test_landing_raw_html_never_hides_content(dist):
+    """Scroll-reveal must be JS-applied only: no hiding class in the built HTML,
+    so no-JS visitors (and crawlers) always get the full page."""
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'class="reveal"' not in html
+    assert "reveal-in" not in html
+
+
+def test_podigami_js_motion_is_progressive_enhancement(repo):
+    js = (repo / "assets" / "podigami.js").read_text(encoding="utf-8")
+    # timeline easing + count-up + scroll-reveal each honour reduced motion
+    assert js.count("prefers-reduced-motion") >= 3
+    assert js.count("IntersectionObserver") >= 2  # count-up + reveal guard on support
