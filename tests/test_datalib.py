@@ -235,3 +235,84 @@ def test_validate_cli_reports_failure(tmp_path, monkeypatch, capsys):
 
     assert validate.main() == 1
     assert "FAILED" in capsys.readouterr().err
+
+
+# --- v2 params unions (model v2) ---------------------------------------------
+
+
+_V2_KNOBS = {
+    "sigma0_drv": 0.7,
+    "sigma0_con": 1.2,
+    "rookie_mu": -0.4,
+    "newteam_mu": -0.8,
+    "tau_drv": 0.04,
+    "tau_con": 0.08,
+    "season_var_drv": 0.03,
+    "season_var_con": 0.1,
+    "reg_var_con": 0.5,
+    "depth_race": 6,
+    "w_attr": 0.5,
+    "depth_qual": 6,
+    "w_qual": 0.3,
+    "rel_half_life": 20.0,
+    "chaos_gamma": 0.5,
+    "chaos_eta": 0.7,
+    "p_wild": 0.05,
+    "t_wild": 2.5,
+}
+
+
+def test_podigami_params_union_accepts_v1_and_v2():
+    from datalib import Podigami, PodigamiParams, PodigamiParamsV2
+
+    v1 = {
+        "model": "plackett-luce",
+        "alpha": 0.1,
+        "halfLife": 8.0,
+        "offSeason": 0.65,
+        "seasonBoost": 0.4,
+        "temperature": 1.2,
+        "usingConstructors": True,
+        "carOverlay": True,
+    }
+    v2 = {
+        "model": "dbpl-v2",
+        **_V2_KNOBS,
+        "usingQualifying": True,
+        "circuitId": "silverstone",
+        "nDraws": 512,
+        "seed": 20260704,
+    }
+    assert isinstance(PodigamiParams.model_validate(v1), PodigamiParams)
+    assert isinstance(PodigamiParamsV2.model_validate(v2), PodigamiParamsV2)
+    # the Podigami.params union must route each shape to the right model
+    fields = Podigami.model_fields["params"].annotation
+    assert PodigamiParams in getattr(fields, "__args__", (fields,))
+
+
+def test_model_eval_params_union_and_chosen_model():
+    from datalib import ModelParamsV2
+
+    assert isinstance(ModelParamsV2.model_validate(_V2_KNOBS), ModelParamsV2)
+    ev = json.loads((DATA_DIR / "model_eval.json").read_text(encoding="utf-8"))
+    REGISTRY["model_eval.json"].validate_python(ev)  # committed file still validates
+
+
+def test_driver_strength_accepts_v2_reliability_fields():
+    from datalib import DriverStrength
+
+    ds = DriverStrength.model_validate(
+        {
+            "driverId": "max_verstappen",
+            "name": "Max Verstappen",
+            "weight": 2.5,
+            "seasonPodiums": 5,
+            "recentPodiums": 4,
+            "constructorId": "red_bull",
+            "constructor": "Red Bull",
+            "constructorStrength": 0.9,
+            "finishProb": 0.96,
+            "uncertainty": 0.21,
+        }
+    )
+    assert ds.finishProb == 0.96 and ds.uncertainty == 0.21

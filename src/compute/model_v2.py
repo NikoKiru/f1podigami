@@ -43,25 +43,29 @@ __all__ = [
     "predict_race",
 ]
 
-# Initial sensible values; locked by the walk-forward tuner (backtest.py --tune-v2).
+# Locked by the walk-forward tuner (backtest.py --tune-v2) on 2010-2018:
+# coordinate descent on trio logLoss + novelty logLoss, J 4.628 -> 4.401.
+# Notable: qualifying earns a large weight, the attrition channel earns none
+# (reliability already carries the DNF signal), and a podium-focused
+# truncation depth of 3 beats deeper race-order likelihoods.
 DEFAULT_PARAMS_V2: dict = {
-    "sigma0_drv": 0.7,  # prior std of a driver's log-worth
-    "sigma0_con": 1.2,  # prior std of a constructor's log-worth (cars matter more)
-    "rookie_mu": -0.4,  # prior mean for a debuting driver
-    "newteam_mu": -0.8,  # prior mean for a brand-new constructor
-    "tau_drv": 0.04,  # per-race diffusion (std) of driver states
+    "sigma0_drv": 0.5,  # prior std of a driver's log-worth
+    "sigma0_con": 1.6,  # prior std of a constructor's log-worth (cars matter more)
+    "rookie_mu": -0.8,  # prior mean for a debuting driver
+    "newteam_mu": -1.2,  # prior mean for a brand-new constructor
+    "tau_drv": 0.02,  # per-race diffusion (std) of driver states
     "tau_con": 0.08,  # per-race diffusion (std) of constructor states
     "season_var_drv": 0.03,  # variance added to drivers at each season boundary
-    "season_var_con": 0.10,  # variance added to constructors at each season boundary
-    "reg_var_con": 0.50,  # extra constructor variance when regulations reset
-    "depth_race": 6,  # truncate the race-order likelihood to the top-N picks
-    "w_attr": 0.5,  # power weight of the attrition (reverse-PL) channel
+    "season_var_con": 0.2,  # variance added to constructors at each season boundary
+    "reg_var_con": 0.5,  # extra constructor variance when regulations reset
+    "depth_race": 3,  # truncate the race-order likelihood to the top-N picks
+    "w_attr": 0.0,  # power weight of the attrition (reverse-PL) channel
     "depth_qual": 6,  # truncation depth for the qualifying order
-    "w_qual": 0.3,  # power weight of the qualifying channel
-    "rel_half_life": 20.0,  # races for a DNF's reliability influence to halve
-    "chaos_gamma": 0.5,  # weight of circuit DNF-rate delta on finish odds
+    "w_qual": 0.6,  # power weight of the qualifying channel
+    "rel_half_life": 40.0,  # races for a DNF's reliability influence to halve
+    "chaos_gamma": 1.0,  # weight of circuit DNF-rate delta on finish odds
     "chaos_eta": 0.7,  # exponent on the circuit displacement temperature
-    "p_wild": 0.05,  # probability a race is "wild" (safety cars, rain, chaos)
+    "p_wild": 0.0,  # probability a race is "wild" (safety cars, rain, chaos)
     "t_wild": 2.5,  # temperature multiplier applied in a wild race
 }
 
@@ -450,7 +454,7 @@ class HistoryFilter:
         drivers = {
             row["driverId"]: (
                 *self.engine.combined(row["driverId"], row["constructorId"]),
-                self._p_finish(row["driverId"], row["constructorId"], delta),
+                self.p_finish_adjusted(row["driverId"], row["constructorId"], delta),
             )
             for row in rows
         }
@@ -503,7 +507,8 @@ class HistoryFilter:
         )
         return snapshot
 
-    def _p_finish(self, did: str, cid: str, circuit_delta: float) -> float:
+    def p_finish_adjusted(self, did: str, cid: str, circuit_delta: float = 0.0) -> float:
+        """Clamped finish probability with the circuit's DNF log-odds shift applied."""
         p0 = min(0.995, max(0.02, self.reliability.p_finish(did, cid)))
         if circuit_delta:
             z = math.log(p0 / (1.0 - p0)) - circuit_delta

@@ -444,7 +444,9 @@ def test_dsq_and_dns_channel_visibility():
 
 
 def test_attrition_order_and_pace_direction():
-    p = dict(DEFAULT_PARAMS_V2)
+    # The tuner zeroed w_attr in the shipped defaults; force the channel on
+    # here because this test verifies the attrition *mechanism* itself.
+    p = dict(DEFAULT_PARAMS_V2, w_attr=0.5)
     hf = model_v2.HistoryFilter(p)
     race = _rrace(
         2020,

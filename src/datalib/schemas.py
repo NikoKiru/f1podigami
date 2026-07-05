@@ -219,6 +219,34 @@ class PodigamiParams(_Base):
     carOverlay: bool
 
 
+class PodigamiParamsV2(_Base):
+    """Params block written by the v2 dynamic Bayesian rating engine ("dbpl-v2")."""
+
+    model: str
+    sigma0_drv: float
+    sigma0_con: float
+    rookie_mu: float
+    newteam_mu: float
+    tau_drv: float
+    tau_con: float
+    season_var_drv: float
+    season_var_con: float
+    reg_var_con: float
+    depth_race: int
+    w_attr: float
+    depth_qual: int
+    w_qual: float
+    rel_half_life: float
+    chaos_gamma: float
+    chaos_eta: float
+    p_wild: float
+    t_wild: float
+    usingQualifying: bool
+    circuitId: str | None = None
+    nDraws: int
+    seed: int
+
+
 class DriverStrength(_Base):
     """A driver's modelled strength — shared by ``candidates[].perDriver`` and ``driverForm``.
 
@@ -235,6 +263,9 @@ class DriverStrength(_Base):
     constructorId: str
     constructor: str | None = None
     constructorStrength: float | None = None
+    # v2 engine extras: modelled finish probability and rating uncertainty (std).
+    finishProb: float | None = None
+    uncertainty: float | None = None
 
 
 class PodigamiCandidate(_Base):
@@ -260,7 +291,7 @@ class SeasonDebut(_Base):
 class Podigami(_Base):
     currentSeason: str
     asOf: RaceRef
-    params: PodigamiParams
+    params: PodigamiParams | PodigamiParamsV2
     gridSize: int
     chanceNextRaceNew: float
     candidates: list[PodigamiCandidate]
@@ -284,6 +315,29 @@ class ModelParams(_Base):
     seasonBoost: float
     posWeights: list[float]
     temperature: float
+
+
+class ModelParamsV2(_Base):
+    """The 18 locked knobs of the v2 rating engine (see model_v2.DEFAULT_PARAMS_V2)."""
+
+    sigma0_drv: float
+    sigma0_con: float
+    rookie_mu: float
+    newteam_mu: float
+    tau_drv: float
+    tau_con: float
+    season_var_drv: float
+    season_var_con: float
+    reg_var_con: float
+    depth_race: int
+    w_attr: float
+    depth_qual: int
+    w_qual: float
+    rel_half_life: float
+    chaos_gamma: float
+    chaos_eta: float
+    p_wild: float
+    t_wild: float
 
 
 class LadderRow(_Base):
@@ -320,11 +374,13 @@ class CalibrationBin(_Base):
 
 class ModelEval(_Base):
     evalWindow: EvalWindow
-    modelParams: ModelParams
+    modelParams: ModelParams | ModelParamsV2
     ladder: list[LadderRow]
     chosen: Chosen
     calibration: list[CalibrationBin]
     poolNote: str
+    # which ladder rung the site actually serves (absent in pre-v2 files)
+    chosenModel: str | None = None
 
 
 # --- constructor_standings.json ----------------------------------------------
