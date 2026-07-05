@@ -136,7 +136,7 @@ flowchart TD
     BUILD ==> GH["GitHub Pages"]:::page
 ```
 
-All access to `data/*.json` goes through **`src/datalib/`** — Pydantic v2 schemas that validate every read and write. `load_*` returns typed model objects; `save_*` validates the payload and writes it byte-identical (so regenerating a dataset never reformats it).
+All access to `data/*.json` goes through **`src/datalib/`** — Pydantic v2 schemas that validate every read and write. `load_*` returns typed model objects; `save_*` validates the payload and writes its canonical schema form — byte-identical to a load/dump round-trip, so regenerating never reformats committed data.
 
 <details>
 <summary>📁 <strong>Repository layout</strong></summary>

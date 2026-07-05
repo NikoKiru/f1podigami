@@ -53,6 +53,78 @@ def test_dataset_roundtrips_byte_identical(name):
     assert redumped == raw
 
 
+def _podigami_payload_constructors_off() -> dict:
+    """A Podigami payload whose driver entries OMIT the optional constructor and
+    v2 fields — exactly what compute._driver_entry emits when the constructor
+    overlay is off (an empty driverConstructor map, e.g. the round-indexed
+    results endpoint lagging right after a race)."""
+
+    def entry(driver_id: str, name: str) -> dict:
+        return {
+            "driverId": driver_id,
+            "name": name,
+            "weight": 130664.836,
+            "seasonPodiums": 4,
+            "recentPodiums": 4,
+            "constructorId": "mercedes",
+        }
+
+    trio = [
+        entry("russell", "George Russell"),
+        entry("leclerc", "Charles Leclerc"),
+        entry("hamilton", "Lewis Hamilton"),
+    ]
+    return {
+        "currentSeason": "2026",
+        "asOf": {"season": "2026", "round": "9", "raceName": "British Grand Prix"},
+        "params": {
+            "model": "plackett-luce",
+            "alpha": 0.1,
+            "halfLife": 8.0,
+            "offSeason": 0.65,
+            "seasonBoost": 0.4,
+            "temperature": 1.2,
+            "usingConstructors": False,
+            "carOverlay": False,
+        },
+        "gridSize": 3,
+        "chanceNextRaceNew": 12.3,
+        "candidates": [
+            {
+                "driverIds": ["russell", "leclerc", "hamilton"],
+                "names": ["George Russell", "Charles Leclerc", "Lewis Hamilton"],
+                "prob": 4.2,
+                "perDriver": [
+                    entry("russell", "George Russell"),
+                    entry("leclerc", "Charles Leclerc"),
+                    entry("hamilton", "Lewis Hamilton"),
+                ],
+            }
+        ],
+        "driverForm": trio,
+        "bySeason": {},
+        "seasonCounts": {},
+        "seasonRange": [1950, 2026],
+    }
+
+
+def test_save_podigami_roundtrips_with_optional_fields_absent(tmp_path, monkeypatch):
+    """Regression: a driver entry may omit the optional constructor/v2 fields when
+    the overlay is off. save_podigami must still write a file that satisfies the
+    byte-identical round-trip invariant — otherwise the auto-update's test gate
+    fails, the data PR is never opened, and the site silently stops updating."""
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    repository.save_podigami(_podigami_payload_constructors_off())
+
+    raw = (tmp_path / "podigami.json").read_text(encoding="utf-8")
+    adapter = REGISTRY["podigami.json"]
+    dumped = adapter.dump_python(adapter.validate_python(json.loads(raw)), mode="json")
+    redumped = json.dumps(dumped, indent=2, ensure_ascii=False)
+    assert redumped == raw
+
+
 def test_loaders_return_typed_objects():
     combos = load_combos()
     assert isinstance(combos, list) and isinstance(combos[0], Combo)
