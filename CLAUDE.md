@@ -80,9 +80,11 @@ Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTE
 
 ### Prediction model
 
-`src/compute/model.py` + `compute_podigami.py` implement a **Plackett–Luce** model over recency-weighted driver strengths. `src/compute/backtest.py` produces `data/model_eval.json` (backtested top-k accuracy + calibration), surfaced on the landing page as a badge and in the FAQ.
+The live predictor is **model v2** (`src/compute/model_v2.py`, params tag `dbpl-v2`): a dynamic Bayesian rating engine — Gaussian driver+constructor log-worth ratings filtered over `data/race_results.json` (full classifications 1950→) and `data/qualifying.json` (1994→) via closed-form truncated Plackett–Luce updates, with decayed DNF hazards (mechanical → car, incident → driver), circuit chaos character, and a deterministic Rao-Blackwellised podium simulation (fixed seed; same inputs → byte-identical JSON). `compute_podigami.py` uses it whenever `race_results.json` exists and falls back to the v1 recency Plackett–Luce model (`src/compute/model.py`) otherwise.
 
-`compute_podigami.py` also folds in `data/constructor_standings.json` (via `_build_constructor_strength` → each driver's `constructorStrength`). Because of this, a refresh that picks up updated standings can rewrite most numeric values in `podigami.json` even when `asOf` is unchanged — that churn is expected, not a bug. Output is deterministic: same inputs → byte-identical JSON.
+`src/compute/backtest.py` is the integrity core: a walk-forward ladder (v1 rungs + v2 ablation rungs) tuned on 2010–2018 and scored on a frozen 2019+ test window → `data/model_eval.json`, surfaced on the landing page as a badge and in the FAQ. An acceptance gate in `evaluate()` keeps v2 "chosen" only while it beats v1 on test logLoss AND brierNew. Tuning knobs are locked in `model_v2.DEFAULT_PARAMS_V2` (`--tune-v2` re-derives them; notable verdicts: qualifying weight 0.6, attrition channel 0).
+
+`compute_podigami.py` still folds in `data/constructor_standings.json` (team labels + each driver's `constructorId`/`constructorStrength`), so a refresh that picks up updated standings can rewrite most numeric values in `podigami.json` even when `asOf` is unchanged — that churn is expected, not a bug. The two raw v2 datasets are stored **compact** (single-line JSON; `datalib.repository.COMPACT`) to keep the repo lean.
 
 ### Data flow
 
@@ -112,7 +114,7 @@ The repo uses a two-stage **`develop` → `main`** flow. `develop` is the **defa
 - **Feature work**: branch off `develop`, open a PR back into `develop` (`gh pr create` targets it by default). CI (`ci.yml`) and security (`security.yml`) run on every PR — 7 required checks gate the merge into `develop` (Lint & format, Test py3.11/3.12/3.13, Build & link-check, Dependency audit, Secret scan). CodeQL does **not** run here (it only triggers on `main`).
 - **Verify before shipping**: there is no staging deploy — the live site only builds from `main`. "Confirmed working" = green CI + local preview (`python src/build_site.py`, then serve `dist/`).
 - **Ship a release**: open a promotion PR `develop → main` (`gh pr create --base main --head develop`). Targeting `main` triggers the **full 9 required checks** (the 7 above + CodeQL's two `Analyze` checks). Merging it runs `deploy.yml` → Pages. Batch multiple features into one promotion PR, or promote one at a time.
-- **Data-update automation is unaffected**: `update.yml` pins `--base main`, so `auto/update-data` PRs still go straight to `main` and auto-merge/deploy without waiting in `develop`.
+- **Data-update automation is unaffected**: `update.yml` operates entirely on `main` — both jobs check out `ref: main` (the guard must read `main`'s `asOf`, which is the only one data PRs advance, and the data branch must be cut from `main`) and the PR pins `--base main` — so `auto/update-data` PRs go straight to `main` and auto-merge/deploy without waiting in `develop`. Committed `data/` on `develop` therefore drifts behind `main` between promotions; that's expected (tests are data-agnostic, and a promotion's three-way merge keeps `main`'s newer data).
 - **RELEASE_NOTES.md**: each feature PR into `develop` carries its own entry (per the Release Notes rules below); the promotion PR just bundles them — no separate entry needed for the promotion itself.
 
 ## Pull Requests
