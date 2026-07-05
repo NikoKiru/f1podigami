@@ -59,29 +59,29 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 ## 🔮 How the predictor works
 
 ![Backtested](https://img.shields.io/badge/backtested-1950–2026-1f6feb?style=flat-square)
-![Half-life](https://img.shields.io/badge/recency_half--life-6_races-e10600?style=flat-square)
-![Top-1](https://img.shields.io/badge/exact_trio_top--1-13%25-brightgreen?style=flat-square)
-![Top-5](https://img.shields.io/badge/trio_top--5-41%25-brightgreen?style=flat-square)
-![Hold-outs](https://img.shields.io/badge/race_hold--outs-333-8957e5?style=flat-square)
+![Engine](https://img.shields.io/badge/engine-Bayesian_ratings_(dbpl--v2)-e10600?style=flat-square)
+![Top-1](https://img.shields.io/badge/exact_trio_top--1-18%25-brightgreen?style=flat-square)
+![Top-3](https://img.shields.io/badge/trio_top--3-35%25-brightgreen?style=flat-square)
+![Hold-outs](https://img.shields.io/badge/frozen_test_races-160-8957e5?style=flat-square)
 
 A *podigami* = a 3-driver podium **set** that has **never** finished a podium together before.
 
-For each driver on the current grid:
+The predictor is a **dynamic Bayesian rating engine** ([`src/compute/model_v2.py`](src/compute/model_v2.py)):
 
-```
-weight(d) = α  +  Σ over past podiums of 0.5 ^ (races_ago / H)  +  boost · (podiums this season)
-            └ floor ┘   └──────── recency decay (half-life H) ────────┘   └── current-season nudge ──┘
-```
+- **Pace** — every driver *and* every car carries a Gaussian rating (mean + uncertainty) over its log-worth. Each qualifying session and race classification since 1950 updates both with a closed-form truncated **Plackett–Luce** step; team lineage carries ratings across rebrands (Toro Rosso → AlphaTauri → RB, Jordan → … → Aston Martin).
+- **Time** — ratings diffuse a little every race, more over a winter, a lot for cars when the technical regulations reset (2009, 2014, 2022, 2026…).
+- **Survival** — exponentially-decayed DNF hazards, era-relative: mechanical failures charge the car, incidents charge the driver.
+- **Chaos** — each circuit's grid→finish shuffle and DNF propensity adjust the prediction temperature and finish odds.
+- **Prediction** — the engine simulates the next race (deterministic seed): skill noise + who survives, with *exact* conditional Plackett–Luce trio probabilities per draw. `P(next race is new)` is the exact complement of every already-seen trio.
 
-Given every driver's weight, a **Plackett–Luce** model scores each trio: sum over the 6 podium orderings of sequential pick probabilities (λᵢ / Σ remaining λ).
-`P(next race is new)` is the total probability mass on trios that have never happened.
-
-> **Why this formula?** It was picked by backtesting candidate models over 1950–2026 (333 race hold-outs):
-> - 📉 Cumulative **career** counts barely beat random (top-1 ≈ 2%) — longevity ≠ current form.
-> - 📈 **Recency** (exponential decay, half-life of 6 races) jumped to **top-1 ≈ 13%, top-5 ≈ 42%**.
-> - ➕ A *mild* current-season boost helped; blending career rate back in **hurt**, so it was dropped.
+> **Why this model?** Walk-forward evaluation — tuned on 2010–2018 only, then scored once on a frozen 2019–2026 test window (160 races) it never saw:
 >
-> Tunable constants live in [`src/compute/model.py`](src/compute/model.py).
+> | model | top-1 | top-3 | top-5 | log-loss |
+> |---|---|---|---|---|
+> | recency Plackett–Luce (previous) | 12.5% | 29.4% | 41.2% | 4.078 |
+> | **rating engine (live)** | **18.1%** | **35.0%** | **43.8%** | **3.916** |
+>
+> Ablations: pace + reliability alone already beat v1; adding the qualifying order gave the biggest jump; a failure-order (attrition) channel earned zero weight and is off. Full ladder in [`data/model_eval.json`](data/model_eval.json).
 
 ---
 
@@ -102,6 +102,8 @@ flowchart TD
     subgraph FETCH ["① Fetch  →  data/*.json"]
         direction LR
         FP["fetch_podiums"]:::fetch
+        FR["fetch_race_results"]:::fetch
+        FQ["fetch_qualifying"]:::fetch
         FG["fetch_current_drivers"]:::fetch
         FS["fetch_schedule"]:::fetch
     end
@@ -150,7 +152,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (317 tests, run in CI)
+tests/          pytest suite (467 tests, run in CI)
 ```
 
 </details>
@@ -180,8 +182,8 @@ python src/build_site.py
 | Command | When | What it does |
 |---|---|---|
 | `python src/build_site.py` | Anytime (offline) | Re-render all pages from committed data → `dist/` |
-| `python src/update.py` | After each race | Incrementally fetch new podiums + grid, recompute, rebuild |
-| `python src/update.py --full` | First run / full rebuild | Re-fetch the entire podium history from 1950 (slow), then rebuild |
+| `python src/update.py` | After each race | Incrementally fetch new podiums, classifications, qualifying + grid, recompute, rebuild |
+| `python src/update.py --full` | First run / full rebuild | Re-fetch the entire race history from 1950 (slow), then rebuild |
 | `PYTHONPATH=src python -m datalib.validate` | After editing data | Validate every dataset against its Pydantic schema |
 
 ---
@@ -191,7 +193,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 317 tests + coverage gate (≥70%)
+pytest --cov                          # 467 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
@@ -243,6 +245,8 @@ flowchart LR
 |---|---|
 | **Fetch** | |
 | `src/fetch/fetch_podiums.py` | Fetch P1/P2/P3 for every race → `data/podiums.json` |
+| `src/fetch/fetch_race_results.py` | Fetch full race classifications (grid, laps, status) → `data/race_results.json` |
+| `src/fetch/fetch_qualifying.py` | Fetch qualifying session order (1994→) → `data/qualifying.json` |
 | `src/fetch/fetch_current_drivers.py` | Fetch the current racing grid → `data/current_drivers.json` |
 | `src/fetch/fetch_schedule.py` | Fetch race calendar + circuit track outlines → `data/schedule.json` |
 | `src/fetch/fetch_constructor_standings.py` | Fetch constructor championship standings → `data/constructor_standings.json` |
@@ -254,8 +258,9 @@ flowchart LR
 | `src/compute/compute_overdue.py` | Find trios overdue based on driver form → `data/overdue.json` |
 | `src/compute/compute_unlikeliest.py` | Rank podium trios that happened despite the odds → `data/unlikeliest.json` |
 | `src/compute/compute_soulmates.py` | Shared-podium matrix for the top 40 → `data/soulmates.json` |
-| `src/compute/model.py` | Plackett–Luce strength model core |
-| `src/compute/backtest.py` | Backtest model accuracy across hold-out seasons → `data/model_eval.json` |
+| `src/compute/model.py` | Plackett–Luce strength model core (v1, fallback) |
+| `src/compute/model_v2.py` | 🔮 Dynamic Bayesian rating engine (pace + reliability + chaos + simulation) |
+| `src/compute/backtest.py` | Walk-forward ladder + tuners across hold-out seasons → `data/model_eval.json` |
 | `src/compute/metrics.py` | Scoring metrics for model evaluation |
 | **Build** | |
 | `src/build/build_podigami_html.py` | Render `dist/index.html` (the predictor + next/last race) |

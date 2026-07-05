@@ -367,7 +367,11 @@ def render_candidates(cands: list[dict], meta: dict) -> str:
 
 
 def render_form(
-    form: list[dict], using_constructors: bool, meta: dict, half_life: float = 6.0
+    form: list[dict],
+    using_constructors: bool,
+    meta: dict,
+    half_life: float = 6.0,
+    is_v2: bool = False,
 ) -> str:
     show = [d for d in form if d["weight"] > 0][:14]
     mx = max((d["weight"] for d in show), default=1)
@@ -385,10 +389,16 @@ def render_form(
             f'<span class="tr-w">{d["weight"]:.1f}</span>'
             f"</div>"
         )
-    sub = f"Each driver's podium weight &mdash; recent podiums decay over ~{half_life:.0f} races, with a boost for this season"
-    if using_constructors:
-        sub += " and constructor strength"
-    sub += "."
+    if is_v2:
+        sub = (
+            "Each driver's modelled strength &mdash; their own rating plus their car's, "
+            "learned race by race from every finishing and qualifying order since 1950."
+        )
+    else:
+        sub = f"Each driver's podium weight &mdash; recent podiums decay over ~{half_life:.0f} races, with a boost for this season"
+        if using_constructors:
+            sub += " and constructor strength"
+        sub += "."
     return (
         f'<section class="panel">'
         f"  <h2>Current form"
@@ -489,14 +499,25 @@ def render_faq(
 ) -> str:
     mp = ev.get("modelParams", {}) if ev else {}
     half_life = mp.get("halfLife", 6)
-    items = [
-        (
-            "How does the prediction model work?",
+    is_v2 = (data.get("params") or {}).get("model") == "dbpl-v2"
+    if is_v2:
+        how_it_works = (
+            "A <strong>Bayesian rating engine</strong> keeps a skill rating for every driver "
+            "and every car, updated after each qualifying session and race since 1950 "
+            "(uncertainty widens between seasons and when the rules change). For the next race "
+            "it blends those ratings with each car&rsquo;s reliability record (DNF risk) and "
+            "the circuit&rsquo;s character, then simulates the podium hundreds of times with a "
+            "<strong>Plackett&ndash;Luce model</strong> to rank the never-before-seen trios."
+        )
+    else:
+        how_it_works = (
             f"A <strong>Plackett&ndash;Luce model</strong> estimates each driver&rsquo;s current "
             f"strength from their recent podium finishes, weighted toward recency (halved every "
             f"~{half_life:.0f} races). It then calculates the probability of every possible trio and "
-            f"ranks the never-before-seen ones from most to least likely.",
-        ),
+            f"ranks the never-before-seen ones from most to least likely."
+        )
+    items = [
+        ("How does the prediction model work?", how_it_works),
         (
             "What does the headline percentage mean?",
             "It&rsquo;s the overall probability that <em>any</em> brand-new podium trio appears at "
@@ -514,9 +535,13 @@ def render_faq(
         ),
         (
             "What is &ldquo;current form&rdquo; based on?",
-            "Each driver&rsquo;s podium weight uses a recency decay &mdash; recent podiums count "
-            "more than older ones. The weight also includes a boost for the current season and "
-            "can factor in constructor strength.",
+            "Each driver&rsquo;s strength is their own rating plus their car&rsquo;s, learned "
+            "from every finishing and qualifying order &mdash; so a driver can rate higher than "
+            "their recent podium count suggests when the car underneath them is quick."
+            if is_v2
+            else "Each driver&rsquo;s podium weight uses a recency decay &mdash; recent podiums "
+            "count more than older ones. The weight also includes a boost for the current "
+            "season and can factor in constructor strength.",
         ),
         (
             "What does &ldquo;podigami&rdquo; mean?",
@@ -615,7 +640,11 @@ def main() -> int:
     hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
     candidates = render_candidates(cands, meta)
     form = render_form(
-        data["driverForm"], using_constructors, meta, data["params"].get("halfLife", 6.0)
+        data["driverForm"],
+        using_constructors,
+        meta,
+        data["params"].get("halfLife", 6.0),
+        is_v2=data["params"].get("model") == "dbpl-v2",
     )
     timeline = render_timeline(data)
     faq = render_faq(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)

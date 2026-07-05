@@ -22,7 +22,10 @@ from datalib import (
 @pytest.mark.parametrize("name", sorted(REGISTRY))
 def test_dataset_loads_and_validates(name):
     """Every committed data/*.json parses and satisfies its schema."""
-    raw = json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
+    path = DATA_DIR / name
+    if not path.exists():
+        pytest.skip(f"{name} not yet backfilled (run its fetcher)")
+    raw = json.loads(path.read_text(encoding="utf-8"))
     REGISTRY[name].validate_python(raw)
 
 
@@ -74,3 +77,31 @@ def test_schedule_dates_well_formed_and_tracks_mostly_present():
     # most circuits should resolve to a drawn track outline
     with_track = sum(1 for r in sched.races if r.trackPath)
     assert with_track >= len(sched.races) * 0.8
+
+
+# Historical quirks where the podium record and the classification rows are known
+# to disagree (shared drives, dead heats). Add (season, round) here only with a
+# comment saying why. Expected to stay empty or tiny.
+PODIUM_CROSSCHECK_SKIP: set[tuple[str, str]] = set()
+
+
+def test_race_results_podiums_agree_with_podiums_dataset():
+    """The v2 raw dataset and podiums.json must tell the same story about who
+    finished 1-2-3 in every race both datasets cover."""
+    import datalib
+
+    podium_map = {
+        (p.season, p.round): [p.p1.driverId, p.p2.driverId, p.p3.driverId] for p in load_podiums()
+    }
+    mismatches = []
+    for race in datalib.load_race_results():
+        rk = (race.season, race.round)
+        if rk not in podium_map or rk in PODIUM_CROSSCHECK_SKIP:
+            continue
+        top3 = dict.fromkeys((1, 2, 3))
+        for row in race.results:
+            if row.position in top3 and top3[row.position] is None:
+                top3[row.position] = row.driverId
+        if [top3[1], top3[2], top3[3]] != podium_map[rk]:
+            mismatches.append((rk, [top3[1], top3[2], top3[3]], podium_map[rk]))
+    assert mismatches == [], f"{len(mismatches)} podium mismatches: {mismatches[:5]}"

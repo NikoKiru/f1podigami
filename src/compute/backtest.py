@@ -16,6 +16,7 @@ data/model_eval.json and prints the ladder.
 from __future__ import annotations
 
 import json
+import math
 import sys
 from itertools import combinations
 from pathlib import Path
@@ -24,12 +25,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import metrics  # noqa: E402
 import model  # noqa: E402
+import model_v2  # noqa: E402
 
 from datalib import save_model_eval  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
 DRIVER_RACES_PATH = DATA_DIR / "driver_races.json"
+RACE_RESULTS_PATH = DATA_DIR / "race_results.json"
+QUALIFYING_PATH = DATA_DIR / "qualifying.json"
 OUT_PATH = DATA_DIR / "model_eval.json"
 
 EVAL_START = 2010  # modern era
@@ -192,9 +196,172 @@ def tune(races, active, val) -> dict:
     return {**model.DEFAULT_PARAMS, **best, "temperature": best_t}
 
 
-def evaluate(races, active, test) -> dict:
+# --- v2: dynamic Bayesian rating engine over full classifications -------------
+
+# Ablation ladder: each rung switches one v2 channel on (overrides on top of
+# the tuned DEFAULT_PARAMS_V2; reliability is core and stays on in all rungs).
+RUNGS_V2 = [
+    (
+        "v2 pace",
+        {"w_attr": 0.0, "w_qual": 0.0, "chaos_gamma": 0.0, "chaos_eta": 0.0, "p_wild": 0.0},
+    ),
+    ("v2 +attrition", {"w_qual": 0.0, "chaos_gamma": 0.0, "chaos_eta": 0.0, "p_wild": 0.0}),
+    ("v2 +chaos", {"w_qual": 0.0}),
+    ("v2 full", {}),
+]
+
+# Per-knob grids for --tune-v2 coordinate descent (2 sweeps, validation window).
+V2_TUNE_GRID: dict[str, list] = {
+    "sigma0_drv": [0.5, 0.7, 1.0],
+    "sigma0_con": [0.8, 1.2, 1.6],
+    "rookie_mu": [-0.8, -0.4, 0.0],
+    "newteam_mu": [-1.2, -0.8, -0.4],
+    "tau_drv": [0.02, 0.04, 0.08],
+    "tau_con": [0.04, 0.08, 0.15],
+    "season_var_drv": [0.01, 0.03, 0.08],
+    "season_var_con": [0.05, 0.1, 0.2],
+    "reg_var_con": [0.2, 0.5, 1.0],
+    "depth_race": [3, 6, 10],
+    "w_attr": [0.0, 0.25, 0.5, 1.0],
+    "depth_qual": [3, 6, 10],
+    "w_qual": [0.0, 0.15, 0.3, 0.6],
+    "rel_half_life": [10.0, 20.0, 40.0],
+    "chaos_gamma": [0.0, 0.5, 1.0],
+    "chaos_eta": [0.0, 0.35, 0.7],
+    "p_wild": [0.0, 0.05, 0.1],
+    "t_wild": [1.5, 2.5],
+}
+
+
+def load_v2():
+    """Load (race_results, quali_map) for the v2 rungs, or None if not fetched."""
+    if not RACE_RESULTS_PATH.exists():
+        return None
+    rresults = sorted(
+        json.loads(RACE_RESULTS_PATH.read_text(encoding="utf-8")),
+        key=lambda r: (int(r["season"]), int(r["round"])),
+    )
+    quali_map = {}
+    if QUALIFYING_PATH.exists():
+        for e in json.loads(QUALIFYING_PATH.read_text(encoding="utf-8")):
+            quali_map[(e["season"], e["round"])] = e
+    return rresults, quali_map
+
+
+def trio_keys_from(races) -> dict[tuple[str, str], tuple]:
+    """(season, round) -> actual podium trio key, from podiums.json records."""
+    return {
+        (r["season"], r["round"]): model.trio_key(r[k]["driverId"] for k in model.POS_KEYS)
+        for r in races
+    }
+
+
+def score_window_v2(
+    rresults, quali_map, trio_keys, window, params, *, draws=64, rank_draws=16, with_rank=False
+):
+    """One HistoryFilter pass over the whole history; score races in the window.
+
+    The fine pass (``draws``) tracks the actual trio plus every seen trio, so
+    p_true and q_new (the exact novelty complement) carry only skill-noise MC
+    error. Rank/top-k/brierSet need all-trio probabilities, so ``with_rank``
+    adds a coarser all-trio pass (``rank_draws``) — ordinal metrics only.
+    """
+    hf = model_v2.HistoryFilter(params)
+    seen: set = set()
+    recs = []
+    for race in rresults:
+        rk = (race["season"], race["round"])
+        key = trio_keys.get(rk)
+        snap = hf.step(race, quali_map.get(rk))
+        if (
+            key is not None
+            and window[0] <= int(race["season"]) <= window[1]
+            and len(snap["drivers"]) >= 3
+        ):
+            entrants = sorted(snap["drivers"])
+            mu_var = {d: (v[0], v[1]) for d, v in snap["drivers"].items()}
+            p_fin = {d: v[2] for d, v in snap["drivers"].items()}
+            seed = 20260704 + int(race["season"]) * 100 + int(race["round"])
+            fine = model_v2.predict_race(
+                entrants,
+                mu_var,
+                p_fin,
+                snap["temp"],
+                params,
+                seen | {key},  # ensure the actual trio is tracked exactly
+                n_draws=draws,
+                seed=seed,
+                screen=0,
+            )
+            q_new = 1.0 - sum(
+                fine["trio_probs"][t] for t in sorted(seen) if t in fine["trio_probs"]
+            )
+            rank = None
+            sum_sq = None
+            if with_rank:
+                coarse = model_v2.predict_race(
+                    entrants,
+                    mu_var,
+                    p_fin,
+                    snap["temp"],
+                    params,
+                    set(),
+                    n_draws=rank_draws,
+                    seed=seed,
+                    screen=10**9,
+                )
+                ranked = sorted(coarse["trio_probs"].items(), key=lambda kv: (-kv[1], kv[0]))
+                rank = next((j + 1 for j, (t, _) in enumerate(ranked) if t == key), None)
+                sum_sq = sum(p * p for p in coarse["trio_probs"].values())
+            recs.append(
+                {
+                    "rank": rank,
+                    "p_true": fine["trio_probs"].get(key, 0.0),
+                    "sum_sq": sum_sq,
+                    "q_new": q_new,
+                    "is_new": 0.0 if key in seen else 1.0,
+                }
+            )
+        if key is not None:
+            seen.add(key)
+    return recs
+
+
+def v2_objective(recs) -> float:
+    """Tuning objective: trio log-loss + binary novelty log-loss (both lower-better)."""
+    eps = 1e-9
+    ll_trio = metrics.log_loss([r["p_true"] for r in recs])
+    ll_new = -sum(
+        r["is_new"] * math.log(max(r["q_new"], eps))
+        + (1.0 - r["is_new"]) * math.log(max(1.0 - r["q_new"], eps))
+        for r in recs
+    ) / max(len(recs), 1)
+    return ll_trio + ll_new
+
+
+def tune_v2(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> dict:
+    """Coordinate descent over V2_TUNE_GRID on the validation window."""
+    best = dict(model_v2.DEFAULT_PARAMS_V2)
+    best_j = v2_objective(score_window_v2(rresults, quali_map, trio_keys, val, best))
+    if verbose:
+        print(f"start J={best_j:.4f}")
+    for sweep in range(sweeps):
+        for knob, grid in V2_TUNE_GRID.items():
+            for value in grid:
+                if value == best[knob]:
+                    continue
+                trial = dict(best, **{knob: value})
+                j = v2_objective(score_window_v2(rresults, quali_map, trio_keys, val, trial))
+                if j < best_j:
+                    best_j, best = j, trial
+            if verbose:
+                print(f"  sweep {sweep + 1} {knob} -> {best[knob]}  (J={best_j:.4f})")
+    return best
+
+
+def evaluate(races, active, test, v2_data=None) -> dict:
     """Score the ladder on the untouched test window using the LOCKED
-    model.DEFAULT_PARAMS as the chosen model (deterministic, no tuning)."""
+    model.DEFAULT_PARAMS / model_v2.DEFAULT_PARAMS_V2 (deterministic, no tuning)."""
     chosen_params = model.DEFAULT_PARAMS
     temp = chosen_params["temperature"]
 
@@ -210,12 +377,39 @@ def evaluate(races, active, test) -> dict:
     )
     ladder.append(("PL + tuned (chosen)", summarize(ch)))
 
-    base_rate = sum(r["is_new"] for r in rf) / max(len(rf), 1)
-    brier_new_base = metrics.brier_binary([base_rate] * len(ch), [r["is_new"] for r in ch])
-    cal = metrics.calibration_bins([r["q_new"] for r in ch], [r["is_new"] for r in ch])
-    ece = metrics.expected_calibration_error([r["q_new"] for r in ch], [r["is_new"] for r in ch])
+    chosen_recs, chosen_name = ch, "PL + tuned (chosen)"
+    chosen_model_params = {
+        k: chosen_params[k]
+        for k in ("halfLife", "offSeason", "seasonBoost", "posWeights", "temperature")
+    }
+    if v2_data is not None:
+        rresults, quali_map = v2_data
+        keys = trio_keys_from(races)
+        v2_full_recs = None
+        for name, overrides in RUNGS_V2:
+            params = dict(model_v2.DEFAULT_PARAMS_V2, **overrides)
+            recs = score_window_v2(rresults, quali_map, keys, test, params, with_rank=True)
+            ladder.append((name, summarize(recs)))
+            if name == "v2 full":
+                v2_full_recs = recs
+        v1, v2 = dict(ladder[3][1]), dict(ladder[-1][1])
+        # Acceptance gate: v2 ships only if it wins BOTH headline scores.
+        if v2["logLoss"] <= v1["logLoss"] and v2["brierNew"] <= v1["brierNew"]:
+            chosen_recs, chosen_name = v2_full_recs, "v2 full"
+            chosen_model_params = dict(model_v2.DEFAULT_PARAMS_V2)
 
-    chosen = dict(ladder[-1][1])
+    base_rate = sum(r["is_new"] for r in rf) / max(len(rf), 1)
+    brier_new_base = metrics.brier_binary(
+        [base_rate] * len(chosen_recs), [r["is_new"] for r in chosen_recs]
+    )
+    cal = metrics.calibration_bins(
+        [r["q_new"] for r in chosen_recs], [r["is_new"] for r in chosen_recs]
+    )
+    ece = metrics.expected_calibration_error(
+        [r["q_new"] for r in chosen_recs], [r["is_new"] for r in chosen_recs]
+    )
+
+    chosen = dict(summarize(chosen_recs))
     chosen.update(
         baseRateNew=round(base_rate, 4),
         brierNewBaseRate=round(brier_new_base, 4),
@@ -224,6 +418,8 @@ def evaluate(races, active, test) -> dict:
     return {
         "ladder": ladder,
         "chosen": chosen,
+        "chosenName": chosen_name,
+        "chosenParams": chosen_model_params,
         "calibration": cal,
         "baseRate": base_rate,
         "brierNewBase": brier_new_base,
@@ -239,6 +435,11 @@ def main(argv: list[str] | None = None) -> int:
         "--tune",
         action="store_true",
         help="grid-search params on the validation window and print the winner",
+    )
+    ap.add_argument(
+        "--tune-v2",
+        action="store_true",
+        help="coordinate-descent v2 knobs on the validation window and print the winner",
     )
     args = ap.parse_args(argv)
 
@@ -257,12 +458,20 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    res = evaluate(races, active, test)
+    v2_data = load_v2()
+
+    if args.tune_v2:
+        if v2_data is None:
+            print("race_results.json missing - run src/fetch/fetch_race_results.py first")
+            return 1
+        winner = tune_v2(v2_data[0], v2_data[1], trio_keys_from(races), val)
+        print("Best validation params (lock these into model_v2.DEFAULT_PARAMS_V2):")
+        print(winner)
+        return 0
+
+    res = evaluate(races, active, test, v2_data)
     ladder, chosen, cal = res["ladder"], res["chosen"], res["calibration"]
-    params = {
-        k: model.DEFAULT_PARAMS[k]
-        for k in ("halfLife", "offSeason", "seasonBoost", "posWeights", "temperature")
-    }
+    params = res["chosenParams"]
 
     payload = {
         "evalWindow": {"validation": list(val), "test": list(test)},
@@ -272,9 +481,11 @@ def main(argv: list[str] | None = None) -> int:
         "calibration": cal,
         "poolNote": "candidate pools = drivers active that race (driver_races) + the actual podium",
     }
+    if v2_data is not None:
+        payload["chosenModel"] = res["chosenName"]
     save_model_eval(payload)
 
-    print(f"Model params: {params}")
+    print(f"Chosen model: {res['chosenName']}\nModel params: {params}")
     print(f"Validation {val}  Test {test}  ({chosen['n']} test races)\n")
     hdr = f"{'model':22} {'top1':>6} {'top3':>6} {'top5':>6} {'logLoss':>8} {'brierNew':>9}"
     print(hdr)

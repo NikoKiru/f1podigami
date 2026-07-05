@@ -10,15 +10,24 @@
     ]
   },
   "modelParams": {
-    "halfLife": 6.0,
-    "offSeason": 0.5,
-    "seasonBoost": 0.2,
-    "posWeights": [
-      1.0,
-      0.85,
-      0.72
-    ],
-    "temperature": 1.0
+    "sigma0_drv": 0.5,
+    "sigma0_con": 1.6,
+    "rookie_mu": -0.8,
+    "newteam_mu": -1.2,
+    "tau_drv": 0.02,
+    "tau_con": 0.08,
+    "season_var_drv": 0.03,
+    "season_var_con": 0.2,
+    "reg_var_con": 0.5,
+    "depth_race": 3,
+    "w_attr": 0.0,
+    "depth_qual": 6,
+    "w_qual": 0.6,
+    "rel_half_life": 40.0,
+    "chaos_gamma": 1.0,
+    "chaos_eta": 0.7,
+    "p_wild": 0.0,
+    "t_wild": 2.5
   },
   "ladder": [
     {
@@ -60,19 +69,59 @@
       "logLoss": 4.0783,
       "brierSet": 0.9469,
       "brierNew": 0.2396
+    },
+    {
+      "model": "v2 pace",
+      "n": 160,
+      "top1": 0.1562,
+      "top3": 0.3125,
+      "top5": 0.4,
+      "logLoss": 4.0888,
+      "brierSet": 0.9479,
+      "brierNew": 0.2365
+    },
+    {
+      "model": "v2 +attrition",
+      "n": 160,
+      "top1": 0.1562,
+      "top3": 0.3125,
+      "top5": 0.4,
+      "logLoss": 4.0888,
+      "brierSet": 0.9479,
+      "brierNew": 0.2365
+    },
+    {
+      "model": "v2 +chaos",
+      "n": 160,
+      "top1": 0.15,
+      "top3": 0.3125,
+      "top5": 0.4,
+      "logLoss": 4.0832,
+      "brierSet": 0.9481,
+      "brierNew": 0.2316
+    },
+    {
+      "model": "v2 full",
+      "n": 160,
+      "top1": 0.1812,
+      "top3": 0.35,
+      "top5": 0.4375,
+      "logLoss": 3.9157,
+      "brierSet": 0.9369,
+      "brierNew": 0.2381
     }
   ],
   "chosen": {
     "n": 160,
-    "top1": 0.125,
-    "top3": 0.2938,
-    "top5": 0.4125,
-    "logLoss": 4.0783,
-    "brierSet": 0.9469,
-    "brierNew": 0.2396,
+    "top1": 0.1812,
+    "top3": 0.35,
+    "top5": 0.4375,
+    "logLoss": 3.9157,
+    "brierSet": 0.9369,
+    "brierNew": 0.2381,
     "baseRateNew": 0.4062,
     "brierNewBaseRate": 0.2412,
-    "ece": 0.0892
+    "ece": 0.0769
   },
   "calibration": [
     {
@@ -92,37 +141,37 @@
     {
       "lo": 0.2,
       "hi": 0.3,
-      "n": 18,
-      "meanPred": 0.275,
-      "obsRate": 0.3333
+      "n": 11,
+      "meanPred": 0.2796,
+      "obsRate": 0.1818
     },
     {
       "lo": 0.3,
       "hi": 0.4,
-      "n": 25,
-      "meanPred": 0.3509,
-      "obsRate": 0.44
+      "n": 31,
+      "meanPred": 0.362,
+      "obsRate": 0.4194
     },
     {
       "lo": 0.4,
       "hi": 0.5,
-      "n": 63,
-      "meanPred": 0.4389,
-      "obsRate": 0.3175
+      "n": 59,
+      "meanPred": 0.447,
+      "obsRate": 0.3559
     },
     {
       "lo": 0.5,
       "hi": 0.6,
-      "n": 40,
-      "meanPred": 0.549,
-      "obsRate": 0.5
+      "n": 53,
+      "meanPred": 0.544,
+      "obsRate": 0.4717
     },
     {
       "lo": 0.6,
       "hi": 0.7,
-      "n": 13,
-      "meanPred": 0.6326,
-      "obsRate": 0.5385
+      "n": 5,
+      "meanPred": 0.6354,
+      "obsRate": 0.6
     },
     {
       "lo": 0.7,
@@ -134,17 +183,18 @@
     {
       "lo": 0.8,
       "hi": 0.9,
-      "n": 1,
-      "meanPred": 0.8414,
-      "obsRate": 1.0
+      "n": 0,
+      "meanPred": null,
+      "obsRate": null
     },
     {
       "lo": 0.9,
       "hi": 1.0,
-      "n": 0,
-      "meanPred": null,
-      "obsRate": null
+      "n": 1,
+      "meanPred": 0.9316,
+      "obsRate": 1.0
     }
   ],
-  "poolNote": "candidate pools = drivers active that race (driver_races) + the actual podium"
+  "poolNote": "candidate pools = drivers active that race (driver_races) + the actual podium",
+  "chosenModel": "v2 full"
 }

@@ -150,6 +150,7 @@ def test_evaluate_reports_full_ladder():
 def test_main_tune_flag_prints_and_returns_zero(monkeypatch, capsys):
     races, active = _small_races()
     monkeypatch.setattr(backtest, "load", lambda: (races, active))
+    monkeypatch.setattr(backtest, "load_v2", lambda: None)
     rc = backtest.main(["--tune"])
     assert rc == 0
     out = capsys.readouterr().out
@@ -159,6 +160,7 @@ def test_main_tune_flag_prints_and_returns_zero(monkeypatch, capsys):
 def test_main_default_writes_eval_and_returns_zero(monkeypatch, capsys):
     races, active = _small_races()
     monkeypatch.setattr(backtest, "load", lambda: (races, active))
+    monkeypatch.setattr(backtest, "load_v2", lambda: None)
     saved = {}
     monkeypatch.setattr(backtest, "save_model_eval", lambda payload: saved.update(payload))
 
@@ -180,3 +182,85 @@ def test_committed_eval_shows_improvement_over_product():
     chosen = by["PL + tuned (chosen)"]
     assert chosen["logLoss"] <= product["logLoss"]  # better proper score
     assert chosen["top5"] >= product["top5"]  # at least as good at ranking
+
+
+# --- v2 rungs -------------------------------------------------------------------
+
+
+def _rrow_v2(did, cid, grid, pos, laps=50, status="Finished"):
+    return {
+        "driverId": did,
+        "constructorId": cid,
+        "grid": grid,
+        "position": pos,
+        "laps": laps,
+        "status": status,
+    }
+
+
+def _synthetic_v2_history():
+    """Two teams, four drivers, the same a>b>c>d order every race for 2 seasons."""
+    rresults, trio_keys = [], {}
+    order = [("a", "t1"), ("b", "t1"), ("c", "t2"), ("d", "t2")]
+    for season in (2010, 2011):
+        for rnd in range(1, 16):
+            rows = [_rrow_v2(d, c, i + 1, i + 1) for i, (d, c) in enumerate(order)]
+            rresults.append(
+                {
+                    "season": str(season),
+                    "round": str(rnd),
+                    "raceName": "GP",
+                    "date": "",
+                    "circuitId": "ring",
+                    "results": rows,
+                }
+            )
+            trio_keys[(str(season), str(rnd))] = ("a", "b", "c")
+    return rresults, trio_keys
+
+
+def test_score_window_v2_learns_the_dominant_trio():
+    rresults, trio_keys = _synthetic_v2_history()
+    params = dict(backtest.model_v2.DEFAULT_PARAMS_V2)
+    recs = backtest.score_window_v2(rresults, {}, trio_keys, (2011, 2011), params)
+    assert len(recs) == 15
+    assert all(r["is_new"] == 0.0 for r in recs)  # trio was seen in 2010 already
+    ll = backtest.metrics.log_loss([r["p_true"] for r in recs])
+    # 4 drivers -> 4 possible trios -> uniform logLoss = log 4 = 1.386; the
+    # engine must have learned the a>b>c ordering long ago.
+    assert ll < 0.9
+
+
+def test_score_window_v2_is_deterministic():
+    rresults, trio_keys = _synthetic_v2_history()
+    params = dict(backtest.model_v2.DEFAULT_PARAMS_V2)
+    r1 = backtest.score_window_v2(rresults, {}, trio_keys, (2011, 2011), params)
+    r2 = backtest.score_window_v2(rresults, {}, trio_keys, (2011, 2011), params)
+    assert r1 == r2
+
+
+def test_score_window_v2_rank_pass_ranks_dominant_trio_first():
+    rresults, trio_keys = _synthetic_v2_history()
+    params = dict(backtest.model_v2.DEFAULT_PARAMS_V2)
+    recs = backtest.score_window_v2(rresults, {}, trio_keys, (2011, 2011), params, with_rank=True)
+    assert recs[-1]["rank"] == 1
+    assert recs[-1]["sum_sq"] is not None
+    s = backtest.summarize(recs)  # the v1 summariser must accept v2 recs verbatim
+    assert s["n"] == 15 and s["top1"] > 0.9
+
+
+def test_rungs_v2_ablation_ladder_shape():
+    names = [name for name, _ in backtest.RUNGS_V2]
+    assert names == ["v2 pace", "v2 +attrition", "v2 +chaos", "v2 full"]
+    by = dict(backtest.RUNGS_V2)
+    assert by["v2 full"] == {}
+    # the pace rung must disable attrition, quali, chaos and wild-race mixing
+    pace = by["v2 pace"]
+    assert pace["w_attr"] == 0.0 and pace["w_qual"] == 0.0
+    assert pace["chaos_eta"] == 0.0 and pace["p_wild"] == 0.0
+
+
+def test_v2_objective_penalises_wrong_confident_novelty():
+    good = [{"p_true": 0.5, "q_new": 0.1, "is_new": 0.0}]
+    bad = [{"p_true": 0.5, "q_new": 0.9, "is_new": 0.0}]
+    assert backtest.v2_objective(bad) > backtest.v2_objective(good)
