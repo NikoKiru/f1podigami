@@ -3,6 +3,7 @@
 ## 2026-07-05
 
 ### Fixes
+- Auto-update no longer stalls one race behind when the Jolpica round-indexed results endpoint (`/{season}/{round}/results`) lags the aggregate feeds right after a race: `fetch_constructor_standings` now falls back to the last round that returns results (keeping the constructor overlay on), and `datalib._save` writes each dataset's canonical schema form so a payload that omits optional fields still round-trips byte-identically — previously the byte-identical test failed on the empty-constructor case, silently skipping the data PR and looping the guard forever (#178)
 - Automated data updates now check out `main` in both `update.yml` jobs: the guard reads `main`'s `asOf` (the only one data PRs advance, preventing an endless re-update loop after the first post-race merge under the develop/main flow) and the data branch is cut from `main` so unpromoted `develop` commits can't ride along into a data PR (#175)
 
 ### Improvements
