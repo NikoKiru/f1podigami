@@ -31,8 +31,10 @@ __all__ = [
     "DEFAULT_PARAMS_V2",
     "REG_RESET_SEASONS",
     "CONSTRUCTOR_LINEAGE",
+    "CircuitStats",
     "Gauss",
     "RatingEngine",
+    "ReliabilityTracker",
     "classify_status",
     "lineage_root",
     "model",
@@ -280,3 +282,118 @@ class RatingEngine:
         denom = 1.0 + st.var * weight * h
         st.mu += st.var * weight * g / denom
         st.var = _clamp_var(st.var / denom)
+
+
+# Era fallbacks for the very first race, before any hazard data exists.
+_ERA_MECH_0 = 0.10
+_ERA_INC_0 = 0.05
+
+
+class ReliabilityTracker:
+    """Exponentially-decayed, Beta-shrunk DNF hazards.
+
+    Two channels: mechanical failures ('mech') are charged to the constructor
+    lineage, incidents ('inc') to the driver. Every other outcome passed in
+    ('finished', 'dsq') is a clean start. Each hazard is shrunk toward the
+    current *decayed era rate*, so a fresh entrant inherits the era hazard and
+    a lone old DNF fades with half-life ``half_life`` races.
+    """
+
+    def __init__(self, half_life: float, prior_k: float = 30.0):
+        self.decay = 0.5 ** (1.0 / half_life)
+        self.prior_k = prior_k
+        self._con: dict[str, list[float]] = {}  # lineage root -> [mech events, starts]
+        self._drv: dict[str, list[float]] = {}  # driverId -> [inc events, starts]
+        self._era_mech = [0.0, 0.0]  # [events, starts], same decay
+        self._era_inc = [0.0, 0.0]
+
+    def observe_race(self, rows: list[tuple[str, str, str]]) -> None:
+        """``rows``: (driverId, constructorId, outcome) for every entry that started."""
+        d = self.decay
+        for sums in self._con.values():
+            sums[0] *= d
+            sums[1] *= d
+        for sums in self._drv.values():
+            sums[0] *= d
+            sums[1] *= d
+        for sums in (self._era_mech, self._era_inc):
+            sums[0] *= d
+            sums[1] *= d
+        for did, cid, outcome in rows:
+            con = self._con.setdefault(lineage_root(cid), [0.0, 0.0])
+            drv = self._drv.setdefault(did, [0.0, 0.0])
+            con[1] += 1.0
+            drv[1] += 1.0
+            self._era_mech[1] += 1.0
+            self._era_inc[1] += 1.0
+            if outcome == "mech":
+                con[0] += 1.0
+                self._era_mech[0] += 1.0
+            elif outcome == "inc":
+                drv[0] += 1.0
+                self._era_inc[0] += 1.0
+
+    def _hazard(self, sums: list[float], era: list[float], era0: float) -> float:
+        era_rate = era[0] / era[1] if era[1] > 0.0 else era0
+        return (self.prior_k * era_rate + sums[0]) / (self.prior_k + sums[1])
+
+    def p_finish(self, did: str, cid: str) -> float:
+        mech = self._hazard(
+            self._con.get(lineage_root(cid), [0.0, 0.0]), self._era_mech, _ERA_MECH_0
+        )
+        inc = self._hazard(self._drv.get(did, [0.0, 0.0]), self._era_inc, _ERA_INC_0)
+        return (1.0 - mech) * (1.0 - inc)
+
+
+_CIRCUIT_SHRINK_N = 8.0  # visits for a circuit's character to earn ~half weight
+
+
+class CircuitStats:
+    """Per-circuit chaos character: DNF propensity and grid->finish displacement.
+
+    Both signals are expressed *relative to the global average* and shrunk
+    toward neutral by n/(n+8) visits, so an unknown circuit is exactly neutral
+    (temp 1.0, DNF delta 0).
+    """
+
+    def __init__(self):
+        # circuit -> [visits, dnfs, starters, disp_sum, disp_races]
+        self._c: dict[str, list[float]] = {}
+        self._g = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+    def observe_race(
+        self, circuit_id: str, starters: int, dnfs: int, mean_disp: float | None
+    ) -> None:
+        rec = self._c.setdefault(circuit_id, [0.0] * 5)
+        for r in (rec, self._g):
+            r[0] += 1.0
+            r[1] += float(dnfs)
+            r[2] += float(starters)
+            if mean_disp is not None:
+                r[3] += float(mean_disp)
+                r[4] += 1.0
+
+    def temp(self, circuit_id: str, eta: float) -> float:
+        """Softmax temperature multiplier: >1 at high-churn circuits."""
+        rec = self._c.get(circuit_id)
+        if not rec or rec[4] <= 0.0 or self._g[4] <= 0.0:
+            return 1.0
+        g_disp = self._g[3] / self._g[4]
+        if g_disp <= 0.0:
+            return 1.0
+        w = rec[4] / (rec[4] + _CIRCUIT_SHRINK_N)
+        ratio = 1.0 + w * (rec[3] / rec[4] / g_disp - 1.0)
+        return min(2.2, max(0.5, ratio)) ** eta
+
+    def dnf_logodds_delta(self, circuit_id: str) -> float:
+        """Shrunk log-odds gap between this circuit's DNF rate and the global one."""
+        rec = self._c.get(circuit_id)
+        if not rec or rec[2] <= 0.0 or self._g[2] <= 0.0:
+            return 0.0
+
+        def logit(p: float) -> float:
+            p = min(0.97, max(0.03, p))
+            return math.log(p / (1.0 - p))
+
+        w = rec[0] / (rec[0] + _CIRCUIT_SHRINK_N)
+        return w * (logit(rec[1] / rec[2]) - logit(self._g[1] / self._g[2]))

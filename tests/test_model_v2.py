@@ -229,3 +229,115 @@ def test_v1_bridge_functions_are_reexported():
     # predict_race (Task 7) must share the exact 6-permutation math with v1.
     assert model_v2.model.pl_set_prob is not None
     assert model_v2.model.all_set_probs is not None
+
+
+# --- ReliabilityTracker ---------------------------------------------------------
+
+
+def _steady_field(n_teams=8):
+    """Rows for a stable background field: one clean finisher per team."""
+    return [(f"bg{i}", f"bgcar{i}", "finished") for i in range(n_teams)]
+
+
+def test_fresh_driver_gets_the_era_rate():
+    tr = model_v2.ReliabilityTracker(half_life=20.0)
+    # Establish a nonzero era: every race one background driver has a mech DNF.
+    for _ in range(30):
+        tr.observe_race(_steady_field() + [("crasher", "fragile", "mech")])
+    fresh = tr.p_finish("never_seen", "never_seen_car")
+    seasoned_clean = tr.p_finish("bg0", "bgcar0")
+    assert 0.5 < fresh < 1.0
+    # A driver with a long clean record must beat the era prior.
+    assert seasoned_clean > fresh
+
+
+def test_constructor_mech_dnfs_hit_both_of_its_drivers():
+    tr = model_v2.ReliabilityTracker(half_life=20.0)
+    for _ in range(20):
+        tr.observe_race(
+            _steady_field()
+            + [("d1", "weakcar", "mech"), ("d2", "weakcar", "finished")]
+            + [("d3", "strongcar", "finished"), ("d4", "strongcar", "finished")]
+        )
+    # d2 never failed personally, but the shared car drags them down too.
+    assert tr.p_finish("d2", "weakcar") < tr.p_finish("d4", "strongcar")
+    assert tr.p_finish("d1", "weakcar") < tr.p_finish("d3", "strongcar")
+
+
+def test_incident_hazard_is_personal_not_car_wide():
+    tr = model_v2.ReliabilityTracker(half_life=20.0)
+    for _ in range(20):
+        tr.observe_race(
+            _steady_field() + [("wild", "shared", "inc"), ("calm", "shared", "finished")]
+        )
+    assert tr.p_finish("wild", "shared") < tr.p_finish("calm", "shared")
+
+
+def test_old_dnf_decays_toward_the_era_rate():
+    hl = 10.0
+    tr = model_v2.ReliabilityTracker(half_life=hl)
+    for _ in range(20):  # warm up a stable era
+        tr.observe_race(_steady_field() + [("someone", "somecar", "mech")])
+    # "a" and "b" join; "a" crashes once, then both run clean.
+    tr.observe_race(_steady_field() + [("a", "cara", "inc"), ("b", "carb", "finished")])
+    gap_early = tr.p_finish("b", "carb") - tr.p_finish("a", "cara")
+    for _ in range(int(hl)):
+        tr.observe_race(
+            _steady_field()
+            + [("a", "cara", "finished"), ("b", "carb", "finished"), ("someone", "somecar", "mech")]
+        )
+    gap_late = tr.p_finish("b", "carb") - tr.p_finish("a", "cara")
+    assert 0 < gap_late < 0.7 * gap_early  # the lone incident's pull has ~halved
+
+
+def test_dsq_counts_as_a_clean_start_for_reliability():
+    tr = model_v2.ReliabilityTracker(half_life=20.0)
+    for _ in range(15):
+        tr.observe_race(_steady_field() + [("naughty", "finecar", "dsq")])
+    # DSQ is a classification event, not a car failure: no reliability penalty.
+    assert tr.p_finish("naughty", "finecar") >= tr.p_finish("bg0", "bgcar0") - 1e-9
+
+
+# --- CircuitStats ----------------------------------------------------------------
+
+
+def test_unknown_circuit_is_neutral():
+    cs = model_v2.CircuitStats()
+    assert cs.temp("nowhere", eta=1.0) == 1.0
+    assert cs.dnf_logodds_delta("nowhere") == 0.0
+
+
+def test_high_displacement_circuit_gets_higher_temperature():
+    cs = model_v2.CircuitStats()
+    for _ in range(20):
+        cs.observe_race("calm", starters=20, dnfs=2, mean_disp=2.0)
+        cs.observe_race("wild", starters=20, dnfs=2, mean_disp=6.0)
+    assert cs.temp("wild", eta=1.0) > 1.0
+    assert cs.temp("wild", eta=1.0) > cs.temp("calm", eta=1.0)
+    # eta < 1 softens the deviation from neutral
+    assert 1.0 < cs.temp("wild", eta=0.5) < cs.temp("wild", eta=1.0)
+
+
+def test_dnf_delta_positive_for_attritional_circuit_and_shrunk_by_visits():
+    seasoned = model_v2.CircuitStats()
+    for _ in range(20):
+        seasoned.observe_race("normal", starters=20, dnfs=2, mean_disp=None)
+        seasoned.observe_race("carnage", starters=20, dnfs=8, mean_disp=None)
+    one_visit = model_v2.CircuitStats()
+    for _ in range(20):
+        one_visit.observe_race("normal", starters=20, dnfs=2, mean_disp=None)
+    one_visit.observe_race("carnage", starters=20, dnfs=8, mean_disp=None)
+
+    assert seasoned.dnf_logodds_delta("carnage") > 0
+    assert seasoned.dnf_logodds_delta("normal") < 0
+    # One visit must be shrunk much closer to neutral than twenty.
+    assert 0 < one_visit.dnf_logodds_delta("carnage") < seasoned.dnf_logodds_delta("carnage")
+
+
+def test_temperature_clamps_hold_under_extreme_displacement():
+    cs = model_v2.CircuitStats()
+    for _ in range(50):
+        cs.observe_race("insane", starters=20, dnfs=0, mean_disp=50.0)
+        cs.observe_race("frozen", starters=20, dnfs=0, mean_disp=0.01)
+    assert cs.temp("insane", eta=1.0) <= 2.2
+    assert cs.temp("frozen", eta=1.0) >= 0.5
