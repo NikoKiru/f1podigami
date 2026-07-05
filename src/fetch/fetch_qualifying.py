@@ -26,7 +26,10 @@ from datalib import save_qualifying  # noqa: E402
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 PAGE_SIZE = 100
 SLEEP_BETWEEN = 1.1
-MAX_BACKOFF_RETRIES = 6
+# A --full run alongside the other fetchers can brush the API's hourly budget;
+# 8 retries (~4 min of cumulative backoff) rides out a rolling throttle window
+# where the fleet-wide 6 would give up and fail the scheduled update.
+MAX_BACKOFF_RETRIES = 8
 USER_AGENT = "f1podigami/0.1 (https://github.com/local/f1podigami)"
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
