@@ -145,6 +145,15 @@ Keeps the site fresh with no manual step, running the same pipeline as a local `
 - When due, the **`update` job** runs `update.py`, validates + tests, then opens/updates a single `auto/update-data` PR and enables **squash auto-merge**. Once the full required checks pass it merges → `deploy.yml` ships it. One race ⇒ one PR (the guard stops once `asOf` advances on merge); re-running is idempotent (no churn).
 - Trigger on demand: `gh workflow run update.yml -f mode=auto -f force=true` (or `-f mode=full`).
 
+#### ⚠️ When a finished race doesn't appear (silent-stall failure mode)
+
+Past the normal post-race lag (API publish delay + dropped cron slots), a missing result is usually **not** more lag but a **silently stalled update**. The `update` job runs the full `pytest` gate *before* the "open PR" step, so **any test failure skips PR creation**: the run goes red, no `auto/update-data` PR opens, `asOf` never advances, and the guard keeps re-firing `due=true` every tick — a self-perpetuating stall one race behind, with **no alert** (nobody watches the Actions tab). This has bitten two live race weekends running.
+
+- **Diagnose:** open the latest `update.yml` run. `check` = success **plus** `update` red with `Run tests` failed and `Open or update the data PR` **skipped** is this pattern (not lag). Upstream tell: `api.jolpi.ca/ergast/f1/<season>/<round>/results.json` can sit **empty for hours** after a race while the aggregate feeds (`/<season>/results/1.json`, `/<season>/results.json`, `/<season>/last/results.json`) already carry the round — so a fetcher that keys off the latest round alone gets nothing.
+- **#175** — under the develop/main flow the guard read `develop`'s stale `asOf` and looped; fixed by pinning both jobs to `main`.
+- **#178** — the round-indexed endpoint lag above emptied `fetch_constructor_standings`' driver→constructor map → `compute` switched the constructor overlay off and omitted optional `constructor`/`constructorStrength` keys → the byte-identical round-trip test failed → PR skipped. Fixed by (a) `fetch_driver_constructors(season, rounds)` walking back to the last round with results, and (b) `_save` writing the canonical schema form so an omitted-optional payload still round-trips.
+- **Guardrail for new work:** any change that makes a compute script emit different keys/types, or any new test that can fail on live data, can re-trigger this class of stall. Keep compute output a byte-identical fixed point of its schema, and make fetchers tolerate partial/lagging upstream data. There is currently **no failure alerting** on `update.yml`; treat "no result several hours after a race" as a prompt to check the run, not to wait longer.
+
 ### ⚠️ CI cannot push to `main` with the built-in token
 
 `main` is a **protected branch** (9 required status checks, `enforce_admins=false`, no required reviews). For any Actions automation:

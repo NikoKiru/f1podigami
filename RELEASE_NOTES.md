@@ -7,6 +7,7 @@
 - Automated data updates now check out `main` in both `update.yml` jobs: the guard reads `main`'s `asOf` (the only one data PRs advance, preventing an endless re-update loop after the first post-race merge under the develop/main flow) and the data branch is cut from `main` so unpromoted `develop` commits can't ride along into a data PR (#175)
 
 ### Improvements
+- Docs: CLAUDE.md now documents the auto-update silent-stall failure mode — a failing test gate in the `update` job skips the data PR, stalling the site one race behind while the guard loops — plus the Jolpica round-indexed endpoint lag that triggered it and a concrete diagnosis path (#182)
 - Docs: CLAUDE.md prediction-model section now describes the live v2 rating engine (datasets, acceptance gate, tuned knobs, compact storage) instead of only the v1 Plackett–Luce model (#174)
 
 ### Features
