@@ -2,8 +2,10 @@
 
 ``load_*`` returns validated model objects (builders use attribute access:
 ``combo.count``, ``combo.lastRace.season``). ``save_*`` validates the data the
-compute scripts build, then writes it **verbatim** — validation is a gate, the
-bytes on disk are unchanged, so regenerating a dataset never reformats it.
+compute scripts build and writes its **canonical schema serialization** (the
+validated model, re-dumped) — byte-identical to a ``load_* -> dump`` round-trip,
+so regenerating never reformats committed data and a payload that omits optional
+fields still round-trips cleanly.
 
 The bulky raw datasets in ``COMPACT`` are written single-line (no indent) to
 keep the repo lean; everything else stays human-readable ``indent=2``.
@@ -64,12 +66,22 @@ def _load(name: str) -> Any:
 
 
 def _save(name: str, data: Any) -> None:
-    """Validate ``data`` against the schema, then write it verbatim."""
-    REGISTRY[name].validate_python(data)
+    """Validate ``data``, then write its canonical schema serialization.
+
+    We dump the *validated model* (not the raw input dict) so the bytes on disk
+    are exactly what ``load_* -> dump`` reproduces. That makes the byte-identical
+    round-trip hold by construction — even when a compute script omits optional
+    fields (e.g. the constructor / v2 keys a driver entry drops when the overlay
+    is off), which would otherwise be re-emitted as ``null`` on reload and break
+    the contract. Committed data is already canonical, so regenerating a dataset
+    still never reformats it.
+    """
+    adapter = REGISTRY[name]
+    canonical = adapter.dump_python(adapter.validate_python(data), mode="json")
     if name in COMPACT:
-        text = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
+        text = json.dumps(canonical, separators=(",", ":"), ensure_ascii=False)
     else:
-        text = json.dumps(data, indent=2, ensure_ascii=False)
+        text = json.dumps(canonical, indent=2, ensure_ascii=False)
     (DATA_DIR / name).write_text(text, encoding="utf-8")
 
 
