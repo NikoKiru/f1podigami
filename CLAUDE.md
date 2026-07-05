@@ -80,9 +80,11 @@ Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTE
 
 ### Prediction model
 
-`src/compute/model.py` + `compute_podigami.py` implement a **Plackett–Luce** model over recency-weighted driver strengths. `src/compute/backtest.py` produces `data/model_eval.json` (backtested top-k accuracy + calibration), surfaced on the landing page as a badge and in the FAQ.
+The live predictor is **model v2** (`src/compute/model_v2.py`, params tag `dbpl-v2`): a dynamic Bayesian rating engine — Gaussian driver+constructor log-worth ratings filtered over `data/race_results.json` (full classifications 1950→) and `data/qualifying.json` (1994→) via closed-form truncated Plackett–Luce updates, with decayed DNF hazards (mechanical → car, incident → driver), circuit chaos character, and a deterministic Rao-Blackwellised podium simulation (fixed seed; same inputs → byte-identical JSON). `compute_podigami.py` uses it whenever `race_results.json` exists and falls back to the v1 recency Plackett–Luce model (`src/compute/model.py`) otherwise.
 
-`compute_podigami.py` also folds in `data/constructor_standings.json` (via `_build_constructor_strength` → each driver's `constructorStrength`). Because of this, a refresh that picks up updated standings can rewrite most numeric values in `podigami.json` even when `asOf` is unchanged — that churn is expected, not a bug. Output is deterministic: same inputs → byte-identical JSON.
+`src/compute/backtest.py` is the integrity core: a walk-forward ladder (v1 rungs + v2 ablation rungs) tuned on 2010–2018 and scored on a frozen 2019+ test window → `data/model_eval.json`, surfaced on the landing page as a badge and in the FAQ. An acceptance gate in `evaluate()` keeps v2 "chosen" only while it beats v1 on test logLoss AND brierNew. Tuning knobs are locked in `model_v2.DEFAULT_PARAMS_V2` (`--tune-v2` re-derives them; notable verdicts: qualifying weight 0.6, attrition channel 0).
+
+`compute_podigami.py` still folds in `data/constructor_standings.json` (team labels + each driver's `constructorId`/`constructorStrength`), so a refresh that picks up updated standings can rewrite most numeric values in `podigami.json` even when `asOf` is unchanged — that churn is expected, not a bug. The two raw v2 datasets are stored **compact** (single-line JSON; `datalib.repository.COMPACT`) to keep the repo lean.
 
 ### Data flow
 
