@@ -82,16 +82,28 @@ def fetch_standings(season: int) -> list[dict]:
     return lists[0].get("ConstructorStandings", [])
 
 
-def fetch_driver_constructors(season: int, rnd: int) -> dict[str, str]:
-    """Map driverId → constructorId from a specific round's results."""
-    data = get(f"{API_ROOT}/{season}/{rnd}/results.json", {"limit": 100})
-    races = data["MRData"]["RaceTable"]["Races"]
-    if not races:
-        return {}
-    out: dict[str, str] = {}
-    for r in races[0].get("Results", []):
-        out[r["Driver"]["driverId"]] = r["Constructor"]["constructorId"]
-    return out
+def fetch_driver_constructors(season: int, rounds: list[int]) -> dict[str, str]:
+    """Map driverId → constructorId from the latest round that has results.
+
+    The round-indexed results endpoint (/{season}/{round}/results.json) can lag
+    the aggregate feeds for a while right after a race — the new round's /results
+    is briefly empty while /results/{pos} already lists its podium. Taking only
+    the latest round would then return {}, which switches the constructor overlay
+    off and (because the resulting podigami.json omits optional fields) breaks the
+    byte-identical data contract. Walk back to the last round that actually
+    returns results; team assignments are stable within a season, so an earlier
+    round gives the same mapping.
+    """
+    for rnd in reversed(rounds):
+        data = get(f"{API_ROOT}/{season}/{rnd}/results.json", {"limit": 100})
+        races = data["MRData"]["RaceTable"]["Races"]
+        if races:
+            return {
+                r["Driver"]["driverId"]: r["Constructor"]["constructorId"]
+                for r in races[0].get("Results", [])
+            }
+        time.sleep(SLEEP_BETWEEN)
+    return {}
 
 
 def main() -> int:
@@ -115,7 +127,7 @@ def main() -> int:
     standings = fetch_standings(season)
     time.sleep(SLEEP_BETWEEN)
 
-    driver_map = fetch_driver_constructors(season, rounds[-1])
+    driver_map = fetch_driver_constructors(season, rounds)
 
     constructors = []
     for s in standings:
