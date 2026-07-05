@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-05
+
+### Features
+- Prediction model v2: a dynamic Bayesian rating engine (driver + car Gaussian ratings filtered over every race classification since 1950 and qualifying since 1994, with DNF-hazard reliability, circuit chaos and Rao-Blackwellised podium simulation) now powers the landing-page prediction. On the frozen 2019–2026 test window it lifts exact-trio top-1 from 12.5% to 18.1%, top-3 from 29.4% to 35.0% and log-loss from 4.078 to 3.916 over the previous Plackett–Luce model, which remains as fallback. New committed datasets `race_results.json` + `qualifying.json` (compact storage), two new fetchers wired into the update pipeline, walk-forward ablation ladder + coordinate-descent tuner in `backtest.py`, and updated FAQ/README copy
+
 ## 2026-07-04
 
 ### Improvements

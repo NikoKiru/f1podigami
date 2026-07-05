@@ -276,3 +276,124 @@ def test_constructor_overlay_lifts_stronger_team_more():
     # both lifted above baseline, and the top team (teamA) is lifted more than teamB
     assert lift["alf"] > 1.0 and lift["cas"] > 1.0
     assert lift["alf"] > lift["cas"]
+
+
+# --- v2 engine path -------------------------------------------------------------
+
+
+def rr_from(podiums, all_drivers, cid_map=None):
+    """Full-classification rows consistent with the podium scenario."""
+    out = []
+    for r in podiums:
+        podium = [r[s]["driverId"] for s in ("p1", "p2", "p3")]
+        order = podium + [d for d in all_drivers if d not in podium]
+        rows = [
+            {
+                "driverId": d,
+                "constructorId": (cid_map or {}).get(d, "car_" + d),
+                "grid": i + 1,
+                "position": i + 1,
+                "laps": 50,
+                "status": "Finished",
+            }
+            for i, d in enumerate(order)
+        ]
+        out.append(
+            {
+                "season": r["season"],
+                "round": r["round"],
+                "raceName": r["raceName"],
+                "date": "",
+                "circuitId": "testring",
+                "results": rows,
+            }
+        )
+    return out
+
+
+@pytest.fixture
+def scenario_v2(scenario_with_constructors):
+    podiums, combos, grid, con = scenario_with_constructors
+    drivers = [g["driverId"] for g in grid]
+    rres = rr_from(podiums, drivers, con["driverConstructor"])
+    return podiums, combos, grid, con, rres
+
+
+def test_v2_path_engaged_when_race_results_present(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    res = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    assert res["params"]["model"] == "dbpl-v2"
+    assert res["params"]["usingQualifying"] is False
+    assert res["params"]["nDraws"] == 512
+    assert set(cp.model_v2.DEFAULT_PARAMS_V2) <= set(res["params"])
+
+
+def test_v2_falls_back_to_v1_without_race_results(scenario_v2):
+    podiums, combos, grid, con, _ = scenario_v2
+    v1 = cp.compute(podiums, combos, grid, constructor_data=con)
+    v1_explicit = cp.compute(
+        podiums, combos, grid, constructor_data=con, race_results=None, qualifying=None
+    )
+    assert v1 == v1_explicit
+    assert v1["params"]["model"] == "plackett-luce"
+
+
+def test_v2_candidates_are_unseen_sorted_valid(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    res = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    assert 0.0 <= res["chanceNextRaceNew"] <= 100.0
+    cand = {tuple(sorted(c["driverIds"])) for c in res["candidates"]}
+    assert ("alf", "bob", "cas") not in cand  # seen 2025 R4
+    probs = [c["prob"] for c in res["candidates"]]
+    assert probs == sorted(probs, reverse=True)
+
+
+def test_v2_driver_entries_carry_reliability_fields(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    res = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    for d in res["driverForm"]:
+        assert 0.0 < d["finishProb"] <= 1.0
+        assert d["uncertainty"] > 0.0
+        assert d["weight"] > 0.0
+    form = {d["driverId"]: d["weight"] for d in res["driverForm"]}
+    # alf leads the current season on the road; the rookie eli trails everyone
+    assert form["alf"] > form["eli"]
+
+
+def test_v2_payload_satisfies_schema(scenario_v2):
+    from datalib import REGISTRY
+
+    podiums, combos, grid, con, rres = scenario_v2
+    res = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    REGISTRY["podigami.json"].validate_python(res)  # must not raise
+
+
+def test_v2_uses_next_circuit_from_schedule(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    sched = {
+        "season": "2025",
+        "totalRounds": 6,
+        "races": [
+            {"round": "5", "circuitId": "testring"},
+            {"round": "6", "circuitId": "monaco"},
+        ],
+    }
+    res = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres, schedule=sched)
+    assert res["params"]["circuitId"] == "monaco"
+    no_sched = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    assert no_sched["params"]["circuitId"] is None
+
+
+def test_v2_deterministic(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    r1 = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    r2 = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    assert r1 == r2
+
+
+def test_v2_small_grid_yields_no_candidates(scenario_v2):
+    podiums, combos, _, con, rres = scenario_v2
+    grid = [{"driverId": d, "name": d.title()} for d in ("alf", "bob")]
+    res = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    assert res["candidates"] == []
+    assert res["chanceNextRaceNew"] == 0.0

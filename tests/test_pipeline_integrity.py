@@ -88,7 +88,10 @@ def test_current_drivers_matches_latest_season():
 def test_podigami_headline_is_a_probability():
     pg = load_data("podigami.json")
     assert 0.0 <= pg["chanceNextRaceNew"] <= 100.0
-    assert {"alpha", "halfLife", "seasonBoost"} <= pg["params"].keys()
+    if pg["params"]["model"] == "dbpl-v2":
+        assert {"sigma0_drv", "w_qual", "nDraws", "seed"} <= pg["params"].keys()
+    else:
+        assert {"alpha", "halfLife", "seasonBoost"} <= pg["params"].keys()
 
 
 def test_podigami_candidates_are_genuinely_new_and_on_the_grid():
