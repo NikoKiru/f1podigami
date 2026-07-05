@@ -7,6 +7,7 @@ scripts persist through ``save_*`` (validate-on-write). Schemas live in
 """
 
 from .repository import (
+    COMPACT,
     DATA_DIR,
     REGISTRY,
     load_combos,
@@ -17,7 +18,9 @@ from .repository import (
     load_overdue,
     load_podigami,
     load_podiums,
+    load_qualifying,
     load_race_links,
+    load_race_results,
     load_schedule,
     load_soulmates,
     load_unlikeliest,
@@ -29,7 +32,9 @@ from .repository import (
     save_overdue,
     save_podigami,
     save_podiums,
+    save_qualifying,
     save_race_links,
+    save_race_results,
     save_schedule,
     save_soulmates,
     save_unlikeliest,
@@ -58,8 +63,12 @@ from .schemas import (
     PodigamiCandidate,
     PodigamiParams,
     Podium,
+    QualifyingEntry,
+    QualifyingRow,
     RaceLink,
     RaceRef,
+    RaceResult,
+    RaceResultRow,
     RoundRace,
     Schedule,
     ScheduleRace,
@@ -75,6 +84,7 @@ from .schemas import (
 
 __all__ = [
     # repository
+    "COMPACT",
     "DATA_DIR",
     "REGISTRY",
     "load_podiums",
@@ -101,6 +111,10 @@ __all__ = [
     "save_constructor_standings",
     "load_race_links",
     "save_race_links",
+    "load_race_results",
+    "save_race_results",
+    "load_qualifying",
+    "save_qualifying",
     # schemas
     "RaceRef",
     "RaceLink",
@@ -138,4 +152,8 @@ __all__ = [
     "ModelEval",
     "Constructor",
     "ConstructorStandings",
+    "RaceResultRow",
+    "RaceResult",
+    "QualifyingRow",
+    "QualifyingEntry",
 ]

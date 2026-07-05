@@ -4,6 +4,9 @@
 ``combo.count``, ``combo.lastRace.season``). ``save_*`` validates the data the
 compute scripts build, then writes it **verbatim** — validation is a gate, the
 bytes on disk are unchanged, so regenerating a dataset never reformats it.
+
+The bulky raw datasets in ``COMPACT`` are written single-line (no indent) to
+keep the repo lean; everything else stays human-readable ``indent=2``.
 """
 
 from __future__ import annotations
@@ -23,7 +26,9 @@ from .schemas import (
     Overdue,
     Podigami,
     Podium,
+    QualifyingEntry,
     RaceLink,
+    RaceResult,
     Schedule,
     Soulmates,
     Unlikeliest,
@@ -45,7 +50,12 @@ REGISTRY: dict[str, TypeAdapter] = {
     "model_eval.json": TypeAdapter(ModelEval),
     "constructor_standings.json": TypeAdapter(ConstructorStandings),
     "f1_race_links.json": TypeAdapter(dict[str, dict[str, RaceLink]]),
+    "race_results.json": TypeAdapter(list[RaceResult]),
+    "qualifying.json": TypeAdapter(list[QualifyingEntry]),
 }
+
+# Bulky raw datasets written single-line to keep the repo (and git deltas) lean.
+COMPACT = {"race_results.json", "qualifying.json"}
 
 
 def _load(name: str) -> Any:
@@ -56,7 +66,11 @@ def _load(name: str) -> Any:
 def _save(name: str, data: Any) -> None:
     """Validate ``data`` against the schema, then write it verbatim."""
     REGISTRY[name].validate_python(data)
-    (DATA_DIR / name).write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    if name in COMPACT:
+        text = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
+    else:
+        text = json.dumps(data, indent=2, ensure_ascii=False)
+    (DATA_DIR / name).write_text(text, encoding="utf-8")
 
 
 def load_podiums() -> list[Podium]:
@@ -153,3 +167,19 @@ def load_race_links() -> dict[str, dict[str, RaceLink]]:
 
 def save_race_links(data: Any) -> None:
     _save("f1_race_links.json", data)
+
+
+def load_race_results() -> list[RaceResult]:
+    return _load("race_results.json")
+
+
+def save_race_results(data: Any) -> None:
+    _save("race_results.json", data)
+
+
+def load_qualifying() -> list[QualifyingEntry]:
+    return _load("qualifying.json")
+
+
+def save_qualifying(data: Any) -> None:
+    _save("qualifying.json", data)

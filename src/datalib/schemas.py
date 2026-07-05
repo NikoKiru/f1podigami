@@ -343,3 +343,43 @@ class ConstructorStandings(_Base):
     round: str
     constructors: list[Constructor]
     driverConstructor: dict[str, str]
+
+
+# --- race_results.json / qualifying.json (model v2 raw inputs) ----------------
+
+
+class RaceResultRow(_Base):
+    """One classified entry of a race: who, in what car, from where, to where.
+
+    ``position`` is the numeric finishing position only when the entry was
+    classified (``positionText`` was numeric); retirements/DNS/DSQ keep their
+    row (grid, laps, status) with ``position: null``.
+    """
+
+    driverId: str
+    constructorId: str
+    grid: int
+    position: int | None = None
+    laps: int
+    status: str
+
+
+class RaceResult(_Base):
+    season: str
+    round: str
+    raceName: str
+    date: str
+    circuitId: str
+    results: list[RaceResultRow]
+
+
+class QualifyingRow(_Base):
+    driverId: str
+    constructorId: str
+    position: int
+
+
+class QualifyingEntry(_Base):
+    season: str
+    round: str
+    results: list[QualifyingRow]
