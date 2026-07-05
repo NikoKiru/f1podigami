@@ -2,6 +2,9 @@
 
 ## 2026-07-05
 
+### Fixes
+- Automated data updates now check out `main` in both `update.yml` jobs: the guard reads `main`'s `asOf` (the only one data PRs advance, preventing an endless re-update loop after the first post-race merge under the develop/main flow) and the data branch is cut from `main` so unpromoted `develop` commits can't ride along into a data PR (#175)
+
 ### Improvements
 - Docs: CLAUDE.md prediction-model section now describes the live v2 rating engine (datasets, acceptance gate, tuned knobs, compact storage) instead of only the v1 Plackett–Luce model (#174)
 

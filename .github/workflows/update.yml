@@ -35,7 +35,13 @@ jobs:
       due: ${{ steps.decide.outputs.due }}
       mode: ${{ steps.decide.outputs.mode }}
     steps:
+      # Pin to main: data PRs merge into main, so main's podigami.json asOf is
+      # the only one that advances. A scheduled run checks out the default
+      # branch (develop), whose stale asOf would re-report the same race as
+      # due after every merge, looping the update forever.
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: main
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
@@ -75,6 +81,10 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
+          # Pin to main: the data branch must be cut from main (the PR base),
+          # not the default branch (develop) — otherwise unpromoted develop
+          # commits ride along into main inside the data PR.
+          ref: main
           # PAT (not the built-in token) so the branch push + PR trigger CI, and
           # the eventual squash-merge is attributed to a real user so deploy fires.
           token: ${{ secrets.DATA_PUSH_TOKEN }}
