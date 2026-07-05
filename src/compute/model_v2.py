@@ -1,0 +1,282 @@
+"""Dynamic Bayesian rating engine for podium prediction (model v2, pure math).
+
+Every driver d and constructor c carries a Gaussian belief over its log-worth
+(θ_d and β_c); a race entry's strength is s = θ_d + β_c. Race finishing order,
+an attrition order (reverse Plackett-Luce over who failed first) and the
+qualifying order are all observed through the same closed-form truncated
+Plackett-Luce update (one Laplace/assumed-density-filtering step per session,
+Weng-Lin style — no sampling), with per-channel power weights. Between races
+the beliefs diffuse: a little every race, more at season boundaries, a lot for
+constructors when the technical regulations reset.
+
+The Hessian used for each state is the diagonal of the PL log-likelihood
+(cross-terms dropped), the standard ADF simplification; a constructor shared
+by several entries gets ONE update with its entries' gradients/Hessians summed.
+
+Constructor identity follows team lineage across rebrands/purchases
+(``CONSTRUCTOR_LINEAGE``), so e.g. Racing Bulls inherits AlphaTauri's state.
+"""
+
+from __future__ import annotations
+
+import math
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import model  # noqa: E402  (v1 module: the exact 6-permutation set-probability math)
+
+__all__ = [
+    "DEFAULT_PARAMS_V2",
+    "REG_RESET_SEASONS",
+    "CONSTRUCTOR_LINEAGE",
+    "Gauss",
+    "RatingEngine",
+    "classify_status",
+    "lineage_root",
+    "model",
+]
+
+# Initial sensible values; locked by the walk-forward tuner (backtest.py --tune-v2).
+DEFAULT_PARAMS_V2: dict = {
+    "sigma0_drv": 0.7,  # prior std of a driver's log-worth
+    "sigma0_con": 1.2,  # prior std of a constructor's log-worth (cars matter more)
+    "rookie_mu": -0.4,  # prior mean for a debuting driver
+    "newteam_mu": -0.8,  # prior mean for a brand-new constructor
+    "tau_drv": 0.04,  # per-race diffusion (std) of driver states
+    "tau_con": 0.08,  # per-race diffusion (std) of constructor states
+    "season_var_drv": 0.03,  # variance added to drivers at each season boundary
+    "season_var_con": 0.10,  # variance added to constructors at each season boundary
+    "reg_var_con": 0.50,  # extra constructor variance when regulations reset
+    "depth_race": 6,  # truncate the race-order likelihood to the top-N picks
+    "w_attr": 0.5,  # power weight of the attrition (reverse-PL) channel
+    "depth_qual": 6,  # truncation depth for the qualifying order
+    "w_qual": 0.3,  # power weight of the qualifying channel
+    "rel_half_life": 20.0,  # races for a DNF's reliability influence to halve
+    "chaos_gamma": 0.5,  # weight of circuit DNF-rate delta on finish odds
+    "chaos_eta": 0.7,  # exponent on the circuit displacement temperature
+    "p_wild": 0.05,  # probability a race is "wild" (safety cars, rain, chaos)
+    "t_wild": 2.5,  # temperature multiplier applied in a wild race
+}
+
+# Seasons whose technical regulations changed enough to scramble the car order.
+REG_RESET_SEASONS = {1961, 1966, 1989, 2009, 2014, 2022, 2026}
+
+# child constructorId -> lineage root id, so a rebrand/purchase keeps its rating.
+# Where the modern id collides with an unrelated historic works team of the same
+# name (mercedes, honda, alfa, aston_martin), the decades-long gap plus season and
+# regulation variance resets make the conflation numerically irrelevant.
+CONSTRUCTOR_LINEAGE: dict[str, str] = {
+    # Minardi -> Toro Rosso -> AlphaTauri -> RB (Racing Bulls)
+    "toro_rosso": "minardi",
+    "alphatauri": "minardi",
+    "rb": "minardi",
+    # Jordan -> Midland/MF1 -> Spyker -> Force India -> Racing Point -> Aston Martin
+    "midland": "jordan",
+    "mf1": "jordan",
+    "spyker": "jordan",
+    "spyker_mf1": "jordan",
+    "force_india": "jordan",
+    "racing_point": "jordan",
+    "aston_martin": "jordan",
+    # Tyrrell -> BAR -> Honda -> Brawn -> Mercedes
+    "bar": "tyrrell",
+    "honda": "tyrrell",
+    "brawn": "tyrrell",
+    "mercedes": "tyrrell",
+    # Toleman -> Benetton -> Renault -> Lotus F1 -> Renault -> Alpine
+    "benetton": "toleman",
+    "renault": "toleman",
+    "lotus_f1": "toleman",
+    "alpine": "toleman",
+    # Sauber -> BMW Sauber -> Sauber -> Alfa Romeo -> Sauber -> Audi
+    "bmw_sauber": "sauber",
+    "alfa": "sauber",
+    "audi": "sauber",
+    # Stewart -> Jaguar -> Red Bull
+    "jaguar": "stewart",
+    "red_bull": "stewart",
+    # Ligier -> Prost
+    "prost": "ligier",
+    # Arrows ran as Footwork 1991-96
+    "footwork": "arrows",
+    # Virgin -> Marussia -> Manor
+    "marussia": "virgin",
+    "manor": "virgin",
+    # Team Lotus (2010-11) -> Caterham
+    "caterham": "lotus_racing",
+}
+
+
+def lineage_root(cid: str) -> str:
+    return CONSTRUCTOR_LINEAGE.get(cid, cid)
+
+
+# Status strings that indicate a driver-side racing incident (as opposed to a
+# car failure, which is the default for anything unrecognised).
+_INC_STATUSES = {
+    "Accident",
+    "Collision",
+    "Collision damage",
+    "Spun off",
+    "Fatal accident",
+    "Injury",
+    "Injured",
+    "Illness",
+    "Driver unwell",
+    "Eye injury",
+}
+
+_DSQ_STATUSES = {"Disqualified", "Excluded"}
+
+# Entries that never took the start: invisible to pace, attrition and reliability.
+_EXCLUDED_STATUSES = {
+    "Did not start",
+    "Did not qualify",
+    "Did not prequalify",
+    "Withdrew",
+    "Withdrawn",
+    "107% Rule",
+}
+
+
+def classify_status(status: str) -> str:
+    """Bucket a verbatim Ergast status string.
+
+    'finished' | 'mech' (car failure) | 'inc' (driver incident) | 'dsq' | 'excluded'.
+    Unknown strings default to 'mech': the long tail of statuses ("Halfshaft",
+    "Fuel pipe", ...) is overwhelmingly component failures.
+    """
+    if status == "Finished" or status.startswith("+") or status == "Not classified":
+        return "finished"
+    if status in _INC_STATUSES:
+        return "inc"
+    if status in _DSQ_STATUSES:
+        return "dsq"
+    if status in _EXCLUDED_STATUSES:
+        return "excluded"
+    return "mech"
+
+
+@dataclass
+class Gauss:
+    """A Gaussian belief over one latent log-worth."""
+
+    mu: float
+    var: float
+
+
+_VAR_MIN = 1e-6
+_VAR_MAX = 25.0
+
+
+def _clamp_var(v: float) -> float:
+    return min(_VAR_MAX, max(_VAR_MIN, v))
+
+
+class RatingEngine:
+    """Gaussian driver + constructor states with closed-form truncated-PL updates."""
+
+    def __init__(self, params: dict):
+        self.params = params
+        self._drivers: dict[str, Gauss] = {}
+        self._constructors: dict[str, Gauss] = {}
+
+    def driver(self, did: str) -> Gauss:
+        st = self._drivers.get(did)
+        if st is None:
+            p = self.params
+            st = Gauss(p["rookie_mu"], _clamp_var(p["sigma0_drv"] ** 2))
+            self._drivers[did] = st
+        return st
+
+    def constructor(self, cid: str) -> Gauss:
+        root = lineage_root(cid)
+        st = self._constructors.get(root)
+        if st is None:
+            p = self.params
+            st = Gauss(p["newteam_mu"], _clamp_var(p["sigma0_con"] ** 2))
+            self._constructors[root] = st
+        return st
+
+    def combined(self, did: str, cid: str) -> tuple[float, float]:
+        """Mean and variance of the entry strength s = θ_d + β_c."""
+        d, c = self.driver(did), self.constructor(cid)
+        return d.mu + c.mu, d.var + c.var
+
+    def advance_race(self) -> None:
+        td2 = self.params["tau_drv"] ** 2
+        tc2 = self.params["tau_con"] ** 2
+        for st in self._drivers.values():
+            st.var = _clamp_var(st.var + td2)
+        for st in self._constructors.values():
+            st.var = _clamp_var(st.var + tc2)
+
+    def advance_season(self, new_season: int) -> None:
+        p = self.params
+        extra = p["reg_var_con"] if new_season in REG_RESET_SEASONS else 0.0
+        for st in self._drivers.values():
+            st.var = _clamp_var(st.var + p["season_var_drv"])
+        for st in self._constructors.values():
+            st.var = _clamp_var(st.var + p["season_var_con"] + extra)
+
+    def observe_order(
+        self,
+        entries: list[tuple[str, str]],
+        *,
+        depth: int | None = None,
+        weight: float = 1.0,
+        sign: int = 1,
+    ) -> None:
+        """One ADF step on an observed decomposition order.
+
+        ``entries`` lists (driverId, constructorId) in pick order — winner first
+        for a finishing/qualifying order; first *failure* first with ``sign=-1``
+        for the attrition channel. ``depth`` truncates the likelihood to the
+        first N picks (the tail is treated as an unranked pool); ``weight`` is
+        the channel's power weight κ.
+        """
+        m = len(entries)
+        if m < 2 or weight <= 0.0:
+            return
+        r = m - 1 if depth is None else max(1, min(depth, m - 1))
+
+        states = [(self.driver(d), self.constructor(c)) for d, c in entries]
+        s = [max(-30.0, min(30.0, sign * (ds.mu + cs.mu))) for ds, cs in states]
+        w = [math.exp(v) for v in s]
+        Z = [0.0] * (m + 1)  # Z[j] = Σ_{i>=j} w_i (the stage-j normaliser)
+        for j in range(m - 1, -1, -1):
+            Z[j] = Z[j + 1] + w[j]
+
+        pref1 = pref2 = 0.0
+        grads: list[float] = []
+        hesss: list[float] = []
+        for i in range(m):
+            if i < r:
+                inv = 1.0 / Z[i]
+                pref1 += inv
+                pref2 += inv * inv
+            g = (1.0 if i < r else 0.0) - w[i] * pref1
+            h = w[i] * pref1 - w[i] * w[i] * pref2
+            grads.append(sign * g)
+            hesss.append(max(h, 0.0))
+
+        # Drivers step individually; each constructor steps ONCE on its summed g/h.
+        con_acc: dict[str, list[float]] = {}
+        for ((d_st, _), (_, cid)), g, h in zip(
+            zip(states, entries, strict=True), grads, hesss, strict=True
+        ):
+            self._nudge(d_st, g, h, weight)
+            acc = con_acc.setdefault(lineage_root(cid), [0.0, 0.0])
+            acc[0] += g
+            acc[1] += h
+        for root, (g, h) in con_acc.items():
+            self._nudge(self._constructors[root], g, h, weight)
+
+    @staticmethod
+    def _nudge(st: Gauss, g: float, h: float, weight: float) -> None:
+        """Scalar Kalman-style step: precision grows by κ·h, mean moves along κ·g."""
+        denom = 1.0 + st.var * weight * h
+        st.mu += st.var * weight * g / denom
+        st.var = _clamp_var(st.var / denom)
