@@ -341,3 +341,193 @@ def test_temperature_clamps_hold_under_extreme_displacement():
         cs.observe_race("frozen", starters=20, dnfs=0, mean_disp=0.01)
     assert cs.temp("insane", eta=1.0) <= 2.2
     assert cs.temp("frozen", eta=1.0) >= 0.5
+
+
+# --- HistoryFilter ----------------------------------------------------------------
+
+
+def _rrow(did, cid, grid, pos, laps, status):
+    return {
+        "driverId": did,
+        "constructorId": cid,
+        "grid": grid,
+        "position": pos,
+        "laps": laps,
+        "status": status,
+    }
+
+
+def _rrace(season, rnd, circuit, rows):
+    return {
+        "season": str(season),
+        "round": str(rnd),
+        "raceName": f"Race {rnd}",
+        "date": "",
+        "circuitId": circuit,
+        "results": rows,
+    }
+
+
+def _two_car_race(season, rnd, winner, loser):
+    return _rrace(
+        season,
+        rnd,
+        "somewhere",
+        [
+            _rrow(winner, "car_" + winner, 1, 1, 50, "Finished"),
+            _rrow(loser, "car_" + loser, 2, 2, 50, "Finished"),
+        ],
+    )
+
+
+def test_step_snapshot_predates_the_race_outcome():
+    hf = model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2))
+    for rnd in range(1, 6):
+        hf.step(_two_car_race(2020, rnd, "champ", "underdog"), None)
+    # Underdog finally wins round 6 - but the snapshot must not know that yet.
+    snap = hf.step(_two_car_race(2020, 6, "underdog", "champ"), None)
+    assert snap["drivers"]["champ"][0] > snap["drivers"]["underdog"][0]
+    assert snap["season"] == 2020
+    # ...while the engine, after the update, has narrowed the gap.
+    gap_before = snap["drivers"]["champ"][0] - snap["drivers"]["underdog"][0]
+    gap_after = hf.engine.driver("champ").mu - hf.engine.driver("underdog").mu
+    assert gap_after < gap_before
+
+
+def test_step_applies_race_vs_season_dynamics():
+    p = dict(DEFAULT_PARAMS_V2)
+    hf = model_v2.HistoryFilter(p)
+    hf.step(_two_car_race(2020, 1, "a", "b"), None)
+    var_after_r1 = hf.engine.driver("a").var + hf.engine.constructor("car_a").var
+
+    snap2 = hf.step(_two_car_race(2020, 2, "a", "b"), None)
+    assert snap2["drivers"]["a"][1] == pytest.approx(
+        var_after_r1 + p["tau_drv"] ** 2 + p["tau_con"] ** 2
+    )
+    var_after_r2 = hf.engine.driver("a").var + hf.engine.constructor("car_a").var
+
+    snap3 = hf.step(_two_car_race(2021, 1, "a", "b"), None)  # 2021: no reg reset
+    assert snap3["drivers"]["a"][1] == pytest.approx(
+        var_after_r2 + p["season_var_drv"] + p["season_var_con"]
+    )
+
+
+def test_dsq_and_dns_channel_visibility():
+    p = dict(DEFAULT_PARAMS_V2)
+    hf = model_v2.HistoryFilter(p)
+    race = _rrace(
+        2020,
+        1,
+        "somewhere",
+        [
+            _rrow("winner", "cw", 1, 1, 50, "Finished"),
+            _rrow("second", "cs", 2, 2, 50, "Finished"),
+            _rrow("cheat", "cc", 3, None, 50, "Disqualified"),
+            _rrow("ghost", "cg", 0, None, 0, "Did not start"),
+        ],
+    )
+    hf.step(race, None)
+    # DSQ: absent from pace and attrition -> rating untouched...
+    assert hf.engine.driver("cheat").mu == p["rookie_mu"]
+    # ...but visible to reliability as a clean start (same as the winner's record).
+    assert hf.reliability.p_finish("cheat", "cc") == pytest.approx(
+        hf.reliability.p_finish("winner", "cw")
+    )
+    # DNS: absent everywhere - rating untouched AND reliability never saw them.
+    assert hf.engine.driver("ghost").mu == p["rookie_mu"]
+    assert hf.reliability.p_finish("ghost", "cg") == pytest.approx(
+        hf.reliability.p_finish("total_stranger", "strange_car")
+    )
+
+
+def test_attrition_order_and_pace_direction():
+    p = dict(DEFAULT_PARAMS_V2)
+    hf = model_v2.HistoryFilter(p)
+    race = _rrace(
+        2020,
+        1,
+        "somewhere",
+        [
+            _rrow("a", "ca", 1, 1, 50, "Finished"),
+            _rrow("b", "cb", 2, 2, 50, "Finished"),
+            _rrow("c", "cc", 3, 3, 50, "Finished"),
+            _rrow("d", "cd", 4, None, 10, "Engine"),
+            _rrow("e", "ce", 5, None, 5, "Engine"),
+        ],
+    )
+    hf.step(race, None)
+    drv = hf.engine.driver
+    # Pace: finishing order is respected.
+    assert drv("a").mu > drv("b").mu > drv("c").mu
+    # Attrition: e failed before d, so e is punished harder; both fell below prior.
+    assert drv("e").mu < drv("d").mu < p["rookie_mu"]
+
+
+def test_qualifying_channel_moves_ratings():
+    on = model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2))
+    off = model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2, w_qual=0.0))
+    race = _two_car_race(2020, 1, "a", "b")
+    quali = {
+        "season": "2020",
+        "round": "1",
+        "results": [
+            {"driverId": "b", "constructorId": "car_b", "position": 1},
+            {"driverId": "a", "constructorId": "car_a", "position": 2},
+        ],
+    }
+    on.step(race, quali)
+    off.step(race, quali)
+    # b out-qualified a, so with the quali channel on, b must end up better off.
+    assert on.engine.driver("b").mu > off.engine.driver("b").mu
+    assert on.engine.driver("a").mu < off.engine.driver("a").mu
+
+
+# --- predict_race -------------------------------------------------------------------
+
+
+_MUS = {"a": 0.5, "b": 0.2, "c": 0.0, "d": -0.3, "e": -0.6}
+
+
+def _predict(p_fin_a=1.0, seen=frozenset()):
+    import math as _math
+
+    params = dict(DEFAULT_PARAMS_V2, p_wild=0.0)
+    entrants = sorted(_MUS)
+    mu_var = {d: (m, 0.0) for d, m in _MUS.items()}
+    p_fin = dict.fromkeys(_MUS, 1.0)
+    p_fin["a"] = p_fin_a
+    return model_v2.predict_race(entrants, mu_var, p_fin, 1.0, params, set(seen), n_draws=64), _math
+
+
+def test_predict_race_bridge_matches_v1_closed_form():
+    out, math_ = _predict()
+    lam = {d: math_.exp(m) for d, m in _MUS.items()}
+    exact = model_v2.model.all_set_probs(lam, sorted(_MUS))
+    assert out["draws_used"] == 64
+    assert sum(out["trio_probs"].values()) == pytest.approx(1.0, abs=1e-9)
+    for trio, p in exact.items():
+        assert out["trio_probs"][trio] == pytest.approx(p, abs=1e-9)
+
+
+def test_predict_race_p_new_is_exact_complement_of_seen():
+    seen = {("a", "b", "c"), ("c", "d", "e")}
+    out, _ = _predict(seen=seen)
+    expected = 1.0 - out["trio_probs"][("a", "b", "c")] - out["trio_probs"][("c", "d", "e")]
+    assert out["p_new"] == pytest.approx(expected, abs=1e-12)
+    assert all(t not in seen for t, _ in out["ranked_new"])
+    probs = [p for _, p in out["ranked_new"]]
+    assert probs == sorted(probs, reverse=True)
+
+
+def test_predict_race_is_deterministic():
+    out1, _ = _predict(seen={("a", "b", "c")})
+    out2, _ = _predict(seen={("a", "b", "c")})
+    assert out1 == out2
+
+
+def test_predict_race_dnf_risk_drains_a_drivers_trios():
+    sure, _ = _predict(p_fin_a=1.0)
+    risky, _ = _predict(p_fin_a=0.5)
+    assert risky["trio_probs"][("a", "b", "c")] < sure["trio_probs"][("a", "b", "c")]
+    # mass moves to trios without a
+    assert risky["trio_probs"][("b", "c", "d")] > sure["trio_probs"][("b", "c", "d")]

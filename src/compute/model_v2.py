@@ -20,6 +20,7 @@ Constructor identity follows team lineage across rebrands/purchases
 from __future__ import annotations
 
 import math
+import random
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,11 +34,13 @@ __all__ = [
     "CONSTRUCTOR_LINEAGE",
     "CircuitStats",
     "Gauss",
+    "HistoryFilter",
     "RatingEngine",
     "ReliabilityTracker",
     "classify_status",
     "lineage_root",
     "model",
+    "predict_race",
 ]
 
 # Initial sensible values; locked by the walk-forward tuner (backtest.py --tune-v2).
@@ -397,3 +400,163 @@ class CircuitStats:
 
         w = rec[0] / (rec[0] + _CIRCUIT_SHRINK_N)
         return w * (logit(rec[1] / rec[2]) - logit(self._g[1] / self._g[2]))
+
+
+class HistoryFilter:
+    """Predict-then-update pass over the chronological race history.
+
+    ``step`` first applies the between-race dynamics, then snapshots every
+    entrant's (mu_s, var_s, p_finish) plus the circuit temperature *before*
+    the race outcome touches any state — the snapshot is exactly what a
+    forecast made on race morning could have known (leakage-free) — and only
+    then feeds the outcome through the qualifying, pace, attrition,
+    reliability and circuit channels.
+    """
+
+    def __init__(self, params: dict):
+        self.params = params
+        self.engine = RatingEngine(params)
+        self.reliability = ReliabilityTracker(params["rel_half_life"])
+        self.circuits = CircuitStats()
+        self.season: int | None = None
+
+    def step(self, race: dict, quali: dict | None = None) -> dict:
+        p = self.params
+        season = int(race["season"])
+        if self.season is not None:
+            if season != self.season:
+                self.engine.advance_season(season)
+            else:
+                self.engine.advance_race()
+        self.season = season
+
+        circuit = race.get("circuitId", "")
+        rows: list[dict] = []
+        seen_dids: set[str] = set()
+        for row in race["results"]:
+            # DNS/DNQ/withdrawn entries never took the start: invisible everywhere.
+            # Shared drives (1950s) keep only the driver's first row.
+            if classify_status(row["status"]) == "excluded" or row["driverId"] in seen_dids:
+                continue
+            seen_dids.add(row["driverId"])
+            rows.append(row)
+
+        # ---- snapshot (strictly before any update) ----
+        delta = p["chaos_gamma"] * self.circuits.dnf_logodds_delta(circuit)
+        drivers = {
+            row["driverId"]: (
+                *self.engine.combined(row["driverId"], row["constructorId"]),
+                self._p_finish(row["driverId"], row["constructorId"], delta),
+            )
+            for row in rows
+        }
+        snapshot = {
+            "drivers": drivers,
+            "temp": self.circuits.temp(circuit, p["chaos_eta"]),
+            "season": season,
+        }
+
+        # ---- channel 1: qualifying order ----
+        if quali is not None and p["w_qual"] > 0.0:
+            qentries: list[tuple[str, str]] = []
+            qseen: set[str] = set()
+            for q in sorted(quali["results"], key=lambda q: q["position"]):
+                if q["driverId"] not in qseen:
+                    qseen.add(q["driverId"])
+                    qentries.append((q["driverId"], q["constructorId"]))
+            self.engine.observe_order(qentries, depth=int(p["depth_qual"]), weight=p["w_qual"])
+
+        # ---- channel 2: race pace (classified finishing order) ----
+        classified = sorted(
+            (r for r in rows if r["position"] is not None), key=lambda r: r["position"]
+        )
+        self.engine.observe_order(
+            [(r["driverId"], r["constructorId"]) for r in classified],
+            depth=int(p["depth_race"]),
+            weight=1.0,
+        )
+
+        # ---- channel 3: attrition (reverse PL: first failure picked first) ----
+        dnfs = sorted(
+            (r for r in rows if classify_status(r["status"]) in ("mech", "inc")),
+            key=lambda r: (r["laps"], r["driverId"]),
+        )
+        if dnfs and p["w_attr"] > 0.0:
+            entries = [(r["driverId"], r["constructorId"]) for r in dnfs]
+            entries += [(r["driverId"], r["constructorId"]) for r in reversed(classified)]
+            self.engine.observe_order(entries, depth=len(dnfs), weight=p["w_attr"], sign=-1)
+
+        # ---- reliability + circuit character ----
+        outcomes = [(r["driverId"], r["constructorId"], classify_status(r["status"])) for r in rows]
+        self.reliability.observe_race(outcomes)
+        n_dnf = sum(1 for _, _, o in outcomes if o in ("mech", "inc"))
+        disp = [abs(r["grid"] - r["position"]) for r in classified if r["grid"] > 0]
+        self.circuits.observe_race(
+            circuit,
+            starters=len(rows),
+            dnfs=n_dnf,
+            mean_disp=(sum(disp) / len(disp)) if disp else None,
+        )
+        return snapshot
+
+    def _p_finish(self, did: str, cid: str, circuit_delta: float) -> float:
+        p0 = min(0.995, max(0.02, self.reliability.p_finish(did, cid)))
+        if circuit_delta:
+            z = math.log(p0 / (1.0 - p0)) - circuit_delta
+            p0 = 1.0 / (1.0 + math.exp(-z))
+        return min(0.995, max(0.02, p0))
+
+
+def predict_race(
+    entrants: list[str],
+    mu_var: dict[str, tuple[float, float]],
+    p_fin: dict[str, float],
+    temp: float,
+    params: dict,
+    seen: set[tuple[str, str, str]],
+    *,
+    n_draws: int = 512,
+    seed: int = 20260704,
+    screen: int = 250,
+) -> dict:
+    """Rao-Blackwellised podium-set distribution for one race.
+
+    Each deterministic-seed draw samples skill noise, survivor Bernoullis and a
+    wild-race temperature flag, then adds the *exact* conditional PL trio
+    probabilities (no top-3 sampling noise). P(new trio) is the exact
+    complement of the tracked seen trios, so only unseen trios need screening
+    (closed-form top-``screen`` at the mean).
+    """
+    rng = random.Random(seed)
+    ids = sorted(entrants)
+    id_set = set(ids)
+    seen_here = {t for t in seen if all(d in id_set for d in t)}
+
+    lam0 = {d: math.exp(max(-30.0, min(30.0, mu_var[d][0]))) for d in ids}
+    base = model.all_set_probs(lam0, ids)  # screening only: rank plausible unseen trios
+    screened = [t for t, _ in sorted(base.items(), key=lambda kv: -kv[1]) if t not in seen_here][
+        :screen
+    ]
+    track = dict.fromkeys(screened, 0.0) | dict.fromkeys(sorted(seen_here), 0.0)
+
+    used = 0
+    for _ in range(n_draws):
+        s = {d: mu_var[d][0] + rng.gauss(0.0, 1.0) * math.sqrt(mu_var[d][1]) for d in ids}
+        alive = [d for d in ids if rng.random() < p_fin[d]]
+        t_eff = temp * (params["t_wild"] if rng.random() < params["p_wild"] else 1.0)
+        if len(alive) < 3:
+            continue
+        used += 1
+        w = {d: math.exp(max(-30.0, min(30.0, s[d] / t_eff))) for d in alive}
+        tot = sum(w.values())
+        aset = set(alive)
+        for t in track:
+            if t[0] in aset and t[1] in aset and t[2] in aset:
+                track[t] += model.pl_set_prob(t, w, tot)
+
+    probs = {t: v / max(used, 1) for t, v in track.items()}
+    p_new = 1.0 - sum(probs[t] for t in sorted(seen_here))
+    ranked_new = sorted(
+        ((t, p) for t, p in probs.items() if t not in seen_here), key=lambda kv: (-kv[1], kv[0])
+    )
+    return {"trio_probs": probs, "p_new": p_new, "ranked_new": ranked_new, "draws_used": used}
