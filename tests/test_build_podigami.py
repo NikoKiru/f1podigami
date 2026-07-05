@@ -203,3 +203,21 @@ def test_quickpicks_record_tie_prefers_earliest_and_dedupes():
 def test_quickpicks_empty_counts_and_single_season():
     out = bp._quickpicks(2026, 2026, {})
     assert out.count('class="tl-chip"') == 1  # just the first-season chip
+
+
+V2_DATA = {"params": {"model": "dbpl-v2", "w_qual": 0.6}}
+
+
+def test_faq_explains_v2_engine_when_active():
+    out = bp.render_faq(V2_DATA, EVAL, 123, 456, 789, 20, 1950)
+    assert "rating" in out.lower()  # explains the rating engine...
+    assert "Plackett" in out  # ...and still names the aggregation model
+    assert "reliability" in out.lower()  # DNF risk is part of the story
+    assert "halved every" not in out  # v1 recency copy must be gone
+
+
+def test_render_form_v2_caption_describes_ratings():
+    form = [{**pd("norris", "Lando Norris", "mclaren"), "weight": 5.0}]
+    out = bp.render_form(form, True, META, is_v2=True)
+    assert "rating" in out.lower()
+    assert "~6 races" not in out
