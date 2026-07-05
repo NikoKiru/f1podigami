@@ -21,6 +21,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write # open/refresh a failure-alert issue when an update run fails
 
 # Never run two data updates at once, and don't cancel one mid-commit.
 concurrency:
@@ -107,11 +108,11 @@ jobs:
           else
             python src/update.py
           fi
-      - name: Validate datasets
-        run: PYTHONPATH=src python -m datalib.validate
-      - name: Run tests
-        run: pytest -q
-      - name: Open or update the data PR and enable auto-merge
+      # Open/refresh the PR BEFORE validating: a bad-data run then surfaces as a
+      # visible red PR (whose required checks gate the auto-merge) instead of a
+      # silently-skipped step. The validate + tests below still run, so a bad run
+      # also goes red and trips the failure alert (notify-failure job).
+      - name: Open or refresh the data PR and arm auto-merge
         env:
           GH_TOKEN: ${{ secrets.DATA_PUSH_TOKEN }}
         run: |
@@ -135,3 +136,35 @@ jobs:
               --body "Automated race-data refresh. Auto-merges once all required checks pass."
           fi
           gh pr merge --auto --squash --delete-branch "$BRANCH"
+      - name: Validate datasets
+        run: PYTHONPATH=src python -m datalib.validate
+      - name: Run tests
+        run: pytest -q
+
+  # If the guard or the update itself fails, the site silently stalls one race
+  # behind (no PR merges; the guard just re-fires every tick). Make that loud:
+  # open — or refresh — a single deduplicated issue so a failure pings a human
+  # within one cron tick instead of hiding in a red run nobody watches.
+  notify-failure:
+    needs: [check, update]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or refresh the failure issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create auto-update-failure --repo "$GITHUB_REPOSITORY" \
+            --color B60205 --description "update.yml data refresh is failing" 2>/dev/null || true
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label auto-update-failure --json number --jq '.[0].number // empty')"
+          body=$'The automated data update failed, so the site will stall one race behind until it is fixed (the guard keeps firing but no data PR merges).\n\nFailed run: '"$RUN_URL"$'\n\nDiagnose per CLAUDE.md (Deployment > "When a finished race does not appear"). Typical tell: check green with update red (Run tests failed), or an open auto/update-data PR whose checks are red. Close this issue once a data PR merges.'
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" \
+              --body "Still failing as of $(date -u +%Y-%m-%dT%H:%MZ): $RUN_URL"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "⚠️ Automated data update is failing" \
+              --label auto-update-failure --body "$body"
+          fi
