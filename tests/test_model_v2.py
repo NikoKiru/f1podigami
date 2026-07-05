@@ -87,10 +87,13 @@ def test_engine_reuses_constructor_state_across_rebrand():
         ("Finished", "finished"),
         ("+1 Lap", "finished"),
         ("+2 Laps", "finished"),
+        ("Lapped", "finished"),  # ran to the flag, laps down (old-style classification)
+        ("Not classified", "finished"),  # insufficient distance, but the car survived
         ("Accident", "inc"),
         ("Collision", "inc"),
         ("Collision damage", "inc"),
         ("Spun off", "inc"),
+        ("Physical", "inc"),  # driver-side condition, not a car failure
         ("Disqualified", "dsq"),
         ("Did not start", "excluded"),
         ("Did not qualify", "excluded"),

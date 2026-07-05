@@ -77,8 +77,7 @@ CONSTRUCTOR_LINEAGE: dict[str, str] = {
     "toro_rosso": "minardi",
     "alphatauri": "minardi",
     "rb": "minardi",
-    # Jordan -> Midland/MF1 -> Spyker -> Force India -> Racing Point -> Aston Martin
-    "midland": "jordan",
+    # Jordan -> MF1 -> Spyker -> Force India -> Racing Point -> Aston Martin
     "mf1": "jordan",
     "spyker": "jordan",
     "spyker_mf1": "jordan",
@@ -124,6 +123,8 @@ _INC_STATUSES = {
     "Accident",
     "Collision",
     "Collision damage",
+    "Damage",
+    "Debris",
     "Spun off",
     "Fatal accident",
     "Injury",
@@ -131,6 +132,7 @@ _INC_STATUSES = {
     "Illness",
     "Driver unwell",
     "Eye injury",
+    "Physical",
 }
 
 _DSQ_STATUSES = {"Disqualified", "Excluded"}
@@ -153,7 +155,9 @@ def classify_status(status: str) -> str:
     Unknown strings default to 'mech': the long tail of statuses ("Halfshaft",
     "Fuel pipe", ...) is overwhelmingly component failures.
     """
-    if status == "Finished" or status.startswith("+") or status == "Not classified":
+    # "Lapped" / "Not classified" ran to the flag (too few laps to classify):
+    # the car survived, so they count as finishes for reliability purposes.
+    if status == "Finished" or status.startswith("+") or status in ("Lapped", "Not classified"):
         return "finished"
     if status in _INC_STATUSES:
         return "inc"
