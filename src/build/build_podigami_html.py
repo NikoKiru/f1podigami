@@ -26,6 +26,7 @@ from _hooks import (  # noqa: E402
 )
 from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
+    SITE_URL,
     asset,
     head,
     nav,
@@ -578,6 +579,40 @@ def render_faq(
     )
 
 
+def json_ld_schemas(schedule: dict, asof: dict | None, description: str) -> list[dict]:
+    """Structured data for the landing page: the site itself plus, when the
+    season is still running, the next Grand Prix as a SportsEvent."""
+    schemas: list[dict] = [
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "F1 Podigami",
+            "url": f"{SITE_URL}/",
+            "description": description,
+        }
+    ]
+    nxt = pick_next_race(schedule, asof) if schedule else None
+    if nxt:
+        schemas.append(
+            {
+                "@context": "https://schema.org",
+                "@type": "SportsEvent",
+                "name": nxt["raceName"],
+                "startDate": _iso_datetime(nxt),
+                "location": {
+                    "@type": "Place",
+                    "name": nxt["circuitName"],
+                    "address": {
+                        "@type": "PostalAddress",
+                        "addressLocality": nxt["locality"],
+                        "addressCountry": nxt["country"],
+                    },
+                },
+            }
+        )
+    return schemas
+
+
 def main() -> int:
     data = load_podigami().model_dump()
     season = data["currentSeason"]
@@ -660,16 +695,17 @@ def main() -> int:
         ensure_ascii=False,
     ).replace("</", "<\\/")
 
+    meta_description = (
+        f"Podigami is the art of spotting F1 podium trios that have never happened before. "
+        f"A statistical model predicts which brand-new trio is most likely next in the {season} season."
+    )
     page = f"""{
         head(
             f"F1 Podigami - Next Likely New Podium ({season})",
             "podigami.css",
-            description=(
-                f"Podigami is the art of spotting F1 podium trios that have never happened before. "
-                f"A statistical model predicts which brand-new trio is most likely next in the {season} season."
-            ),
+            description=meta_description,
             page_path="index.html",
-            keywords="F1, podigami, Formula 1, podium prediction, scorigami, F1 podium, new podium trio, F1 statistics",
+            json_ld=json_ld_schemas(schedule, data.get("asOf"), meta_description),
         )
     }
 <body>

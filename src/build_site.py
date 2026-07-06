@@ -52,9 +52,10 @@ def _last_race_date() -> str:
 
 def _write_sitemap_xml() -> None:
     lastmod = _last_race_date()
+    # The homepage is listed as the bare root (its canonical URL), not /index.html.
+    locs = [f"{SITE_URL}/" if page == "index.html" else f"{SITE_URL}/{page}" for page in PAGES]
     urls = "\n".join(
-        f"  <url>\n    <loc>{SITE_URL}/{page}</loc>\n    <lastmod>{lastmod}</lastmod>\n  </url>"
-        for page in PAGES
+        f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n  </url>" for loc in locs
     )
     content = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'

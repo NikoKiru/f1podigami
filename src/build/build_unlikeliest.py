@@ -137,7 +137,6 @@ def main() -> int:
             "podigami.css",
             description="The most statistically improbable F1 podiums that actually happened. Trios of drivers who rarely podiumed, yet once all three shared the rostrum against the odds.",
             page_path="unlikeliest.html",
-            keywords="F1, Formula 1, unlikeliest podiums, improbable podiums, F1 statistics, podium trios, fluke podiums, F1 data",
         )
     }
 <body>

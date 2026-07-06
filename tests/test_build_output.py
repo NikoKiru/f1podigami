@@ -1,6 +1,11 @@
 """Output / HTML validation: the built site is complete and well-formed."""
 
+import json
+import re
+
 import pytest
+
+SITE_URL = "https://nikokiru.github.io/f1podigami"
 
 # page -> assets it must reference (and which must end up in dist/)
 PAGES = {
@@ -291,6 +296,83 @@ def test_every_page_has_mobile_nav_drawer(dist, page):
     drawer = html[html.index('<aside class="nav-drawer"') : html.index("</aside>")]
     for href in ALL_PAGES:
         assert f'href="{href}"' in drawer, f"{page} drawer missing link to {href}"
+
+
+def _json_ld_blocks(html: str) -> list[dict]:
+    """All parsed <script type="application/ld+json"> payloads in a page."""
+    return [
+        json.loads(m)
+        for m in re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.DOTALL)
+    ]
+
+
+def test_index_canonical_is_site_root(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert f'<link rel="canonical" href="{SITE_URL}/">' in html
+    assert f'<meta property="og:url" content="{SITE_URL}/">' in html
+    assert f'href="{SITE_URL}/index.html"' not in html
+
+
+def test_subpage_canonical_keeps_page_url(dist):
+    html = (dist / "combos.html").read_text(encoding="utf-8")
+    assert f'<link rel="canonical" href="{SITE_URL}/combos.html">' in html
+
+
+def test_index_json_ld_website(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    websites = [b for b in _json_ld_blocks(html) if b.get("@type") == "WebSite"]
+    assert len(websites) == 1, "index.html should carry exactly one WebSite schema"
+    site = websites[0]
+    assert site["@context"] == "https://schema.org"
+    assert site["name"] == "F1 Podigami"
+    assert site["url"] == f"{SITE_URL}/"
+    assert site["description"]
+
+
+def test_index_json_ld_next_race_event(dist, data):
+    from build.build_podigami_html import pick_next_race
+
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    events = [b for b in _json_ld_blocks(html) if b.get("@type") == "SportsEvent"]
+    nxt = pick_next_race(data["schedule"], data["podigami"].get("asOf"))
+    if nxt is None:
+        assert events == [], "no upcoming race -> no SportsEvent schema"
+        return
+    assert len(events) == 1, "index.html should carry exactly one SportsEvent schema"
+    event = events[0]
+    assert event["name"] == nxt["raceName"]
+    assert event["startDate"].startswith(nxt["date"])
+    assert event["location"]["@type"] == "Place"
+    assert event["location"]["name"] == nxt["circuitName"]
+    assert event["location"]["address"]["addressCountry"] == nxt["country"]
+
+
+def test_404_is_noindex(dist):
+    html = (dist / "404.html").read_text(encoding="utf-8")
+    assert '<meta name="robots" content="noindex">' in html
+    index = (dist / "index.html").read_text(encoding="utf-8")
+    assert 'name="robots"' not in index
+
+
+@pytest.mark.parametrize("page", ALL_PAGES)
+def test_no_dead_keywords_meta(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    assert 'name="keywords"' not in html, f"{page} still emits the dead keywords meta"
+
+
+@pytest.mark.parametrize("page", ALL_PAGES)
+def test_og_locale_and_image_alt(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    assert '<meta property="og:locale" content="en_US">' in html
+    assert '<meta property="og:image:alt" content="' in html
+
+
+def test_sitemap_homepage_is_root_url(dist):
+    sitemap = (dist / "sitemap.xml").read_text(encoding="utf-8")
+    assert f"<loc>{SITE_URL}/</loc>" in sitemap
+    assert f"<loc>{SITE_URL}/index.html</loc>" not in sitemap
+    for page in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+        assert f"<loc>{SITE_URL}/{page}</loc>" in sitemap
 
 
 def test_drawer_marks_active_page(dist):

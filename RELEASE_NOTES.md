@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-06
+
+### Improvements
+- SEO technical quick wins: the homepage now canonicalises on the bare site root (`…/f1podigami/`) in both its `<link rel="canonical">`/`og:url` tags and the sitemap, the landing page carries JSON-LD structured data (`WebSite` plus a `SportsEvent` for the next race while the season runs), the 404 page is marked `noindex`, every page gains `og:locale` + `og:image:alt`, and the dead `meta keywords` tag is gone (#185)
+
 ## 2026-07-05
 
 ### Fixes

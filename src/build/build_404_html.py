@@ -18,6 +18,7 @@ def render() -> str:
             "404 — Page Not Found | F1 Podigami",
             description="This page doesn't exist. Head back to F1 Podigami.",
             page_path="404.html",
+            noindex=True,
         )
     }
 <body>

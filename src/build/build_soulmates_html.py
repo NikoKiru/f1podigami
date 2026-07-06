@@ -213,7 +213,6 @@ def main() -> int:
             "soulmates.css",
             description="Which F1 legends spent the most race weekends together on the podium? 76 years of Formula 1 history distilled into the partnerships that defined each era.",
             page_path="soulmates.html",
-            keywords="F1, Formula 1, podium soulmates, F1 partnerships, F1 podium history, F1 statistics, driver pairs",
         )
     }
 <body>
