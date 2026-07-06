@@ -11,6 +11,7 @@ them). The import works both when a builder is run as a script
 from __future__ import annotations
 
 import hashlib
+import json
 import urllib.parse
 from functools import cache
 from pathlib import Path
@@ -100,36 +101,54 @@ def head(
     *css_files: str,
     description: str = "",
     page_path: str = "",
-    keywords: str = "",
+    json_ld: list[dict] | None = None,
+    noindex: bool = False,
 ) -> str:
     """Return ``<!DOCTYPE html>`` through ``</head>`` for a page.
 
     ``style.css`` is always linked first; ``css_files`` are the page-specific
-    stylesheets (e.g. ``"podigami.css"``).
+    stylesheets (e.g. ``"podigami.css"``). ``json_ld`` schema objects are
+    embedded as ``application/ld+json`` blocks; ``noindex`` marks a page
+    (the 404) as not for search indexes.
     """
     links = "\n".join(
         f'<link rel="stylesheet" href="{asset(href)}">' for href in ("style.css", *css_files)
     )
-    canonical = f"{SITE_URL}/{page_path}" if page_path else f"{SITE_URL}/"
+    # GitHub Pages serves the homepage at both / and /index.html; canonicalise
+    # on the root so search engines see a single homepage URL.
+    if page_path and page_path != "index.html":
+        canonical = f"{SITE_URL}/{page_path}"
+    else:
+        canonical = f"{SITE_URL}/"
     seo = ""
+    if noindex:
+        seo += '\n<meta name="robots" content="noindex">'
     if description:
         seo += f'\n<meta name="description" content="{description}">'
         seo += f'\n<meta property="og:description" content="{description}">'
-    if keywords:
-        seo += f'\n<meta name="keywords" content="{keywords}">'
     seo += f'\n<link rel="canonical" href="{canonical}">'
     seo += f'\n<meta property="og:title" content="{title}">'
     seo += '\n<meta property="og:type" content="website">'
     seo += f'\n<meta property="og:url" content="{canonical}">'
     seo += '\n<meta property="og:site_name" content="F1 Podigami">'
+    seo += '\n<meta property="og:locale" content="en_US">'
     seo += f'\n<meta property="og:image" content="{SITE_URL}/og-image.png">'
     seo += '\n<meta property="og:image:width" content="1200">'
     seo += '\n<meta property="og:image:height" content="630">'
+    seo += (
+        '\n<meta property="og:image:alt" '
+        'content="F1 Podigami — Formula 1 podium scorigami tracker">'
+    )
     seo += '\n<meta name="twitter:card" content="summary_large_image">'
     seo += f'\n<meta name="twitter:title" content="{title}">'
     if description:
         seo += f'\n<meta name="twitter:description" content="{description}">'
     seo += f'\n<meta name="twitter:image" content="{SITE_URL}/og-image.png">'
+    for schema in json_ld or []:
+        # "</" would close the script element early if a data string ever
+        # contained it; the JSON-string escape keeps the payload inert.
+        payload = json.dumps(schema, separators=(",", ":")).replace("</", "<\\/")
+        seo += f'\n<script type="application/ld+json">{payload}</script>'
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>

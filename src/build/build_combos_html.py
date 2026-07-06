@@ -119,7 +119,6 @@ def main() -> int:
             "index.css",
             description=f"Every unique trio that has shared an F1 World Championship podium since {season_min}. Browse, filter, and sort all {unique_combos:,} combinations across {total_podiums:,} races.",
             page_path="combos.html",
-            keywords="F1, Formula 1, podium combinations, F1 podium history, F1 statistics, podium trios, F1 data",
         )
     }
 <body>
