@@ -173,6 +173,7 @@ def main() -> int:
     </div>
 </main>
 {FOOTER}
+<script src="{asset("overdue.js")}"></script>
 <script src="{asset("theme.js")}"></script>
 </body>
 </html>
