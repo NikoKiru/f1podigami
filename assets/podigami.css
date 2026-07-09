@@ -835,6 +835,73 @@ main {
     white-space: nowrap;
 }
 
+/* ── Overdue: collapsible section headers (native <details>) ──────────────── */
+.od-panel > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.od-panel > summary::-webkit-details-marker {
+    display: none;
+}
+
+.od-panel > summary h2 {
+    margin: 0;
+}
+
+.od-panel > summary:hover h2 {
+    color: var(--text);
+}
+
+.od-panel > .panel-sub {
+    margin-top: 6px;
+}
+
+.panel-chev {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.18s ease, color 0.15s;
+}
+
+.od-panel[open] > summary .panel-chev {
+    transform: rotate(180deg);
+    color: var(--accent-bright);
+}
+
+/* ── Overdue: per-card stats toggle (mobile only; hidden on desktop) ───────── */
+.od-toggle {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px 0 0;
+    border: none;
+    border-top: 1px solid var(--border);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+}
+
+.od-toggle:hover {
+    color: var(--text);
+}
+
+.od-toggle .chev {
+    font-size: 11px;
+    transition: transform 0.18s ease;
+}
+
 /* current form — broadcast timing tower */
 .form-tower {
     display: flex;
@@ -1304,6 +1371,23 @@ a.tl-where:hover {
 
     .odcard-hero .od-score-num {
         font-size: 38px;
+    }
+
+    /* Overdue cards: collapse the three stat cells behind the Details toggle */
+    .odcard .od-stats {
+        display: none;
+    }
+
+    .odcard.od-open .od-stats {
+        display: grid;
+    }
+
+    .od-toggle {
+        display: flex;
+    }
+
+    .odcard.od-open .od-toggle .chev {
+        transform: rotate(180deg);
     }
 
     .info-bubble {

@@ -121,4 +121,27 @@ def test_panel_wraps_title_and_sub():
     out = bo.panel("My Title", "the subtitle", [])
     assert "<h2>My Title</h2>" in out
     assert "the subtitle" in out
-    assert 'class="panel"' in out
+    # section is now a collapsible <details>, open by default
+    assert '<details class="panel od-panel" open>' in out
+    assert '<summary class="panel-head">' in out
+    assert 'class="panel-chev"' in out
+
+
+# ── mobile stats toggle ───────────────────────────────────────────────────────
+
+
+def test_render_card_has_mobile_stats_toggle():
+    e = entry(["A Driver", "B Driver", "C Driver"], ["a", "b", "c"], 10, 2.0, [0.3, 0.2, 0.1])
+    html = bo.render_card(2, e, uid="at")
+    assert 'class="od-toggle"' in html
+    assert 'aria-expanded="false"' in html
+    assert 'id="odstats-at2"' in html
+    assert 'aria-controls="odstats-at2"' in html
+
+
+def test_render_cards_stats_ids_unique_per_section():
+    entries = [
+        entry(["A Driver", "B Driver", "C Driver"], ["a", "b", "c"], 10, 2.0, [0.3, 0.2, 0.1])
+    ]
+    assert 'id="odstats-at1"' in bo.render_cards(entries, uid="at")
+    assert 'id="odstats-cg1"' in bo.render_cards(entries, uid="cg")

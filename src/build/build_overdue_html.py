@@ -69,8 +69,13 @@ def _stat(label: str, value: str) -> str:
     )
 
 
-def render_card(rank: int, e: OverdueTrio, hero: bool = False) -> str:
-    """One uniform card. ``hero`` makes it the larger, accented #1 variant."""
+def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") -> str:
+    """One uniform card. ``hero`` makes it the larger, accented #1 variant.
+
+    On mobile the three stat cells collapse behind a per-card "Details" toggle
+    (see assets/overdue.js); ``uid`` keeps each card's stats id unique across the
+    two sections.
+    """
     cls = "odcard odcard-hero" if hero else "odcard"
     drivers = f'<div class="od-drivers">{render_trio(e.names)}</div>'
     stats = (
@@ -78,6 +83,7 @@ def render_card(rank: int, e: OverdueTrio, hero: bool = False) -> str:
         + _stat("Raced together", f"{e.racesTogether}&times;")
         + _stat("Chance by now", format_probability(e.score))
     )
+    stats_id = f"odstats-{uid}{rank}"
     return (
         f'<li class="{cls}">'
         f'<div class="od-top">'
@@ -88,25 +94,37 @@ def render_card(rank: int, e: OverdueTrio, hero: bool = False) -> str:
         f'<span class="od-score-num">{format_score(e.score)}</span>'
         f'<span class="od-score-label">expected co-podiums</span>'
         f"</div>"
-        f'<div class="od-stats">{stats}</div>'
+        f'<button type="button" class="od-toggle" aria-expanded="false" aria-controls="{stats_id}">'
+        f'<span class="od-toggle-label">Details</span>'
+        f'<span class="chev" aria-hidden="true">&#9662;</span>'
+        f"</button>"
+        f'<div class="od-stats" id="{stats_id}">{stats}</div>'
         f"</li>"
     )
 
 
-def render_cards(entries: list[OverdueTrio]) -> str:
+def render_cards(entries: list[OverdueTrio], uid: str = "") -> str:
     if not entries:
         return '<p class="panel-sub">No candidates.</p>'
-    cards = [render_card(i, e, hero=(i == 1)) for i, e in enumerate(entries, 1)]
+    cards = [render_card(i, e, hero=(i == 1), uid=uid) for i, e in enumerate(entries, 1)]
     return f'<ol class="odcard-list">{"".join(cards)}</ol>'
 
 
-def panel(title: str, sub: str, entries: list[OverdueTrio]) -> str:
+def panel(title: str, sub: str, entries: list[OverdueTrio], uid: str = "") -> str:
+    """One collapsible grid section.
+
+    A native ``<details open>`` so the header toggles the whole section with no
+    JS; ``uid`` disambiguates each card's stats id across the two sections.
+    """
     return (
-        f'<section class="panel">'
-        f"  <h2>{title}</h2>"
-        f'  <p class="panel-sub">{sub}</p>'
-        f"  {render_cards(entries)}"
-        f"</section>"
+        f'<details class="panel od-panel" open>'
+        f'<summary class="panel-head">'
+        f"<h2>{title}</h2>"
+        f'<span class="panel-chev" aria-hidden="true">&#9662;</span>'
+        f"</summary>"
+        f'<p class="panel-sub">{sub}</p>'
+        f"{render_cards(entries, uid=uid)}"
+        f"</details>"
     )
 
 
@@ -120,11 +138,13 @@ def main() -> int:
         "&mdash; yet never all three on the same podium. Expected co-podiums = races together "
         "&times; each driver&rsquo;s career podium rate.",
         data.allTime,
+        uid="at",
     )
     grid = panel(
         "Current grid &mdash; still possible",
         "The most overdue trios among this season&rsquo;s drivers. These could still happen.",
         data.currentGrid,
+        uid="cg",
     )
 
     page = f"""{
@@ -153,6 +173,7 @@ def main() -> int:
     </div>
 </main>
 {FOOTER}
+<script src="{asset("overdue.js")}"></script>
 <script src="{asset("theme.js")}"></script>
 </body>
 </html>

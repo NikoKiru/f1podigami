@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-09
+
+### Improvements
+- Overdue page: each grid section ("All-time near-misses" / "Current grid") is now collapsible from its header (native `<details>`, open by default) so you can hide one and navigate the other, and on mobile each trio card collapses its three stats behind a per-card "Details" toggle to cut clutter (#189)
+
 ## 2026-07-06
 
 ### Improvements
