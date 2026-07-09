@@ -121,4 +121,7 @@ def test_panel_wraps_title_and_sub():
     out = bo.panel("My Title", "the subtitle", [])
     assert "<h2>My Title</h2>" in out
     assert "the subtitle" in out
-    assert 'class="panel"' in out
+    # section is now a collapsible <details>, open by default
+    assert '<details class="panel od-panel" open>' in out
+    assert '<summary class="panel-head">' in out
+    assert 'class="panel-chev"' in out

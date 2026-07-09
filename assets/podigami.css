@@ -835,6 +835,44 @@ main {
     white-space: nowrap;
 }
 
+/* ── Overdue: collapsible section headers (native <details>) ──────────────── */
+.od-panel > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.od-panel > summary::-webkit-details-marker {
+    display: none;
+}
+
+.od-panel > summary h2 {
+    margin: 0;
+}
+
+.od-panel > summary:hover h2 {
+    color: var(--text);
+}
+
+.od-panel > .panel-sub {
+    margin-top: 6px;
+}
+
+.panel-chev {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.18s ease, color 0.15s;
+}
+
+.od-panel[open] > summary .panel-chev {
+    transform: rotate(180deg);
+    color: var(--accent-bright);
+}
+
 /* current form — broadcast timing tower */
 .form-tower {
     display: flex;

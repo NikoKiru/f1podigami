@@ -69,7 +69,7 @@ def _stat(label: str, value: str) -> str:
     )
 
 
-def render_card(rank: int, e: OverdueTrio, hero: bool = False) -> str:
+def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") -> str:
     """One uniform card. ``hero`` makes it the larger, accented #1 variant."""
     cls = "odcard odcard-hero" if hero else "odcard"
     drivers = f'<div class="od-drivers">{render_trio(e.names)}</div>'
@@ -93,20 +93,28 @@ def render_card(rank: int, e: OverdueTrio, hero: bool = False) -> str:
     )
 
 
-def render_cards(entries: list[OverdueTrio]) -> str:
+def render_cards(entries: list[OverdueTrio], uid: str = "") -> str:
     if not entries:
         return '<p class="panel-sub">No candidates.</p>'
-    cards = [render_card(i, e, hero=(i == 1)) for i, e in enumerate(entries, 1)]
+    cards = [render_card(i, e, hero=(i == 1), uid=uid) for i, e in enumerate(entries, 1)]
     return f'<ol class="odcard-list">{"".join(cards)}</ol>'
 
 
-def panel(title: str, sub: str, entries: list[OverdueTrio]) -> str:
+def panel(title: str, sub: str, entries: list[OverdueTrio], uid: str = "") -> str:
+    """One collapsible grid section.
+
+    A native ``<details open>`` so the header toggles the whole section with no
+    JS; ``uid`` disambiguates each card's stats id across the two sections.
+    """
     return (
-        f'<section class="panel">'
-        f"  <h2>{title}</h2>"
-        f'  <p class="panel-sub">{sub}</p>'
-        f"  {render_cards(entries)}"
-        f"</section>"
+        f'<details class="panel od-panel" open>'
+        f'<summary class="panel-head">'
+        f"<h2>{title}</h2>"
+        f'<span class="panel-chev" aria-hidden="true">&#9662;</span>'
+        f"</summary>"
+        f'<p class="panel-sub">{sub}</p>'
+        f"{render_cards(entries, uid=uid)}"
+        f"</details>"
     )
 
 
