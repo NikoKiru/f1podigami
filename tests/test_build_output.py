@@ -11,7 +11,7 @@ SITE_URL = "https://nikokiru.github.io/f1podigami"
 PAGES = {
     "index.html": ["podigami.css", "podigami.js", "theme.js"],
     "combos.html": ["index.css", "index.js", "theme.js"],
-    "overdue.html": ["podigami.css", "theme.js"],
+    "overdue.html": ["podigami.css", "overdue.js", "theme.js"],
     "soulmates.html": ["soulmates.css", "theme.js"],
 }
 
@@ -22,6 +22,7 @@ ALL_ASSETS = [
     "podigami.css",
     "index.js",
     "podigami.js",
+    "overdue.js",
     "theme.js",
     "favicon.svg",
 ]

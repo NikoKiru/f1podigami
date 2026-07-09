@@ -95,3 +95,17 @@ def test_shared_nav_collapses_to_drawer_on_mobile():
     # drawer starts off-canvas left and slides in when the checkbox is checked
     assert re.search(r"\.nav-drawer\s*\{[^}]*translateX\(-", s)
     assert ".nav-drawer-toggle:checked" in s
+
+
+def test_overdue_cards_collapse_stats_on_mobile():
+    """On phones the three stat cells hide behind a per-card Details toggle."""
+    import re
+
+    s = css("podigami.css")
+    block = re.search(r"@media \(max-width: 600px\)[\s\S]*", s).group(0)
+    assert re.search(r"\.odcard\s+\.od-stats\s*\{[^}]*display:\s*none", block), (
+        "mobile must hide the overdue stat block by default"
+    )
+    assert re.search(r"\.od-toggle\s*\{[^}]*display:\s*flex", block), (
+        "the Details toggle must appear on mobile"
+    )
