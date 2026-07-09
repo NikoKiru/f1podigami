@@ -70,7 +70,12 @@ def _stat(label: str, value: str) -> str:
 
 
 def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") -> str:
-    """One uniform card. ``hero`` makes it the larger, accented #1 variant."""
+    """One uniform card. ``hero`` makes it the larger, accented #1 variant.
+
+    On mobile the three stat cells collapse behind a per-card "Details" toggle
+    (see assets/overdue.js); ``uid`` keeps each card's stats id unique across the
+    two sections.
+    """
     cls = "odcard odcard-hero" if hero else "odcard"
     drivers = f'<div class="od-drivers">{render_trio(e.names)}</div>'
     stats = (
@@ -78,6 +83,7 @@ def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") ->
         + _stat("Raced together", f"{e.racesTogether}&times;")
         + _stat("Chance by now", format_probability(e.score))
     )
+    stats_id = f"odstats-{uid}{rank}"
     return (
         f'<li class="{cls}">'
         f'<div class="od-top">'
@@ -88,7 +94,11 @@ def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") ->
         f'<span class="od-score-num">{format_score(e.score)}</span>'
         f'<span class="od-score-label">expected co-podiums</span>'
         f"</div>"
-        f'<div class="od-stats">{stats}</div>'
+        f'<button type="button" class="od-toggle" aria-expanded="false" aria-controls="{stats_id}">'
+        f'<span class="od-toggle-label">Details</span>'
+        f'<span class="chev" aria-hidden="true">&#9662;</span>'
+        f"</button>"
+        f'<div class="od-stats" id="{stats_id}">{stats}</div>'
         f"</li>"
     )
 
@@ -128,11 +138,13 @@ def main() -> int:
         "&mdash; yet never all three on the same podium. Expected co-podiums = races together "
         "&times; each driver&rsquo;s career podium rate.",
         data.allTime,
+        uid="at",
     )
     grid = panel(
         "Current grid &mdash; still possible",
         "The most overdue trios among this season&rsquo;s drivers. These could still happen.",
         data.currentGrid,
+        uid="cg",
     )
 
     page = f"""{
