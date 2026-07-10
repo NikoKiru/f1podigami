@@ -48,7 +48,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 | | Page | What it shows |
 |---|---|---|
-| 🔮 | **`index.html`** | The **Podigami predictor** — next/last race, most likely brand-new trio, candidate rankings, current form tower, season debut timeline (with quick-pick season chips), FAQ, plus live-stat discovery hooks and a "Keep exploring" grid routing to every other page |
+| 🔮 | **`index.html`** | The **Podigami predictor** — next/last race, most likely brand-new trio, candidate rankings (with a collapsible current-form tower), season debut timeline (with quick-pick season chips), FAQ, plus live-stat discovery hooks and a "Keep exploring" grid routing to every other page |
 | 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 — sortable, filterable, expandable |
 | ⏳ | `overdue.html` | Trios "overdue" to appear — driver pairs whose current form suggests a shared podium is imminent |
 | 🎲 | `unlikeliest.html` | The mirror of Overdue — podium trios that *did* happen ranked by how statistically improbable they were, led by the single biggest fluke in F1 history |

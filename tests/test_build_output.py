@@ -199,9 +199,23 @@ def test_landing_page_discovery_hooks_in_flow(dist):
         assert f'<a class="hook-card" href="{href}"' in html, f"missing hook to {href}"
     # each in-flow hook sits after its related section
     assert html.index('class="cand-list"') < html.index('class="hook-card" href="combos.html"')
-    assert html.index('class="form-tower"') < html.index('class="hook-card" href="soulmates.html"')
+    assert html.index('class="form-tower"') < html.index('class="hook-card" href="combos.html"')
     assert html.index('id="tl-slider"') < html.index('class="hook-card" href="overdue.html"')
     assert 'class="hook-row"' in html  # overdue + unlikeliest side by side
+
+
+def test_landing_page_form_is_collapsed_in_candidates_panel(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    # no standalone "Current form" panel heading anymore
+    assert "<h2>Current form" not in html
+    # the tower sits in a collapsed <details> inside the candidates panel
+    assert '<details class="form-details">' in html
+    assert '<details class="form-details" open' not in html
+    assert "Show current form" in html
+    details = html[html.index('<details class="form-details">') :]
+    assert details.index('class="form-tower"') < details.index("</details>")
+    panel_start = html.index("Most likely next combinations")
+    assert panel_start < html.index('<details class="form-details">')
 
 
 def test_landing_page_explore_grid_is_last_section(dist):

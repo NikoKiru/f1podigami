@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-10
+
+### Improvements
+- Landing page: the "Current form" tower now lives behind a "Show current form" toggle inside the "Most likely next combinations" panel (native `<details>`, collapsed by default), shortening the page and putting the form data next to the ranking it explains (#191)
+
 ## 2026-07-09
 
 ### Improvements
