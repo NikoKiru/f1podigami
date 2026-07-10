@@ -170,6 +170,11 @@ def test_render_form_builds_timing_tower():
     assert "constructor strength" in out  # using_constructors=True extends the sub
     assert "~6 races" in out
     assert "~8 races" not in out
+    # collapsed <details> block, not a standalone panel
+    assert out.startswith('<details class="form-details">')
+    assert "<section" not in out
+    assert "Show current form" in out and "Hide current form" in out
+    assert " open>" not in out  # collapsed by default
 
 
 def test_render_form_half_life_default_is_six():
