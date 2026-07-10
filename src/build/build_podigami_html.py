@@ -1,8 +1,8 @@
 """Render data/podigami.json into dist/index.html (the landing page).
 
 Shows the current season's most likely *brand-new* podium trio ("podigami"),
-a ranked list of contenders, the current-form grid, and a year-slider timeline
-of every trio that debuted in each season.
+a ranked list of contenders (with a collapsible current-form tower), and a
+year-slider timeline of every trio that debuted in each season.
 """
 
 from __future__ import annotations
@@ -328,7 +328,7 @@ def render_hero(top: dict, chance: float, meta: dict, acc_badge: str = "") -> st
     )
 
 
-def render_candidates(cands: list[dict], meta: dict) -> str:
+def render_candidates(cands: list[dict], meta: dict, form_html: str = "") -> str:
     if not cands:
         return ""
     top = cands[0]["prob"] or 1
@@ -363,6 +363,7 @@ def render_candidates(cands: list[dict], meta: dict) -> str:
         f"    </span>"
         f"  </h2>"
         f'  <ol class="cand-list">{"".join(rows)}</ol>'
+        f"  {form_html}"
         f"</section>"
     )
 
@@ -677,7 +678,6 @@ def main() -> int:
 
     acc_badge = render_accuracy_badge(model_eval)
     hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
-    candidates = render_candidates(cands, meta)
     form = render_form(
         data["driverForm"],
         using_constructors,
@@ -685,6 +685,7 @@ def main() -> int:
         data["params"].get("halfLife", 6.0),
         is_v2=data["params"].get("model") == "dbpl-v2",
     )
+    candidates = render_candidates(cands, meta, form)
     timeline = render_timeline(data)
     faq = render_faq(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)
 
@@ -728,7 +729,6 @@ def main() -> int:
         {hero}
         {candidates}
         {hook_combos}
-        {form}
         {hook_soulmates}
         {timeline}
         {hook_row}

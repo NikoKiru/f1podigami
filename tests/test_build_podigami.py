@@ -81,6 +81,27 @@ def test_render_candidates_empty_is_blank():
     assert bp.render_candidates([], META) == ""
 
 
+def test_render_candidates_embeds_form_block_after_list():
+    cands = [
+        {
+            "prob": 3.0,
+            "names": ["Andrea Kimi Antonelli", "Lando Norris", "George Russell"],
+            "perDriver": [
+                pd("antonelli", "Andrea Kimi Antonelli", "mercedes"),
+                pd("norris", "Lando Norris", "mclaren"),
+                pd("russell", "George Russell", "mercedes"),
+            ],
+        }
+    ]
+    form_html = '<details class="form-details">FORM</details>'
+    out = bp.render_candidates(cands, META, form_html)
+    assert form_html in out
+    assert out.index('class="cand-list"') < out.index(form_html)  # after the ranked list
+    assert out.rstrip().endswith("</section>")  # inside the panel
+    # default keeps the old signature working
+    assert "form-details" not in bp.render_candidates(cands, META)
+
+
 EVAL = {
     "evalWindow": {"validation": [2010, 2018], "test": [2019, 2026]},
     "modelParams": {
