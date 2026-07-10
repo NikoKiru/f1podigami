@@ -1,8 +1,8 @@
 """Render data/podigami.json into dist/index.html (the landing page).
 
 Shows the current season's most likely *brand-new* podium trio ("podigami"),
-a ranked list of contenders, the current-form grid, and a year-slider timeline
-of every trio that debuted in each season.
+a ranked list of contenders (with a collapsible current-form tower), and a
+year-slider timeline of every trio that debuted in each season.
 """
 
 from __future__ import annotations
@@ -328,7 +328,7 @@ def render_hero(top: dict, chance: float, meta: dict, acc_badge: str = "") -> st
     )
 
 
-def render_candidates(cands: list[dict], meta: dict) -> str:
+def render_candidates(cands: list[dict], meta: dict, form_html: str = "") -> str:
     if not cands:
         return ""
     top = cands[0]["prob"] or 1
@@ -363,6 +363,7 @@ def render_candidates(cands: list[dict], meta: dict) -> str:
         f"    </span>"
         f"  </h2>"
         f'  <ol class="cand-list">{"".join(rows)}</ol>'
+        f"  {form_html}"
         f"</section>"
     )
 
@@ -374,6 +375,11 @@ def render_form(
     half_life: float = 6.0,
     is_v2: bool = False,
 ) -> str:
+    """Driver-form tower collapsed behind a <details> toggle.
+
+    The returned block is embedded inside the candidates panel by
+    render_candidates(), not emitted as a standalone section.
+    """
     show = [d for d in form if d["weight"] > 0][:14]
     mx = max((d["weight"] for d in show), default=1)
     rows = []
@@ -401,15 +407,14 @@ def render_form(
             sub += " and constructor strength"
         sub += "."
     return (
-        f'<section class="panel">'
-        f"  <h2>Current form"
-        f'    <span class="info-tip" tabindex="0" aria-label="More info">'
-        f'      <span class="info-icon">i</span>'
-        f'      <span class="info-bubble">{sub}</span>'
-        f"    </span>"
-        f"  </h2>"
-        f'  <div class="form-tower">{"".join(rows)}</div>'
-        f"</section>"
+        f'<details class="form-details">'
+        f"<summary>"
+        f'<span class="fd-closed">Show current form &#9662;</span>'
+        f'<span class="fd-open">Hide current form &#9652;</span>'
+        f"</summary>"
+        f'<p class="form-caption">{sub}</p>'
+        f'<div class="form-tower">{"".join(rows)}</div>'
+        f"</details>"
     )
 
 
@@ -673,7 +678,6 @@ def main() -> int:
 
     acc_badge = render_accuracy_badge(model_eval)
     hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
-    candidates = render_candidates(cands, meta)
     form = render_form(
         data["driverForm"],
         using_constructors,
@@ -681,6 +685,7 @@ def main() -> int:
         data["params"].get("halfLife", 6.0),
         is_v2=data["params"].get("model") == "dbpl-v2",
     )
+    candidates = render_candidates(cands, meta, form)
     timeline = render_timeline(data)
     faq = render_faq(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)
 
@@ -724,7 +729,6 @@ def main() -> int:
         {hero}
         {candidates}
         {hook_combos}
-        {form}
         {hook_soulmates}
         {timeline}
         {hook_row}

@@ -902,6 +902,56 @@ main {
     transition: transform 0.18s ease;
 }
 
+/* current form — collapsed <details> inside the candidates panel */
+.form-details {
+    margin-top: 14px;
+}
+
+.form-details > summary {
+    list-style: none;
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.form-details > summary:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.form-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.form-details .fd-open {
+    display: none;
+}
+
+.form-details[open] .fd-open {
+    display: inline;
+}
+
+.form-details[open] .fd-closed {
+    display: none;
+}
+
+.form-caption {
+    margin: 12px 0 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
 /* current form — broadcast timing tower */
 .form-tower {
     display: flex;
