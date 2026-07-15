@@ -388,8 +388,12 @@ class CircuitStats:
                 r[3] += float(mean_disp)
                 r[4] += 1.0
 
-    def temp(self, circuit_id: str, eta: float) -> float:
-        """Softmax temperature multiplier: >1 at high-churn circuits."""
+    def disp_ratio(self, circuit_id: str) -> float:
+        """Shrunk grid->finish displacement ratio vs the global mean.
+
+        1.0 = neutral/unknown; clamped to [0.5, 2.2]. Low = processional
+        (finish follows the grid), high = high-churn.
+        """
         rec = self._c.get(circuit_id)
         if not rec or rec[4] <= 0.0 or self._g[4] <= 0.0:
             return 1.0
@@ -398,7 +402,11 @@ class CircuitStats:
             return 1.0
         w = rec[4] / (rec[4] + _CIRCUIT_SHRINK_N)
         ratio = 1.0 + w * (rec[3] / rec[4] / g_disp - 1.0)
-        return min(2.2, max(0.5, ratio)) ** eta
+        return min(2.2, max(0.5, ratio))
+
+    def temp(self, circuit_id: str, eta: float) -> float:
+        """Softmax temperature multiplier: >1 at high-churn circuits."""
+        return self.disp_ratio(circuit_id) ** eta
 
     def dnf_logodds_delta(self, circuit_id: str) -> float:
         """Shrunk log-odds gap between this circuit's DNF rate and the global one."""

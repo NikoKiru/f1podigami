@@ -348,6 +348,24 @@ def test_temperature_clamps_hold_under_extreme_displacement():
     assert cs.temp("frozen", eta=1.0) >= 0.5
 
 
+def test_disp_ratio_neutral_for_unknown_circuit():
+    cs = model_v2.CircuitStats()
+    assert cs.disp_ratio("nowhere") == 1.0
+
+
+def test_temp_equals_disp_ratio_to_eta():
+    cs = model_v2.CircuitStats()
+    # calm circuit: half the displacement of the global average
+    for _ in range(10):
+        cs.observe_race("calm", starters=20, dnfs=2, mean_disp=1.0)
+        cs.observe_race("wild", starters=20, dnfs=2, mean_disp=3.0)
+    r = cs.disp_ratio("calm")
+    assert 0.5 <= r < 1.0  # below the global mean, inside the clamp
+    assert cs.temp("calm", 0.7) == pytest.approx(r**0.7)
+    assert cs.temp("calm", 0.0) == pytest.approx(1.0)
+    assert cs.disp_ratio("wild") > 1.0
+
+
 # --- HistoryFilter ----------------------------------------------------------------
 
 
