@@ -25,6 +25,8 @@
     "chaos_eta": 0.7,
     "p_wild": 0.0,
     "t_wild": 2.5,
+    "w_grid": 0.1,
+    "grid_circuit_beta": 0.5,
     "usingQualifying": true,
     "circuitId": "silverstone",
     "nDraws": 512,
@@ -56,7 +58,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "norris",
@@ -68,7 +71,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.909,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         },
         {
           "driverId": "russell",
@@ -80,7 +84,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.901,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -107,7 +112,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "piastri",
@@ -119,7 +125,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.913,
-          "uncertainty": 0.401
+          "uncertainty": 0.401,
+          "gridPosition": null
         },
         {
           "driverId": "russell",
@@ -131,7 +138,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.901,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -158,7 +166,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.89,
-          "uncertainty": 0.427
+          "uncertainty": 0.427,
+          "gridPosition": null
         },
         {
           "driverId": "norris",
@@ -170,7 +179,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.909,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         },
         {
           "driverId": "russell",
@@ -182,7 +192,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.901,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -209,7 +220,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.896,
-          "uncertainty": 0.436
+          "uncertainty": 0.436,
+          "gridPosition": null
         },
         {
           "driverId": "leclerc",
@@ -221,7 +233,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.89,
-          "uncertainty": 0.427
+          "uncertainty": 0.427,
+          "gridPosition": null
         },
         {
           "driverId": "russell",
@@ -233,7 +246,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.901,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -260,7 +274,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "leclerc",
@@ -272,7 +287,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.89,
-          "uncertainty": 0.427
+          "uncertainty": 0.427,
+          "gridPosition": null
         },
         {
           "driverId": "max_verstappen",
@@ -284,7 +300,8 @@
           "constructor": "Red Bull",
           "constructorStrength": 0.381,
           "finishProb": 0.884,
-          "uncertainty": 0.475
+          "uncertainty": 0.475,
+          "gridPosition": null
         }
       ]
     },
@@ -311,7 +328,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "hamilton",
@@ -323,7 +341,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.896,
-          "uncertainty": 0.436
+          "uncertainty": 0.436,
+          "gridPosition": null
         },
         {
           "driverId": "leclerc",
@@ -335,7 +354,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.89,
-          "uncertainty": 0.427
+          "uncertainty": 0.427,
+          "gridPosition": null
         }
       ]
     },
@@ -362,7 +382,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "leclerc",
@@ -374,7 +395,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.89,
-          "uncertainty": 0.427
+          "uncertainty": 0.427,
+          "gridPosition": null
         },
         {
           "driverId": "norris",
@@ -386,7 +408,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.909,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -413,7 +436,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "hamilton",
@@ -425,7 +449,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.896,
-          "uncertainty": 0.436
+          "uncertainty": 0.436,
+          "gridPosition": null
         },
         {
           "driverId": "norris",
@@ -437,7 +462,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.909,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -464,7 +490,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "hadjar",
@@ -476,7 +503,8 @@
           "constructor": "Red Bull",
           "constructorStrength": 0.381,
           "finishProb": 0.89,
-          "uncertainty": 0.581
+          "uncertainty": 0.581,
+          "gridPosition": null
         },
         {
           "driverId": "russell",
@@ -488,7 +516,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.901,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -515,7 +544,8 @@
           "constructor": "Red Bull",
           "constructorStrength": 0.381,
           "finishProb": 0.884,
-          "uncertainty": 0.475
+          "uncertainty": 0.475,
+          "gridPosition": null
         },
         {
           "driverId": "piastri",
@@ -527,7 +557,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.913,
-          "uncertainty": 0.401
+          "uncertainty": 0.401,
+          "gridPosition": null
         },
         {
           "driverId": "russell",
@@ -539,7 +570,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.901,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -566,7 +598,8 @@
           "constructor": "Ferrari",
           "constructorStrength": 0.675,
           "finishProb": 0.896,
-          "uncertainty": 0.436
+          "uncertainty": 0.436,
+          "gridPosition": null
         },
         {
           "driverId": "piastri",
@@ -578,7 +611,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.913,
-          "uncertainty": 0.401
+          "uncertainty": 0.401,
+          "gridPosition": null
         },
         {
           "driverId": "russell",
@@ -590,7 +624,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.901,
-          "uncertainty": 0.399
+          "uncertainty": 0.399,
+          "gridPosition": null
         }
       ]
     },
@@ -617,7 +652,8 @@
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
           "finishProb": 0.907,
-          "uncertainty": 0.435
+          "uncertainty": 0.435,
+          "gridPosition": null
         },
         {
           "driverId": "max_verstappen",
@@ -629,7 +665,8 @@
           "constructor": "Red Bull",
           "constructorStrength": 0.381,
           "finishProb": 0.884,
-          "uncertainty": 0.475
+          "uncertainty": 0.475,
+          "gridPosition": null
         },
         {
           "driverId": "piastri",
@@ -641,7 +678,8 @@
           "constructor": "McLaren",
           "constructorStrength": 0.526,
           "finishProb": 0.913,
-          "uncertainty": 0.401
+          "uncertainty": 0.401,
+          "gridPosition": null
         }
       ]
     }
@@ -657,7 +695,8 @@
       "constructor": "Mercedes",
       "constructorStrength": 1.0,
       "finishProb": 0.901,
-      "uncertainty": 0.399
+      "uncertainty": 0.399,
+      "gridPosition": null
     },
     {
       "driverId": "antonelli",
@@ -669,7 +708,8 @@
       "constructor": "Mercedes",
       "constructorStrength": 1.0,
       "finishProb": 0.907,
-      "uncertainty": 0.435
+      "uncertainty": 0.435,
+      "gridPosition": null
     },
     {
       "driverId": "leclerc",
@@ -681,7 +721,8 @@
       "constructor": "Ferrari",
       "constructorStrength": 0.675,
       "finishProb": 0.89,
-      "uncertainty": 0.427
+      "uncertainty": 0.427,
+      "gridPosition": null
     },
     {
       "driverId": "max_verstappen",
@@ -693,7 +734,8 @@
       "constructor": "Red Bull",
       "constructorStrength": 0.381,
       "finishProb": 0.884,
-      "uncertainty": 0.475
+      "uncertainty": 0.475,
+      "gridPosition": null
     },
     {
       "driverId": "hamilton",
@@ -705,7 +747,8 @@
       "constructor": "Ferrari",
       "constructorStrength": 0.675,
       "finishProb": 0.896,
-      "uncertainty": 0.436
+      "uncertainty": 0.436,
+      "gridPosition": null
     },
     {
       "driverId": "norris",
@@ -717,7 +760,8 @@
       "constructor": "McLaren",
       "constructorStrength": 0.526,
       "finishProb": 0.909,
-      "uncertainty": 0.399
+      "uncertainty": 0.399,
+      "gridPosition": null
     },
     {
       "driverId": "piastri",
@@ -729,7 +773,8 @@
       "constructor": "McLaren",
       "constructorStrength": 0.526,
       "finishProb": 0.913,
-      "uncertainty": 0.401
+      "uncertainty": 0.401,
+      "gridPosition": null
     },
     {
       "driverId": "hadjar",
@@ -741,7 +786,8 @@
       "constructor": "Red Bull",
       "constructorStrength": 0.381,
       "finishProb": 0.89,
-      "uncertainty": 0.581
+      "uncertainty": 0.581,
+      "gridPosition": null
     },
     {
       "driverId": "sainz",
@@ -753,7 +799,8 @@
       "constructor": "Williams",
       "constructorStrength": 0.036,
       "finishProb": 0.823,
-      "uncertainty": 0.82
+      "uncertainty": 0.82,
+      "gridPosition": null
     },
     {
       "driverId": "gasly",
@@ -765,7 +812,8 @@
       "constructor": "Alpine F1 Team",
       "constructorStrength": 0.189,
       "finishProb": 0.876,
-      "uncertainty": 0.937
+      "uncertainty": 0.937,
+      "gridPosition": null
     },
     {
       "driverId": "alonso",
@@ -777,7 +825,8 @@
       "constructor": "Aston Martin",
       "constructorStrength": 0.003,
       "finishProb": 0.838,
-      "uncertainty": 0.893
+      "uncertainty": 0.893,
+      "gridPosition": null
     },
     {
       "driverId": "lawson",
@@ -789,7 +838,8 @@
       "constructor": "RB F1 Team",
       "constructorStrength": 0.146,
       "finishProb": 0.873,
-      "uncertainty": 0.898
+      "uncertainty": 0.898,
+      "gridPosition": null
     },
     {
       "driverId": "arvid_lindblad",
@@ -801,7 +851,8 @@
       "constructor": "RB F1 Team",
       "constructorStrength": 0.146,
       "finishProb": 0.868,
-      "uncertainty": 0.908
+      "uncertainty": 0.908,
+      "gridPosition": null
     },
     {
       "driverId": "albon",
@@ -813,7 +864,8 @@
       "constructor": "Williams",
       "constructorStrength": 0.036,
       "finishProb": 0.828,
-      "uncertainty": 0.892
+      "uncertainty": 0.892,
+      "gridPosition": null
     },
     {
       "driverId": "colapinto",
@@ -825,7 +877,8 @@
       "constructor": "Alpine F1 Team",
       "constructorStrength": 0.189,
       "finishProb": 0.879,
-      "uncertainty": 0.999
+      "uncertainty": 0.999,
+      "gridPosition": null
     },
     {
       "driverId": "ocon",
@@ -837,7 +890,8 @@
       "constructor": "Haas F1 Team",
       "constructorStrength": 0.07,
       "finishProb": 0.884,
-      "uncertainty": 1.089
+      "uncertainty": 1.089,
+      "gridPosition": null
     },
     {
       "driverId": "stroll",
@@ -849,7 +903,8 @@
       "constructor": "Aston Martin",
       "constructorStrength": 0.003,
       "finishProb": 0.827,
-      "uncertainty": 0.936
+      "uncertainty": 0.936,
+      "gridPosition": null
     },
     {
       "driverId": "hulkenberg",
@@ -861,7 +916,8 @@
       "constructor": "Audi",
       "constructorStrength": 0.007,
       "finishProb": 0.872,
-      "uncertainty": 1.283
+      "uncertainty": 1.283,
+      "gridPosition": null
     },
     {
       "driverId": "bearman",
@@ -873,7 +929,8 @@
       "constructor": "Haas F1 Team",
       "constructorStrength": 0.07,
       "finishProb": 0.884,
-      "uncertainty": 1.128
+      "uncertainty": 1.128,
+      "gridPosition": null
     },
     {
       "driverId": "bortoleto",
@@ -885,7 +942,8 @@
       "constructor": "Audi",
       "constructorStrength": 0.007,
       "finishProb": 0.874,
-      "uncertainty": 1.272
+      "uncertainty": 1.272,
+      "gridPosition": null
     },
     {
       "driverId": "bottas",
@@ -897,7 +955,8 @@
       "constructor": "Cadillac F1 Team",
       "constructorStrength": 0.0,
       "finishProb": 0.781,
-      "uncertainty": 1.681
+      "uncertainty": 1.681,
+      "gridPosition": null
     },
     {
       "driverId": "perez",
@@ -909,9 +968,11 @@
       "constructor": "Cadillac F1 Team",
       "constructorStrength": 0.0,
       "finishProb": 0.781,
-      "uncertainty": 1.652
+      "uncertainty": 1.652,
+      "gridPosition": null
     }
   ],
+  "postQuali": null,
   "bySeason": {
     "2018": [
       {

@@ -46,6 +46,8 @@ def test_default_params_have_exactly_the_locked_knobs():
         "chaos_eta",
         "p_wild",
         "t_wild",
+        "w_grid",
+        "grid_circuit_beta",
     }
 
 

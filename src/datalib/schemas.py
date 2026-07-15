@@ -245,6 +245,8 @@ class PodigamiParamsV2(_Base):
     chaos_eta: float
     p_wild: float
     t_wild: float
+    w_grid: float
+    grid_circuit_beta: float
     usingQualifying: bool
     circuitId: str | None = None
     nDraws: int
@@ -270,6 +272,8 @@ class DriverStrength(_Base):
     # v2 engine extras: modelled finish probability and rating uncertainty (std).
     finishProb: float | None = None
     uncertainty: float | None = None
+    # Post-quali only: the driver's qualifying classification position.
+    gridPosition: int | None = None
 
 
 class PodigamiCandidate(_Base):
@@ -292,6 +296,22 @@ class SeasonDebut(_Base):
     firstRace: RoundRace
 
 
+class PodigamiPostQuali(_Base):
+    """Grid-aware prediction recomputed after the next race's qualifying.
+
+    Present only between a qualifying session and its race; ``null`` otherwise.
+    ``candidates``/``driverForm`` reuse the pre-quali shapes; ``perDriver``
+    entries additionally carry ``gridPosition``.
+    """
+
+    season: str
+    round: str
+    raceName: str
+    chanceNextRaceNew: float
+    candidates: list[PodigamiCandidate]
+    driverForm: list[DriverStrength]
+
+
 class Podigami(_Base):
     currentSeason: str
     asOf: RaceRef
@@ -300,6 +320,7 @@ class Podigami(_Base):
     chanceNextRaceNew: float
     candidates: list[PodigamiCandidate]
     driverForm: list[DriverStrength]
+    postQuali: PodigamiPostQuali | None = None
     bySeason: dict[str, list[SeasonDebut]]
     seasonCounts: dict[str, int]
     seasonRange: list[int]

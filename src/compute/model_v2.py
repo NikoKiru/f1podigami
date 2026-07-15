@@ -67,6 +67,10 @@ DEFAULT_PARAMS_V2: dict = {
     "chaos_eta": 0.7,  # exponent on the circuit displacement temperature
     "p_wild": 0.0,  # probability a race is "wild" (safety cars, rain, chaos)
     "t_wild": 2.5,  # temperature multiplier applied in a wild race
+    # Post-quali grid term (grid_offsets): PROVISIONAL until backtest.py
+    # --tune-v2-grid locks them on 2010-2018 (see the tuning task).
+    "w_grid": 0.1,  # weight of the causal grid-position term
+    "grid_circuit_beta": 0.5,  # circuit modulation: disp_ratio ** (-beta)
 }
 
 # Seasons whose technical regulations changed enough to scramble the car order.
