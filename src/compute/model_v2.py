@@ -38,6 +38,7 @@ __all__ = [
     "RatingEngine",
     "ReliabilityTracker",
     "classify_status",
+    "grid_offsets",
     "lineage_root",
     "model",
     "predict_race",
@@ -174,6 +175,23 @@ def classify_status(status: str) -> str:
     if status in _EXCLUDED_STATUSES:
         return "excluded"
     return "mech"
+
+
+def grid_offsets(quali_pos: dict[str, int], disp_ratio: float, params: dict) -> dict[str, float]:
+    """Causal track-position term: additive log-worth offsets from grid slots.
+
+    ``x(g) = -(ln g - mean ln g)`` -- a centered power-law decay in grid
+    position -- scaled by ``w_grid`` and amplified at processional circuits
+    (low displacement ratio) via ``disp_ratio ** (-grid_circuit_beta)``.
+    Zero-sum across the field, so it shifts relative order, not overall level.
+    """
+    w = params["w_grid"]
+    if w <= 0.0 or not quali_pos:
+        return dict.fromkeys(quali_pos, 0.0)
+    logs = {d: math.log(g) for d, g in quali_pos.items()}
+    mean_log = sum(logs.values()) / len(logs)
+    scale = w * (max(disp_ratio, 1e-6) ** (-params["grid_circuit_beta"]))
+    return {d: scale * (mean_log - lg) for d, lg in logs.items()}
 
 
 @dataclass

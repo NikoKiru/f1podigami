@@ -366,6 +366,41 @@ def test_temp_equals_disp_ratio_to_eta():
     assert cs.disp_ratio("wild") > 1.0
 
 
+# --- grid_offsets ---------------------------------------------------------------
+
+
+def _gparams(w=0.2, beta=0.5):
+    return dict(DEFAULT_PARAMS_V2, w_grid=w, grid_circuit_beta=beta)
+
+
+def test_grid_offsets_centered_and_monotone():
+    qpos = {f"d{g}": g for g in range(1, 11)}
+    offs = model_v2.grid_offsets(qpos, 1.0, _gparams())
+    assert sum(offs.values()) == pytest.approx(0.0, abs=1e-12)  # zero-sum across the field
+    vals = [offs[f"d{g}"] for g in range(1, 11)]
+    assert vals == sorted(vals, reverse=True)  # pole gets the biggest boost
+    # log decay: the P1-P2 gap dwarfs the P9-P10 gap
+    assert (vals[0] - vals[1]) > 3 * (vals[8] - vals[9])
+
+
+def test_grid_offsets_circuit_modulation_direction():
+    qpos = {"a": 1, "b": 2, "c": 3}
+    p = _gparams(beta=1.0)
+    monaco = model_v2.grid_offsets(qpos, 0.5, p)  # processional -> amplified
+    neutral = model_v2.grid_offsets(qpos, 1.0, p)
+    chaotic = model_v2.grid_offsets(qpos, 2.0, p)  # high churn -> dampened
+    assert monaco["a"] > neutral["a"] > chaotic["a"]
+    # beta=0 switches the modulation off entirely
+    flat = _gparams(beta=0.0)
+    assert model_v2.grid_offsets(qpos, 0.5, flat) == model_v2.grid_offsets(qpos, 2.0, flat)
+
+
+def test_grid_offsets_zero_weight_and_empty():
+    qpos = {"a": 1, "b": 2, "c": 3}
+    assert model_v2.grid_offsets(qpos, 1.0, _gparams(w=0.0)) == {"a": 0.0, "b": 0.0, "c": 0.0}
+    assert model_v2.grid_offsets({}, 1.0, _gparams()) == {}
+
+
 # --- HistoryFilter ----------------------------------------------------------------
 
 
