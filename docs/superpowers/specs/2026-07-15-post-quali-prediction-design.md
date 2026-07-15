@@ -89,6 +89,9 @@ Post-quali prediction = existing v2 filter state + two effects, in order:
    x(g) = -(ln g - mean(ln g over the field))    # centered power-law decay
    ```
 
+   `g_d` is the driver's **qualifying classification position** — everywhere in the
+   post-quali path, both when scoring historical races in the backtest and at serve
+   time (train/serve consistency; the penalty-adjusted grid isn't knowable pre-race).
    `disp_ratio` is the shrunk, clamped grid→finish displacement ratio `CircuitStats`
    already maintains, exposed via a small refactor (`temp()` becomes `ratio ** eta`).
    Negative exponent: processional circuits (low displacement, e.g. Monaco) amplify the
@@ -132,12 +135,14 @@ holds that exact (season, round) → emit `postQuali`; else `"postQuali": null`.
 - Top-level `chanceNextRaceNew` / `candidates` / `driverForm` keep their exact current
   (pre-quali) meaning; `asOf` semantics untouched.
 - Schema: `Podigami.postQuali: PodigamiPostQuali | None = None`; `DriverStrength` gains
-  optional `gridPosition: int | None`; `PodigamiParamsV2` gains `w_grid`,
-  `grid_circuit_beta`, `usingPostQuali: bool`.
+  optional `gridPosition: int | None`; `PodigamiParamsV2` gains `w_grid` and
+  `grid_circuit_beta` (the block's presence itself signals a post-quali payload — no
+  redundant flag).
 - Because params gains required keys, the feature PR recomputes and commits
   `podigami.json` offline (expect the usual standings-churn noise in the diff).
-- Determinism: distinct derived fixed seed for the post-quali simulation; the file
-  remains a byte-identical fixed point of its inputs (the #178 stall-class guardrail).
+- Determinism: the post-quali simulation seeds with the backtest's existing convention
+  (`SEED + season*100 + round`), so the file remains a byte-identical fixed point of
+  its inputs (the #178 stall-class guardrail).
 
 ## Section 4 — Automation: trigger & guard
 
@@ -169,7 +174,8 @@ holds that exact (season, round) → emit `postQuali`; else `"postQuali": null`.
 - **Present:** hero renders the post-quali chance as the big number; pick + candidates
   panel come from `postQuali.candidates`; form tower uses `postQuali.driverForm`. New
   hero elements: "⚡ Updated after qualifying" badge + delta line
-  "↑ was 52% before the grid was set" (old number from the top-level field). Candidate
+  "↑ was 52% before the grid was set" (old number from the top-level field; arrow
+  up/down by direction, a neutral dash when both round to the same value). Candidate
   driver chips gain "starts P3" tags; candidates panel gets a "grid-aware" badge.
 - **Null:** exactly today's page.
 - Always: next-race box shows "Qualifying: Sat 14:00 UTC" when the schedule has it.
