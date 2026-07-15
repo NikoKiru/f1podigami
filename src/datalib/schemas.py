@@ -185,6 +185,10 @@ class ScheduleRace(_Base):
     raceName: str
     date: str
     time: str
+    # Qualifying session start (from the API's Qualifying block); None for seasons
+    # fetched before this field existed and for races the API hasn't scheduled yet.
+    qualifyingDate: str | None = None
+    qualifyingTime: str | None = None
     circuitId: str
     circuitName: str
     locality: str
