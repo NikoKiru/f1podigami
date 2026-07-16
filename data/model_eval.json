@@ -27,7 +27,9 @@
     "chaos_gamma": 1.0,
     "chaos_eta": 0.7,
     "p_wild": 0.0,
-    "t_wild": 2.5
+    "t_wild": 2.5,
+    "w_grid": 0.4,
+    "grid_circuit_beta": 1.0
   },
   "ladder": [
     {
@@ -109,6 +111,26 @@
       "logLoss": 3.9127,
       "brierSet": 0.937,
       "brierNew": 0.238
+    },
+    {
+      "model": "v2 post-quali (ratings)",
+      "n": 161,
+      "top1": 0.2112,
+      "top3": 0.3665,
+      "top5": 0.4783,
+      "logLoss": 3.7494,
+      "brierSet": 0.9264,
+      "brierNew": 0.235
+    },
+    {
+      "model": "v2 post-quali +grid",
+      "n": 161,
+      "top1": 0.2547,
+      "top3": 0.4037,
+      "top5": 0.5155,
+      "logLoss": 3.4741,
+      "brierSet": 0.9029,
+      "brierNew": 0.2206
     }
   ],
   "chosen": {

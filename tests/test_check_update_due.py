@@ -7,7 +7,7 @@ by now is newer than what the committed data already reflects (podigami.json's
 
 from datetime import UTC, datetime
 
-from check_update_due import is_update_due
+from check_update_due import is_post_quali_update_due, is_update_due
 
 
 def at(s: str) -> datetime:
@@ -108,3 +108,89 @@ def test_non_numeric_season_not_due():
 def test_non_numeric_round_skipped():
     s = sched(("nope", "2026-03-08", "04:00:00Z"))
     assert is_update_due(s, ASOF_PREV, at("2026-03-08 07:00")) is False
+
+
+# --- post-quali trigger -------------------------------------------------------
+
+
+def qsched(*rounds, season="2026"):
+    """Schedule dict from (round, race_date, race_time, quali_date, quali_time)."""
+    return {
+        "season": season,
+        "totalRounds": len(rounds),
+        "races": [
+            {"round": r, "date": d, "time": t, "qualifyingDate": qd, "qualifyingTime": qt}
+            for (r, d, t, qd, qt) in rounds
+        ],
+    }
+
+
+# Round 10 races Sunday 13:00; quali Saturday 14:00 (all UTC).
+R10 = ("10", "2026-07-19", "13:00:00Z", "2026-07-18", "14:00:00Z")
+PQ_R10 = {"season": "2026", "round": "10", "raceName": "Belgian Grand Prix"}
+
+
+def test_quali_not_due_before_session():
+    s = qsched(R10)
+    assert is_post_quali_update_due(s, ASOF_R9, None, at("2026-07-18 13:00")) is False
+
+
+def test_quali_not_due_inside_buffer():
+    # quali start + 90min buffer = 15:30
+    s = qsched(R10)
+    assert is_post_quali_update_due(s, ASOF_R9, None, at("2026-07-18 15:00")) is False
+
+
+def test_quali_due_past_buffer_when_uncovered():
+    s = qsched(R10)
+    assert is_post_quali_update_due(s, ASOF_R9, None, at("2026-07-18 15:31")) is True
+
+
+def test_quali_not_due_when_post_quali_covers_the_round():
+    s = qsched(R10)
+    assert is_post_quali_update_due(s, ASOF_R9, PQ_R10, at("2026-07-18 16:00")) is False
+
+
+def test_quali_due_when_post_quali_covers_an_older_round():
+    s = qsched(R10)
+    stale = {"season": "2026", "round": "9", "raceName": "R9"}
+    assert is_post_quali_update_due(s, ASOF_R9, stale, at("2026-07-18 16:00")) is True
+
+
+def test_quali_missing_fields_never_fires():
+    # pre-rollout schedule: quali fields null -> trigger stays quiet forever
+    s = qsched(("10", "2026-07-19", "13:00:00Z", None, None))
+    assert is_post_quali_update_due(s, ASOF_R9, None, at("2026-07-19 12:00")) is False
+
+
+def test_quali_garbage_time_never_fires():
+    s = qsched(("10", "2026-07-19", "13:00:00Z", "2026-07-18", "not-a-time"))
+    assert is_post_quali_update_due(s, ASOF_R9, None, at("2026-07-19 12:00")) is False
+
+
+def test_quali_missing_time_defaults_to_end_of_day():
+    s = qsched(("10", "2026-07-19", "13:00:00Z", "2026-07-18", ""))
+    # 23:59:59Z + 90min buffer -> not due Saturday evening, due Sunday 02:00
+    assert is_post_quali_update_due(s, ASOF_R9, None, at("2026-07-18 23:00")) is False
+    assert is_post_quali_update_due(s, ASOF_R9, None, at("2026-07-19 02:00")) is True
+
+
+def test_quali_garbage_asof_never_fires():
+    # unlike the race trigger, no asOf means we can't locate the "next" race
+    s = qsched(R10)
+    assert is_post_quali_update_due(s, {}, None, at("2026-07-18 16:00")) is False
+
+
+def test_quali_targets_the_race_after_asof_only():
+    # R10's quali passed but R10 is already in the data -> next race is R11,
+    # whose quali is in the future -> not due.
+    r11 = ("11", "2026-08-02", "13:00:00Z", "2026-08-01", "14:00:00Z")
+    s = qsched(R10, r11)
+    asof_r10 = {"season": "2026", "round": "10", "raceName": "Belgian Grand Prix"}
+    assert is_post_quali_update_due(s, asof_r10, None, at("2026-07-19 20:00")) is False
+
+
+def test_quali_season_rollover():
+    # data holds last season's finale; the opener's quali just finished
+    s = qsched(("1", "2027-03-07", "04:00:00Z", "2027-03-06", "05:00:00Z"), season="2027")
+    assert is_post_quali_update_due(s, ASOF_PREV, None, at("2027-03-06 06:31")) is True

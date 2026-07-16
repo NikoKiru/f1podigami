@@ -84,8 +84,8 @@ def _build_constructor_strength(
     return strength, driver_cid
 
 
-def _next_circuit(schedule: dict | None, as_of_season: int, as_of_round: int) -> str | None:
-    """circuitId of the first scheduled race after ``asOf``, or None if unknown."""
+def _next_race(schedule: dict | None, as_of_season: int, as_of_round: int) -> dict | None:
+    """The first scheduled race after ``asOf``, or None if unknown."""
     if not schedule:
         return None
     races = schedule.get("races") or []
@@ -98,7 +98,7 @@ def _next_circuit(schedule: dict | None, as_of_season: int, as_of_round: int) ->
         return None
     if not upcoming:
         return None
-    return min(upcoming, key=lambda r: int(r["round"])).get("circuitId")
+    return min(upcoming, key=lambda r: int(r["round"]))
 
 
 def _v2_next_race_model(
@@ -111,7 +111,8 @@ def _v2_next_race_model(
 ) -> dict:
     """Filter the full history, then predict the next race for the current grid.
 
-    Returns {"mu_var", "p_fin", "temp", "circuit", "chance_new", "ranked_new", "params"}.
+    Returns {"mu_var", "p_fin", "temp", "circuit", "chance_new", "ranked_new",
+    "params", "hf", "next_race", "next_season"}.
     """
     params = dict(model_v2.DEFAULT_PARAMS_V2)
     qmap = {(q["season"], q["round"]): q for q in (qualifying or [])}
@@ -122,7 +123,8 @@ def _v2_next_race_model(
 
     last_season = int(ordered[-1]["season"])
     last_round = int(ordered[-1]["round"])
-    circuit = _next_circuit(schedule, last_season, last_round)
+    next_race = _next_race(schedule, last_season, last_round)
+    circuit = next_race.get("circuitId") if next_race else None
 
     # Between-race dynamics up to the race being predicted.
     sched_season = int(schedule["season"]) if schedule else last_season
@@ -157,6 +159,118 @@ def _v2_next_race_model(
         "chance_new": chance_new,
         "ranked_new": ranked_new,
         "params": params,
+        "hf": hf,
+        "next_race": next_race,
+        "next_season": sched_season,
+    }
+
+
+def _title_from_id(driver_id: str) -> str:
+    """Display-name fallback for a driver we've never seen a name for."""
+    return " ".join(w.capitalize() for w in driver_id.split("_"))
+
+
+def _post_quali_block(
+    v2: dict,
+    qualifying: list[dict] | None,
+    seen: set[tuple[str, str, str]],
+    nm,
+    season_pod: dict[str, int],
+    recent_pod: dict[str, int],
+    cid_name: dict[str, str],
+    con_strength: dict[str, float],
+    using_constructors: bool,
+) -> dict | None:
+    """Grid-aware prediction for the next race, or None before its quali exists.
+
+    Entrants are exactly the qualifying participants with the constructor each
+    qualified for (handles seat swaps/substitutes). Two effects on top of the
+    already-advanced filter state in ``v2["hf"]``: the quali order through the
+    standard rating channel, then grid_offsets folded into the means. Seeded
+    with the backtest convention so the output is a deterministic function of
+    its inputs.
+
+    NOTE: mutates v2["hf"] (the quali observation) — call only after every
+    pre-quali value has been extracted from ``v2``.
+    """
+    nxt = v2["next_race"]
+    if nxt is None or not qualifying:
+        return None
+    season, rnd = str(v2["next_season"]), str(nxt["round"])
+    q = next((e for e in qualifying if e["season"] == season and e["round"] == rnd), None)
+    if q is None:
+        return None
+
+    hf, params = v2["hf"], v2["params"]
+    qpos: dict[str, int] = {}
+    qcid: dict[str, str] = {}
+    entries: list[tuple[str, str]] = []
+    for row in sorted(q["results"], key=lambda r: r["position"]):
+        d = row["driverId"]
+        if d in qpos:
+            continue
+        qpos[d] = row["position"]
+        qcid[d] = row["constructorId"]
+        entries.append((d, row["constructorId"]))
+    if len(entries) < 3:
+        return None
+
+    # Information effect: the fresh quali order through the standard channel.
+    hf.engine.observe_order(entries, depth=int(params["depth_qual"]), weight=params["w_qual"])
+
+    circuit = nxt.get("circuitId")
+    delta = params["chaos_gamma"] * hf.circuits.dnf_logodds_delta(circuit) if circuit else 0.0
+    temp = hf.circuits.temp(circuit, params["chaos_eta"]) if circuit else 1.0
+    disp = hf.circuits.disp_ratio(circuit) if circuit else 1.0
+
+    # Causal track-position effect: grid offsets folded into the means.
+    offsets = model_v2.grid_offsets(qpos, disp, params)
+    mu_var: dict[str, tuple[float, float]] = {}
+    p_fin: dict[str, float] = {}
+    for d in qpos:
+        mu, var = hf.engine.combined(d, qcid[d])
+        mu_var[d] = (mu + offsets[d], var)
+        p_fin[d] = hf.p_finish_adjusted(d, qcid[d], delta)
+
+    seed = SEED + int(season) * 100 + int(rnd)
+    out = model_v2.predict_race(
+        sorted(qpos), mu_var, p_fin, temp, params, seen, n_draws=N_DRAWS, seed=seed
+    )
+
+    def entry(d: str) -> dict:
+        e: dict = {
+            "driverId": d,
+            "name": nm(d),
+            "weight": round(math.exp(mu_var[d][0]), 3),
+            "seasonPodiums": season_pod.get(d, 0),
+            "recentPodiums": recent_pod.get(d, 0),
+            "constructorId": qcid[d],
+        }
+        if using_constructors:
+            e["constructor"] = cid_name.get(qcid[d], "")
+            e["constructorStrength"] = round(con_strength.get(d, 0), 3)
+        e["finishProb"] = round(p_fin[d], 3)
+        e["uncertainty"] = round(math.sqrt(mu_var[d][1]), 3)
+        e["gridPosition"] = qpos[d]
+        return e
+
+    candidates = [
+        {
+            "driverIds": list(t),
+            "names": [nm(d) for d in t],
+            "prob": round(100 * p, 3),
+            "perDriver": [entry(d) for d in t],
+        }
+        for t, p in out["ranked_new"][:TOP_CANDIDATES]
+    ]
+    driver_form = sorted((entry(d) for d in sorted(qpos)), key=lambda x: -x["weight"])
+    return {
+        "season": season,
+        "round": rnd,
+        "raceName": nxt.get("raceName", ""),
+        "chanceNextRaceNew": round(100 * out["p_new"], 1),
+        "candidates": candidates,
+        "driverForm": driver_form,
     }
 
 
@@ -186,11 +300,12 @@ def compute(
     grid_ids = sorted(grid_name)
 
     def nm(d: str) -> str:
-        return name_by_id.get(d) or grid_name.get(d, d)
+        return name_by_id.get(d) or grid_name.get(d) or _title_from_id(d)
 
     con_strength, driver_cid = _build_constructor_strength(constructor_data, current)
     using_constructors = bool(con_strength)
     constructor_name: dict[str, str] = {}
+    cid_to_name: dict[str, str] = {}
     if using_constructors:
         cid_to_name = {c["constructorId"]: c["name"] for c in constructor_data["constructors"]}
         constructor_name = {d: cid_to_name.get(driver_cid.get(d, ""), "") for d in grid_ids}
@@ -257,6 +372,22 @@ def compute(
         key=lambda x: -x["weight"],
     )
 
+    # Grid-aware prediction once the next race's qualifying is known. MUST come
+    # after all pre-quali values are read from v2 — it mutates v2["hf"].
+    post_quali = None
+    if v2 is not None:
+        post_quali = _post_quali_block(
+            v2,
+            qualifying,
+            seen,
+            nm,
+            season_pod,
+            recent_pod,
+            cid_to_name,
+            con_strength,
+            using_constructors,
+        )
+
     # Per-season debut trios (podigamis), grouped from combos[].firstRace.
     by_season: dict[str, list[dict]] = defaultdict(list)
     for c in combos:
@@ -308,6 +439,7 @@ def compute(
         "chanceNextRaceNew": round(100 * chance_new, 1),
         "candidates": candidates[:TOP_CANDIDATES],
         "driverForm": driver_form,
+        "postQuali": post_quali,
         "bySeason": dict(by_season),
         "seasonCounts": season_counts,
         "seasonRange": [min(seasons_all), max(seasons_all)],

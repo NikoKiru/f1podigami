@@ -333,6 +333,11 @@ _V2_KNOBS = {
     "t_wild": 2.5,
 }
 
+# The two grid knobs added by the post-quali feature. Kept separate from
+# _V2_KNOBS: PodigamiParamsV2 requires them from Task 2, ModelParamsV2 only
+# from the tuning task (model_eval.json is regenerated there).
+_GRID_KNOBS = {"w_grid": 0.1, "grid_circuit_beta": 0.5}
+
 
 def test_podigami_params_union_accepts_v1_and_v2():
     from datalib import Podigami, PodigamiParams, PodigamiParamsV2
@@ -350,6 +355,7 @@ def test_podigami_params_union_accepts_v1_and_v2():
     v2 = {
         "model": "dbpl-v2",
         **_V2_KNOBS,
+        **_GRID_KNOBS,
         "usingQualifying": True,
         "circuitId": "silverstone",
         "nDraws": 512,
@@ -365,7 +371,7 @@ def test_podigami_params_union_accepts_v1_and_v2():
 def test_model_eval_params_union_and_chosen_model():
     from datalib import ModelParamsV2
 
-    assert isinstance(ModelParamsV2.model_validate(_V2_KNOBS), ModelParamsV2)
+    assert isinstance(ModelParamsV2.model_validate({**_V2_KNOBS, **_GRID_KNOBS}), ModelParamsV2)
     ev = json.loads((DATA_DIR / "model_eval.json").read_text(encoding="utf-8"))
     REGISTRY["model_eval.json"].validate_python(ev)  # committed file still validates
 
@@ -388,3 +394,41 @@ def test_driver_strength_accepts_v2_reliability_fields():
         }
     )
     assert ds.finishProb == 0.96 and ds.uncertainty == 0.21
+
+
+def test_podigami_post_quali_block_and_null():
+    from datalib import DriverStrength, PodigamiPostQuali
+
+    ds = {
+        "driverId": "verstappen",
+        "name": "Max Verstappen",
+        "weight": 2.5,
+        "seasonPodiums": 5,
+        "recentPodiums": 4,
+        "constructorId": "red_bull",
+        "finishProb": 0.96,
+        "uncertainty": 0.2,
+        "gridPosition": 3,
+    }
+    assert DriverStrength.model_validate(ds).gridPosition == 3
+    block = {
+        "season": "2026",
+        "round": "10",
+        "raceName": "Belgian Grand Prix",
+        "chanceNextRaceNew": 71.3,
+        "candidates": [
+            {
+                "driverIds": ["a", "b", "c"],
+                "names": ["A", "B", "C"],
+                "prob": 3.2,
+                "perDriver": [
+                    dict(ds, driverId=d, gridPosition=i + 1) for i, d in enumerate("abc")
+                ],
+            }
+        ],
+        "driverForm": [ds],
+    }
+    assert isinstance(PodigamiPostQuali.model_validate(block), PodigamiPostQuali)
+    # committed file must expose the key (null or block) after this task's regen
+    pj = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
+    assert "postQuali" in pj
