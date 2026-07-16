@@ -343,7 +343,7 @@ class ModelParams(_Base):
 
 
 class ModelParamsV2(_Base):
-    """The 18 locked knobs of the v2 rating engine (see model_v2.DEFAULT_PARAMS_V2)."""
+    """The 20 locked knobs of the v2 rating engine (see model_v2.DEFAULT_PARAMS_V2)."""
 
     sigma0_drv: float
     sigma0_con: float
@@ -363,6 +363,8 @@ class ModelParamsV2(_Base):
     chaos_eta: float
     p_wild: float
     t_wild: float
+    w_grid: float
+    grid_circuit_beta: float
 
 
 class LadderRow(_Base):

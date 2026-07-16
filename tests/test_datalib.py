@@ -371,7 +371,7 @@ def test_podigami_params_union_accepts_v1_and_v2():
 def test_model_eval_params_union_and_chosen_model():
     from datalib import ModelParamsV2
 
-    assert isinstance(ModelParamsV2.model_validate(_V2_KNOBS), ModelParamsV2)
+    assert isinstance(ModelParamsV2.model_validate({**_V2_KNOBS, **_GRID_KNOBS}), ModelParamsV2)
     ev = json.loads((DATA_DIR / "model_eval.json").read_text(encoding="utf-8"))
     REGISTRY["model_eval.json"].validate_python(ev)  # committed file still validates
 
