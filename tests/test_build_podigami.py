@@ -296,3 +296,62 @@ def test_next_race_without_quali_fields_has_no_line():
     }
     out = bp.render_next_race(sched, {"season": "2026", "round": "9"})
     assert "nr-quali" not in out
+
+
+def _hero_top():
+    return {
+        "prob": 3.5,
+        "perDriver": [
+            pd("antonelli", "Andrea Kimi Antonelli", "mercedes", 6),
+            pd("norris", "Lando Norris", "mclaren", 2),
+            pd("russell", "George Russell", "mercedes", 3),
+        ],
+    }
+
+
+def test_render_hero_post_quali_badge_and_delta_up():
+    out = bp.render_hero(_hero_top(), 71.0, META, pre_chance=52.0)
+    assert "hc-updated" in out and "Updated after qualifying" in out
+    assert "hc-delta-up" in out and "was 52%" in out and "before the grid was set" in out
+    assert "71%" in out
+
+
+def test_render_hero_delta_down_and_flat():
+    down = bp.render_hero(_hero_top(), 40.0, META, pre_chance=52.0)
+    assert "hc-delta-down" in down
+    flat = bp.render_hero(_hero_top(), 52.4, META, pre_chance=52.0)  # both round to 52
+    assert "hc-delta-flat" in flat and "&mdash;" in flat
+
+
+def test_render_hero_default_has_no_post_quali_markup():
+    out = bp.render_hero(_hero_top(), 55.0, META)
+    assert "hc-updated" not in out and "hc-delta" not in out
+
+
+def _grid_cands():
+    return [
+        {
+            "prob": 3.0,
+            "names": ["Andrea Kimi Antonelli", "Lando Norris", "George Russell"],
+            "perDriver": [
+                {**pd("antonelli", "Andrea Kimi Antonelli", "mercedes"), "gridPosition": 3},
+                {**pd("norris", "Lando Norris", "mclaren"), "gridPosition": 1},
+                {**pd("russell", "George Russell", "mercedes"), "gridPosition": 7},
+            ],
+        }
+    ]
+
+
+def test_render_candidates_grid_aware_badge_and_chips():
+    out = bp.render_candidates(_grid_cands(), META, grid_aware=True)
+    assert "panel-badge" in out and "grid-aware" in out
+    assert out.count('class="cd-grid"') == 3
+    assert ">P1<" in out and ">P3<" in out and ">P7<" in out
+
+
+def test_render_candidates_default_has_no_grid_markup():
+    cands = _grid_cands()
+    for p in cands[0]["perDriver"]:
+        p.pop("gridPosition")
+    out = bp.render_candidates(cands, META)
+    assert "panel-badge" not in out and "cd-grid" not in out

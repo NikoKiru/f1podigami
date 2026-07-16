@@ -303,7 +303,9 @@ def render_last_race(
     )
 
 
-def render_hero(top: dict, chance: float, meta: dict, acc_badge: str = "") -> str:
+def render_hero(
+    top: dict, chance: float, meta: dict, acc_badge: str = "", pre_chance: float | None = None
+) -> str:
     cards = []
     for p in top["perDriver"]:
         v = driver_view(p, meta)
@@ -317,16 +319,30 @@ def render_hero(top: dict, chance: float, meta: dict, acc_badge: str = "") -> st
             f"</div>"
         )
     pd = "".join(cards)
+    updated = ""
+    delta = ""
+    if pre_chance is not None:
+        updated = '<span class="hc-updated">&#9889; Updated after qualifying</span>'
+        if round(chance) > round(pre_chance):
+            cls, arrow = "up", "&#8593;"
+        elif round(chance) < round(pre_chance):
+            cls, arrow = "down", "&#8595;"
+        else:
+            cls, arrow = "flat", "&mdash;"
+        delta = (
+            f'<span class="hc-delta hc-delta-{cls}">{arrow} was {pre_chance:.0f}% '
+            f"before the grid was set</span>"
+        )
     return (
         f'<section class="hero">'
         f'  <div class="hero-head">'
-        f'    <div class="hero-chance"><span class="hc-num">{chance:.0f}%</span>'
+        f'    <div class="hero-chance">{updated}<span class="hc-num">{chance:.0f}%</span>'
         f'      <span class="hc-label">chance the next race<br>delivers a brand-new trio'
         f'        <span class="info-tip info-tip-sm" tabindex="0" aria-label="More info">'
         f'          <span class="info-icon">i</span>'
         f'          <span class="info-bubble">The overall probability that any brand-new podium trio appears at the next race, not just the top-ranked one.</span>'
         f"        </span>"
-        f"      </span></div>"
+        f"      </span>{delta}</div>"
         f"  </div>"
         f'  <div class="hero-pick">'
         f'    <div class="hp-label">Most likely next <span class="accent">podigami</span></div>'
@@ -340,9 +356,12 @@ def render_hero(top: dict, chance: float, meta: dict, acc_badge: str = "") -> st
     )
 
 
-def render_candidates(cands: list[dict], meta: dict, form_html: str = "") -> str:
+def render_candidates(
+    cands: list[dict], meta: dict, form_html: str = "", grid_aware: bool = False
+) -> str:
     if not cands:
         return ""
+    badge = '<span class="panel-badge">grid-aware</span>' if grid_aware else ""
     top = cands[0]["prob"] or 1
     rows = []
     for i, c in enumerate(cands, 1):
@@ -350,9 +369,11 @@ def render_candidates(cands: list[dict], meta: dict, form_html: str = "") -> str
         chips = []
         for p in c["perDriver"]:
             v = driver_view(p, meta)
+            gp = p.get("gridPosition")
+            grid_chip = f'<span class="cd-grid">P{gp}</span>' if gp else ""
             chips.append(
                 f'<span class="cd" style="--team:{v["color"]}" title="{esc(display_name(v["name"]))}">'
-                f'<span class="cd-dot"></span><span class="cd-code">{esc(v["code"])}</span>'
+                f'<span class="cd-dot"></span><span class="cd-code">{esc(v["code"])}</span>{grid_chip}'
                 f"</span>"
             )
         names = '<span class="cd-sep">/</span>'.join(chips)
@@ -373,7 +394,7 @@ def render_candidates(cands: list[dict], meta: dict, form_html: str = "") -> str
         f'      <span class="info-icon">i</span>'
         f'      <span class="info-bubble">Trios that have never shared a podium, ranked by the model\'s probability they do it next.</span>'
         f"    </span>"
-        f"  </h2>"
+        f"  {badge}</h2>"
         f'  <ol class="cand-list">{"".join(rows)}</ol>'
         f"  {form_html}"
         f"</section>"
@@ -635,6 +656,12 @@ def main() -> int:
     season = data["currentSeason"]
     chance = data["chanceNextRaceNew"]
     cands = data["candidates"]
+    # Post-quali overrides the pre-quali headline once the grid is set; the
+    # top-level `chance` stays the pre-quali number the delta line cites.
+    post = data.get("postQuali")
+    active_chance = post["chanceNextRaceNew"] if post else chance
+    active_cands = post["candidates"] if post else cands
+    active_form = post["driverForm"] if post else data["driverForm"]
     lo, hi = data["seasonRange"]
 
     using_constructors = data.get("params", {}).get("usingConstructors", False)
@@ -689,15 +716,21 @@ def main() -> int:
     explore = explore_grid()
 
     acc_badge = render_accuracy_badge(model_eval)
-    hero = render_hero(cands[0], chance, meta, acc_badge) if cands else ""
+    hero = (
+        render_hero(
+            active_cands[0], active_chance, meta, acc_badge, pre_chance=chance if post else None
+        )
+        if active_cands
+        else ""
+    )
     form = render_form(
-        data["driverForm"],
+        active_form,
         using_constructors,
         meta,
         data["params"].get("halfLife", 6.0),
         is_v2=data["params"].get("model") == "dbpl-v2",
     )
-    candidates = render_candidates(cands, meta, form)
+    candidates = render_candidates(active_cands, meta, form, grid_aware=bool(post))
     timeline = render_timeline(data)
     faq = render_faq(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)
 
@@ -759,7 +792,10 @@ def main() -> int:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(page, encoding="utf-8")
     print(f"Wrote {OUT_PATH}")
-    print(f"  season {season}: P(new)={chance}%, {len(cands)} candidates, seasons {lo}-{hi}")
+    print(
+        f"  season {season}: P(new)={active_chance}%, "
+        f"{len(active_cands)} candidates, seasons {lo}-{hi}"
+    )
     return 0
 
 

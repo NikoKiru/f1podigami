@@ -133,6 +133,19 @@ def test_landing_page_has_next_race_box(dist):
     assert 'class="nr-track"' in html  # circuit outline SVG
 
 
+def test_post_quali_hero_state_matches_data(dist, data):
+    """The rendered hero must mirror the committed postQuali state exactly —
+    conditional on the data so the update job's pytest run stays green whether
+    the block is live or null (the #178 stall-class guardrail)."""
+    html_text = (dist / "index.html").read_text(encoding="utf-8")
+    if data["podigami"].get("postQuali"):
+        assert "hc-updated" in html_text
+        assert "cd-grid" in html_text
+    else:
+        assert "hc-updated" not in html_text
+        assert "cd-grid" not in html_text
+
+
 def test_display_name_uppercases_surname_only():
     from build.build_podigami_html import display_name
 
