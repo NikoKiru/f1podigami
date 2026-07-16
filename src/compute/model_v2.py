@@ -444,11 +444,17 @@ class HistoryFilter:
     """Predict-then-update pass over the chronological race history.
 
     ``step`` first applies the between-race dynamics, then snapshots every
-    entrant's (mu_s, var_s, p_finish) plus the circuit temperature *before*
-    the race outcome touches any state — the snapshot is exactly what a
-    forecast made on race morning could have known (leakage-free) — and only
-    then feeds the outcome through the qualifying, pace, attrition,
-    reliability and circuit channels.
+    entrant's (mu_s, var_s, p_finish) plus the circuit temperature and
+    displacement ratio, and only then feeds the outcome through the
+    qualifying, pace, attrition, reliability and circuit channels.
+
+    By default (``snapshot_after_quali=False``) the snapshot is race-morning
+    knowledge: qualifying is observed *after* the snapshot, so it is
+    leakage-free for a forecast made on race morning. With
+    ``snapshot_after_quali=True`` the snapshot is post-qualifying-Saturday
+    knowledge: qualifying is observed *before* the snapshot (legitimate
+    conditioning — quali precedes the race). Either way the quali order is
+    observed exactly once, never twice.
     """
 
     def __init__(self, params: dict):
@@ -458,7 +464,21 @@ class HistoryFilter:
         self.circuits = CircuitStats()
         self.season: int | None = None
 
-    def step(self, race: dict, quali: dict | None = None) -> dict:
+    def _observe_quali(self, quali: dict | None) -> None:
+        p = self.params
+        if quali is None or p["w_qual"] <= 0.0:
+            return
+        qentries: list[tuple[str, str]] = []
+        qseen: set[str] = set()
+        for q in sorted(quali["results"], key=lambda q: q["position"]):
+            if q["driverId"] not in qseen:
+                qseen.add(q["driverId"])
+                qentries.append((q["driverId"], q["constructorId"]))
+        self.engine.observe_order(qentries, depth=int(p["depth_qual"]), weight=p["w_qual"])
+
+    def step(
+        self, race: dict, quali: dict | None = None, *, snapshot_after_quali: bool = False
+    ) -> dict:
         p = self.params
         season = int(race["season"])
         if self.season is not None:
@@ -479,7 +499,11 @@ class HistoryFilter:
             seen_dids.add(row["driverId"])
             rows.append(row)
 
-        # ---- snapshot (strictly before any update) ----
+        # ---- channel 1: qualifying order (before the snapshot in post-quali mode) ----
+        if snapshot_after_quali:
+            self._observe_quali(quali)
+
+        # ---- snapshot ----
         delta = p["chaos_gamma"] * self.circuits.dnf_logodds_delta(circuit)
         drivers = {
             row["driverId"]: (
@@ -491,18 +515,13 @@ class HistoryFilter:
         snapshot = {
             "drivers": drivers,
             "temp": self.circuits.temp(circuit, p["chaos_eta"]),
+            "disp_ratio": self.circuits.disp_ratio(circuit),
             "season": season,
         }
 
-        # ---- channel 1: qualifying order ----
-        if quali is not None and p["w_qual"] > 0.0:
-            qentries: list[tuple[str, str]] = []
-            qseen: set[str] = set()
-            for q in sorted(quali["results"], key=lambda q: q["position"]):
-                if q["driverId"] not in qseen:
-                    qseen.add(q["driverId"])
-                    qentries.append((q["driverId"], q["constructorId"]))
-            self.engine.observe_order(qentries, depth=int(p["depth_qual"]), weight=p["w_qual"])
+        # ---- channel 1: qualifying order (after the snapshot in race-morning mode) ----
+        if not snapshot_after_quali:
+            self._observe_quali(quali)
 
         # ---- channel 2: race pace (classified finishing order) ----
         classified = sorted(

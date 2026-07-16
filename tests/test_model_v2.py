@@ -470,6 +470,48 @@ def test_step_applies_race_vs_season_dynamics():
     )
 
 
+def _quali(season, rnd, order):
+    return {
+        "season": str(season),
+        "round": str(rnd),
+        "results": [
+            {"driverId": d, "constructorId": "car_" + d, "position": i + 1}
+            for i, d in enumerate(order)
+        ],
+    }
+
+
+def test_snapshot_after_quali_sees_the_quali_shock():
+    # 5 races of champ>underdog; round 6 quali flips the order.
+    pre, post = (model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2)) for _ in range(2))
+    for rnd in range(1, 6):
+        race = _two_car_race(2020, rnd, "champ", "underdog")
+        pre.step(race, _quali(2020, rnd, ["champ", "underdog"]))
+        post.step(race, _quali(2020, rnd, ["champ", "underdog"]))
+    race6 = _two_car_race(2020, 6, "underdog", "champ")
+    q6 = _quali(2020, 6, ["underdog", "champ"])
+    snap_pre = pre.step(race6, q6)
+    snap_post = post.step(race6, q6, snapshot_after_quali=True)
+    # pre-quali snapshot can't know about the shock; post-quali one narrows the gap
+    gap_pre = snap_pre["drivers"]["champ"][0] - snap_pre["drivers"]["underdog"][0]
+    gap_post = snap_post["drivers"]["champ"][0] - snap_post["drivers"]["underdog"][0]
+    assert gap_post < gap_pre
+    # the quali is observed exactly once either way: end states must agree
+    assert pre.engine.driver("champ").mu == pytest.approx(post.engine.driver("champ").mu)
+    assert pre.engine.driver("underdog").var == pytest.approx(post.engine.driver("underdog").var)
+
+
+def test_snapshot_carries_disp_ratio():
+    # The snapshot always exposes a disp_ratio, and it is neutral (1.0) here:
+    # round 1 is the circuit's first visit (unknown), and _two_car_race has both
+    # cars finish at their grid slot, so there is no displacement to measure.
+    hf = model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2))
+    snap = hf.step(_two_car_race(2020, 1, "a", "b"), None)
+    assert snap["disp_ratio"] == 1.0  # first visit: neutral
+    snap2 = hf.step(_two_car_race(2020, 2, "a", "b"), None)
+    assert snap2["disp_ratio"] == 1.0  # no grid->finish displacement recorded
+
+
 def test_dsq_and_dns_channel_visibility():
     p = dict(DEFAULT_PARAMS_V2)
     hf = model_v2.HistoryFilter(p)
