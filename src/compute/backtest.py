@@ -232,6 +232,20 @@ V2_TUNE_GRID: dict[str, list] = {
     "t_wild": [1.5, 2.5],
 }
 
+# Post-quali protocol rungs: quali observed BEFORE the snapshot (legitimate
+# conditioning — qualifying precedes the race) with grid offsets applied.
+# The ratings rung is the acceptance-gate baseline for the grid term.
+RUNGS_V2_POSTQUALI = [
+    ("v2 post-quali (ratings)", {"w_grid": 0.0}),
+    ("v2 post-quali +grid", {}),
+]
+
+# Per-knob grids for --tune-v2-grid (the other 18 knobs stay frozen).
+V2_GRID_TUNE_GRID: dict[str, list] = {
+    "w_grid": [0.0, 0.05, 0.1, 0.2, 0.4],
+    "grid_circuit_beta": [0.0, 0.5, 1.0],
+}
+
 
 def load_v2():
     """Load (race_results, quali_map) for the v2 rungs, or None if not fetched."""
@@ -257,7 +271,16 @@ def trio_keys_from(races) -> dict[tuple[str, str], tuple]:
 
 
 def score_window_v2(
-    rresults, quali_map, trio_keys, window, params, *, draws=64, rank_draws=16, with_rank=False
+    rresults,
+    quali_map,
+    trio_keys,
+    window,
+    params,
+    *,
+    draws=64,
+    rank_draws=16,
+    with_rank=False,
+    post_quali=False,
 ):
     """One HistoryFilter pass over the whole history; score races in the window.
 
@@ -265,6 +288,10 @@ def score_window_v2(
     p_true and q_new (the exact novelty complement) carry only skill-noise MC
     error. Rank/top-k/brierSet need all-trio probabilities, so ``with_rank``
     adds a coarser all-trio pass (``rank_draws``) — ordinal metrics only.
+
+    When ``post_quali`` is set the qualifying order is observed BEFORE the
+    snapshot (legitimate conditioning — qualifying precedes the race) and the
+    causal grid offsets are folded into the driver means.
     """
     hf = model_v2.HistoryFilter(params)
     seen: set = set()
@@ -272,7 +299,7 @@ def score_window_v2(
     for race in rresults:
         rk = (race["season"], race["round"])
         key = trio_keys.get(rk)
-        snap = hf.step(race, quali_map.get(rk))
+        snap = hf.step(race, quali_map.get(rk), snapshot_after_quali=post_quali)
         if (
             key is not None
             and window[0] <= int(race["season"]) <= window[1]
@@ -280,6 +307,15 @@ def score_window_v2(
         ):
             entrants = sorted(snap["drivers"])
             mu_var = {d: (v[0], v[1]) for d, v in snap["drivers"].items()}
+            if post_quali:
+                quali = quali_map.get(rk)
+                if quali:
+                    qpos: dict[str, int] = {}
+                    for q in sorted(quali["results"], key=lambda q: q["position"]):
+                        qpos.setdefault(q["driverId"], q["position"])
+                    qpos = {d: g for d, g in qpos.items() if d in mu_var}
+                    offs = model_v2.grid_offsets(qpos, snap["disp_ratio"], params)
+                    mu_var = {d: (mv[0] + offs.get(d, 0.0), mv[1]) for d, mv in mu_var.items()}
             p_fin = {d: v[2] for d, v in snap["drivers"].items()}
             seed = 20260704 + int(race["season"]) * 100 + int(race["round"])
             fine = model_v2.predict_race(
@@ -359,6 +395,31 @@ def tune_v2(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> d
     return best
 
 
+def tune_v2_grid(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> dict:
+    """Coordinate descent over ONLY the two grid knobs (post-quali protocol),
+    with the 18 locked v2 knobs frozen."""
+    best = dict(model_v2.DEFAULT_PARAMS_V2)
+    best_j = v2_objective(
+        score_window_v2(rresults, quali_map, trio_keys, val, best, post_quali=True)
+    )
+    if verbose:
+        print(f"start J={best_j:.4f}")
+    for sweep in range(sweeps):
+        for knob, grid in V2_GRID_TUNE_GRID.items():
+            for value in grid:
+                if value == best[knob]:
+                    continue
+                trial = dict(best, **{knob: value})
+                j = v2_objective(
+                    score_window_v2(rresults, quali_map, trio_keys, val, trial, post_quali=True)
+                )
+                if j < best_j:
+                    best_j, best = j, trial
+            if verbose:
+                print(f"  sweep {sweep + 1} {knob} -> {best[knob]}  (J={best_j:.4f})")
+    return best
+
+
 def evaluate(races, active, test, v2_data=None) -> dict:
     """Score the ladder on the untouched test window using the LOCKED
     model.DEFAULT_PARAMS / model_v2.DEFAULT_PARAMS_V2 (deterministic, no tuning)."""
@@ -382,6 +443,7 @@ def evaluate(races, active, test, v2_data=None) -> dict:
         k: chosen_params[k]
         for k in ("halfLife", "offSeason", "seasonBoost", "posWeights", "temperature")
     }
+    post_quali_info = None
     if v2_data is not None:
         rresults, quali_map = v2_data
         keys = trio_keys_from(races)
@@ -397,6 +459,22 @@ def evaluate(races, active, test, v2_data=None) -> dict:
         if v2["logLoss"] <= v1["logLoss"] and v2["brierNew"] <= v1["brierNew"]:
             chosen_recs, chosen_name = v2_full_recs, "v2 full"
             chosen_model_params = dict(model_v2.DEFAULT_PARAMS_V2)
+
+        post_rows: dict[str, dict] = {}
+        for name, overrides in RUNGS_V2_POSTQUALI:
+            params = dict(model_v2.DEFAULT_PARAMS_V2, **overrides)
+            recs = score_window_v2(
+                rresults, quali_map, keys, test, params, with_rank=True, post_quali=True
+            )
+            ladder.append((name, summarize(recs)))
+            post_rows[name] = ladder[-1][1]
+        ratings, grid = post_rows["v2 post-quali (ratings)"], post_rows["v2 post-quali +grid"]
+        # Grid-term acceptance gate: +grid ships only if it wins BOTH headline scores.
+        post_quali_info = {
+            "gridAccepted": bool(
+                grid["logLoss"] <= ratings["logLoss"] and grid["brierNew"] <= ratings["brierNew"]
+            )
+        }
 
     base_rate = sum(r["is_new"] for r in rf) / max(len(rf), 1)
     brier_new_base = metrics.brier_binary(
@@ -424,6 +502,7 @@ def evaluate(races, active, test, v2_data=None) -> dict:
         "baseRate": base_rate,
         "brierNewBase": brier_new_base,
         "ece": ece,
+        "postQuali": post_quali_info,
     }
 
 
@@ -440,6 +519,11 @@ def main(argv: list[str] | None = None) -> int:
         "--tune-v2",
         action="store_true",
         help="coordinate-descent v2 knobs on the validation window and print the winner",
+    )
+    ap.add_argument(
+        "--tune-v2-grid",
+        action="store_true",
+        help="coordinate-descent the two grid knobs (post-quali protocol) on the validation window",
     )
     args = ap.parse_args(argv)
 
@@ -469,6 +553,15 @@ def main(argv: list[str] | None = None) -> int:
         print(winner)
         return 0
 
+    if args.tune_v2_grid:
+        if v2_data is None:
+            print("race_results.json missing - run src/fetch/fetch_race_results.py first")
+            return 1
+        winner = tune_v2_grid(v2_data[0], v2_data[1], trio_keys_from(races), val)
+        print("Best grid knobs (lock these into model_v2.DEFAULT_PARAMS_V2):")
+        print({k: winner[k] for k in ("w_grid", "grid_circuit_beta")})
+        return 0
+
     res = evaluate(races, active, test, v2_data)
     ladder, chosen, cal = res["ladder"], res["chosen"], res["calibration"]
     params = res["chosenParams"]
@@ -494,6 +587,15 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"{name:22} {m['top1']:>6.3f} {m['top3']:>6.3f} {m['top5']:>6.3f} "
             f"{m['logLoss']:>8.3f} {m['brierNew']:>9.3f}"
+        )
+    if res.get("postQuali") is not None:
+        by = dict(ladder)
+        pre, post = by["v2 full"], by["v2 post-quali +grid"]
+        sane = post["logLoss"] <= pre["logLoss"]
+        print(
+            f"\npost-quali gate: gridAccepted={res['postQuali']['gridAccepted']}"
+            f" | post-vs-pre logLoss {post['logLoss']:.3f} vs {pre['logLoss']:.3f}"
+            f"{' OK' if sane else '  WARNING: post-quali scored worse than pre-quali'}"
         )
     print(
         f"\nP(new) base-rate {res['baseRate']:.3f} | brierNew base {res['brierNewBase']:.3f} "
