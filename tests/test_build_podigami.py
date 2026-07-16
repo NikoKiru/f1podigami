@@ -355,3 +355,43 @@ def test_render_candidates_default_has_no_grid_markup():
         p.pop("gridPosition")
     out = bp.render_candidates(cands, META)
     assert "panel-badge" not in out and "cd-grid" not in out
+
+
+EVAL_WITH_POSTQUALI = {
+    **EVAL,
+    "ladder": EVAL["ladder"]
+    + [
+        {
+            "model": "v2 post-quali (ratings)",
+            "n": 159,
+            "top1": 0.14,
+            "top3": 0.31,
+            "top5": 0.43,
+            "logLoss": 4.05,
+        },
+        {
+            "model": "v2 post-quali +grid",
+            "n": 159,
+            "top1": 0.15,
+            "top3": 0.33,
+            "top5": 0.45,
+            "logLoss": 4.01,
+        },
+    ],
+}
+
+
+def test_faq_post_quali_item_present_for_v2_and_cites_rung():
+    out = bp.render_faq(V2_DATA, EVAL_WITH_POSTQUALI, 123, 456, 789, 20, 1950)
+    assert "after qualifying" in out
+    assert "33%" in out  # cites the "v2 post-quali +grid" rung's top3
+
+
+def test_faq_post_quali_item_absent_for_v1():
+    out = bp.render_faq({}, EVAL, 123, 456, 789, 20, 1950)
+    assert "after qualifying" not in out
+
+
+def test_faq_post_quali_item_tolerates_missing_rung():
+    out = bp.render_faq(V2_DATA, EVAL, 123, 456, 789, 20, 1950)  # old eval, no rung
+    assert "after qualifying" in out  # item still there, just uncited

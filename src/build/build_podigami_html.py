@@ -601,6 +601,29 @@ def render_faq(
             "which drivers keep meeting on the podium.",
         ),
     ]
+    if is_v2:
+        rung = next(
+            (r for r in (ev.get("ladder") or []) if r.get("model") == "v2 post-quali +grid"),
+            None,
+        )
+        cite = (
+            f" In backtests, the grid-aware update places the actual podium trio in its "
+            f"top&nbsp;3 {round(100 * rung['top3'])}% of the time."
+            if rung
+            else ""
+        )
+        items.insert(
+            2,
+            (
+                "Why does the prediction update after qualifying?",
+                "Qualifying is the most informative pre-race session: it reveals current pace "
+                "and fixes the starting grid, whose track-position advantage has strong "
+                "historical precedent. Once the grid is set, the model feeds the qualifying "
+                "order through its rating engine and adds a grid-position term scaled by how "
+                "processional the circuit historically is &mdash; stronger where overtaking "
+                "is hard, weaker where the grid gets shuffled." + cite,
+            ),
+        )
     entries = []
     for q, a in items:
         entries.append(
