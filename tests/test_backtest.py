@@ -264,3 +264,140 @@ def test_v2_objective_penalises_wrong_confident_novelty():
     good = [{"p_true": 0.5, "q_new": 0.1, "is_new": 0.0}]
     bad = [{"p_true": 0.5, "q_new": 0.9, "is_new": 0.0}]
     assert backtest.v2_objective(bad) > backtest.v2_objective(good)
+
+
+# --- post-quali protocol ----------------------------------------------------------
+
+
+def _q_for(season, rnd, order):
+    return {
+        "season": str(season),
+        "round": str(rnd),
+        "results": [
+            {"driverId": d, "constructorId": c, "position": i + 1} for i, (d, c) in enumerate(order)
+        ],
+    }
+
+
+def _quali_informative_history():
+    """Two team-pairs alternate dominance per round; quali reveals which state
+    the race is in, so only a post-quali snapshot can predict the flip rounds."""
+    a_side = [("a", "t1"), ("b", "t1"), ("c", "t2"), ("d", "t2")]
+    c_side = [("c", "t2"), ("d", "t2"), ("a", "t1"), ("b", "t1")]
+    rresults, quali_map, trio_keys = [], {}, {}
+    for season in (2010, 2011):
+        for rnd in range(1, 16):
+            order = a_side if rnd % 2 == 0 else c_side
+            rows = [_rrow_v2(d, c, i + 1, i + 1) for i, (d, c) in enumerate(order)]
+            rresults.append(
+                {
+                    "season": str(season),
+                    "round": str(rnd),
+                    "raceName": "GP",
+                    "date": "",
+                    "circuitId": "ring",
+                    "results": rows,
+                }
+            )
+            quali_map[(str(season), str(rnd))] = _q_for(season, rnd, order)
+            trio_keys[(str(season), str(rnd))] = tuple(sorted(d for d, _ in order[:3]))
+    return rresults, quali_map, trio_keys
+
+
+def test_post_quali_protocol_beats_pre_quali_on_quali_informative_history():
+    rresults, quali_map, trio_keys = _quali_informative_history()
+    params = dict(backtest.model_v2.DEFAULT_PARAMS_V2, w_grid=0.0)
+    pre = backtest.score_window_v2(rresults, quali_map, trio_keys, (2011, 2011), params)
+    post = backtest.score_window_v2(
+        rresults, quali_map, trio_keys, (2011, 2011), params, post_quali=True
+    )
+    ll_pre = backtest.metrics.log_loss([r["p_true"] for r in pre])
+    ll_post = backtest.metrics.log_loss([r["p_true"] for r in post])
+    assert ll_post < ll_pre
+
+
+def test_grid_term_sharpens_on_grid_follows_finish_history():
+    # finish always == quali order, but the order rotates so long-run ratings
+    # equalise: the causal grid term is the only stable signal.
+    drivers = [("a", "t1"), ("b", "t1"), ("c", "t2"), ("d", "t2")]
+    rresults, quali_map, trio_keys = [], {}, {}
+    for season in (2010, 2011):
+        for rnd in range(1, 16):
+            order = drivers[rnd % 4 :] + drivers[: rnd % 4]  # rotate the grid
+            rows = [_rrow_v2(d, c, i + 1, i + 1) for i, (d, c) in enumerate(order)]
+            rresults.append(
+                {
+                    "season": str(season),
+                    "round": str(rnd),
+                    "raceName": "GP",
+                    "date": "",
+                    "circuitId": "ring",
+                    "results": rows,
+                }
+            )
+            quali_map[(str(season), str(rnd))] = _q_for(season, rnd, order)
+            trio_keys[(str(season), str(rnd))] = tuple(sorted(d for d, _ in order[:3]))
+    base = dict(backtest.model_v2.DEFAULT_PARAMS_V2, w_grid=0.0)
+    grid = dict(backtest.model_v2.DEFAULT_PARAMS_V2, w_grid=0.4)
+    r0 = backtest.score_window_v2(
+        rresults, quali_map, trio_keys, (2011, 2011), base, post_quali=True
+    )
+    r1 = backtest.score_window_v2(
+        rresults, quali_map, trio_keys, (2011, 2011), grid, post_quali=True
+    )
+    p0 = sum(r["p_true"] for r in r0) / len(r0)
+    p1 = sum(r["p_true"] for r in r1) / len(r1)
+    assert p1 > p0
+
+
+def test_rungs_v2_postquali_shape():
+    names = [name for name, _ in backtest.RUNGS_V2_POSTQUALI]
+    assert names == ["v2 post-quali (ratings)", "v2 post-quali +grid"]
+    by = dict(backtest.RUNGS_V2_POSTQUALI)
+    assert by["v2 post-quali (ratings)"] == {"w_grid": 0.0}
+    assert by["v2 post-quali +grid"] == {}
+
+
+def _races_for(trio_keys):
+    return [race(int(s), int(r), *trio) for (s, r), trio in sorted(trio_keys.items())]
+
+
+def test_evaluate_appends_post_quali_rungs_and_gate():
+    rresults, quali_map, trio_keys = _quali_informative_history()
+    races = _races_for(trio_keys)
+    active = _active_all(races, ["a", "b", "c", "d"])
+    res = backtest.evaluate(races, active, (2011, 2011), v2_data=(rresults, quali_map))
+    names = [name for name, _ in res["ladder"]]
+    assert names[-2:] == ["v2 post-quali (ratings)", "v2 post-quali +grid"]
+    assert isinstance(res["postQuali"]["gridAccepted"], bool)
+    # the pre-quali chosen selection is untouched by the new rungs
+    assert res["chosenName"] in ("PL + tuned (chosen)", "v2 full")
+
+
+def test_evaluate_without_v2_reports_no_post_quali():
+    races, active = _small_races()
+    res = backtest.evaluate(races, active, (2011, 2012))
+    assert res["postQuali"] is None
+
+
+def test_tune_v2_grid_touches_only_the_grid_knobs():
+    rresults, quali_map, trio_keys = _quali_informative_history()
+    winner = backtest.tune_v2_grid(
+        rresults, quali_map, trio_keys, (2010, 2010), sweeps=1, verbose=False
+    )
+    assert winner["w_grid"] in backtest.V2_GRID_TUNE_GRID["w_grid"]
+    assert winner["grid_circuit_beta"] in backtest.V2_GRID_TUNE_GRID["grid_circuit_beta"]
+    for k, v in backtest.model_v2.DEFAULT_PARAMS_V2.items():
+        if k not in ("w_grid", "grid_circuit_beta"):
+            assert winner[k] == v
+
+
+def test_main_tune_v2_grid_flag_prints_winner(monkeypatch, capsys):
+    rresults, quali_map, trio_keys = _quali_informative_history()
+    races = _races_for(trio_keys)
+    active = _active_all(races, ["a", "b", "c", "d"])
+    monkeypatch.setattr(backtest, "load", lambda: (races, active))
+    monkeypatch.setattr(backtest, "load_v2", lambda: (rresults, quali_map))
+    rc = backtest.main(["--tune-v2-grid"])
+    assert rc == 0
+    assert "Best grid knobs" in capsys.readouterr().out

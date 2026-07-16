@@ -46,6 +46,8 @@ def test_default_params_have_exactly_the_locked_knobs():
         "chaos_eta",
         "p_wild",
         "t_wild",
+        "w_grid",
+        "grid_circuit_beta",
     }
 
 
@@ -346,6 +348,59 @@ def test_temperature_clamps_hold_under_extreme_displacement():
     assert cs.temp("frozen", eta=1.0) >= 0.5
 
 
+def test_disp_ratio_neutral_for_unknown_circuit():
+    cs = model_v2.CircuitStats()
+    assert cs.disp_ratio("nowhere") == 1.0
+
+
+def test_temp_equals_disp_ratio_to_eta():
+    cs = model_v2.CircuitStats()
+    # calm circuit: half the displacement of the global average
+    for _ in range(10):
+        cs.observe_race("calm", starters=20, dnfs=2, mean_disp=1.0)
+        cs.observe_race("wild", starters=20, dnfs=2, mean_disp=3.0)
+    r = cs.disp_ratio("calm")
+    assert 0.5 <= r < 1.0  # below the global mean, inside the clamp
+    assert cs.temp("calm", 0.7) == pytest.approx(r**0.7)
+    assert cs.temp("calm", 0.0) == pytest.approx(1.0)
+    assert cs.disp_ratio("wild") > 1.0
+
+
+# --- grid_offsets ---------------------------------------------------------------
+
+
+def _gparams(w=0.2, beta=0.5):
+    return dict(DEFAULT_PARAMS_V2, w_grid=w, grid_circuit_beta=beta)
+
+
+def test_grid_offsets_centered_and_monotone():
+    qpos = {f"d{g}": g for g in range(1, 11)}
+    offs = model_v2.grid_offsets(qpos, 1.0, _gparams())
+    assert sum(offs.values()) == pytest.approx(0.0, abs=1e-12)  # zero-sum across the field
+    vals = [offs[f"d{g}"] for g in range(1, 11)]
+    assert vals == sorted(vals, reverse=True)  # pole gets the biggest boost
+    # log decay: the P1-P2 gap dwarfs the P9-P10 gap
+    assert (vals[0] - vals[1]) > 3 * (vals[8] - vals[9])
+
+
+def test_grid_offsets_circuit_modulation_direction():
+    qpos = {"a": 1, "b": 2, "c": 3}
+    p = _gparams(beta=1.0)
+    monaco = model_v2.grid_offsets(qpos, 0.5, p)  # processional -> amplified
+    neutral = model_v2.grid_offsets(qpos, 1.0, p)
+    chaotic = model_v2.grid_offsets(qpos, 2.0, p)  # high churn -> dampened
+    assert monaco["a"] > neutral["a"] > chaotic["a"]
+    # beta=0 switches the modulation off entirely
+    flat = _gparams(beta=0.0)
+    assert model_v2.grid_offsets(qpos, 0.5, flat) == model_v2.grid_offsets(qpos, 2.0, flat)
+
+
+def test_grid_offsets_zero_weight_and_empty():
+    qpos = {"a": 1, "b": 2, "c": 3}
+    assert model_v2.grid_offsets(qpos, 1.0, _gparams(w=0.0)) == {"a": 0.0, "b": 0.0, "c": 0.0}
+    assert model_v2.grid_offsets({}, 1.0, _gparams()) == {}
+
+
 # --- HistoryFilter ----------------------------------------------------------------
 
 
@@ -413,6 +468,48 @@ def test_step_applies_race_vs_season_dynamics():
     assert snap3["drivers"]["a"][1] == pytest.approx(
         var_after_r2 + p["season_var_drv"] + p["season_var_con"]
     )
+
+
+def _quali(season, rnd, order):
+    return {
+        "season": str(season),
+        "round": str(rnd),
+        "results": [
+            {"driverId": d, "constructorId": "car_" + d, "position": i + 1}
+            for i, d in enumerate(order)
+        ],
+    }
+
+
+def test_snapshot_after_quali_sees_the_quali_shock():
+    # 5 races of champ>underdog; round 6 quali flips the order.
+    pre, post = (model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2)) for _ in range(2))
+    for rnd in range(1, 6):
+        race = _two_car_race(2020, rnd, "champ", "underdog")
+        pre.step(race, _quali(2020, rnd, ["champ", "underdog"]))
+        post.step(race, _quali(2020, rnd, ["champ", "underdog"]))
+    race6 = _two_car_race(2020, 6, "underdog", "champ")
+    q6 = _quali(2020, 6, ["underdog", "champ"])
+    snap_pre = pre.step(race6, q6)
+    snap_post = post.step(race6, q6, snapshot_after_quali=True)
+    # pre-quali snapshot can't know about the shock; post-quali one narrows the gap
+    gap_pre = snap_pre["drivers"]["champ"][0] - snap_pre["drivers"]["underdog"][0]
+    gap_post = snap_post["drivers"]["champ"][0] - snap_post["drivers"]["underdog"][0]
+    assert gap_post < gap_pre
+    # the quali is observed exactly once either way: end states must agree
+    assert pre.engine.driver("champ").mu == pytest.approx(post.engine.driver("champ").mu)
+    assert pre.engine.driver("underdog").var == pytest.approx(post.engine.driver("underdog").var)
+
+
+def test_snapshot_carries_disp_ratio():
+    # The snapshot always exposes a disp_ratio, and it is neutral (1.0) here:
+    # round 1 is the circuit's first visit (unknown), and _two_car_race has both
+    # cars finish at their grid slot, so there is no displacement to measure.
+    hf = model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2))
+    snap = hf.step(_two_car_race(2020, 1, "a", "b"), None)
+    assert snap["disp_ratio"] == 1.0  # first visit: neutral
+    snap2 = hf.step(_two_car_race(2020, 2, "a", "b"), None)
+    assert snap2["disp_ratio"] == 1.0  # no grid->finish displacement recorded
 
 
 def test_dsq_and_dns_channel_visibility():

@@ -1725,3 +1725,82 @@ a.tl-where:hover {
         transform: none;
     }
 }
+
+/* ---- Post-quali state (hero badge, movement delta, grid chips, quali line) --- */
+
+.hc-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent-bright);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    margin-bottom: 0.4rem;
+}
+
+.hc-delta {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+    color: var(--muted);
+}
+
+.hc-delta-up {
+    color: var(--accent-bright);
+}
+
+.hc-delta-down,
+.hc-delta-flat {
+    color: var(--muted);
+}
+
+.panel-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent-bright);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    padding: 0.12rem 0.5rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.cd-grid {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.05rem 0.3rem;
+    margin-left: 0.2rem;
+}
+
+.nr-quali {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 600px) {
+    .hc-updated {
+        font-size: 0.64rem;
+    }
+
+    .cd-grid {
+        font-size: 0.58rem;
+        padding: 0.03rem 0.25rem;
+    }
+
+    .hc-delta {
+        font-size: 0.75rem;
+    }
+}

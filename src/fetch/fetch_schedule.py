@@ -9,8 +9,9 @@ build stays offline.
 Circuit outline data: f1-circuits by Tomislav Bačinger (ODbL).
 
 Writes data/schedule.json:
-{"season","totalRounds","races":[{round,raceName,date,time,circuitId,
- circuitName,locality,country,lat,long,lengthKm,trackPath,trackViewBox,url}]}.
+{"season","totalRounds","races":[{round,raceName,date,time,qualifyingDate,
+ qualifyingTime,circuitId,circuitName,locality,country,lat,long,lengthKm,
+ trackPath,trackViewBox,url}]}.
 """
 
 from __future__ import annotations
@@ -65,6 +66,8 @@ def build_race(race: dict, features: list[dict]) -> dict:
         "raceName": race["raceName"],
         "date": race["date"],
         "time": race.get("time", ""),
+        "qualifyingDate": (race.get("Qualifying") or {}).get("date"),
+        "qualifyingTime": (race.get("Qualifying") or {}).get("time"),
         "circuitId": circ["circuitId"],
         "circuitName": circ["circuitName"],
         "locality": loc["locality"],

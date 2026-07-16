@@ -397,3 +397,168 @@ def test_v2_small_grid_yields_no_candidates(scenario_v2):
     res = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
     assert res["candidates"] == []
     assert res["chanceNextRaceNew"] == 0.0
+
+
+# --- postQuali block --------------------------------------------------------------
+
+
+def q_entry(season, rnd, order, cid_map=None):
+    """A qualifying.json entry: drivers in classification order."""
+    return {
+        "season": str(season),
+        "round": str(rnd),
+        "results": [
+            {"driverId": d, "constructorId": (cid_map or {}).get(d, "car_" + d), "position": i + 1}
+            for i, d in enumerate(order)
+        ],
+    }
+
+
+SCHED_R6 = {
+    "season": "2025",
+    "totalRounds": 6,
+    "races": [
+        {"round": "5", "circuitId": "testring", "raceName": "Test GP"},
+        {"round": "6", "circuitId": "monaco", "raceName": "Monaco GP"},
+    ],
+}
+
+
+@pytest.fixture
+def scenario_post_quali(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    cid = con["driverConstructor"]
+    quali = [q_entry(2025, 6, ["eli", "alf", "bob", "cas", "dan"], cid)]
+    return podiums, combos, grid, con, rres, quali
+
+
+def test_post_quali_null_without_next_round_quali(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    res = cp.compute(
+        podiums, combos, grid, constructor_data=con, race_results=rres, schedule=SCHED_R6
+    )
+    assert res["postQuali"] is None
+    # also null when there's no schedule at all
+    res2 = cp.compute(podiums, combos, grid, constructor_data=con, race_results=rres)
+    assert res2["postQuali"] is None
+
+
+def test_post_quali_block_present_and_shaped(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    res = cp.compute(
+        podiums,
+        combos,
+        grid,
+        constructor_data=con,
+        race_results=rres,
+        qualifying=quali,
+        schedule=SCHED_R6,
+    )
+    pq = res["postQuali"]
+    assert pq is not None
+    assert (pq["season"], pq["round"], pq["raceName"]) == ("2025", "6", "Monaco GP")
+    assert 0.0 <= pq["chanceNextRaceNew"] <= 100.0
+    assert pq["candidates"] and all(
+        p["gridPosition"] >= 1 for c in pq["candidates"] for p in c["perDriver"]
+    )
+    form = {d["driverId"]: d for d in pq["driverForm"]}
+    assert set(form) == {"eli", "alf", "bob", "cas", "dan"}  # exactly the quali entrants
+    assert form["eli"]["gridPosition"] == 1
+    probs = [c["prob"] for c in pq["candidates"]]
+    assert probs == sorted(probs, reverse=True)
+
+
+def test_post_quali_leaves_top_level_untouched(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    base = cp.compute(
+        podiums,
+        combos,
+        grid,
+        constructor_data=con,
+        race_results=rres,
+        qualifying=[],
+        schedule=SCHED_R6,
+    )
+    withq = cp.compute(
+        podiums,
+        combos,
+        grid,
+        constructor_data=con,
+        race_results=rres,
+        qualifying=quali,
+        schedule=SCHED_R6,
+    )
+    for k in ("chanceNextRaceNew", "candidates", "driverForm", "asOf"):
+        assert base[k] == withq[k]
+
+
+def test_post_quali_deterministic(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    kw = {"constructor_data": con, "race_results": rres, "qualifying": quali, "schedule": SCHED_R6}
+    assert cp.compute(podiums, combos, grid, **kw) == cp.compute(podiums, combos, grid, **kw)
+
+
+def test_post_quali_pole_shock_lifts_underdog(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    res = cp.compute(
+        podiums,
+        combos,
+        grid,
+        constructor_data=con,
+        race_results=rres,
+        qualifying=quali,
+        schedule=SCHED_R6,
+    )
+    pre = {d["driverId"]: d["weight"] for d in res["driverForm"]}
+    post = {d["driverId"]: d["weight"] for d in res["postQuali"]["driverForm"]}
+    # eli (never-podiumed rookie) stuck pole: info + grid term must lift the weight
+    assert post["eli"] > pre["eli"]
+
+
+def test_post_quali_substitute_driver_gets_title_cased_name(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    cid = dict(con["driverConstructor"], zed_zephyr="teamC")
+    quali = [q_entry(2025, 6, ["alf", "bob", "cas", "zed_zephyr"], cid)]
+    res = cp.compute(
+        podiums,
+        combos,
+        grid,
+        constructor_data=con,
+        race_results=rres,
+        qualifying=quali,
+        schedule=SCHED_R6,
+    )
+    form = {d["driverId"]: d for d in res["postQuali"]["driverForm"]}
+    assert form["zed_zephyr"]["name"] == "Zed Zephyr"
+    assert form["zed_zephyr"]["gridPosition"] == 4
+
+
+def test_post_quali_needs_three_entrants(scenario_v2):
+    podiums, combos, grid, con, rres = scenario_v2
+    quali = [q_entry(2025, 6, ["alf", "bob"], con["driverConstructor"])]
+    res = cp.compute(
+        podiums,
+        combos,
+        grid,
+        constructor_data=con,
+        race_results=rres,
+        qualifying=quali,
+        schedule=SCHED_R6,
+    )
+    assert res["postQuali"] is None
+
+
+def test_post_quali_payload_satisfies_schema(scenario_post_quali):
+    from datalib import REGISTRY
+
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    res = cp.compute(
+        podiums,
+        combos,
+        grid,
+        constructor_data=con,
+        race_results=rres,
+        qualifying=quali,
+        schedule=SCHED_R6,
+    )
+    REGISTRY["podigami.json"].validate_python(res)  # must not raise

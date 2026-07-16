@@ -38,6 +38,7 @@ __all__ = [
     "RatingEngine",
     "ReliabilityTracker",
     "classify_status",
+    "grid_offsets",
     "lineage_root",
     "model",
     "predict_race",
@@ -67,6 +68,11 @@ DEFAULT_PARAMS_V2: dict = {
     "chaos_eta": 0.7,  # exponent on the circuit displacement temperature
     "p_wild": 0.0,  # probability a race is "wild" (safety cars, rain, chaos)
     "t_wild": 2.5,  # temperature multiplier applied in a wild race
+    # Post-quali grid term (grid_offsets), locked by backtest.py --tune-v2-grid
+    # on 2010-2018 (2026-07-16): coordinate descent on trio logLoss + novelty
+    # logLoss, J 4.201 -> 4.056. Both knobs pin to the grid ceiling.
+    "w_grid": 0.4,  # weight of the causal grid-position term
+    "grid_circuit_beta": 1.0,  # circuit modulation: disp_ratio ** (-beta)
 }
 
 # Seasons whose technical regulations changed enough to scramble the car order.
@@ -170,6 +176,23 @@ def classify_status(status: str) -> str:
     if status in _EXCLUDED_STATUSES:
         return "excluded"
     return "mech"
+
+
+def grid_offsets(quali_pos: dict[str, int], disp_ratio: float, params: dict) -> dict[str, float]:
+    """Causal track-position term: additive log-worth offsets from grid slots.
+
+    ``x(g) = -(ln g - mean ln g)`` -- a centered power-law decay in grid
+    position -- scaled by ``w_grid`` and amplified at processional circuits
+    (low displacement ratio) via ``disp_ratio ** (-grid_circuit_beta)``.
+    Zero-sum across the field, so it shifts relative order, not overall level.
+    """
+    w = params["w_grid"]
+    if w <= 0.0 or not quali_pos:
+        return dict.fromkeys(quali_pos, 0.0)
+    logs = {d: math.log(g) for d, g in quali_pos.items()}
+    mean_log = sum(logs.values()) / len(logs)
+    scale = w * (max(disp_ratio, 1e-6) ** (-params["grid_circuit_beta"]))
+    return {d: scale * (mean_log - lg) for d, lg in logs.items()}
 
 
 @dataclass
@@ -384,8 +407,12 @@ class CircuitStats:
                 r[3] += float(mean_disp)
                 r[4] += 1.0
 
-    def temp(self, circuit_id: str, eta: float) -> float:
-        """Softmax temperature multiplier: >1 at high-churn circuits."""
+    def disp_ratio(self, circuit_id: str) -> float:
+        """Shrunk grid->finish displacement ratio vs the global mean.
+
+        1.0 = neutral/unknown; clamped to [0.5, 2.2]. Low = processional
+        (finish follows the grid), high = high-churn.
+        """
         rec = self._c.get(circuit_id)
         if not rec or rec[4] <= 0.0 or self._g[4] <= 0.0:
             return 1.0
@@ -394,7 +421,11 @@ class CircuitStats:
             return 1.0
         w = rec[4] / (rec[4] + _CIRCUIT_SHRINK_N)
         ratio = 1.0 + w * (rec[3] / rec[4] / g_disp - 1.0)
-        return min(2.2, max(0.5, ratio)) ** eta
+        return min(2.2, max(0.5, ratio))
+
+    def temp(self, circuit_id: str, eta: float) -> float:
+        """Softmax temperature multiplier: >1 at high-churn circuits."""
+        return self.disp_ratio(circuit_id) ** eta
 
     def dnf_logodds_delta(self, circuit_id: str) -> float:
         """Shrunk log-odds gap between this circuit's DNF rate and the global one."""
@@ -414,11 +445,17 @@ class HistoryFilter:
     """Predict-then-update pass over the chronological race history.
 
     ``step`` first applies the between-race dynamics, then snapshots every
-    entrant's (mu_s, var_s, p_finish) plus the circuit temperature *before*
-    the race outcome touches any state — the snapshot is exactly what a
-    forecast made on race morning could have known (leakage-free) — and only
-    then feeds the outcome through the qualifying, pace, attrition,
-    reliability and circuit channels.
+    entrant's (mu_s, var_s, p_finish) plus the circuit temperature and
+    displacement ratio, and only then feeds the outcome through the
+    qualifying, pace, attrition, reliability and circuit channels.
+
+    By default (``snapshot_after_quali=False``) the snapshot is race-morning
+    knowledge: qualifying is observed *after* the snapshot, so it is
+    leakage-free for a forecast made on race morning. With
+    ``snapshot_after_quali=True`` the snapshot is post-qualifying-Saturday
+    knowledge: qualifying is observed *before* the snapshot (legitimate
+    conditioning — quali precedes the race). Either way the quali order is
+    observed exactly once, never twice.
     """
 
     def __init__(self, params: dict):
@@ -428,7 +465,21 @@ class HistoryFilter:
         self.circuits = CircuitStats()
         self.season: int | None = None
 
-    def step(self, race: dict, quali: dict | None = None) -> dict:
+    def _observe_quali(self, quali: dict | None) -> None:
+        p = self.params
+        if quali is None or p["w_qual"] <= 0.0:
+            return
+        qentries: list[tuple[str, str]] = []
+        qseen: set[str] = set()
+        for q in sorted(quali["results"], key=lambda q: q["position"]):
+            if q["driverId"] not in qseen:
+                qseen.add(q["driverId"])
+                qentries.append((q["driverId"], q["constructorId"]))
+        self.engine.observe_order(qentries, depth=int(p["depth_qual"]), weight=p["w_qual"])
+
+    def step(
+        self, race: dict, quali: dict | None = None, *, snapshot_after_quali: bool = False
+    ) -> dict:
         p = self.params
         season = int(race["season"])
         if self.season is not None:
@@ -449,7 +500,11 @@ class HistoryFilter:
             seen_dids.add(row["driverId"])
             rows.append(row)
 
-        # ---- snapshot (strictly before any update) ----
+        # ---- channel 1: qualifying order (before the snapshot in post-quali mode) ----
+        if snapshot_after_quali:
+            self._observe_quali(quali)
+
+        # ---- snapshot ----
         delta = p["chaos_gamma"] * self.circuits.dnf_logodds_delta(circuit)
         drivers = {
             row["driverId"]: (
@@ -461,18 +516,13 @@ class HistoryFilter:
         snapshot = {
             "drivers": drivers,
             "temp": self.circuits.temp(circuit, p["chaos_eta"]),
+            "disp_ratio": self.circuits.disp_ratio(circuit),
             "season": season,
         }
 
-        # ---- channel 1: qualifying order ----
-        if quali is not None and p["w_qual"] > 0.0:
-            qentries: list[tuple[str, str]] = []
-            qseen: set[str] = set()
-            for q in sorted(quali["results"], key=lambda q: q["position"]):
-                if q["driverId"] not in qseen:
-                    qseen.add(q["driverId"])
-                    qentries.append((q["driverId"], q["constructorId"]))
-            self.engine.observe_order(qentries, depth=int(p["depth_qual"]), weight=p["w_qual"])
+        # ---- channel 1: qualifying order (after the snapshot in race-morning mode) ----
+        if not snapshot_after_quali:
+            self._observe_quali(quali)
 
         # ---- channel 2: race pace (classified finishing order) ----
         classified = sorted(

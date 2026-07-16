@@ -247,3 +247,151 @@ def test_render_form_v2_caption_describes_ratings():
     out = bp.render_form(form, True, META, is_v2=True)
     assert "rating" in out.lower()
     assert "~6 races" not in out
+
+
+SCHED_ONE = {
+    "season": "2026",
+    "totalRounds": 16,
+    "races": [
+        {
+            "round": "10",
+            "raceName": "Belgian Grand Prix",
+            "date": "2026-07-19",
+            "time": "13:00:00Z",
+            "qualifyingDate": "2026-07-18",
+            "qualifyingTime": "14:00:00Z",
+            "circuitId": "spa",
+            "circuitName": "Spa-Francorchamps",
+            "locality": "Spa",
+            "country": "Belgium",
+            "lat": "50",
+            "long": "5",
+            "url": "",
+            "trackPath": "",
+            "trackViewBox": "0 0 100 100",
+            "lengthKm": 7.004,
+        }
+    ],
+}
+
+
+def test_next_race_shows_quali_session():
+    out = bp.render_next_race(SCHED_ONE, {"season": "2026", "round": "9"})
+    assert 'class="nr-quali"' in out
+    assert "Qualifying:" in out
+    assert "Sat 18 Jul" in out and "14:00 UTC" in out
+
+
+def test_next_race_without_quali_fields_has_no_line():
+    sched = {
+        "season": "2026",
+        "totalRounds": 16,
+        "races": [
+            {
+                k: v
+                for k, v in SCHED_ONE["races"][0].items()
+                if k not in ("qualifyingDate", "qualifyingTime")
+            }
+        ],
+    }
+    out = bp.render_next_race(sched, {"season": "2026", "round": "9"})
+    assert "nr-quali" not in out
+
+
+def _hero_top():
+    return {
+        "prob": 3.5,
+        "perDriver": [
+            pd("antonelli", "Andrea Kimi Antonelli", "mercedes", 6),
+            pd("norris", "Lando Norris", "mclaren", 2),
+            pd("russell", "George Russell", "mercedes", 3),
+        ],
+    }
+
+
+def test_render_hero_post_quali_badge_and_delta_up():
+    out = bp.render_hero(_hero_top(), 71.0, META, pre_chance=52.0)
+    assert "hc-updated" in out and "Updated after qualifying" in out
+    assert "hc-delta-up" in out and "was 52%" in out and "before the grid was set" in out
+    assert "71%" in out
+
+
+def test_render_hero_delta_down_and_flat():
+    down = bp.render_hero(_hero_top(), 40.0, META, pre_chance=52.0)
+    assert "hc-delta-down" in down
+    flat = bp.render_hero(_hero_top(), 52.4, META, pre_chance=52.0)  # both round to 52
+    assert "hc-delta-flat" in flat and "&mdash;" in flat
+
+
+def test_render_hero_default_has_no_post_quali_markup():
+    out = bp.render_hero(_hero_top(), 55.0, META)
+    assert "hc-updated" not in out and "hc-delta" not in out
+
+
+def _grid_cands():
+    return [
+        {
+            "prob": 3.0,
+            "names": ["Andrea Kimi Antonelli", "Lando Norris", "George Russell"],
+            "perDriver": [
+                {**pd("antonelli", "Andrea Kimi Antonelli", "mercedes"), "gridPosition": 3},
+                {**pd("norris", "Lando Norris", "mclaren"), "gridPosition": 1},
+                {**pd("russell", "George Russell", "mercedes"), "gridPosition": 7},
+            ],
+        }
+    ]
+
+
+def test_render_candidates_grid_aware_badge_and_chips():
+    out = bp.render_candidates(_grid_cands(), META, grid_aware=True)
+    assert "panel-badge" in out and "grid-aware" in out
+    assert out.count('class="cd-grid"') == 3
+    assert ">P1<" in out and ">P3<" in out and ">P7<" in out
+
+
+def test_render_candidates_default_has_no_grid_markup():
+    cands = _grid_cands()
+    for p in cands[0]["perDriver"]:
+        p.pop("gridPosition")
+    out = bp.render_candidates(cands, META)
+    assert "panel-badge" not in out and "cd-grid" not in out
+
+
+EVAL_WITH_POSTQUALI = {
+    **EVAL,
+    "ladder": EVAL["ladder"]
+    + [
+        {
+            "model": "v2 post-quali (ratings)",
+            "n": 159,
+            "top1": 0.14,
+            "top3": 0.31,
+            "top5": 0.43,
+            "logLoss": 4.05,
+        },
+        {
+            "model": "v2 post-quali +grid",
+            "n": 159,
+            "top1": 0.15,
+            "top3": 0.33,
+            "top5": 0.45,
+            "logLoss": 4.01,
+        },
+    ],
+}
+
+
+def test_faq_post_quali_item_present_for_v2_and_cites_rung():
+    out = bp.render_faq(V2_DATA, EVAL_WITH_POSTQUALI, 123, 456, 789, 20, 1950)
+    assert "after qualifying" in out
+    assert "33%" in out  # cites the "v2 post-quali +grid" rung's top3
+
+
+def test_faq_post_quali_item_absent_for_v1():
+    out = bp.render_faq({}, EVAL, 123, 456, 789, 20, 1950)
+    assert "after qualifying" not in out
+
+
+def test_faq_post_quali_item_tolerates_missing_rung():
+    out = bp.render_faq(V2_DATA, EVAL, 123, 456, 789, 20, 1950)  # old eval, no rung
+    assert "after qualifying" in out  # item still there, just uncited
