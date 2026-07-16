@@ -166,7 +166,7 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         except ValueError:
             q = None
         if q is not None:
-            qt = (nxt.get("qualifyingTime") or "")[:5]
+            qt = esc((nxt.get("qualifyingTime") or "")[:5])
             when = f"{q:%a} {q.day} {q:%b}" + (f" &middot; {qt} UTC" if qt else "")
             quali_line = f'<div class="nr-quali">Qualifying: {when}</div>'
     return (
