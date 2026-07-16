@@ -48,7 +48,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 | | Page | What it shows |
 |---|---|---|
-| 🔮 | **`index.html`** | The **Podigami predictor** — next/last race, most likely brand-new trio, candidate rankings (with a collapsible current-form tower), season debut timeline (with quick-pick season chips), FAQ, plus live-stat discovery hooks and a "Keep exploring" grid routing to every other page |
+| 🔮 | **`index.html`** | The **Podigami predictor** — next/last race (with the upcoming qualifying time), most likely brand-new trio and candidate rankings that **refresh after qualifying using the starting grid** (with a collapsible current-form tower), season debut timeline (with quick-pick season chips), FAQ, plus live-stat discovery hooks and a "Keep exploring" grid routing to every other page |
 | 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 — sortable, filterable, expandable |
 | ⏳ | `overdue.html` | Trios "overdue" to appear — driver pairs whose current form suggests a shared podium is imminent |
 | 🎲 | `unlikeliest.html` | The mirror of Overdue — podium trios that *did* happen ranked by how statistically improbable they were, led by the single biggest fluke in F1 history |
@@ -62,7 +62,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 ![Engine](https://img.shields.io/badge/engine-Bayesian_ratings_(dbpl--v2)-e10600?style=flat-square)
 ![Top-1](https://img.shields.io/badge/exact_trio_top--1-18%25-brightgreen?style=flat-square)
 ![Top-3](https://img.shields.io/badge/trio_top--3-35%25-brightgreen?style=flat-square)
-![Hold-outs](https://img.shields.io/badge/frozen_test_races-160-8957e5?style=flat-square)
+![Hold-outs](https://img.shields.io/badge/frozen_test_races-161-8957e5?style=flat-square)
 
 A *podigami* = a 3-driver podium **set** that has **never** finished a podium together before.
 
@@ -72,16 +72,19 @@ The predictor is a **dynamic Bayesian rating engine** ([`src/compute/model_v2.py
 - **Time** — ratings diffuse a little every race, more over a winter, a lot for cars when the technical regulations reset (2009, 2014, 2022, 2026…).
 - **Survival** — exponentially-decayed DNF hazards, era-relative: mechanical failures charge the car, incidents charge the driver.
 - **Chaos** — each circuit's grid→finish shuffle and DNF propensity adjust the prediction temperature and finish odds.
+- **Grid** — once a race's qualifying is classified, the grid order feeds back through the ratings and a **circuit-modulated track-position term** shifts each driver's finishing odds — amplified at processional circuits where the grid rarely reshuffles, damped where it does — so the headline refreshes after qualifying.
 - **Prediction** — the engine simulates the next race (deterministic seed): skill noise + who survives, with *exact* conditional Plackett–Luce trio probabilities per draw. `P(next race is new)` is the exact complement of every already-seen trio.
 
-> **Why this model?** Walk-forward evaluation — tuned on 2010–2018 only, then scored once on a frozen 2019–2026 test window (160 races) it never saw:
+> **Why this model?** Walk-forward evaluation — tuned on 2010–2018 only, then scored once on a frozen 2019–2026 test window (161 races) it never saw:
 >
 > | model | top-1 | top-3 | top-5 | log-loss |
 > |---|---|---|---|---|
-> | recency Plackett–Luce (previous) | 12.5% | 29.4% | 41.2% | 4.078 |
-> | **rating engine (live)** | **18.1%** | **35.0%** | **43.8%** | **3.916** |
+> | recency Plackett–Luce (previous) | 12.4% | 29.2% | 41.0% | 4.109 |
+> | **rating engine (live, pre-qualifying)** | **18.0%** | **35.4%** | **44.1%** | **3.913** |
+> | + qualifying order (post-qualifying) | 21.1% | 36.6% | 47.8% | 3.749 |
+> | **+ grid position (post-qualifying)** | **25.5%** | **40.4%** | **51.5%** | **3.474** |
 >
-> Ablations: pace + reliability alone already beat v1; adding the qualifying order gave the biggest jump; a failure-order (attrition) channel earned zero weight and is off. Full ladder in [`data/model_eval.json`](data/model_eval.json).
+> Ablations: pace + reliability alone already beat v1; adding the qualifying order gave the biggest jump; a failure-order (attrition) channel earned zero weight and is off. Once a race's qualifying is in, replaying the grid order through the ratings **plus** a circuit-aware grid-position term (gate-accepted on the same hold-out) lifts top-3 to 40.4% and log-loss to 3.474. Full ladder in [`data/model_eval.json`](data/model_eval.json).
 
 ---
 
@@ -209,7 +212,7 @@ Every push and PR runs a hardened pipeline:
 | [`codeql.yml`](.github/workflows/codeql.yml) | **CodeQL** static analysis of Python *and* the workflow files (weekly + on PRs) |
 | [`security.yml`](.github/workflows/security.yml) | **pip-audit** for vulnerable dependencies · **gitleaks** secret scanning |
 | [`deploy.yml`](.github/workflows/deploy.yml) | Test-gated publish to **GitHub Pages** |
-| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — polls every 15 min for a newly-finished race, opens an auto-merging PR when due; a weekly run forces a full reconciliation |
+| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — polls every 15 min for a newly-finished race *or* a just-completed qualifying session (90-min buffer, to publish the post-qualifying prediction update), opens an auto-merging PR when due; a weekly run forces a full reconciliation |
 | [`dependabot.yml`](.github/dependabot.yml) + [auto-merge](.github/workflows/dependabot-automerge.yml) | Weekly dependency PRs; patch/minor bumps auto-merge once CI is green |
 
 All workflows run with **least-privilege permissions**, **concurrency cancellation**, and **pip
