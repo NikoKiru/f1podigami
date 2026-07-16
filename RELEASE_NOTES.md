@@ -3,7 +3,7 @@
 ## 2026-07-16
 
 ### Features
-- Post-qualifying grid-aware prediction: once the next race's qualifying is classified, the headline new-trio chance, candidate trios and driver form update automatically using the starting grid — the qualifying order replays through the rating engine plus a circuit-aware grid-advantage term, validated by the walk-forward backtest (post-qualifying lifts top-3 from 35% to 40% on the frozen 2019–2026 test window). The next-race box shows the upcoming qualifying time; after qualifying the hero gains an "updated after qualifying" badge with the movement from the pre-grid number, and candidates show grid-position chips (#PR)
+- Post-qualifying grid-aware prediction: once the next race's qualifying is classified, the headline new-trio chance, candidate trios and driver form update automatically using the starting grid — the qualifying order replays through the rating engine plus a circuit-aware grid-advantage term, validated by the walk-forward backtest (post-qualifying lifts top-3 from 35% to 40% on the frozen 2019–2026 test window). The next-race box shows the upcoming qualifying time; after qualifying the hero gains an "updated after qualifying" badge with the movement from the pre-grid number, and candidates show grid-position chips (#195)
 
 ## 2026-07-10
 
