@@ -247,3 +247,52 @@ def test_render_form_v2_caption_describes_ratings():
     out = bp.render_form(form, True, META, is_v2=True)
     assert "rating" in out.lower()
     assert "~6 races" not in out
+
+
+SCHED_ONE = {
+    "season": "2026",
+    "totalRounds": 16,
+    "races": [
+        {
+            "round": "10",
+            "raceName": "Belgian Grand Prix",
+            "date": "2026-07-19",
+            "time": "13:00:00Z",
+            "qualifyingDate": "2026-07-18",
+            "qualifyingTime": "14:00:00Z",
+            "circuitId": "spa",
+            "circuitName": "Spa-Francorchamps",
+            "locality": "Spa",
+            "country": "Belgium",
+            "lat": "50",
+            "long": "5",
+            "url": "",
+            "trackPath": "",
+            "trackViewBox": "0 0 100 100",
+            "lengthKm": 7.004,
+        }
+    ],
+}
+
+
+def test_next_race_shows_quali_session():
+    out = bp.render_next_race(SCHED_ONE, {"season": "2026", "round": "9"})
+    assert 'class="nr-quali"' in out
+    assert "Qualifying:" in out
+    assert "Sat 18 Jul" in out and "14:00 UTC" in out
+
+
+def test_next_race_without_quali_fields_has_no_line():
+    sched = {
+        "season": "2026",
+        "totalRounds": 16,
+        "races": [
+            {
+                k: v
+                for k, v in SCHED_ONE["races"][0].items()
+                if k not in ("qualifyingDate", "qualifyingTime")
+            }
+        ],
+    }
+    out = bp.render_next_race(sched, {"season": "2026", "round": "9"})
+    assert "nr-quali" not in out

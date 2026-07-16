@@ -158,6 +158,17 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
             f'<svg class="nr-track" viewBox="{esc(nxt["trackViewBox"])}" '
             f'fill="none" aria-hidden="true"><path d="{esc(nxt["trackPath"])}"/></svg>'
         )
+    quali_line = ""
+    qd = nxt.get("qualifyingDate")
+    if qd:
+        try:
+            q = dt.datetime.strptime(qd, "%Y-%m-%d")
+        except ValueError:
+            q = None
+        if q is not None:
+            qt = (nxt.get("qualifyingTime") or "")[:5]
+            when = f"{q:%a} {q.day} {q:%b}" + (f" &middot; {qt} UTC" if qt else "")
+            quali_line = f'<div class="nr-quali">Qualifying: {when}</div>'
     return (
         f'<section class="next-race" data-datetime="{esc(_iso_datetime(nxt))}">'
         f'  <div class="nr-main">'
@@ -172,6 +183,7 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         f'      <span class="nr-date">{_fallback_when(nxt)}</span>'
         f'      <span class="nr-countdown" data-countdown></span>'
         f"    </div>"
+        f"    {quali_line}"
         f"  </div>"
         f'  <div class="nr-art">{track}</div>'
         f"</section>"
