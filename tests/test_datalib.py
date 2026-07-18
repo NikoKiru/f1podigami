@@ -289,6 +289,48 @@ def test_save_qualifying_rejects_extra_key(tmp_path, monkeypatch):
         repository.save_qualifying(bad)
 
 
+def test_grid_penalty_requires_exactly_one_directive():
+    """A penalty entry must carry exactly one of penaltyPlaces / backOfGrid —
+    an empty or doubled-up directive is a curation mistake, not a no-op."""
+    from datalib import GridPenalty
+
+    assert GridPenalty.model_validate({"driverId": "norris", "penaltyPlaces": 10}).penaltyPlaces
+    assert GridPenalty.model_validate({"driverId": "hadjar", "backOfGrid": True}).backOfGrid
+    for bad in (
+        {"driverId": "norris"},
+        {"driverId": "norris", "backOfGrid": False},
+        {"driverId": "norris", "penaltyPlaces": 10, "backOfGrid": True},
+        {"driverId": "norris", "penaltyPlaces": 0},
+    ):
+        with pytest.raises(ValidationError):
+            GridPenalty.model_validate(bad)
+
+
+def test_save_grid_penalties_roundtrips(tmp_path, monkeypatch):
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    repository.save_grid_penalties(
+        [
+            {
+                "season": "2026",
+                "round": "10",
+                "penalties": [
+                    {"driverId": "norris", "penaltyPlaces": 10},
+                    {"driverId": "hadjar", "backOfGrid": True},
+                ],
+            }
+        ]
+    )
+    raw = (tmp_path / "grid_penalties.json").read_text(encoding="utf-8")
+    adapter = REGISTRY["grid_penalties.json"]
+    dumped = adapter.dump_python(adapter.validate_python(json.loads(raw)), mode="json")
+    assert json.dumps(dumped, indent=2, ensure_ascii=False) == raw
+    loaded = repository.load_grid_penalties()
+    assert loaded[0].penalties[0].penaltyPlaces == 10
+    assert loaded[0].penalties[1].backOfGrid is True
+
+
 def test_validate_cli_succeeds_on_committed_data():
     from datalib import validate
 
