@@ -9,7 +9,17 @@
         "backOfGrid": null
       },
       {
+        "driverId": "stroll",
+        "penaltyPlaces": 10,
+        "backOfGrid": null
+      },
+      {
         "driverId": "hadjar",
+        "penaltyPlaces": null,
+        "backOfGrid": true
+      },
+      {
+        "driverId": "alonso",
         "penaltyPlaces": null,
         "backOfGrid": true
       }

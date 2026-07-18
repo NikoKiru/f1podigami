@@ -2,6 +2,9 @@
 
 ## 2026-07-18
 
+### Improvements
+- Final grid penalties for the 2026 Belgian GP (round 10): Norris and Stroll drop 10 places (power-unit quota); Hadjar (30 places) and Alonso (20 places) exceed the 15-place threshold and start from the back of the grid
+
 ### Features
 - Grid penalties now feed the post-qualifying prediction: a new hand-curated `data/grid_penalties.json` (place drops and back-of-grid starts, validated by `datalib`) rebuilds the actual starting slots for the causal grid-position term and the displayed grid chips, while the qualifying order still counts at face value through the rating channel — first entries: Norris +10 places and Hadjar to the back for the 2026 Belgian GP
 
