@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-18
+
+### Features
+- Grid penalties now feed the post-qualifying prediction: a new hand-curated `data/grid_penalties.json` (place drops and back-of-grid starts, validated by `datalib`) rebuilds the actual starting slots for the causal grid-position term and the displayed grid chips, while the qualifying order still counts at face value through the rating channel — first entries: Norris +10 places and Hadjar to the back for the 2026 Belgian GP
+
 ## 2026-07-16
 
 ### Features

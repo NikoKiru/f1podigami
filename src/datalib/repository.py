@@ -24,6 +24,7 @@ from .schemas import (
     ConstructorStandings,
     CurrentDrivers,
     DriverRaces,
+    GridPenaltyRace,
     ModelEval,
     Overdue,
     Podigami,
@@ -54,6 +55,7 @@ REGISTRY: dict[str, TypeAdapter] = {
     "f1_race_links.json": TypeAdapter(dict[str, dict[str, RaceLink]]),
     "race_results.json": TypeAdapter(list[RaceResult]),
     "qualifying.json": TypeAdapter(list[QualifyingEntry]),
+    "grid_penalties.json": TypeAdapter(list[GridPenaltyRace]),
 }
 
 # Bulky raw datasets written single-line to keep the repo (and git deltas) lean.
@@ -195,3 +197,11 @@ def load_qualifying() -> list[QualifyingEntry]:
 
 def save_qualifying(data: Any) -> None:
     _save("qualifying.json", data)
+
+
+def load_grid_penalties() -> list[GridPenaltyRace]:
+    return _load("grid_penalties.json")
+
+
+def save_grid_penalties(data: Any) -> None:
+    _save("grid_penalties.json", data)

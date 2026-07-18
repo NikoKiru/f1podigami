@@ -1,0 +1,18 @@
+[
+  {
+    "season": "2026",
+    "round": "10",
+    "penalties": [
+      {
+        "driverId": "norris",
+        "penaltyPlaces": 10,
+        "backOfGrid": null
+      },
+      {
+        "driverId": "hadjar",
+        "penaltyPlaces": null,
+        "backOfGrid": true
+      }
+    ]
+  }
+]

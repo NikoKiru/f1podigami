@@ -8,7 +8,7 @@ of silently passing through.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class _Base(BaseModel):
@@ -272,7 +272,8 @@ class DriverStrength(_Base):
     # v2 engine extras: modelled finish probability and rating uncertainty (std).
     finishProb: float | None = None
     uncertainty: float | None = None
-    # Post-quali only: the driver's qualifying classification position.
+    # Post-quali only: the driver's starting slot — the qualifying classification
+    # adjusted for any grid penalties (data/grid_penalties.json).
     gridPosition: int | None = None
 
 
@@ -466,3 +467,35 @@ class QualifyingEntry(_Base):
     season: str
     round: str
     results: list[QualifyingRow]
+
+
+# --- grid_penalties.json ------------------------------------------------------
+
+
+class GridPenalty(_Base):
+    """One driver's start-position directive for a race, curated by hand.
+
+    Exactly one of ``penaltyPlaces`` (drop N slots below the qualifying
+    classification, FIA-style) or ``backOfGrid`` (start behind every
+    unpenalised car — engine penalties, pit-lane starts) must be set.
+    """
+
+    driverId: str
+    penaltyPlaces: int | None = None
+    backOfGrid: bool | None = None
+
+    @model_validator(mode="after")
+    def _exactly_one_directive(self) -> GridPenalty:
+        if (self.penaltyPlaces is not None) == bool(self.backOfGrid):
+            raise ValueError("set exactly one of penaltyPlaces or backOfGrid")
+        if self.penaltyPlaces is not None and self.penaltyPlaces < 1:
+            raise ValueError("penaltyPlaces must be >= 1")
+        return self
+
+
+class GridPenaltyRace(_Base):
+    """All known grid penalties for one race; stale seasons/rounds are ignored."""
+
+    season: str
+    round: str
+    penalties: list[GridPenalty]
