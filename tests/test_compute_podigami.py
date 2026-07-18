@@ -498,6 +498,88 @@ def test_post_quali_deterministic(scenario_post_quali):
     assert cp.compute(podiums, combos, grid, **kw) == cp.compute(podiums, combos, grid, **kw)
 
 
+# --- grid penalties ---------------------------------------------------------------
+
+
+def test_apply_grid_penalties_place_drop_shifts_field():
+    """A 2-place drop for P1: P2/P3 move up, the penalised car slots in behind."""
+    qpos = {"a": 1, "b": 2, "c": 3, "d": 4}
+    out = cp._apply_grid_penalties(qpos, [{"driverId": "a", "penaltyPlaces": 2}])
+    assert out == {"b": 1, "c": 2, "a": 3, "d": 4}
+
+
+def test_apply_grid_penalties_penalised_behind_unpenalised_on_same_slot():
+    """FIA-style: quali P1 + 2 places targets slot 3, which the unpenalised P3
+    car contests after moving up — the penalised car lines up behind it."""
+    qpos = {"a": 1, "b": 2, "c": 3}
+    out = cp._apply_grid_penalties(qpos, [{"driverId": "a", "penaltyPlaces": 2}])
+    assert out == {"b": 1, "c": 2, "a": 3}
+
+
+def test_apply_grid_penalties_back_of_grid_is_last():
+    qpos = {"a": 1, "b": 2, "c": 3, "d": 4}
+    out = cp._apply_grid_penalties(qpos, [{"driverId": "b", "backOfGrid": True}])
+    assert out == {"a": 1, "c": 2, "d": 3, "b": 4}
+
+
+def test_apply_grid_penalties_back_of_grid_behind_big_place_penalty():
+    """Back-of-grid outranks even a place penalty that overshoots the field."""
+    qpos = {"a": 1, "b": 2, "c": 3, "d": 4}
+    pens = [{"driverId": "a", "penaltyPlaces": 10}, {"driverId": "b", "backOfGrid": True}]
+    out = cp._apply_grid_penalties(qpos, pens)
+    assert out == {"c": 1, "d": 2, "a": 3, "b": 4}
+
+
+def test_apply_grid_penalties_noop_and_unknown_driver():
+    qpos = {"a": 1, "b": 2, "c": 3}
+    assert cp._apply_grid_penalties(qpos, []) == qpos
+    assert cp._apply_grid_penalties(qpos, [{"driverId": "zzz", "penaltyPlaces": 5}]) == qpos
+
+
+def test_post_quali_grid_penalties_move_grid_positions(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    kw = {"constructor_data": con, "race_results": rres, "qualifying": quali, "schedule": SCHED_R6}
+    pens = [
+        {
+            "season": "2025",
+            "round": "6",
+            "penalties": [
+                {"driverId": "eli", "penaltyPlaces": 3, "backOfGrid": None},
+                {"driverId": "bob", "penaltyPlaces": None, "backOfGrid": True},
+            ],
+        }
+    ]
+    plain = cp.compute(podiums, combos, grid, **kw)
+    pend = cp.compute(podiums, combos, grid, grid_penalties=pens, **kw)
+
+    form = {d["driverId"]: d["gridPosition"] for d in pend["postQuali"]["driverForm"]}
+    # quali eli,alf,bob,cas,dan -> eli drops 3 (to slot 4), bob to the back
+    assert form == {"alf": 1, "cas": 2, "dan": 3, "eli": 4, "bob": 5}
+    # only the causal grid term moves: the prediction changes, the pre-quali block doesn't
+    assert pend["postQuali"]["chanceNextRaceNew"] != plain["postQuali"]["chanceNextRaceNew"]
+    for k in ("chanceNextRaceNew", "candidates", "driverForm", "asOf"):
+        assert pend[k] == plain[k]
+    # the payload with penalties applied still satisfies the schema
+    from datalib import REGISTRY
+
+    REGISTRY["podigami.json"].validate_python(pend)
+
+
+def test_post_quali_grid_penalties_other_round_ignored(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    kw = {"constructor_data": con, "race_results": rres, "qualifying": quali, "schedule": SCHED_R6}
+    stale = [
+        {
+            "season": "2025",
+            "round": "5",
+            "penalties": [{"driverId": "eli", "penaltyPlaces": 3, "backOfGrid": None}],
+        }
+    ]
+    assert cp.compute(podiums, combos, grid, grid_penalties=stale, **kw) == cp.compute(
+        podiums, combos, grid, **kw
+    )
+
+
 def test_post_quali_pole_shock_lifts_underdog(scenario_post_quali):
     podiums, combos, grid, con, rres, quali = scenario_post_quali
     res = cp.compute(

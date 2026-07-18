@@ -12,7 +12,8 @@ podium together.
 
 Inputs : data/podiums.json, data/combos.json, data/current_drivers.json,
          data/constructor_standings.json, data/race_results.json,
-         data/qualifying.json, data/schedule.json (the last four optional)
+         data/qualifying.json, data/schedule.json, data/grid_penalties.json
+         (the last five optional)
 Output : data/podigami.json
 """
 
@@ -39,6 +40,7 @@ CONSTRUCTOR_PATH = DATA_DIR / "constructor_standings.json"
 RACE_RESULTS_PATH = DATA_DIR / "race_results.json"
 QUALIFYING_PATH = DATA_DIR / "qualifying.json"
 SCHEDULE_PATH = DATA_DIR / "schedule.json"
+GRID_PENALTIES_PATH = DATA_DIR / "grid_penalties.json"
 OUT_PATH = DATA_DIR / "podigami.json"
 
 RECENT_WINDOW = 10  # races, for the "recent form" display stat
@@ -170,6 +172,36 @@ def _title_from_id(driver_id: str) -> str:
     return " ".join(w.capitalize() for w in driver_id.split("_"))
 
 
+def _apply_grid_penalties(qpos: dict[str, int], penalties: list[dict]) -> dict[str, int]:
+    """Reconstruct starting slots from the quali classification plus penalties.
+
+    ``penaltyPlaces: N`` drops a driver N slots below their qualifying position
+    (cars in between move up, and a penalised car lines up behind an unpenalised
+    one contesting the same slot — FIA-style); ``backOfGrid: true`` sends a
+    driver behind every other car, back-of-grid drivers keeping their quali
+    order among themselves. Directives for drivers not in ``qpos`` are ignored.
+    """
+    directive = {p["driverId"]: p for p in penalties if p["driverId"] in qpos}
+    if not directive:
+        return qpos
+
+    # Back-of-grid cars vacate their slots first; place drops then apply to the
+    # positions of the field that actually lines up.
+    back = sorted((d for d in qpos if directive.get(d, {}).get("backOfGrid")), key=qpos.get)
+    front = sorted((d for d in qpos if d not in set(back)), key=qpos.get)
+    eff = {d: i + 1 for i, d in enumerate(front)}
+
+    def slot_key(d: str) -> tuple[int, int, int]:
+        q = eff[d]
+        p = directive.get(d)
+        if p is None:
+            return (q, 0, q)
+        return (q + p["penaltyPlaces"], 1, q)
+
+    order = sorted(front, key=slot_key) + back
+    return {d: i + 1 for i, d in enumerate(order)}
+
+
 def _post_quali_block(
     v2: dict,
     qualifying: list[dict] | None,
@@ -180,6 +212,7 @@ def _post_quali_block(
     cid_name: dict[str, str],
     con_strength: dict[str, float],
     using_constructors: bool,
+    grid_penalties: list[dict] | None = None,
 ) -> dict | None:
     """Grid-aware prediction for the next race, or None before its quali exists.
 
@@ -189,6 +222,11 @@ def _post_quali_block(
     standard rating channel, then grid_offsets folded into the means. Seeded
     with the backtest convention so the output is a deterministic function of
     its inputs.
+
+    The quali order feeds the rating channel untouched — a penalised driver
+    still demonstrated that pace — but the causal grid term and the displayed
+    ``gridPosition`` use the actual starting slots, i.e. the classification
+    adjusted by any ``grid_penalties`` entry for this season/round.
 
     NOTE: mutates v2["hf"] (the quali observation) — call only after every
     pre-quali value has been extracted from ``v2``.
@@ -223,8 +261,19 @@ def _post_quali_block(
     temp = hf.circuits.temp(circuit, params["chaos_eta"]) if circuit else 1.0
     disp = hf.circuits.disp_ratio(circuit) if circuit else 1.0
 
+    # Actual starting slots: quali classification adjusted for grid penalties.
+    pens = next(
+        (
+            e["penalties"]
+            for e in (grid_penalties or [])
+            if e["season"] == season and e["round"] == rnd
+        ),
+        [],
+    )
+    gpos = _apply_grid_penalties(qpos, pens)
+
     # Causal track-position effect: grid offsets folded into the means.
-    offsets = model_v2.grid_offsets(qpos, disp, params)
+    offsets = model_v2.grid_offsets(gpos, disp, params)
     mu_var: dict[str, tuple[float, float]] = {}
     p_fin: dict[str, float] = {}
     for d in qpos:
@@ -251,7 +300,7 @@ def _post_quali_block(
             e["constructorStrength"] = round(con_strength.get(d, 0), 3)
         e["finishProb"] = round(p_fin[d], 3)
         e["uncertainty"] = round(math.sqrt(mu_var[d][1]), 3)
-        e["gridPosition"] = qpos[d]
+        e["gridPosition"] = gpos[d]
         return e
 
     candidates = [
@@ -282,6 +331,7 @@ def compute(
     race_results: list[dict] | None = None,
     qualifying: list[dict] | None = None,
     schedule: dict | None = None,
+    grid_penalties: list[dict] | None = None,
 ) -> dict:
     """Pure core: returns the podigami.json payload. No file IO."""
     races = sorted(podiums, key=lambda r: (int(r["season"]), int(r["round"])))
@@ -386,6 +436,7 @@ def compute(
             cid_to_name,
             con_strength,
             using_constructors,
+            grid_penalties=grid_penalties,
         )
 
     # Per-season debut trios (podigamis), grouped from combos[].firstRace.
@@ -465,6 +516,9 @@ def main() -> int:
     schedule = None
     if SCHEDULE_PATH.exists():
         schedule = json.loads(SCHEDULE_PATH.read_text(encoding="utf-8"))
+    grid_penalties = None
+    if GRID_PENALTIES_PATH.exists():
+        grid_penalties = json.loads(GRID_PENALTIES_PATH.read_text(encoding="utf-8"))
 
     payload = compute(
         podiums,
@@ -474,6 +528,7 @@ def main() -> int:
         race_results=race_results,
         qualifying=qualifying,
         schedule=schedule,
+        grid_penalties=grid_penalties,
     )
     save_podigami(payload)
 
