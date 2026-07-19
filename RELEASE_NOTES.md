@@ -3,6 +3,7 @@
 ## 2026-07-19
 
 ### Fixes
+- Cleared two long-standing CodeQL alerts in the test suite: the race-link test now matches the full official F1 URL prefix instead of a bare `formula1.com` substring (which a lookalike host would satisfy), and the data-integrity test imports `load_race_results` at module level instead of re-importing `datalib` inside the function (#208)
 - Finished races now reach the site far sooner: the update run holds its runner and polls the results feed itself until the round is actually published, instead of giving up and waiting for the next cron slot — GitHub only honours ~1 of our 15-min slots per hour, so a single early fetch used to cost a full extra hour (the Belgian GP landed ~100 min after the flag). The race-finished buffer also drops from 2h to 1h40, matching a real ~100-min race (#206)
 
 ### Improvements

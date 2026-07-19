@@ -82,8 +82,11 @@ def test_race_report_links_are_official_f1(dist):
             "https://en.wikipedia.org/wiki/"
         )
         assert " " not in url
-    # the whole point of the feature: the vast majority resolve to F1
-    f1 = [u for u in links if "formula1.com" in u]
+    # the whole point of the feature: the vast majority resolve to F1.
+    # Match on the full prefix, not a bare "formula1.com" substring — the latter
+    # also matches a lookalike host (formula1.com.example.com) and trips CodeQL's
+    # incomplete-URL-substring-sanitization rule.
+    f1 = [u for u in links if u.startswith("https://www.formula1.com/en/results/")]
     assert len(f1) > len(links) // 2, "expected most race links to be official F1 URLs"
 
 
