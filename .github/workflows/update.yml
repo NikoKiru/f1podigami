@@ -79,6 +79,8 @@ jobs:
     needs: check
     if: needs.check.outputs.due == 'true'
     runs-on: ubuntu-latest
+    # Covers the watcher's 2h poll budget plus the pipeline, well under the 6h cap.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -101,6 +103,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+      # GitHub honours only a fraction of our 15-min cron (~1 run/hour observed,
+      # with multi-hour overnight gaps), so a fetch that lands before the API has
+      # published the race costs a WHOLE HOUR before the next attempt — that is
+      # what put the 2026 Belgian GP on the site ~100min late. Hold the runner
+      # and poll until the round appears instead, so cron only has to land one
+      # slot in a wide window. Scheduled runs only: a human dispatch should act
+      # now, not block for up to 2h, and `full` is a reconciliation, not a race.
+      - name: Wait for the finished race to be published upstream
+        if: needs.check.outputs.mode != 'full' && github.event_name == 'schedule'
+        run: python src/wait_for_results.py
+
       - name: Fetch latest data and rebuild site
         run: |
           if [ "${{ needs.check.outputs.mode }}" = "full" ]; then

@@ -7,7 +7,11 @@ by now is newer than what the committed data already reflects (podigami.json's
 
 from datetime import UTC, datetime
 
-from check_update_due import is_post_quali_update_due, is_update_due
+from check_update_due import (
+    is_post_quali_update_due,
+    is_update_due,
+    latest_finished_round,
+)
 
 
 def at(s: str) -> datetime:
@@ -35,14 +39,40 @@ def test_future_race_not_due():
 
 
 def test_race_within_buffer_not_due():
-    # Started 1h ago; buffer is 2h -> results not expected, don't poll mid-race.
+    # Started 1h ago; buffer is 100min -> still racing, don't poll mid-race.
     s = sched(("1", "2026-03-08", "04:00:00Z"))
     assert is_update_due(s, ASOF_PREV, at("2026-03-08 05:00")) is False
+
+
+def test_race_due_shortly_after_a_typical_race_ends():
+    # A GP runs ~100min. At 1h45 past the start the flag has fallen, so the
+    # watcher must be allowed to arm — waiting a full 2h burns ~20min of every
+    # race weekend for nothing.
+    s = sched(("1", "2026-03-08", "04:00:00Z"))
+    assert is_update_due(s, ASOF_PREV, at("2026-03-08 05:45")) is True
 
 
 def test_race_past_buffer_not_in_data_is_due():
     s = sched(("1", "2026-03-08", "04:00:00Z"))
     assert is_update_due(s, ASOF_PREV, at("2026-03-08 07:00")) is True
+
+
+# --- latest_finished_round: the (season, round) the watcher should wait for.
+
+
+def test_latest_finished_round_is_newest_race_past_the_buffer():
+    s = sched(*[(str(r), f"2026-03-0{r}", "04:00:00Z") for r in range(1, 4)])
+    assert latest_finished_round(s, at("2026-03-03 07:00")) == (2026, 3)
+
+
+def test_latest_finished_round_ignores_races_still_inside_the_buffer():
+    s = sched(("1", "2026-03-01", "04:00:00Z"), ("2", "2026-03-08", "04:00:00Z"))
+    assert latest_finished_round(s, at("2026-03-08 04:30")) == (2026, 1)
+
+
+def test_latest_finished_round_none_before_any_race():
+    s = sched(("1", "2026-03-08", "04:00:00Z"))
+    assert latest_finished_round(s, at("2026-03-01 12:00")) is None
 
 
 def test_race_past_buffer_already_in_data_not_due():

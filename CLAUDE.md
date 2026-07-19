@@ -142,7 +142,20 @@ GitHub Actions (`.github/workflows/`) runs CI (lint, format, tests across py3.11
 Keeps the site fresh with no manual step, running the same pipeline as a local `python src/update.py` + push:
 
 - A cheap **`check` job** runs `src/check_update_due.py` **every 15 min** (`cron: 2,17,32,47 * * * *`; offset off the hour to dodge GitHub's top-of-hour load, which often drops scheduled runs; no network, no secret) and proceeds only when a race that should have results by now is newer than `podigami.json`'s `asOf`. A weekly run (`0 7 * * 1`) forces an unconditional `--full` reconciliation; `workflow_dispatch` takes `mode` (auto/full) + `force`.
-- When due, the **`update` job** runs `update.py`, validates + tests, then opens/updates a single `auto/update-data` PR and enables **squash auto-merge**. Once the full required checks pass it merges → `deploy.yml` ships it. One race ⇒ one PR (the guard stops once `asOf` advances on merge); re-running is idempotent (no churn).
+- When due, the **`update` job first waits for the results to exist** (see below), then runs `update.py`, validates + tests, and opens/updates a single `auto/update-data` PR with **squash auto-merge**. Once the full required checks pass it merges → `deploy.yml` ships it. One race ⇒ one PR (the guard stops once `asOf` advances on merge); re-running is idempotent (no churn).
+
+#### The cron is ~1/hour, not every 15 min — don't design around the schedule
+
+GitHub honours only a fraction of the requested slots. Measured on race Sunday 2026-07-19: **13 scheduled runs against 76 expected (~17%)**, landing at arbitrary minutes (not `:02/:17/:32/:47`), with multi-hour overnight gaps, and one slot additionally queued **41 min** before executing. This is normal Actions throttling for scheduled workflows; **making the cron denser does not help** — the extra slots are dropped too.
+
+The consequence that actually hurts: the Jolpica API often has not published a just-finished race when the run fetches. Previously that meant the run produced a PR with no new race (`asOf` unchanged), and the retry had to wait for the *next surviving slot* — **a full hour**. At the 2026 Belgian GP that put the result on the site ~100 min after the flag (fetched 15:32Z with nothing upstream → PR #204 carried no race → only #205 at 16:23Z did).
+
+**Fix (#206): wait in-run rather than retry across runs.** `src/wait_for_results.py` polls `/{season}/last/results.json` every 3 min for up to 2h until the round appears, then the pipeline runs once. Cron now only has to land **one** slot in a wide window, which it reliably does. Notes:
+- It polls an **aggregate** feed on purpose — the round-indexed endpoint lags for hours (see #178 below).
+- A timeout is **not** a failure: the pipeline runs anyway (idempotent) and the guard re-fires.
+- It runs on **scheduled events only** (`github.event_name == 'schedule'`) and not for `mode=full`, so a human dispatch stays snappy instead of blocking up to 2h.
+- `RESULTS_BUFFER` is **1h40** — the end of a real ~100-min race, *not* "results are published". Publish lag belongs to the watcher; padding the buffer instead just burns wall-clock every race weekend.
+- The `update` job carries `timeout-minutes: 180` to cover the poll budget plus the pipeline.
 - Trigger on demand: `gh workflow run update.yml -f mode=auto -f force=true` (or `-f mode=full`).
 
 #### ⚠️ When a finished race doesn't appear (silent-stall failure mode)

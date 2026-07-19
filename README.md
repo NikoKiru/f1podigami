@@ -212,7 +212,7 @@ Every push and PR runs a hardened pipeline:
 | [`codeql.yml`](.github/workflows/codeql.yml) | **CodeQL** static analysis of Python *and* the workflow files (weekly + on PRs) |
 | [`security.yml`](.github/workflows/security.yml) | **pip-audit** for vulnerable dependencies · **gitleaks** secret scanning |
 | [`deploy.yml`](.github/workflows/deploy.yml) | Test-gated publish to **GitHub Pages** |
-| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — polls every 15 min for a newly-finished race *or* a just-completed qualifying session (90-min buffer, to publish the post-qualifying prediction update), opens an auto-merging PR when due; a weekly run forces a full reconciliation |
+| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — polls every 15 min for a newly-finished race (1h40 buffer) *or* a just-completed qualifying session (90-min buffer, to publish the post-qualifying prediction update). When a race is due it waits in-run for the results to be published upstream, then opens an auto-merging PR; a weekly run forces a full reconciliation |
 | [`dependabot.yml`](.github/dependabot.yml) + [auto-merge](.github/workflows/dependabot-automerge.yml) | Weekly dependency PRs; patch/minor bumps auto-merge once CI is green |
 
 All workflows run with **least-privilege permissions**, **concurrency cancellation**, and **pip
