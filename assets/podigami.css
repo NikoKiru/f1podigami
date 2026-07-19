@@ -341,9 +341,6 @@ main {
     color: var(--accent);
 }
 
-/* ── Unlikeliest page: uniform improbability cards ───────────────────────────
-   Every entry is the same card; #1 (.uncard-hero) is a larger, accented version
-   of the identical structure so each field sits in the same place on every card. */
 /* ── Shared ranked list (Overdue + Unlikeliest): hero card + leaderboard rows ─
    The #1 hero keeps its card treatment; every other rank is a compact native
    <details> row — the <summary> is the row face, the body holds the stat
@@ -522,7 +519,7 @@ main {
     display: none;
 }
 
-/* Headline odds — the one number every card leads with. */
+/* Headline odds — the number the hero card leads with. */
 .un-odds {
     display: flex;
     flex-direction: column;
