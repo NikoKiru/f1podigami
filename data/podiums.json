@@ -19684,5 +19684,22 @@
       "driverId": "hamilton",
       "name": "Lewis Hamilton"
     }
+  },
+  {
+    "season": "2026",
+    "round": "10",
+    "raceName": "Belgian Grand Prix",
+    "p1": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p2": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc"
+    },
+    "p3": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    }
   }
 ]
