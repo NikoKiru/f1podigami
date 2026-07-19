@@ -3,7 +3,7 @@
 ## 2026-07-19
 
 ### Improvements
-- De-cluttered the Overdue and Unlikeliest pages: only the #1 trio (per section) keeps its full card; every other rank is a compact leaderboard row that expands to show its stats — native `<details>`, no JS (the old mobile "Details" toggle script is gone) (#PR)
+- De-cluttered the Overdue and Unlikeliest pages: only the #1 trio (per section) keeps its full card; every other rank is a compact leaderboard row that expands to show its stats — native `<details>`, no JS (the old mobile "Details" toggle script is gone) (#202)
 
 ## 2026-07-18
 
