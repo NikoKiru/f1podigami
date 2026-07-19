@@ -97,15 +97,20 @@ def test_shared_nav_collapses_to_drawer_on_mobile():
     assert ".nav-drawer-toggle:checked" in s
 
 
-def test_overdue_cards_collapse_stats_on_mobile():
-    """On phones the three stat cells hide behind a per-card Details toggle."""
+def test_rank_rows_swap_race_into_panel_on_mobile():
+    """Leaderboard rows: on phones the race name leaves the row face and shows
+    as a stat cell inside the expanded panel instead; driver names abbreviate."""
     import re
 
     s = css("podigami.css")
+    assert "od-toggle" not in s, "the old JS Details-toggle CSS must be gone"
     block = re.search(r"@media \(max-width: 600px\)[\s\S]*", s).group(0)
-    assert re.search(r"\.odcard\s+\.od-stats\s*\{[^}]*display:\s*none", block), (
-        "mobile must hide the overdue stat block by default"
+    assert re.search(r"\.rr-race\s*\{[^}]*display:\s*none", block), (
+        "mobile must hide the race name on the row face"
     )
-    assert re.search(r"\.od-toggle\s*\{[^}]*display:\s*flex", block), (
-        "the Details toggle must appear on mobile"
+    assert re.search(r"\.rr-stat-race\s*\{[^}]*display:\s*flex", block), (
+        "mobile must show the race stat cell in the expanded panel"
+    )
+    assert ".rr-drivers .dn-full" in block and ".rr-drivers .dn-abbr" in block, (
+        "row driver names must swap to abbreviated form on mobile"
     )
