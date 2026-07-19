@@ -226,7 +226,7 @@ def test_landing_page_form_is_collapsed_in_candidates_panel(dist):
     assert "Show current form" in html
     details = html[html.index('<details class="form-details">') :]
     assert details.index('class="form-tower"') < details.index("</details>")
-    panel_start = html.index("Most likely next combinations")
+    panel_start = html.index("Most likely new trios")
     assert panel_start < html.index('<details class="form-details">')
 
 

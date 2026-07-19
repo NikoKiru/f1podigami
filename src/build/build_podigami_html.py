@@ -389,7 +389,7 @@ def render_candidates(
         )
     return (
         f'<section class="panel">'
-        f"  <h2>Most likely next combinations"
+        f"  <h2>Most likely new trios"
         f'    <span class="info-tip" tabindex="0" aria-label="More info">'
         f'      <span class="info-icon">i</span>'
         f'      <span class="info-bubble">Trios that have never shared a podium, ranked by the model\'s probability they do it next.</span>'
