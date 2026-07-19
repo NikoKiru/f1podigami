@@ -1,11 +1,11 @@
 """Render data/unlikeliest.json into dist/unlikeliest.html.
 
 The mirror of the Overdue page: podium trios that *did* happen, ranked by how
-statistically unlikely they were. Every entry is a uniform card with the same
-fields in the same place — drivers, the odds it would ever happen, each driver's
-career podium rate, how often they raced together, and how many times it hit.
-The #1 card (the single most improbable podium in F1 history) is a larger,
-accented version of the identical layout.
+statistically unlikely they were. The #1 trio (the single most improbable
+podium in F1 history) is a full hero card; every other rank is a compact
+leaderboard row (shared ``_rows.render_row``) that expands to show each
+driver's career podium rate, how often they raced together, and how many
+times it hit.
 
 The headline "1 in N" is the odds the trio would *ever* share a podium, derived
 from the expected co-podium count s = racesTogether x rates via the Poisson
@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
 from _layout import FOOTER, abbr_name, asset, head, nav, race_url  # noqa: E402
+from _rows import render_row  # noqa: E402
 
 from datalib import UnlikeliestTrio, load_race_links, load_unlikeliest  # noqa: E402
 
@@ -119,11 +120,29 @@ def render_card(
     )
 
 
+def render_row_entry(rank: int, e: UnlikeliestTrio, links: dict | None = None) -> str:
+    """One compact leaderboard row for ranks below the hero. The race link sits
+    on the row face on desktop and repeats in the stats panel, where CSS shows
+    it on phones instead."""
+    race = _race_link(e, links)
+    stats = (
+        _stat("Podium rates", _rates_cells(e))
+        + _stat("Raced together", f"{e.racesTogether}&times;")
+        + _stat("Times it happened", str(e.count))
+        + f'<div class="un-stat rr-stat-race">'
+        f'<span class="un-stat-label">Race</span>'
+        f'<span class="un-stat-val">{race}</span>'
+        f"</div>"
+    )
+    return render_row(rank, render_trio(e.names), format_odds(e.score), stats, race_html=race)
+
+
 def render_cards(entries: list[UnlikeliestTrio], links: dict | None = None) -> str:
     if not entries:
         return '<p class="panel-sub">No trios.</p>'
-    cards = [render_card(i, e, hero=(i == 1), links=links) for i, e in enumerate(entries, 1)]
-    return f'<ol class="uncard-list">{"".join(cards)}</ol>'
+    hero = render_card(1, entries[0], hero=True, links=links)
+    rows = "".join(render_row_entry(i, e, links) for i, e in enumerate(entries[1:], 2))
+    return f'<ol class="rank-list">{hero}{rows}</ol>'
 
 
 def main() -> int:
