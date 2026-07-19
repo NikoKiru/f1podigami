@@ -25,13 +25,17 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-# A race is assumed to have published results once this long has elapsed since
-# its scheduled start. 2h is long enough that a normal GP is over (race time is
-# capped at 2h running / 3h elapsed, and most finish well inside 2h) so we never
-# poll mid-race, and short enough to pick results up promptly. Being early is
-# harmless: update.py is idempotent and an empty commit is skipped, so an early
-# "due" just yields a self-terminating no-op run.
-RESULTS_BUFFER = timedelta(hours=2)
+# How long after its scheduled start a race is assumed to be *over* — i.e. when
+# it is worth starting to look for results. A GP runs ~100min (2h running / 3h
+# elapsed are only the regulatory caps; a red-flagged race is the rare
+# exception), so 1h40 clears the flag without ever polling mid-race.
+#
+# This is deliberately the *end of the race*, not "results are published": the
+# API's publish lag is absorbed by the in-run watcher (src/wait_for_results.py),
+# which polls until the round actually appears. Padding this constant instead
+# would just burn wall-clock on every race weekend, because a miss costs a whole
+# cron cycle (GitHub delivers ~1/hour against our 15-min schedule).
+RESULTS_BUFFER = timedelta(minutes=100)
 
 # How long after the scheduled qualifying start the classification is assumed
 # published. Quali runs ~1h; API publish lag is minutes. Being early is harmless
@@ -59,28 +63,18 @@ def _race_start(date: str, time: str) -> datetime | None:
         return None
 
 
-def is_update_due(schedule: dict, asof: dict, now: datetime) -> bool:
-    """True if a race that should have results by ``now`` is newer than ``asof``.
+def latest_finished_round(schedule: dict, now: datetime) -> tuple[int, int] | None:
+    """The newest ``(season, round)`` that should be over by ``now``, or None.
 
-    ``schedule``: parsed ``schedule.json`` for the current season.
-    ``asof``:     the latest race already reflected in the data — i.e.
-                  ``podigami.json``'s ``asOf`` (``{"season", "round", ...}``).
-    ``now``:      tz-aware UTC datetime.
+    Shared by :func:`is_update_due` (is it newer than what we have?) and the
+    watcher (which round should we wait for the API to publish?).
     """
     try:
         season = int(schedule["season"])
     except (KeyError, ValueError, TypeError):
-        return False
+        return None
 
-    # (season, round) we already have. Compared NUMERICALLY — a string compare
-    # would order round "9" after "10". A missing/garbage asOf means "we have
-    # nothing", so any finished race is due.
-    try:
-        have = (int(asof["season"]), int(asof["round"]))
-    except (KeyError, ValueError, TypeError):
-        have = (-1, -1)
-
-    latest_due: tuple[int, int] | None = None
+    latest: tuple[int, int] | None = None
     for race in schedule.get("races", []):
         start = _race_start(race.get("date", ""), race.get("time", ""))
         if start is None or now < start + RESULTS_BUFFER:
@@ -89,9 +83,28 @@ def is_update_due(schedule: dict, asof: dict, now: datetime) -> bool:
             key = (season, int(race["round"]))
         except (KeyError, ValueError, TypeError):
             continue
-        if latest_due is None or key > latest_due:
-            latest_due = key
+        if latest is None or key > latest:
+            latest = key
+    return latest
 
+
+def is_update_due(schedule: dict, asof: dict, now: datetime) -> bool:
+    """True if a race that should have results by ``now`` is newer than ``asof``.
+
+    ``schedule``: parsed ``schedule.json`` for the current season.
+    ``asof``:     the latest race already reflected in the data — i.e.
+                  ``podigami.json``'s ``asOf`` (``{"season", "round", ...}``).
+    ``now``:      tz-aware UTC datetime.
+    """
+    # (season, round) we already have. Compared NUMERICALLY — a string compare
+    # would order round "9" after "10". A missing/garbage asOf means "we have
+    # nothing", so any finished race is due.
+    try:
+        have = (int(asof["season"]), int(asof["round"]))
+    except (KeyError, ValueError, TypeError):
+        have = (-1, -1)
+
+    latest_due = latest_finished_round(schedule, now)
     if latest_due is None:
         return False  # nothing has finished this season yet (early/empty season)
     return latest_due > have
