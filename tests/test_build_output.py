@@ -262,6 +262,14 @@ def test_overdue_has_two_ranked_lists(dist):
     assert 'class="od-drivers"' in html
 
 
+def test_unlikeliest_has_ranked_list(dist):
+    html = (dist / "unlikeliest.html").read_text(encoding="utf-8")
+    assert html.count('class="rank-list"') == 1
+    assert html.count("uncard-hero") == 1  # only the #1 trio is a card
+    assert 'class="rankrow"' in html
+    assert 'class="un-stat rr-stat-race"' in html  # race repeats in the row panel
+
+
 def test_404_page_exists_with_chrome_and_home_link(dist):
     f = dist / "404.html"
     assert f.is_file(), "dist/404.html was not generated"
