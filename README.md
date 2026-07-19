@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-296%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-555%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -155,7 +155,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (538 tests, run in CI)
+tests/          pytest suite (555 tests, run in CI)
 ```
 
 </details>
