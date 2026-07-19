@@ -11,7 +11,7 @@ SITE_URL = "https://nikokiru.github.io/f1podigami"
 PAGES = {
     "index.html": ["podigami.css", "podigami.js", "theme.js"],
     "combos.html": ["index.css", "index.js", "theme.js"],
-    "overdue.html": ["podigami.css", "overdue.js", "theme.js"],
+    "overdue.html": ["podigami.css", "theme.js"],
     "soulmates.html": ["soulmates.css", "theme.js"],
 }
 
@@ -22,7 +22,6 @@ ALL_ASSETS = [
     "podigami.css",
     "index.js",
     "podigami.js",
-    "overdue.js",
     "theme.js",
     "favicon.svg",
 ]
@@ -258,7 +257,7 @@ def test_stylesheet_defines_light_theme(dist):
 def test_overdue_has_two_ranked_lists(dist):
     html = (dist / "overdue.html").read_text(encoding="utf-8")
     assert 'class="nav"' in html
-    assert html.count('class="odcard-list"') == 2  # all-time + current grid
+    assert html.count('class="rank-list"') == 2  # all-time + current grid
     assert "All-time near-misses" in html
     assert 'class="od-drivers"' in html
 

@@ -96,18 +96,34 @@ def test_render_card_probability_stat_present():
     assert "86%" in html
 
 
+# ── render_row_entry ─────────────────────────────────────────────────────────
+
+
+def test_render_row_entry_carries_score_and_stats():
+    e = entry(["A Driver", "B Driver", "C Driver"], ["a", "b", "c"], 10, 2.0, [0.3, 0.2, 0.1])
+    html = bo.render_row_entry(2, e)
+    assert 'class="rankrow"' in html
+    assert "2.0×" in html  # headline number on the row face
+    assert "Chance by now" in html and "86%" in html  # stats in the details body
+    assert "10&times;" in html  # raced together
+    assert 'class="dn-abbr"' in html  # responsive names still emitted
+
+
 # ── render_cards ─────────────────────────────────────────────────────────────
 
 
-def test_render_cards_structure():
+def test_render_cards_hero_then_rows():
     entries = [
         entry(["A Driver", "B Driver", "C Driver"], ["a", "b", "c"], 50, 8.0, [0.5, 0.4, 0.3]),
         entry(["A Driver", "B Driver", "D Driver"], ["a", "b", "d"], 30, 4.0, [0.5, 0.4, 0.2]),
+        entry(["A Driver", "C Driver", "D Driver"], ["a", "c", "d"], 20, 3.0, [0.5, 0.3, 0.2]),
     ]
     html = bo.render_cards(entries)
-    assert 'class="odcard-list"' in html
-    assert "odcard-hero" in html
-    assert html.count('<li class="odcard') == 2
+    assert 'class="rank-list"' in html
+    assert html.count("odcard-hero") == 1  # only the first entry is a card
+    assert html.count('class="rankrow"') == 2  # the rest are rows
+    assert '<span class="rr-rank">2</span>' in html
+    assert '<span class="rr-rank">3</span>' in html
 
 
 def test_render_cards_empty():
@@ -125,23 +141,3 @@ def test_panel_wraps_title_and_sub():
     assert '<details class="panel od-panel" open>' in out
     assert '<summary class="panel-head">' in out
     assert 'class="panel-chev"' in out
-
-
-# ── mobile stats toggle ───────────────────────────────────────────────────────
-
-
-def test_render_card_has_mobile_stats_toggle():
-    e = entry(["A Driver", "B Driver", "C Driver"], ["a", "b", "c"], 10, 2.0, [0.3, 0.2, 0.1])
-    html = bo.render_card(2, e, uid="at")
-    assert 'class="od-toggle"' in html
-    assert 'aria-expanded="false"' in html
-    assert 'id="odstats-at2"' in html
-    assert 'aria-controls="odstats-at2"' in html
-
-
-def test_render_cards_stats_ids_unique_per_section():
-    entries = [
-        entry(["A Driver", "B Driver", "C Driver"], ["a", "b", "c"], 10, 2.0, [0.3, 0.2, 0.1])
-    ]
-    assert 'id="odstats-at1"' in bo.render_cards(entries, uid="at")
-    assert 'id="odstats-cg1"' in bo.render_cards(entries, uid="cg")
