@@ -8333,6 +8333,37 @@
     "drivers": [
       "Andrea Kimi Antonelli",
       "Charles Leclerc",
+      "Max Verstappen"
+    ],
+    "driverIds": [
+      "antonelli",
+      "leclerc",
+      "max_verstappen"
+    ],
+    "count": 1,
+    "lastRace": {
+      "season": "2026",
+      "round": "10",
+      "raceName": "Belgian Grand Prix"
+    },
+    "firstRace": {
+      "season": "2026",
+      "round": "10",
+      "raceName": "Belgian Grand Prix"
+    },
+    "lastRaceKey": 2026010,
+    "races": [
+      {
+        "season": "2026",
+        "round": "10",
+        "raceName": "Belgian Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
+      "Andrea Kimi Antonelli",
+      "Charles Leclerc",
       "Oscar Piastri"
     ],
     "driverIds": [

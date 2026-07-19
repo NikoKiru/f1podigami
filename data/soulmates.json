@@ -172,7 +172,7 @@
     },
     {
       "name": "Max Verstappen",
-      "total": 129,
+      "total": 130,
       "medianYear": 2022
     },
     {
@@ -187,7 +187,7 @@
     },
     {
       "name": "Charles Leclerc",
-      "total": 53,
+      "total": 54,
       "medianYear": 2023
     },
     {
@@ -1668,7 +1668,7 @@
       0,
       25,
       16,
-      27,
+      28,
       27,
       16
     ],
@@ -1791,7 +1791,7 @@
       16,
       0,
       9,
-      27,
+      28,
       9,
       9,
       0,
@@ -1970,18 +1970,18 @@
       "lastYear": 1991
     },
     {
+      "a": "Max Verstappen",
+      "b": "Charles Leclerc",
+      "count": 28,
+      "firstYear": 2019,
+      "lastYear": 2026
+    },
+    {
       "a": "Ayrton Senna",
       "b": "Nigel Mansell",
       "count": 27,
       "firstYear": 1985,
       "lastYear": 1992
-    },
-    {
-      "a": "Max Verstappen",
-      "b": "Charles Leclerc",
-      "count": 27,
-      "firstYear": 2019,
-      "lastYear": 2025
     },
     {
       "a": "Max Verstappen",
