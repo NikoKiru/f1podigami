@@ -1,12 +1,13 @@
 """Render data/overdue.json into dist/overdue.html.
 
-Two ranked sections — all-time near-misses and current-grid candidates — each
-a grid of uniform cards. Every card leads with the expected number of shared
-podiums (racesTogether × rates) shown as "X.Y×", which makes the overdue-ness
-concrete: a score of 8 means statistics expected this to happen roughly eight
-times already. A "chance by now" stat converts the same number to a probability
-(Poisson tail: 1 − e^−score) so readers can see just how likely it should have
-been.
+Two ranked sections — all-time near-misses and current-grid candidates. In
+each, the #1 trio is a full hero card and every other rank is a compact
+leaderboard row (shared ``_rows.render_row``) that expands to show its stats.
+Every entry leads with the expected number of shared podiums (racesTogether ×
+rates) shown as "X.Y×", which makes the overdue-ness concrete: a score of 8
+means statistics expected this to happen roughly eight times already. A
+"chance by now" stat converts the same number to a probability (Poisson tail:
+1 − e^−score) so readers can see just how likely it should have been.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
 from _layout import FOOTER, abbr_name, asset, head, nav  # noqa: E402
+from _rows import render_row  # noqa: E402
 
 from datalib import OverdueTrio, load_overdue  # noqa: E402
 
@@ -69,13 +71,8 @@ def _stat(label: str, value: str) -> str:
     )
 
 
-def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") -> str:
-    """One uniform card. ``hero`` makes it the larger, accented #1 variant.
-
-    On mobile the three stat cells collapse behind a per-card "Details" toggle
-    (see assets/overdue.js); ``uid`` keeps each card's stats id unique across the
-    two sections.
-    """
+def render_card(rank: int, e: OverdueTrio, hero: bool = False) -> str:
+    """One full card. ``hero`` makes it the larger, accented #1 variant."""
     cls = "odcard odcard-hero" if hero else "odcard"
     drivers = f'<div class="od-drivers">{render_trio(e.names)}</div>'
     stats = (
@@ -83,7 +80,6 @@ def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") ->
         + _stat("Raced together", f"{e.racesTogether}&times;")
         + _stat("Chance by now", format_probability(e.score))
     )
-    stats_id = f"odstats-{uid}{rank}"
     return (
         f'<li class="{cls}">'
         f'<div class="od-top">'
@@ -94,27 +90,34 @@ def render_card(rank: int, e: OverdueTrio, hero: bool = False, uid: str = "") ->
         f'<span class="od-score-num">{format_score(e.score)}</span>'
         f'<span class="od-score-label">expected co-podiums</span>'
         f"</div>"
-        f'<button type="button" class="od-toggle" aria-expanded="false" aria-controls="{stats_id}">'
-        f'<span class="od-toggle-label">Details</span>'
-        f'<span class="chev" aria-hidden="true">&#9662;</span>'
-        f"</button>"
-        f'<div class="od-stats" id="{stats_id}">{stats}</div>'
+        f'<div class="od-stats">{stats}</div>'
         f"</li>"
     )
 
 
-def render_cards(entries: list[OverdueTrio], uid: str = "") -> str:
+def render_row_entry(rank: int, e: OverdueTrio) -> str:
+    """One compact leaderboard row for ranks below the hero."""
+    stats = (
+        _stat("Podium rates", _rates_cells(e))
+        + _stat("Raced together", f"{e.racesTogether}&times;")
+        + _stat("Chance by now", format_probability(e.score))
+    )
+    return render_row(rank, render_trio(e.names), format_score(e.score), stats)
+
+
+def render_cards(entries: list[OverdueTrio]) -> str:
     if not entries:
         return '<p class="panel-sub">No candidates.</p>'
-    cards = [render_card(i, e, hero=(i == 1), uid=uid) for i, e in enumerate(entries, 1)]
-    return f'<ol class="odcard-list">{"".join(cards)}</ol>'
+    hero = render_card(1, entries[0], hero=True)
+    rows = "".join(render_row_entry(i, e) for i, e in enumerate(entries[1:], 2))
+    return f'<ol class="rank-list">{hero}{rows}</ol>'
 
 
-def panel(title: str, sub: str, entries: list[OverdueTrio], uid: str = "") -> str:
-    """One collapsible grid section.
+def panel(title: str, sub: str, entries: list[OverdueTrio]) -> str:
+    """One collapsible ranked section.
 
     A native ``<details open>`` so the header toggles the whole section with no
-    JS; ``uid`` disambiguates each card's stats id across the two sections.
+    JS.
     """
     return (
         f'<details class="panel od-panel" open>'
@@ -123,7 +126,7 @@ def panel(title: str, sub: str, entries: list[OverdueTrio], uid: str = "") -> st
         f'<span class="panel-chev" aria-hidden="true">&#9662;</span>'
         f"</summary>"
         f'<p class="panel-sub">{sub}</p>'
-        f"{render_cards(entries, uid=uid)}"
+        f"{render_cards(entries)}"
         f"</details>"
     )
 
@@ -138,13 +141,11 @@ def main() -> int:
         "&mdash; yet never all three on the same podium. Expected co-podiums = races together "
         "&times; each driver&rsquo;s career podium rate.",
         data.allTime,
-        uid="at",
     )
     grid = panel(
         "Current grid &mdash; still possible",
         "The most overdue trios among this season&rsquo;s drivers. These could still happen.",
         data.currentGrid,
-        uid="cg",
     )
 
     page = f"""{
@@ -173,7 +174,6 @@ def main() -> int:
     </div>
 </main>
 {FOOTER}
-<script src="{asset("overdue.js")}"></script>
 <script src="{asset("theme.js")}"></script>
 </body>
 </html>

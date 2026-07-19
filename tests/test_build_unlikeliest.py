@@ -97,23 +97,37 @@ def test_render_card_hero_variant_is_flagged():
     assert "uncard-hero" not in bu.render_card(2, e, hero=False)
 
 
-def test_render_card_shows_repeat_count_when_more_than_one():
+def test_render_row_entry_shows_repeat_count():
     once = trio(["A B", "C D", "E F"], ["a", "b", "c"], 10, 0.01, 1, [0.1, 0.1, 0.1])
     twice = trio(["A B", "C D", "E F"], ["a", "b", "c"], 10, 0.01, 2, [0.1, 0.1, 0.1])
-    assert ">2<" in bu.render_card(3, twice)  # count cell shows 2
-    # the once card shows 1 somewhere in its count cell
-    assert "Times it happened" in bu.render_card(3, once)
+    assert ">2<" in bu.render_row_entry(3, twice)  # count cell shows 2
+    assert "Times it happened" in bu.render_row_entry(3, once)
 
 
-def test_render_cards_lists_all_with_hero_first():
+def test_render_row_entry_race_on_face_and_in_stats():
+    e = trio(["A B", "C D", "E F"], ["a", "b", "c"], 152, 0.0065, 1, [0.02, 0.13, 0.02])
+    html = bu.render_row_entry(2, e)
+    assert 'class="rankrow"' in html
+    assert "1 in 150" in html  # headline odds on the row face
+    # race link appears twice: on the desktop row face and in the stats panel
+    assert html.count("https://en.wikipedia.org/wiki/2020_Sakhir_Grand_Prix") == 2
+    assert 'class="rr-race"' in html
+    assert 'class="un-stat rr-stat-race"' in html
+    assert "152&times;" in html  # raced together stat
+
+
+def test_render_cards_hero_then_rows():
     entries = [
         trio(["A B", "C D", "E F"], ["a", "b", "c"], 10, 0.01, 1, [0.1, 0.1, 0.1]),
         trio(["G H", "I J", "K L"], ["g", "h", "i"], 20, 0.05, 1, [0.2, 0.2, 0.2]),
+        trio(["M N", "O P", "Q R"], ["m", "n", "o"], 30, 0.08, 1, [0.2, 0.2, 0.2]),
     ]
     html = bu.render_cards(entries)
-    assert html.count('<li class="uncard') == 2
-    assert html.count("uncard-hero") == 1  # only the first
-    assert ">1<" in html and ">2<" in html  # ranks
+    assert html.count("uncard-hero") == 1  # only the first entry is a card
+    assert html.count('class="rankrow"') == 2  # the rest are rows
+    assert 'class="rank-list"' in html
+    assert '<span class="rr-rank">2</span>' in html
+    assert '<span class="rr-rank">3</span>' in html
 
 
 def test_render_cards_empty_shows_placeholder():

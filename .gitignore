@@ -29,3 +29,6 @@ Thumbs.db
 
 #playwright-mcp
 /.playwright-mcp/
+
+# superpowers brainstorming sessions (visual companion mockups)
+/.superpowers/
