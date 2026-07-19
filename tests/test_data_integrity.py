@@ -15,6 +15,7 @@ from datalib import (
     REGISTRY,
     load_combos,
     load_podiums,
+    load_race_results,
     load_schedule,
 )
 
@@ -88,13 +89,11 @@ PODIUM_CROSSCHECK_SKIP: set[tuple[str, str]] = set()
 def test_race_results_podiums_agree_with_podiums_dataset():
     """The v2 raw dataset and podiums.json must tell the same story about who
     finished 1-2-3 in every race both datasets cover."""
-    import datalib
-
     podium_map = {
         (p.season, p.round): [p.p1.driverId, p.p2.driverId, p.p3.driverId] for p in load_podiums()
     }
     mismatches = []
-    for race in datalib.load_race_results():
+    for race in load_race_results():
         rk = (race.season, race.round)
         if rk not in podium_map or rk in PODIUM_CROSSCHECK_SKIP:
             continue
