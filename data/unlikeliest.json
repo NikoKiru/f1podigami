@@ -271,8 +271,8 @@
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 437,
-          "rate": 0.2426
+          "starts": 438,
+          "rate": 0.242
         },
         {
           "name": "Michael Schumacher",
@@ -419,8 +419,8 @@
         "Sergio Pérez",
         "Lance Stroll"
       ],
-      "racesTogether": 153,
-      "score": 0.0065,
+      "racesTogether": 154,
+      "score": 0.0064,
       "count": 1,
       "happened": {
         "season": "2020",
@@ -431,20 +431,20 @@
         {
           "name": "Esteban Ocon",
           "podiums": 4,
-          "starts": 189,
-          "rate": 0.0212
+          "starts": 190,
+          "rate": 0.0211
         },
         {
           "name": "Sergio Pérez",
           "podiums": 39,
-          "starts": 292,
-          "rate": 0.1336
+          "starts": 293,
+          "rate": 0.1331
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 200,
-          "rate": 0.015
+          "starts": 201,
+          "rate": 0.0149
         }
       ]
     },
@@ -619,8 +619,8 @@
         "Carlos Sainz",
         "Lance Stroll"
       ],
-      "racesTogether": 184,
-      "score": 0.0107,
+      "racesTogether": 185,
+      "score": 0.0106,
       "count": 1,
       "happened": {
         "season": "2020",
@@ -631,20 +631,20 @@
         {
           "name": "Pierre Gasly",
           "podiums": 6,
-          "starts": 187,
-          "rate": 0.0321
+          "starts": 188,
+          "rate": 0.0319
         },
         {
           "name": "Carlos Sainz",
           "podiums": 29,
-          "starts": 241,
-          "rate": 0.1203
+          "starts": 242,
+          "rate": 0.1198
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 200,
-          "rate": 0.015
+          "starts": 201,
+          "rate": 0.0149
         }
       ]
     },
