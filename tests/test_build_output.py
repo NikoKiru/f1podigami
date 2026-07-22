@@ -460,6 +460,34 @@ def test_index_faqpage_schema_matches_visible_faq(dist):
         assert f'<summary class="faq-q">{qe["name"]}</summary>' in page_plain
 
 
+def test_combos_dataset_schema(dist):
+    html = (dist / "combos.html").read_text(encoding="utf-8")
+    datasets = [b for b in _json_ld_blocks(html) if b.get("@type") == "Dataset"]
+    assert len(datasets) == 1, "combos.html should carry exactly one Dataset schema"
+    ds = datasets[0]
+    assert "podium combination" in ds["name"].lower()
+    assert ds["url"] == f"{SITE_URL}/combos.html"
+    assert ds["creator"]["@type"] == "Organization"
+    assert ds["license"]
+    assert "/" in ds["temporalCoverage"]  # e.g. "1950/2026"
+    assert isinstance(ds["keywords"], list) and ds["keywords"]
+
+
+def test_index_sportsevent_enriched(dist, data):
+    from build.build_podigami_html import pick_next_race
+
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    nxt = pick_next_race(data["schedule"], data["podigami"].get("asOf"))
+    events = [b for b in _json_ld_blocks(html) if b.get("@type") == "SportsEvent"]
+    if nxt is None:
+        assert events == []
+        return
+    ev = events[0]
+    assert ev["sport"] == "Formula 1"
+    assert ev["eventStatus"] == "https://schema.org/EventScheduled"
+    assert ev["url"] == f"{SITE_URL}/"
+
+
 def test_404_is_noindex(dist):
     html = (dist / "404.html").read_text(encoding="utf-8")
     assert '<meta name="robots" content="noindex">' in html

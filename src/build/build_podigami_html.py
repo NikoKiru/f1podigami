@@ -703,6 +703,9 @@ def json_ld_schemas(
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
                 "name": nxt["raceName"],
+                "sport": "Formula 1",
+                "url": f"{SITE_URL}/",
+                "eventStatus": "https://schema.org/EventScheduled",
                 "startDate": _iso_datetime(nxt),
                 "location": {
                     "@type": "Place",

@@ -15,6 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
 from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
+    REPO_URL,
+    SITE_URL,
     abbr_name,
     asset,
     breadcrumb_schema,
@@ -25,6 +27,33 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
 )
 
 from datalib import Combo, RaceRef, load_combos, load_podiums, load_race_links  # noqa: E402
+
+
+def dataset_schema(
+    season_min: int, season_max: int, unique_combos: int, total_podiums: int
+) -> dict:
+    """schema.org Dataset describing the full podium-combination table (Google
+    Dataset Search + topical authority)."""
+    return {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        "name": f"Every unique F1 podium combination, {season_min}–{season_max}",
+        "description": (
+            f"All {unique_combos:,} unique three-driver podium combinations in Formula 1 "
+            f"World Championship history, derived from {total_podiums:,} race results "
+            f"since {season_min}."
+        ),
+        "url": f"{SITE_URL}/combos.html",
+        "creator": organization_schema(),
+        "license": REPO_URL,
+        "temporalCoverage": f"{season_min}/{season_max}",
+        "keywords": [
+            "F1 podium combinations",
+            "F1 podium history",
+            "podium scorigami",
+            "Formula 1 statistics",
+        ],
+    }
 
 OUT_PATH = ROOT / "dist" / "combos.html"
 
@@ -124,6 +153,7 @@ def main() -> int:
             json_ld=[
                 organization_schema(),
                 breadcrumb_schema("Podium Combinations", "combos.html"),
+                dataset_schema(season_min, season_max, unique_combos, total_podiums),
             ],
         )
     }
