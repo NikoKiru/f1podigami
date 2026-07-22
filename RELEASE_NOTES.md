@@ -3,6 +3,7 @@
 ## 2026-07-22
 
 ### Improvements
+- Landing hero: the "chance the next race delivers a brand-new trio" number now sits in its own framed panel that fills the full hero height, so on desktop it's anchored and balances the podium cards instead of floating in dead space; the old divider between the two halves is dropped (redundant with the panel border)
 - SEO: keyword-tuned every page's title and meta description (front-loading terms like "F1 podium scorigami" and "F1 podium history"), and added FAQPage, Dataset, BreadcrumbList, and Organization structured data across the site — the FAQ schema is generated from the same source as the visible FAQ, so the two can never drift
 
 ## 2026-07-19
