@@ -769,12 +769,12 @@ def main() -> int:
     ).replace("</", "<\\/")
 
     meta_description = (
-        f"Podigami is the art of spotting F1 podium trios that have never happened before. "
-        f"A statistical model predicts which brand-new trio is most likely next in the {season} season."
+        f"F1 podium scorigami: tracking the podium trios Formula 1 has never seen. "
+        f"A model predicts the most likely brand-new trio for the next {season} race."
     )
     page = f"""{
         head(
-            f"F1 Podigami - Next Likely New Podium ({season})",
+            "F1 Podium Scorigami — New Trio Tracker & Predictions",
             "podigami.css",
             description=meta_description,
             page_path="index.html",

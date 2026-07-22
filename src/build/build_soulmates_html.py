@@ -209,9 +209,9 @@ def main() -> int:
 
     page = f"""{
         head(
-            "F1 Soulmates &middot; Podigami",
+            "F1 Podium Partnerships — Drivers Who Shared the Rostrum",
             "soulmates.css",
-            description="Which F1 legends spent the most race weekends together on the podium? 76 years of Formula 1 history distilled into the partnerships that defined each era.",
+            description="F1 podium history by partnership: which drivers spent the most race weekends together on the rostrum across 76 years of Formula 1.",
             page_path="soulmates.html",
         )
     }

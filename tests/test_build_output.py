@@ -51,6 +51,34 @@ def test_page_head_essentials(dist, page):
     assert '<link rel="stylesheet" href="style.css?v=' in html
 
 
+# page -> a keyword phrase its <title> must front-load
+TITLE_KEYWORDS = {
+    "index.html": "F1 Podium Scorigami",
+    "combos.html": "F1 Podium Combination",
+    "overdue.html": "F1 Overdue Podiums",
+    "unlikeliest.html": "F1 Unlikeliest Podiums",
+    "soulmates.html": "F1 Podium Partnerships",
+}
+
+
+@pytest.mark.parametrize("page,keyword", TITLE_KEYWORDS.items())
+def test_title_front_loads_keyword(dist, page, keyword):
+    html = (dist / page).read_text(encoding="utf-8")
+    m = re.search(r"<title>(.*?)</title>", html, re.DOTALL)
+    assert m, f"{page} has no <title>"
+    title = m.group(1)
+    assert keyword in title, f"{page} title missing keyword {keyword!r}: {title!r}"
+    assert len(title) <= 65, f"{page} title too long ({len(title)}): {title!r}"
+
+
+@pytest.mark.parametrize("page", ["index.html", "combos.html"])
+def test_description_within_budget(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    m = re.search(r'<meta name="description" content="(.*?)">', html, re.DOTALL)
+    assert m, f"{page} has no meta description"
+    assert len(m.group(1)) <= 160, f"{page} description too long: {len(m.group(1))}"
+
+
 def test_landing_h1_keyword_has_real_space(dist):
     # the <h1> text content must read "F1 Podigami" (real space, not just CSS gap)
     html = (dist / "index.html").read_text(encoding="utf-8")

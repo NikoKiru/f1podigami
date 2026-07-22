@@ -152,9 +152,9 @@ def main() -> int:
 
     page = f"""{
         head(
-            "F1 Unlikeliest Podiums - The Most Improbable Trios That Actually Happened",
+            "F1 Unlikeliest Podiums — Most Improbable Trios Ever",
             "podigami.css",
-            description="The most statistically improbable F1 podiums that actually happened. Trios of drivers who rarely podiumed, yet once all three shared the rostrum against the odds.",
+            description="The most statistically improbable podiums in F1 history: trios of drivers who rarely podiumed, yet once all three shared the rostrum against the odds.",
             page_path="unlikeliest.html",
         )
     }

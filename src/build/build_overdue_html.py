@@ -150,9 +150,9 @@ def main() -> int:
 
     page = f"""{
         head(
-            "F1 Overdue Podiums - Most Likely Trio to Never Have Happened",
+            "F1 Overdue Podiums — Trios That Should Have Happened",
             "podigami.css",
-            description="The F1 podium trios that should have happened but never did. Drivers who raced together dozens of times, each a regular podium finisher, yet never all three on the rostrum.",
+            description="F1 podium history's missing trios: drivers who raced together dozens of times, each a regular podium finisher, yet never all three on the rostrum at once.",
             page_path="overdue.html",
         )
     }

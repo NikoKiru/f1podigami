@@ -115,9 +115,9 @@ def main() -> int:
 
     page = f"""{
         head(
-            f"F1 Podium Combinations - {season_min}-{season_max}",
+            f"Every F1 Podium Combination, {season_min}–{season_max} — Podium History",
             "index.css",
-            description=f"Every unique trio that has shared an F1 World Championship podium since {season_min}. Browse, filter, and sort all {unique_combos:,} combinations across {total_podiums:,} races.",
+            description=f"Every unique F1 podium combination in history: all {unique_combos:,} driver trios that have shared a Formula 1 podium since {season_min}, across {total_podiums:,} races.",
             page_path="combos.html",
         )
     }
