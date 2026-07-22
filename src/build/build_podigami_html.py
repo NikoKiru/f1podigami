@@ -802,7 +802,9 @@ def main() -> int:
     )
     candidates = render_candidates(active_cands, meta, form, grid_aware=bool(post))
     timeline = render_timeline(data)
-    faq_pairs = faq_items(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)
+    faq_pairs = faq_items(
+        data, model_eval, total_combos, total_races, possible_trios, grid_size, lo
+    )
     faq = render_faq(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)
 
     # Embedded data for the slider (only what the client needs).

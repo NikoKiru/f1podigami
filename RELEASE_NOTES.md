@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-07-22
+
+### Improvements
+- SEO: keyword-tuned every page's title and meta description (front-loading terms like "F1 podium scorigami" and "F1 podium history"), and added FAQPage, Dataset, BreadcrumbList, and Organization structured data across the site — the FAQ schema is generated from the same source as the visible FAQ, so the two can never drift
+
 ## 2026-07-19
 
 ### Fixes
