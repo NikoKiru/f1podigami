@@ -69,7 +69,7 @@ def format_odds(score: float) -> str:
 def render_trio(names: list[str]) -> str:
     """The three drivers, each carrying a full and an abbreviated form so CSS can
     swap to 'E. Ocon' on narrow screens (matching the combos table)."""
-    sep = '<span class="sep">&middot;</span>'
+    sep = '<span class="sep">/</span>'
     driver = (
         '<span class="undriver">'
         '<span class="dn-full">{full}</span>'

@@ -56,7 +56,7 @@ def format_probability(score: float) -> str:
 
 def render_trio(names: list[str]) -> str:
     """Three drivers with full and abbreviated forms for CSS to swap on narrow screens."""
-    sep = '<span class="sep">&middot;</span>'
+    sep = '<span class="sep">/</span>'
     driver = (
         '<span class="oddriver">'
         '<span class="dn-full">{full}</span>'
