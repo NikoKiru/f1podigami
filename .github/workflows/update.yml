@@ -40,10 +40,10 @@ jobs:
       # the only one that advances. A scheduled run checks out the default
       # branch (develop), whose stale asOf would re-report the same race as
       # due after every merge, looping the update forever.
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
       - name: Decide whether an update is due
@@ -82,7 +82,7 @@ jobs:
     # Covers the watcher's 2h poll budget plus the pipeline, well under the 6h cap.
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Pin to main: the data branch must be cut from main (the PR base),
           # not the default branch (develop) — otherwise unpromoted develop
@@ -93,7 +93,7 @@ jobs:
           token: ${{ secrets.DATA_PUSH_TOKEN }}
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
           cache: pip
