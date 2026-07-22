@@ -410,6 +410,34 @@ def test_index_json_ld_next_race_event(dist, data):
     assert event["location"]["address"]["addressCountry"] == nxt["country"]
 
 
+@pytest.mark.parametrize("page", ALL_PAGES)
+def test_every_page_has_organization_schema(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    orgs = [b for b in _json_ld_blocks(html) if b.get("@type") == "Organization"]
+    assert len(orgs) == 1, f"{page} should carry exactly one Organization schema"
+    assert orgs[0]["name"] == "F1 Podigami"
+    assert orgs[0]["logo"].endswith("apple-touch-icon.png")
+
+
+SUBPAGE_BREADCRUMB = {
+    "combos.html": "Podium Combinations",
+    "overdue.html": "Overdue Podiums",
+    "unlikeliest.html": "Unlikeliest Podiums",
+    "soulmates.html": "Podium Partnerships",
+}
+
+
+@pytest.mark.parametrize("page,label", SUBPAGE_BREADCRUMB.items())
+def test_subpages_have_breadcrumb(dist, page, label):
+    html = (dist / page).read_text(encoding="utf-8")
+    crumbs = [b for b in _json_ld_blocks(html) if b.get("@type") == "BreadcrumbList"]
+    assert len(crumbs) == 1, f"{page} should carry one BreadcrumbList"
+    items = crumbs[0]["itemListElement"]
+    assert items[0]["name"] == "Home"
+    assert items[-1]["name"] == label
+    assert items[-1]["item"] == f"{SITE_URL}/{page}"
+
+
 def test_404_is_noindex(dist):
     html = (dist / "404.html").read_text(encoding="utf-8")
     assert '<meta name="robots" content="noindex">' in html

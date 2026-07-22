@@ -17,8 +17,10 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
     abbr_name,
     asset,
+    breadcrumb_schema,
     head,
     nav,
+    organization_schema,
     race_url,
 )
 
@@ -119,6 +121,10 @@ def main() -> int:
             "index.css",
             description=f"Every unique F1 podium combination in history: all {unique_combos:,} driver trios that have shared a Formula 1 podium since {season_min}, across {total_podiums:,} races.",
             page_path="combos.html",
+            json_ld=[
+                organization_schema(),
+                breadcrumb_schema("Podium Combinations", "combos.html"),
+            ],
         )
     }
 <body>

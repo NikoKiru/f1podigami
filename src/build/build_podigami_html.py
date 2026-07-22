@@ -30,6 +30,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     asset,
     head,
     nav,
+    organization_schema,
     race_url,
 )
 from flags import flag_svg  # noqa: E402
@@ -644,13 +645,14 @@ def json_ld_schemas(schedule: dict, asof: dict | None, description: str) -> list
     """Structured data for the landing page: the site itself plus, when the
     season is still running, the next Grand Prix as a SportsEvent."""
     schemas: list[dict] = [
+        organization_schema(),
         {
             "@context": "https://schema.org",
             "@type": "WebSite",
             "name": "F1 Podigami",
             "url": f"{SITE_URL}/",
             "description": description,
-        }
+        },
     ]
     nxt = pick_next_race(schedule, asof) if schedule else None
     if nxt:
