@@ -610,7 +610,7 @@ main {
     border-top: 3px solid var(--team, var(--accent));
     border-radius: var(--radius-sm);
     padding: 11px 14px 12px;
-    min-width: 138px;
+    flex: 1 1 138px;
 }
 
 .hd-id {
