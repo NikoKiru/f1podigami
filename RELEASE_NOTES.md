@@ -3,6 +3,7 @@
 ## 2026-07-22
 
 ### Improvements
+- Unified the trio separator across the whole site on `/` (e.g. "Verstappen / Norris / Piastri"): the Overdue and Unlikeliest pages previously used a middot between driver names, which collided with the middot already used for the per-driver rates line on the same cards. Now `/` always means "these three are one trio" and `·` is reserved for separate facts (rates, dates, footer)
 - Landing hero: the "chance the next race delivers a brand-new trio" number now sits in its own framed panel that fills the full hero height, so on desktop it's anchored and balances the podium cards instead of floating in dead space; the old divider between the two halves is dropped (redundant with the panel border), and the three podium cards now stretch to fill their column so neither side leaves dead space
 - SEO: keyword-tuned every page's title and meta description (front-loading terms like "F1 podium scorigami" and "F1 podium history"), and added FAQPage, Dataset, BreadcrumbList, and Organization structured data across the site — the FAQ schema is generated from the same source as the visible FAQ, so the two can never drift
 
