@@ -49,6 +49,39 @@ def wiki_url(season: str, race_name: str) -> str:
     return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(title)
 
 
+def organization_schema() -> dict:
+    """schema.org Organization for the site (stable entity + logo for search)."""
+    return {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "F1 Podigami",
+        "url": f"{SITE_URL}/",
+        "logo": f"{SITE_URL}/apple-touch-icon.png",
+    }
+
+
+def breadcrumb_schema(label: str, page_path: str) -> dict:
+    """schema.org BreadcrumbList: ``Home`` then, for a sub-page, this page.
+
+    A homepage/empty ``page_path`` yields a single ``Home`` item.
+    """
+    items = [{"@type": "ListItem", "position": 1, "name": "Home", "item": f"{SITE_URL}/"}]
+    if page_path and page_path != "index.html":
+        items.append(
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": label,
+                "item": f"{SITE_URL}/{page_path}",
+            }
+        )
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": items,
+    }
+
+
 def race_url(links: dict, season: str, rnd, race_name: str) -> str:
     """Official F1 result-page URL for a race, falling back to Wikipedia.
 
