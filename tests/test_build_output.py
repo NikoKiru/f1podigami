@@ -1,5 +1,6 @@
 """Output / HTML validation: the built site is complete and well-formed."""
 
+import html as _html
 import json
 import re
 
@@ -436,6 +437,27 @@ def test_subpages_have_breadcrumb(dist, page, label):
     assert items[0]["name"] == "Home"
     assert items[-1]["name"] == label
     assert items[-1]["item"] == f"{SITE_URL}/{page}"
+
+
+def test_index_faqpage_schema_matches_visible_faq(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    faqs = [b for b in _json_ld_blocks(html) if b.get("@type") == "FAQPage"]
+    assert len(faqs) == 1, "index.html should carry exactly one FAQPage schema"
+    q_entities = faqs[0]["mainEntity"]
+    assert len(q_entities) >= 5
+    for qe in q_entities:
+        assert qe["@type"] == "Question"
+        assert qe["name"]  # question text
+        assert qe["acceptedAnswer"]["@type"] == "Answer"
+        assert qe["acceptedAnswer"]["text"]
+        # schema answer is plain text (no HTML tags leaked in)
+        assert "<" not in qe["acceptedAnswer"]["text"]
+    # Parity: each schema question is a visible FAQ <summary> on the page. The
+    # schema name is plain text (entities unescaped), so compare against the
+    # unescaped page rather than the raw &ldquo;-carrying HTML.
+    page_plain = _html.unescape(html)
+    for qe in q_entities:
+        assert f'<summary class="faq-q">{qe["name"]}</summary>' in page_plain
 
 
 def test_404_is_noindex(dist):
