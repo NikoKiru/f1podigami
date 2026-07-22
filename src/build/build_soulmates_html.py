@@ -9,7 +9,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, asset, head, nav  # noqa: E402  (needs the sys.path entry above)
+from _layout import (  # noqa: E402  (needs the sys.path entry above)
+    FOOTER,
+    asset,
+    breadcrumb_schema,
+    head,
+    nav,
+    organization_schema,
+)
 
 from datalib import SoulmatePair, Soulmates, load_soulmates  # noqa: E402
 
@@ -209,10 +216,14 @@ def main() -> int:
 
     page = f"""{
         head(
-            "F1 Soulmates &middot; Podigami",
+            "F1 Podium Partnerships — Drivers Who Shared the Rostrum",
             "soulmates.css",
-            description="Which F1 legends spent the most race weekends together on the podium? 76 years of Formula 1 history distilled into the partnerships that defined each era.",
+            description="F1 podium history by partnership: which drivers spent the most race weekends together on the rostrum across 76 years of Formula 1.",
             page_path="soulmates.html",
+            json_ld=[
+                organization_schema(),
+                breadcrumb_schema("Podium Partnerships", "soulmates.html"),
+            ],
         )
     }
 <body>

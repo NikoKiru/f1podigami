@@ -1,5 +1,6 @@
 """Output / HTML validation: the built site is complete and well-formed."""
 
+import html as _html
 import json
 import re
 
@@ -49,6 +50,34 @@ def test_page_head_essentials(dist, page):
     assert "width=device-width, initial-scale=1.0" in html
     # style.css is linked with a cache-busting ?v= token
     assert '<link rel="stylesheet" href="style.css?v=' in html
+
+
+# page -> a keyword phrase its <title> must front-load
+TITLE_KEYWORDS = {
+    "index.html": "F1 Podium Scorigami",
+    "combos.html": "F1 Podium Combination",
+    "overdue.html": "F1 Overdue Podiums",
+    "unlikeliest.html": "F1 Unlikeliest Podiums",
+    "soulmates.html": "F1 Podium Partnerships",
+}
+
+
+@pytest.mark.parametrize("page,keyword", TITLE_KEYWORDS.items())
+def test_title_front_loads_keyword(dist, page, keyword):
+    html = (dist / page).read_text(encoding="utf-8")
+    m = re.search(r"<title>(.*?)</title>", html, re.DOTALL)
+    assert m, f"{page} has no <title>"
+    title = m.group(1)
+    assert keyword in title, f"{page} title missing keyword {keyword!r}: {title!r}"
+    assert len(title) <= 65, f"{page} title too long ({len(title)}): {title!r}"
+
+
+@pytest.mark.parametrize("page", ["index.html", "combos.html"])
+def test_description_within_budget(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    m = re.search(r'<meta name="description" content="(.*?)">', html, re.DOTALL)
+    assert m, f"{page} has no meta description"
+    assert len(m.group(1)) <= 160, f"{page} description too long: {len(m.group(1))}"
 
 
 def test_landing_h1_keyword_has_real_space(dist):
@@ -380,6 +409,83 @@ def test_index_json_ld_next_race_event(dist, data):
     assert event["location"]["@type"] == "Place"
     assert event["location"]["name"] == nxt["circuitName"]
     assert event["location"]["address"]["addressCountry"] == nxt["country"]
+
+
+@pytest.mark.parametrize("page", ALL_PAGES)
+def test_every_page_has_organization_schema(dist, page):
+    html = (dist / page).read_text(encoding="utf-8")
+    orgs = [b for b in _json_ld_blocks(html) if b.get("@type") == "Organization"]
+    assert len(orgs) == 1, f"{page} should carry exactly one Organization schema"
+    assert orgs[0]["name"] == "F1 Podigami"
+    assert orgs[0]["logo"].endswith("apple-touch-icon.png")
+
+
+SUBPAGE_BREADCRUMB = {
+    "combos.html": "Podium Combinations",
+    "overdue.html": "Overdue Podiums",
+    "unlikeliest.html": "Unlikeliest Podiums",
+    "soulmates.html": "Podium Partnerships",
+}
+
+
+@pytest.mark.parametrize("page,label", SUBPAGE_BREADCRUMB.items())
+def test_subpages_have_breadcrumb(dist, page, label):
+    html = (dist / page).read_text(encoding="utf-8")
+    crumbs = [b for b in _json_ld_blocks(html) if b.get("@type") == "BreadcrumbList"]
+    assert len(crumbs) == 1, f"{page} should carry one BreadcrumbList"
+    items = crumbs[0]["itemListElement"]
+    assert items[0]["name"] == "Home"
+    assert items[-1]["name"] == label
+    assert items[-1]["item"] == f"{SITE_URL}/{page}"
+
+
+def test_index_faqpage_schema_matches_visible_faq(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    faqs = [b for b in _json_ld_blocks(html) if b.get("@type") == "FAQPage"]
+    assert len(faqs) == 1, "index.html should carry exactly one FAQPage schema"
+    q_entities = faqs[0]["mainEntity"]
+    assert len(q_entities) >= 5
+    for qe in q_entities:
+        assert qe["@type"] == "Question"
+        assert qe["name"]  # question text
+        assert qe["acceptedAnswer"]["@type"] == "Answer"
+        assert qe["acceptedAnswer"]["text"]
+        # schema answer is plain text (no HTML tags leaked in)
+        assert "<" not in qe["acceptedAnswer"]["text"]
+    # Parity: each schema question is a visible FAQ <summary> on the page. The
+    # schema name is plain text (entities unescaped), so compare against the
+    # unescaped page rather than the raw &ldquo;-carrying HTML.
+    page_plain = _html.unescape(html)
+    for qe in q_entities:
+        assert f'<summary class="faq-q">{qe["name"]}</summary>' in page_plain
+
+
+def test_combos_dataset_schema(dist):
+    html = (dist / "combos.html").read_text(encoding="utf-8")
+    datasets = [b for b in _json_ld_blocks(html) if b.get("@type") == "Dataset"]
+    assert len(datasets) == 1, "combos.html should carry exactly one Dataset schema"
+    ds = datasets[0]
+    assert "podium combination" in ds["name"].lower()
+    assert ds["url"] == f"{SITE_URL}/combos.html"
+    assert ds["creator"]["@type"] == "Organization"
+    assert ds["license"]
+    assert "/" in ds["temporalCoverage"]  # e.g. "1950/2026"
+    assert isinstance(ds["keywords"], list) and ds["keywords"]
+
+
+def test_index_sportsevent_enriched(dist, data):
+    from build.build_podigami_html import pick_next_race
+
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    nxt = pick_next_race(data["schedule"], data["podigami"].get("asOf"))
+    events = [b for b in _json_ld_blocks(html) if b.get("@type") == "SportsEvent"]
+    if nxt is None:
+        assert events == []
+        return
+    ev = events[0]
+    assert ev["sport"] == "Formula 1"
+    assert ev["eventStatus"] == "https://schema.org/EventScheduled"
+    assert ev["url"] == f"{SITE_URL}/"
 
 
 def test_404_is_noindex(dist):
