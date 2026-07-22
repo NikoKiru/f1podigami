@@ -395,3 +395,12 @@ def test_faq_post_quali_item_absent_for_v1():
 def test_faq_post_quali_item_tolerates_missing_rung():
     out = bp.render_faq(V2_DATA, EVAL, 123, 456, 789, 20, 1950)  # old eval, no rung
     assert "after qualifying" in out  # item still there, just uncited
+
+
+def test_faq_items_matches_rendered_faq():
+    pairs = bp.faq_items({}, {}, 123, 456, 789, 20, 1950)
+    html_out = bp.render_faq({}, {}, 123, 456, 789, 20, 1950)
+    # Every question produced by faq_items is rendered verbatim as a <summary>.
+    for q, _a in pairs:
+        assert f'<summary class="faq-q">{q}</summary>' in html_out
+    assert len(pairs) >= 5
