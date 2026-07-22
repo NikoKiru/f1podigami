@@ -23,7 +23,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import FOOTER, abbr_name, asset, head, nav, race_url  # noqa: E402
+from _layout import (  # noqa: E402
+    FOOTER,
+    abbr_name,
+    asset,
+    breadcrumb_schema,
+    head,
+    nav,
+    organization_schema,
+    race_url,
+)
 from _rows import render_row  # noqa: E402
 
 from datalib import UnlikeliestTrio, load_race_links, load_unlikeliest  # noqa: E402
@@ -152,10 +161,14 @@ def main() -> int:
 
     page = f"""{
         head(
-            "F1 Unlikeliest Podiums - The Most Improbable Trios That Actually Happened",
+            "F1 Unlikeliest Podiums — Most Improbable Trios Ever",
             "podigami.css",
-            description="The most statistically improbable F1 podiums that actually happened. Trios of drivers who rarely podiumed, yet once all three shared the rostrum against the odds.",
+            description="The most statistically improbable podiums in F1 history: trios of drivers who rarely podiumed, yet once all three shared the rostrum against the odds.",
             page_path="unlikeliest.html",
+            json_ld=[
+                organization_schema(),
+                breadcrumb_schema("Unlikeliest Podiums", "unlikeliest.html"),
+            ],
         )
     }
 <body>

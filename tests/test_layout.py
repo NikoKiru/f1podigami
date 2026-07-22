@@ -4,7 +4,16 @@ import hashlib
 import re
 from pathlib import Path
 
-from build._layout import FOOTER, NAV_LINKS, asset, head, nav
+from build._layout import (
+    FOOTER,
+    NAV_LINKS,
+    SITE_URL,
+    asset,
+    breadcrumb_schema,
+    head,
+    nav,
+    organization_schema,
+)
 
 ASSETS = Path(__file__).resolve().parents[1] / "assets"
 
@@ -90,3 +99,30 @@ def test_nav_links_are_plain_labels_no_arrow():
 def test_footer_is_shared_constant():
     assert "Jolpica F1 API" in FOOTER
     assert 'class="footer-nav"' in FOOTER
+
+
+def test_organization_schema_shape():
+    org = organization_schema()
+    assert org["@context"] == "https://schema.org"
+    assert org["@type"] == "Organization"
+    assert org["name"] == "F1 Podigami"
+    assert org["url"] == f"{SITE_URL}/"
+    assert org["logo"] == f"{SITE_URL}/apple-touch-icon.png"
+
+
+def test_breadcrumb_schema_subpage():
+    bc = breadcrumb_schema("Podium Combinations", "combos.html")
+    assert bc["@type"] == "BreadcrumbList"
+    items = bc["itemListElement"]
+    assert [i["position"] for i in items] == [1, 2]
+    assert items[0]["name"] == "Home"
+    assert items[0]["item"] == f"{SITE_URL}/"
+    assert items[1]["name"] == "Podium Combinations"
+    assert items[1]["item"] == f"{SITE_URL}/combos.html"
+
+
+def test_breadcrumb_schema_homepage_is_single_item():
+    bc = breadcrumb_schema("Home", "index.html")
+    items = bc["itemListElement"]
+    assert len(items) == 1
+    assert items[0]["item"] == f"{SITE_URL}/"

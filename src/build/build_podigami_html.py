@@ -10,6 +10,7 @@ from __future__ import annotations
 import datetime as dt
 import html
 import json
+import re
 import sys
 import urllib.parse
 from pathlib import Path
@@ -30,6 +31,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     asset,
     head,
     nav,
+    organization_schema,
     race_url,
 )
 from flags import flag_svg  # noqa: E402
@@ -527,7 +529,7 @@ def render_accuracy_badge(ev: dict) -> str:
     )
 
 
-def render_faq(
+def faq_items(
     data: dict,
     ev: dict,
     total_combos: int,
@@ -535,7 +537,9 @@ def render_faq(
     possible_trios: int,
     grid_size: int,
     lo: int,
-) -> str:
+) -> list[tuple[str, str]]:
+    """Ordered (question, answer-HTML) FAQ pairs — the single source feeding both
+    the visible FAQ (``render_faq``) and the FAQPage schema (``json_ld_schemas``)."""
     mp = ev.get("modelParams", {}) if ev else {}
     half_life = mp.get("halfLife", 6)
     is_v2 = (data.get("params") or {}).get("model") == "dbpl-v2"
@@ -624,6 +628,19 @@ def render_faq(
                 "is hard, weaker where the grid gets shuffled." + cite,
             ),
         )
+    return items
+
+
+def render_faq(
+    data: dict,
+    ev: dict,
+    total_combos: int,
+    total_races: int,
+    possible_trios: int,
+    grid_size: int,
+    lo: int,
+) -> str:
+    items = faq_items(data, ev, total_combos, total_races, possible_trios, grid_size, lo)
     entries = []
     for q, a in items:
         entries.append(
@@ -640,18 +657,45 @@ def render_faq(
     )
 
 
-def json_ld_schemas(schedule: dict, asof: dict | None, description: str) -> list[dict]:
-    """Structured data for the landing page: the site itself plus, when the
-    season is still running, the next Grand Prix as a SportsEvent."""
+def _plain(text: str) -> str:
+    """Strip HTML tags and unescape entities -> plain text for JSON-LD answers."""
+    return html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
+
+
+def json_ld_schemas(
+    schedule: dict,
+    asof: dict | None,
+    description: str,
+    faq: list[tuple[str, str]] | None = None,
+) -> list[dict]:
+    """Structured data for the landing page: the organisation and site, the FAQ
+    (as a FAQPage), plus, when the season is still running, the next Grand Prix
+    as a SportsEvent."""
     schemas: list[dict] = [
+        organization_schema(),
         {
             "@context": "https://schema.org",
             "@type": "WebSite",
             "name": "F1 Podigami",
             "url": f"{SITE_URL}/",
             "description": description,
-        }
+        },
     ]
+    if faq:
+        schemas.append(
+            {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": _plain(q),
+                        "acceptedAnswer": {"@type": "Answer", "text": _plain(a)},
+                    }
+                    for q, a in faq
+                ],
+            }
+        )
     nxt = pick_next_race(schedule, asof) if schedule else None
     if nxt:
         schemas.append(
@@ -659,6 +703,9 @@ def json_ld_schemas(schedule: dict, asof: dict | None, description: str) -> list
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
                 "name": nxt["raceName"],
+                "sport": "Formula 1",
+                "url": f"{SITE_URL}/",
+                "eventStatus": "https://schema.org/EventScheduled",
                 "startDate": _iso_datetime(nxt),
                 "location": {
                     "@type": "Place",
@@ -755,6 +802,9 @@ def main() -> int:
     )
     candidates = render_candidates(active_cands, meta, form, grid_aware=bool(post))
     timeline = render_timeline(data)
+    faq_pairs = faq_items(
+        data, model_eval, total_combos, total_races, possible_trios, grid_size, lo
+    )
     faq = render_faq(data, model_eval, total_combos, total_races, possible_trios, grid_size, lo)
 
     # Embedded data for the slider (only what the client needs).
@@ -769,16 +819,16 @@ def main() -> int:
     ).replace("</", "<\\/")
 
     meta_description = (
-        f"Podigami is the art of spotting F1 podium trios that have never happened before. "
-        f"A statistical model predicts which brand-new trio is most likely next in the {season} season."
+        f"F1 podium scorigami: tracking the podium trios Formula 1 has never seen. "
+        f"A model predicts the most likely brand-new trio for the next {season} race."
     )
     page = f"""{
         head(
-            f"F1 Podigami - Next Likely New Podium ({season})",
+            "F1 Podium Scorigami — New Trio Tracker & Predictions",
             "podigami.css",
             description=meta_description,
             page_path="index.html",
-            json_ld=json_ld_schemas(schedule, data.get("asOf"), meta_description),
+            json_ld=json_ld_schemas(schedule, data.get("asOf"), meta_description, faq_pairs),
         )
     }
 <body>
