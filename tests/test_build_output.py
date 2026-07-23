@@ -13,13 +13,12 @@ PAGES = {
     "index.html": ["podigami.css", "podigami.js", "theme.js"],
     "combos.html": ["index.css", "index.js", "theme.js"],
     "overdue.html": ["podigami.css", "theme.js"],
-    "soulmates.html": ["soulmates.css", "theme.js"],
+    "soulmates.html": ["podigami.css", "theme.js"],
 }
 
 ALL_ASSETS = [
     "style.css",
     "index.css",
-    "soulmates.css",
     "podigami.css",
     "index.js",
     "podigami.js",
@@ -297,6 +296,22 @@ def test_unlikeliest_has_ranked_list(dist):
     assert html.count("uncard-hero") == 1  # only the #1 trio is a card
     assert 'class="rankrow"' in html
     assert 'class="un-stat rr-stat-race"' in html  # race repeats in the row panel
+
+
+def test_soulmates_uses_shared_ranked_layout(dist):
+    """Soulmates must share the site's panel + hero + leaderboard-row chrome
+    rather than its old bespoke bar-chart list."""
+    html = (dist / "soulmates.html").read_text(encoding="utf-8")
+    assert 'class="nav"' in html
+    assert 'class="panel"' in html  # site-standard panels
+    assert html.count('class="rank-list"') == 1
+    assert html.count("smcard-hero") == 1  # only the #1 duo is a hero card
+    assert 'class="rankrow"' in html  # the rest are shared leaderboard rows
+    assert 'class="fact-card"' in html  # did-you-know cards retained
+    # the old bespoke layout is gone
+    assert 'class="sm-page"' not in html
+    assert 'class="pl-list"' not in html
+    assert 'class="fact-stack"' not in html
 
 
 def test_404_page_exists_with_chrome_and_home_link(dist):

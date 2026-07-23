@@ -28,7 +28,7 @@ def test_index_inputs_prevent_ios_zoom():
     assert "font-size: 16px" in css("index.css")
 
 
-@pytest.mark.parametrize("name", ["soulmates.css", "podigami.css"])
+@pytest.mark.parametrize("name", ["index.css", "podigami.css"])
 def test_secondary_pages_have_phone_breakpoint(name):
     assert "@media (max-width: 600px)" in css(name)
 

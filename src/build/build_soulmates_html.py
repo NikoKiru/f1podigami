@@ -1,4 +1,10 @@
-"""Render soulmates.html — ranked pairs list + fun-fact stat cards."""
+"""Render soulmates.html — the driver-partnership leaderboard.
+
+Shares the site's ranked-list chrome (Overdue / Unlikeliest): the #1 duo is a
+full hero card and every rank below it is a compact native ``<details>`` row
+(``_rows.render_row``) that expands to show the partnership's stats. A second
+panel surfaces the fun-fact stat cards computed from the full 40×40 matrix.
+"""
 
 from __future__ import annotations
 
@@ -11,12 +17,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
 from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
+    abbr_name,
     asset,
     breadcrumb_schema,
     head,
     nav,
     organization_schema,
 )
+from _rows import render_row  # noqa: E402
 
 from datalib import SoulmatePair, Soulmates, load_soulmates  # noqa: E402
 
@@ -27,32 +35,67 @@ def esc(s: str) -> str:
     return html.escape(str(s))
 
 
-def _last(name: str) -> str:
-    parts = name.split()
-    return parts[-1] if parts else name
+def _seasons(p: SoulmatePair) -> int:
+    """Seasons the pairing spanned, inclusive of both endpoints."""
+    return p.lastYear - p.firstYear + 1
 
 
-def _render_pairs(pairs: list[SoulmatePair]) -> str:
+def render_pair(p: SoulmatePair) -> str:
+    """The two drivers, each carrying a full and an abbreviated form so CSS can
+    swap to 'L. Hamilton' on narrow screens (matching every other page)."""
+    sep = '<span class="sep">/</span>'
+    driver = (
+        '<span class="smdriver">'
+        '<span class="dn-full">{full}</span>'
+        '<span class="dn-abbr" aria-hidden="true">{abbr}</span>'
+        "</span>"
+    )
+    return sep.join(driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in (p.a, p.b))
+
+
+def _stat(label: str, value: str) -> str:
+    return (
+        f'<div class="sm-stat">'
+        f'<span class="sm-stat-label">{label}</span>'
+        f'<span class="sm-stat-val">{value}</span>'
+        f"</div>"
+    )
+
+
+def _pair_stats(p: SoulmatePair) -> str:
+    seasons = _seasons(p)
+    rate = p.count / seasons
+    return (
+        _stat("Years", f"{p.firstYear}&ndash;{p.lastYear}")
+        + _stat("Seasons active", str(seasons))
+        + _stat("Per season", f"{rate:.1f}")
+    )
+
+
+def render_hero(p: SoulmatePair) -> str:
+    """The #1 pairing as the larger, accented hero card (mirrors Overdue)."""
+    return (
+        '<li class="smcard smcard-hero">'
+        '<div class="sm-top"><span class="sm-rank">1</span></div>'
+        f'<div class="sm-drivers">{render_pair(p)}</div>'
+        f'<div class="sm-count">'
+        f'<span class="sm-count-num">{p.count}</span>'
+        f'<span class="sm-count-label">shared podiums</span>'
+        f"</div>"
+        f'<div class="sm-stats">{_pair_stats(p)}</div>'
+        "</li>"
+    )
+
+
+def render_pairs(pairs: list[SoulmatePair]) -> str:
     if not pairs:
-        return ""
-    max_c = pairs[0].count
-    rows = []
-    for i, p in enumerate(pairs, 1):
-        pct = round(100 * p.count / max_c)
-        rows.append(
-            f'<li class="pl-row">'
-            f'<span class="pl-rank">{i}</span>'
-            f'<div class="pl-body">'
-            f'  <div class="pl-names"><b>{esc(p.a)}</b> &amp; <b>{esc(p.b)}</b></div>'
-            f'  <div class="pl-bar-wrap"><div class="pl-bar" style="width:{pct}%"></div></div>'
-            f"</div>"
-            f'<div class="pl-meta">'
-            f'  <span class="pl-count">{p.count}</span>'
-            f'  <span class="pl-years">{p.firstYear}&ndash;{p.lastYear}</span>'
-            f"</div>"
-            f"</li>"
-        )
-    return "\n".join(rows)
+        return '<p class="panel-sub">No partnerships yet.</p>'
+    hero = render_hero(pairs[0])
+    rows = "".join(
+        render_row(i, render_pair(p), str(p.count), _pair_stats(p))
+        for i, p in enumerate(pairs[1:], 2)
+    )
+    return f'<ol class="rank-list">{hero}{rows}</ol>'
 
 
 def _compute_facts(soulmates: Soulmates) -> list[dict]:
@@ -189,35 +232,15 @@ def main() -> int:
     soulmates = load_soulmates()
 
     top_pairs = soulmates.topPairs
-    top = top_pairs[0] if top_pairs else None
     n_drivers = len(soulmates.drivers)
 
-    stats_html = ""
-    if top:
-        stats_html = f"""
-        <div class="stats">
-            <div class="stat">
-                <div class="num">{n_drivers}</div>
-                <div class="label">Drivers charted</div>
-            </div>
-            <div class="stat">
-                <div class="num">{top.count} <small>shared podiums</small></div>
-                <div class="label">{esc(_last(top.a))} &amp; {esc(_last(top.b))} &mdash; #1 pair</div>
-            </div>
-            <div class="stat">
-                <div class="num">{len(top_pairs)}</div>
-                <div class="label">Pairs ranked</div>
-            </div>
-        </div>"""
-
-    pairs_html = _render_pairs(top_pairs)
-    facts = _compute_facts(soulmates)
-    facts_html = _render_facts(facts)
+    pairs_html = render_pairs(top_pairs)
+    facts_html = _render_facts(_compute_facts(soulmates))
 
     page = f"""{
         head(
             "F1 Podium Partnerships — Drivers Who Shared the Rostrum",
-            "soulmates.css",
+            "podigami.css",
             description="F1 podium history by partnership: which drivers spent the most race weekends together on the rostrum across 76 years of Formula 1.",
             page_path="soulmates.html",
             json_ld=[
@@ -232,28 +255,31 @@ def main() -> int:
     <div class="container">
         <h1><span class="accent">F1</span> Podium Soulmates</h1>
         <p class="tagline">Which legends spent the most race weekends together on the box? 76 years of F1 history distilled into the partnerships that defined each era.</p>
-        {stats_html}
     </div>
 </header>
 <main>
     <div class="container">
-        <div class="sm-page">
+        <section class="panel">
+            <h2>Closest partnerships</h2>
+            <p class="panel-sub">Ranked by how many World Championship podiums each duo shared &mdash; {
+        len(top_pairs)
+    } partnerships drawn from the all-time top {n_drivers} drivers by career podiums.</p>
+            {pairs_html}
+        </section>
 
-            <section>
-                <p class="sm-section-title">Ranked pairs</p>
-                <ol class="pl-list">
-                    {pairs_html}
-                </ol>
-            </section>
+        <section class="panel">
+            <h2>Did you know</h2>
+            <p class="panel-sub">The quirks hiding inside the full {n_drivers}&times;{
+        n_drivers
+    } shared-podium matrix.</p>
+            <div class="sm-facts">
+                {facts_html}
+            </div>
+        </section>
 
-            <section>
-                <p class="sm-section-title">Did you know</p>
-                <div class="fact-stack">
-                    {facts_html}
-                </div>
-            </section>
-
-        </div>
+        <p class="as-of">Shared podiums count every World Championship race where both drivers finished in the top three, across all F1 rounds since 1950. The field is the all-time top {
+        n_drivers
+    } drivers by career podiums.</p>
     </div>
 </main>
 {FOOTER}
