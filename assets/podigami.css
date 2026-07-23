@@ -913,6 +913,176 @@ main {
     white-space: nowrap;
 }
 
+/* ── Soulmates: hero card + fun-fact grid ────────────────────────────────────
+   Mirrors the Overdue hero; every rank below the #1 duo reuses the shared
+   .rankrow leaderboard styles. The fun-fact cards sit in their own responsive
+   grid inside a second panel. */
+.smcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.smcard-hero {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--bg-2) 100%);
+    border-color: var(--border-strong);
+    border-left: 4px solid var(--accent-bright);
+    padding: 24px;
+}
+
+.sm-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sm-rank {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.sm-rank::before {
+    content: "#";
+    color: var(--accent);
+}
+
+.sm-drivers {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.35;
+}
+
+.sm-drivers .sep {
+    color: var(--muted-dim);
+    margin: 0 7px;
+    font-weight: 400;
+}
+
+.sm-drivers .dn-abbr {
+    display: none;
+}
+
+/* Headline count — the number the hero card leads with. */
+.sm-count {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sm-count-num {
+    font-size: 46px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent-bright);
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.sm-count-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+/* Three labelled stat cells, always in the same order/place. */
+.sm-stats {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    margin-top: auto;
+}
+
+.sm-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.sm-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    line-height: 1.2;
+}
+
+.sm-stat-val {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* fun-fact cards (second panel) */
+.sm-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.fact-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    transition: border-color 0.12s, background 0.12s;
+}
+
+.fact-card:hover {
+    border-color: var(--border-strong);
+    border-left-color: var(--accent-bright);
+}
+
+.fc-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 6px;
+}
+
+.fc-num {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.4px;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+
+.fc-num .fc-unit {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-left: 4px;
+    letter-spacing: 0;
+}
+
+.fc-detail {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+}
+
+.fc-detail b {
+    color: var(--text);
+    font-weight: 600;
+}
+
 /* ── Overdue: collapsible section headers (native <details>) ──────────────── */
 .od-panel > summary {
     display: flex;
@@ -1437,12 +1607,14 @@ a.tl-where:hover {
        hero numbers down so the #1 card still fits a phone column. */
     .un-drivers .dn-full,
     .od-drivers .dn-full,
+    .sm-drivers .dn-full,
     .rr-drivers .dn-full {
         display: none;
     }
 
     .un-drivers .dn-abbr,
     .od-drivers .dn-abbr,
+    .sm-drivers .dn-abbr,
     .rr-drivers .dn-abbr {
         display: inline;
     }
@@ -1469,6 +1641,22 @@ a.tl-where:hover {
 
     .odcard-hero .od-score-num {
         font-size: 38px;
+    }
+
+    .smcard-hero {
+        padding: 18px;
+    }
+
+    .smcard-hero .sm-drivers {
+        font-size: 20px;
+    }
+
+    .smcard-hero .sm-count-num {
+        font-size: 38px;
+    }
+
+    .sm-facts {
+        grid-template-columns: 1fr;
     }
 
     /* Leaderboard rows: tighter type; the race name leaves the row face and
