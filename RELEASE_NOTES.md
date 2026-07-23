@@ -3,7 +3,7 @@
 ## 2026-07-23
 
 ### Improvements
-- Rebuilt the Soulmates page on the site's shared ranked-list chrome so it matches the Overdue and Unlikeliest pages: the #1 duo is now a full hero card and every rank below it is a compact leaderboard row that expands to show the partnership's stats (years active, seasons, shared podiums per season). The fun-fact "Did you know" cards move into their own panel, the bespoke bar-chart list and standalone `soulmates.css` are gone (the page now shares `podigami.css`), and the header stat strip is dropped for parity with the other pages (#PRNUM)
+- Rebuilt the Soulmates page on the site's shared ranked-list chrome so it matches the Overdue and Unlikeliest pages: the #1 duo is now a full hero card and every rank below it is a compact leaderboard row that expands to show the partnership's stats (years active, seasons, shared podiums per season). The fun-fact "Did you know" cards move into their own panel, the bespoke bar-chart list and standalone `soulmates.css` are gone (the page now shares `podigami.css`), and the header stat strip is dropped for parity with the other pages (#222)
 
 ## 2026-07-22
 
