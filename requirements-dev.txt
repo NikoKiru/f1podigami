@@ -5,6 +5,6 @@
 # code blocks), and an unpinned CI ruff silently failed every PR's format gate —
 # blocking the auto/update-data auto-merge (2026-07-25 Hungary quali stall).
 # Bump the bound only together with a repo-wide `ruff format` in the same PR.
-ruff>=0.15.22,<0.16
+ruff>=0.16.1,<0.17
 pytest-cov>=7.1.0
 pip-audit>=2.10.1
