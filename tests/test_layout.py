@@ -8,8 +8,10 @@ from build._layout import (
     FOOTER,
     NAV_LINKS,
     SITE_URL,
+    abbr_name,
     asset,
     breadcrumb_schema,
+    driver_name,
     head,
     nav,
     organization_schema,
@@ -144,3 +146,20 @@ def test_breadcrumb_schema_homepage_is_single_item():
     items = bc["itemListElement"]
     assert len(items) == 1
     assert items[0]["item"] == f"{SITE_URL}/"
+
+
+def test_driver_name_uses_the_name_f1_bills_him_by():
+    """The API still lists Antonelli by his full given names; F1 and Mercedes
+    call him Kimi Antonelli, and so does the site."""
+    assert driver_name("Andrea Kimi Antonelli") == "Kimi Antonelli"
+
+
+def test_driver_name_leaves_every_other_driver_alone():
+    assert driver_name("Kimi Räikkönen") == "Kimi Räikkönen"
+    assert driver_name("Andrea de Cesaris") == "Andrea de Cesaris"
+    assert driver_name("") == ""
+
+
+def test_abbr_name_abbreviates_the_billed_name():
+    assert abbr_name("Andrea Kimi Antonelli") == "K. Antonelli"
+    assert abbr_name("Esteban Ocon") == "E. Ocon"

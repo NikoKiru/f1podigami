@@ -4,6 +4,7 @@
 
 ### Improvements
 - The landing page's tagline now reads **"Keeping track of every F1 podium trio ever and predicting the next one."** — it says what the site does in plain terms, where the previous line ("Spotting the podium trio F1 has never seen — and predicting who's about to make it happen") asked the reader to work out the scorigami premise before the first data on the page (#315)
+- **Andrea Kimi Antonelli is now Kimi Antonelli across the site**, the name F1 and Mercedes use for him: in the hero, the trio board's tooltips, the timeline, the combinations table (where `K. Antonelli` is the narrow-screen form and searching "kimi antonelli" finds him), and on the other pages as well. The Jolpica API still lists his full given names and the committed data keeps them. The pages swap in the billed name when they render, so the automated data refreshes are unaffected (#317)
 
 ## 2026-09-08
 

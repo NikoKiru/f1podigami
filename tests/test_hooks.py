@@ -39,6 +39,13 @@ def test_soulmates_hook_top_pair_and_escaping():
     assert 'href="soulmates.html"' in out
 
 
+def test_soulmates_hook_bills_antonelli_as_kimi():
+    sm = NS(topPairs=[NS(a="Andrea Kimi Antonelli", b="George Russell", count=9)])
+    out = _hooks.soulmates_hook(sm)
+    assert "Kimi Antonelli &amp; George Russell" in out
+    assert "Andrea" not in out
+
+
 def test_soulmates_hook_missing_data():
     assert "hook-stat" not in _hooks.soulmates_hook(None)
     assert "hook-stat" not in _hooks.soulmates_hook(NS(topPairs=[]))

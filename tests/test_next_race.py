@@ -358,6 +358,12 @@ def test_combos_link_builds_prefilled_combos_url():
     assert url == "combos.html?d=Max+Verstappen&d=Lando+Norris&d=Charles+Leclerc"
 
 
+def test_combos_link_filters_on_the_name_the_combos_table_shows():
+    # The combos table lists him as Kimi Antonelli, so the filter has to match that.
+    url = bp.combos_link(["Andrea Kimi Antonelli", "Lando Norris", "George Russell"])
+    assert url == "combos.html?d=Kimi+Antonelli&d=Lando+Norris&d=George+Russell"
+
+
 _PODIUM_TRIO = {
     "season": "2026",
     "round": "2",
@@ -387,7 +393,7 @@ def test_render_last_race_trio_links_to_combos_page_when_combo_exists():
     assert 'class="combo-link"' in html
     assert "combos.html?d=George+Russell" in html
     assert "d=Max+Verstappen" in html
-    assert "d=Andrea+Kimi+Antonelli" in html
+    assert "d=Kimi+Antonelli" in html
     # the link wraps the trio (codes live inside the anchor)
     anchor = html.split('class="combo-link"', 1)[1]
     assert "lr-trio" in anchor.split("</a>", 1)[0]

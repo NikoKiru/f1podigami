@@ -1543,8 +1543,9 @@ a.tl-where:hover {
         font-size: 16.5px;
     }
 
-    /* Three columns leave ~158px each here — narrower than "Andrea Kimi
-       Antonelli" — so the trio stacks and each driver gets the full width. */
+    /* Three columns leave ~158px each here — no room to spare once the
+       post-qualifying "Aston Martin · starts 12th" line is in — so the trio
+       stacks and each driver gets the full width. */
     .hero-drivers {
         grid-template-columns: 1fr;
         gap: 16px;

@@ -20,6 +20,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     abbr_name,
     asset,
     breadcrumb_schema,
+    driver_name,
     head,
     nav,
     organization_schema,
@@ -137,14 +138,15 @@ def render_combo(
 
     shared = shared or {}
 
+    names = [driver_name(d) for d in combo.drivers]
     drivers_html = '<span class="sep">/</span>'.join(
         f'<span class="driver">'
         f'<span class="dn-full">{html.escape(d)}</span>'
         f'<span class="dn-abbr" aria-hidden="true">{html.escape(abbr_name(d))}</span>'
         f"</span>"
-        for d in combo.drivers
+        for d in names
     )
-    drivers_data = " | ".join(combo.drivers).lower()
+    drivers_data = " | ".join(names).lower()
     last = combo.lastRace
     last_html = (
         f'<span class="year">{html.escape(last.season)}</span>'
