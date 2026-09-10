@@ -66,6 +66,15 @@ def test_render_trio_escapes_names():
     assert "A &amp; B" in out
 
 
+def test_render_trio_separator_rides_with_the_name_before_it():
+    """The "/" lives inside the name before it, so an inline trio wraps only
+    after a separator and a stacked one simply hides it. The last carries none."""
+    out = bu.render_trio(["Esteban Ocon", "Sergio Pérez", "Lance Stroll"])
+    assert out.count('<span class="sep">/</span>') == 2
+    assert '</span><span class="sep">/</span></span><span class="undriver">' in out
+    assert out.endswith("L. Stroll</span></span>")
+
+
 # --- rows -------------------------------------------------------------------
 
 

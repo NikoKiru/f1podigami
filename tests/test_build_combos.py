@@ -109,6 +109,17 @@ def test_render_combo_row_has_drivers_and_count():
     assert '<td class="count">4</td>' in out
 
 
+def test_render_combo_separator_rides_with_the_name_before_it():
+    """Each name is an unbreakable span, and the "/" lives inside the one before
+    it: a trio can then wrap on a phone only after a separator, never leaving a
+    "/" to lead the next line. The last name carries none."""
+    out = bc.render_combo(_sample_combo())
+    cell = out.split('<td class="drivers">')[1].split("</td>")[0]
+    assert cell.count('<span class="sep">/</span>') == 2
+    assert '</span><span class="sep">/</span></span><span class="driver">' in cell
+    assert cell.endswith("C. Leclerc</span></span>")
+
+
 def test_render_combo_data_attributes():
     c = _sample_combo()
     out = bc.render_combo(c)
@@ -234,6 +245,16 @@ def test_render_combo_emits_shared_badge_for_combo_touching_shared_race():
     shared = {("1955", "1"): "Froilan Gonzalez"}
     out = bc.render_combo(c, None, shared)
     assert "shared-badge" in out
+
+
+def test_render_combo_shared_badge_rides_with_the_last_name():
+    """Phones stack one name per line, so a badge left loose in the cell would
+    drop onto a line of its own; inside the last .driver it stays beside it."""
+    c = _shared_combo()
+    out = bc.render_combo(c, None, {("1955", "1"): "Froilan Gonzalez"})
+    cell = out.split('<td class="drivers">')[1].split("</td>")[0]
+    assert cell.endswith("&#8644;</span></span>")
+    assert cell.rindex('<span class="driver">') < cell.index("shared-badge")
 
 
 def test_render_combo_omits_shared_badge_when_no_race_is_shared():
