@@ -169,7 +169,7 @@ jobs:
           git checkout -B "$BRANCH"
           git commit -m "$TITLE"
           git push --force origin "$BRANCH"
-          PR="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')"
+          PR="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" || true
           if [ -z "$PR" ]; then
             gh pr create --base main --head "$BRANCH" \
               --title "$TITLE" \
@@ -194,6 +194,9 @@ jobs:
       # since it's a notification, not a failure, so nothing auto-closes it.
       # Issues are created FIRST and loudly (a failed `gh issue create` fails
       # this step); the PR label is cosmetic and applied after, non-fatally.
+      # Close a podium-revised issue only after its data PR has merged: dedup
+      # is against OPEN issues, so closing one while the PR is still unmerged
+      # makes the next run open an identical one.
       - name: Flag podium revisions for a human
         if: steps.revisions.outputs.revised == 'true'
         env:
@@ -203,7 +206,7 @@ jobs:
           gh label create podium-revised --repo "$GITHUB_REPOSITORY" \
             --color FBCA04 --description "A data update changed an already-published podium" 2>/dev/null || true
           existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --label podium-revised \
-            --state open --limit 200 --json title --jq '.[].title')"
+            --state open --limit 200 --json title --jq '.[].title')" || existing=""
           for f in "$REVISIONS_DIR"/*.md; do
             [ -e "$f" ] || continue
             title="$(head -n 1 "$f")"
@@ -216,7 +219,7 @@ jobs:
               --label podium-revised --body-file "$RUNNER_TEMP/issue-body.md"
           done
           PR="$(gh pr list --repo "$GITHUB_REPOSITORY" --head auto/update-data --state open \
-            --json number --jq '.[0].number')"
+            --json number --jq '.[0].number')" || true
           if [ -n "$PR" ]; then
             gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR/labels" \
               -f "labels[]=podium-revised" >/dev/null \

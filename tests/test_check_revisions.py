@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ from check_revisions import (
     issue_title,
     podium_revisions,
     pr_title_suffix,
+    summary_markdown,
     verdict,
     write_revision_files,
 )
@@ -139,7 +141,7 @@ def test_titles():
     assert issue_title(rev[0]) == "Podium revised: 2026 R6 Monaco Grand Prix — Hadjar → Gasly"
     assert pr_title_suffix([]) == ""
     assert pr_title_suffix(rev) == issue_title(rev[0])
-    assert pr_title_suffix(rev + rev) == "Podium revised: 2 races"
+    assert pr_title_suffix(rev + rev) == "Podium revised: 2 races (2026 R6)"
 
 
 def test_issue_markdown_puts_the_title_first_then_a_table():
@@ -237,10 +239,25 @@ def test_six_revisions_write_one_summary_titled_with_the_count(tmp_path):
     assert [f.name for f in files] == ["summary.md"]
     text = files[0].read_text(encoding="utf-8")
     lines = text.splitlines()
-    assert lines[0] == pr_title_suffix(revisions) == f"Podium revised: {MAX_ISSUES + 1} races"
+    assert (
+        lines[0]
+        == pr_title_suffix(revisions)
+        == f"Podium revised: {MAX_ISSUES + 1} races (2026 R1–2026 R6)"
+    )
     assert lines[1] == ""
     for rev in revisions:
         assert rev["raceName"] in text
+
+
+def test_a_hundred_and_fifty_revisions_truncate_the_summary_body():
+    """GitHub caps issue bodies at 65,536 characters; a row is ~190 bytes."""
+    revisions = _many_revisions(150)
+    text = summary_markdown(revisions)
+    lines = text.splitlines()
+    row_lines = [line for line in lines if line.startswith("| 2026 R")]
+    assert len(row_lines) == 100
+    last_row_index = max(i for i, line in enumerate(lines) if line.startswith("| 2026 R"))
+    assert lines[last_row_index + 1] == "…and 50 more."
 
 
 def test_outputs_survive_a_console_encoding_crash(tmp_path, monkeypatch):
@@ -302,13 +319,19 @@ def test_main_reconfigures_stdout_so_an_arrow_does_not_crash_a_cp1252_console(
 
 
 def test_cli_runs_as_a_real_subprocess(tmp_path):
-    """M9: exercise the actual entry point, not just main() in-process."""
+    """M9: exercise the actual entry point, not just main() in-process.
+
+    Drop GITHUB_OUTPUT from the child's env so this can never append to a
+    real CI step's output file if the test happens to inherit one.
+    """
     out_dir = tmp_path / "issues"
+    env = {k: v for k, v in os.environ.items() if k != "GITHUB_OUTPUT"}
     result = subprocess.run(
         [sys.executable, "src/check_revisions.py", "--out-dir", str(out_dir)],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
+        env=env,
     )
     assert result.returncode == 0, result.stderr
     assert out_dir.exists()

@@ -31,6 +31,9 @@ from build._layout import driver_name
 REPO = Path(__file__).resolve().parents[1]
 SLOTS = ("p1", "p2", "p3")
 MAX_ISSUES = 5
+# GitHub caps issue bodies at 65,536 characters; a table row is ~190 bytes, so
+# cap the summary table well under that and say how many rows were dropped.
+MAX_SUMMARY_ROWS = 100
 
 
 def _ordinal(n: int) -> str:
@@ -119,12 +122,20 @@ def issue_title(rev: dict) -> str:
     return f"Podium revised: {rev['season']} R{rev['round']} {rev['raceName']} — {describe(rev)}"
 
 
+def _race_label(rev: dict) -> str:
+    return f"{rev['season']} R{rev['round']}"
+
+
 def pr_title_suffix(revisions: list[dict]) -> str:
     if not revisions:
         return ""
     if len(revisions) == 1:
         return issue_title(revisions[0])
-    return f"Podium revised: {len(revisions)} races"
+    # Revisions are already sorted by season/round, so the first and last
+    # entries bound the span.
+    first, last = _race_label(revisions[0]), _race_label(revisions[-1])
+    span = f"({first})" if first == last else f"({first}–{last})"
+    return f"Podium revised: {len(revisions)} races {span}"
 
 
 def issue_markdown(rev: dict) -> str:
@@ -167,13 +178,15 @@ def summary_markdown(revisions: list[dict]) -> str:
         "| Race | Before | After | Verdict |",
         "|---|---|---|---|",
     ]
-    for rev in revisions:
+    for rev in revisions[:MAX_SUMMARY_ROWS]:
         race = f"{rev['season']} R{rev['round']} {rev['raceName']}"
         before = " / ".join(driver_name(n) for n in rev["before"])
         after = " / ".join(driver_name(n) for n in rev["after"])
         lines.append(
             f"| {race} | {before} | {after} | {rev['verdictBefore']} → {rev['verdictAfter']} |"
         )
+    if len(revisions) > MAX_SUMMARY_ROWS:
+        lines.append(f"…and {len(revisions) - MAX_SUMMARY_ROWS} more.")
     lines += [
         "",
         "The data PR still auto-merges. Check the official classification on formula1.com. "
@@ -231,7 +244,12 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(errors="backslashreplace")
 
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--out-dir", type=Path, required=True, help="one issue file per revision")
+    ap.add_argument(
+        "--out-dir",
+        type=Path,
+        required=True,
+        help="one issue file per revision, or one summary file above MAX_ISSUES",
+    )
     args = ap.parse_args(argv)
 
     data = REPO / "data"
