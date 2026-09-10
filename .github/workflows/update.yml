@@ -169,19 +169,31 @@ jobs:
           git checkout -B "$BRANCH"
           git commit -m "$TITLE"
           git push --force origin "$BRANCH"
-          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
+          PR="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')"
+          if [ -z "$PR" ]; then
             gh pr create --base main --head "$BRANCH" \
               --title "$TITLE" \
               --body "Automated race-data refresh. Auto-merges once all required checks pass."
-          else
-            # A refresh keeps the title current, so a revision shows even when it
-            # lands on a PR that was already open (and clears once it is gone).
-            gh pr edit "$BRANCH" --title "$TITLE"
           fi
           gh pr merge --auto --squash --delete-branch "$BRANCH"
+          # A refresh re-derives the title from the comparison with main, so a
+          # revision shows even when it lands on a PR that was already open.
+          # Retitle AFTER auto-merge is armed, via the REST API (Pull requests:
+          # write is enough — unlike `gh pr edit`, which also queries
+          # projects/labels/milestones DATA_PUSH_TOKEN may not be allowed to
+          # read), and never fatally: a revision alert must not fail the
+          # data update.
+          if [ -n "$PR" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$PR" -f title="$TITLE" >/dev/null \
+              || echo "::warning::Could not retitle data PR #$PR"
+          fi
       # The built-in token, not the PAT: DATA_PUSH_TOKEN carries no Issues
-      # permission. One issue per revision, deduplicated by title, left open for
-      # a human — it's a notification, not a failure, so nothing auto-closes it.
+      # permission. One issue per revision, deduplicated by title against OPEN
+      # podium-revised issues only — a human closing one re-arms it, so a
+      # repeat flip-flop after that still notifies — left open for a human
+      # since it's a notification, not a failure, so nothing auto-closes it.
+      # Issues are created FIRST and loudly (a failed `gh issue create` fails
+      # this step); the PR label is cosmetic and applied after, non-fatally.
       - name: Flag podium revisions for a human
         if: steps.revisions.outputs.revised == 'true'
         env:
@@ -190,9 +202,8 @@ jobs:
         run: |
           gh label create podium-revised --repo "$GITHUB_REPOSITORY" \
             --color FBCA04 --description "A data update changed an already-published podium" 2>/dev/null || true
-          gh pr edit auto/update-data --repo "$GITHUB_REPOSITORY" --add-label podium-revised
           existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --label podium-revised \
-            --state all --limit 200 --json title --jq '.[].title')"
+            --state open --limit 200 --json title --jq '.[].title')"
           for f in "$REVISIONS_DIR"/*.md; do
             [ -e "$f" ] || continue
             title="$(head -n 1 "$f")"
@@ -204,6 +215,13 @@ jobs:
             gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" \
               --label podium-revised --body-file "$RUNNER_TEMP/issue-body.md"
           done
+          PR="$(gh pr list --repo "$GITHUB_REPOSITORY" --head auto/update-data --state open \
+            --json number --jq '.[0].number')"
+          if [ -n "$PR" ]; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR/labels" \
+              -f "labels[]=podium-revised" >/dev/null \
+              || echo "::warning::Could not label data PR #$PR"
+          fi
       - name: Validate datasets
         run: PYTHONPATH=src python -m datalib.validate
       - name: Run tests
