@@ -571,9 +571,19 @@ Insert immediately **after** the `Fetch latest data and rebuild site` step:
       # Compare every podium already on main with the refreshed data. A change
       # retitles the PR and opens an issue (below) but never blocks the merge —
       # holding this PR would hold every later race too.
+      #
+      # Guarded: a scheduled run takes this workflow from develop but checks out
+      # main's scripts, so between merging to develop and promoting to main the
+      # script is not there yet. Skip rather than fail every data update.
       - name: Detect podium revisions
         id: revisions
-        run: python src/check_revisions.py --out-dir "$RUNNER_TEMP/podium-revisions"
+        run: |
+          if [ -f src/check_revisions.py ]; then
+            python src/check_revisions.py --out-dir "$RUNNER_TEMP/podium-revisions"
+          else
+            echo "check_revisions.py is not on main yet; skipping."
+            echo "revised=false" >> "$GITHUB_OUTPUT"
+          fi
 ```
 
 - [ ] **Step 2: Retitle the data PR on a revision**
@@ -687,6 +697,7 @@ In the "⚠️ When a finished race doesn't appear" list, after the `#245` bulle
 
 ```markdown
 - **Silent upstream revisions (#<PR>).** Jolpica rewrote Monaco 2026's P3 twice (Hadjar Jun 8 → Gasly Jun 16 → Hadjar Sep 6); both edits merged in routine data PRs and the site showed a trio that never officially happened for 82 days. Now flagged by the revision alert. The fix for a *wrong* revision is upstream — the fetchers re-read the whole season every run, so a local revert is overwritten.
+- **Develop's workflow, main's scripts.** A scheduled run takes `update.yml` from the default branch (`develop`) but the `update` job checks out `main`, so between merging a PR to `develop` and promoting it, the workflow can call a script or flag `main` doesn't have yet. Every data update then fails. Guard any new step that calls a new script (`if [ -f src/<script>.py ]; then …; fi`, with the skip path writing safe step outputs), and after merging to `develop` run a forced update to prove it: `gh workflow run update.yml -f mode=auto -f force=true`.
 ```
 
 - [ ] **Step 2: README.md**
@@ -762,6 +773,14 @@ git push
 - [ ] **Step 7: Merge, promote, clean up**
 
 1. Wait for the 7 required checks: `gh pr checks <number> --watch`. Merge: `gh pr merge <number> --squash --delete-branch`.
+   Then prove the develop-workflow/main-scripts window is safe. The merged workflow now runs against `main`, which lacks `check_revisions.py`, so the guarded step must skip:
+   ```bash
+   gh workflow run update.yml -f mode=auto -f force=true
+   sleep 20; run=$(gh run list --workflow=update.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+   gh run watch "$run" --exit-status
+   gh run view "$run" --log | grep -E "check_revisions.py is not on main yet|No published podium changed"
+   ```
+   Expected: the run is green and the log shows the skip line. If it fails, revert the merge on `develop` right away; a Spanish-GP-weekend data update depends on it.
 2. Promote only when no qualifying or race is within the next 48 h (this changes the race-day workflow):
    ```bash
    gh pr create --base main --head develop --title "Promote develop to main: podium revision alert" \

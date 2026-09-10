@@ -58,6 +58,7 @@ git switch -c feat/race-day-watcher
 **Interfaces:**
 - Produces (Task 2 and Plan 3 rely on these names):
   - `ARM_BEFORE: timedelta` (3 h), `SUCCESSOR_WINDOW: timedelta` (12 h)
+  - `session_start(date: str, time: str) -> datetime | None`: the old private `_race_start`, made public because Plan 3's fetcher reuses it; same behaviour
   - `latest_armed_round(schedule: dict, now: datetime) -> tuple[int, int] | None` (replaces `latest_finished_round`)
   - `is_update_due(schedule: dict, asof: dict, now: datetime) -> bool`
   - `next_quali_target(schedule: dict, asof: dict, post_quali: dict | None, now: datetime) -> tuple[int, int] | None`
@@ -382,7 +383,7 @@ SUCCESSOR_WINDOW = timedelta(hours=12)
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 
-def _race_start(date: str, time: str) -> datetime | None:
+def session_start(date: str, time: str) -> datetime | None:
     """Parse a session's scheduled start as a tz-aware UTC datetime.
 
     ``date`` is ``YYYY-MM-DD``; ``time`` is e.g. ``04:00:00Z`` (may be empty).
@@ -431,7 +432,7 @@ def latest_armed_round(schedule: dict, now: datetime) -> tuple[int, int] | None:
 
     latest: tuple[int, int] | None = None
     for race in schedule.get("races", []):
-        start = _race_start(race.get("date", ""), race.get("time", ""))
+        start = session_start(race.get("date", ""), race.get("time", ""))
         if start is None or now < start - ARM_BEFORE:
             continue  # window not open yet, or unparseable
         try:
@@ -491,7 +492,7 @@ def next_quali_target(
     race = _next_race_entry(schedule, have)
     if race is None:
         return None
-    start = _race_start(race.get("qualifyingDate") or "", race.get("qualifyingTime") or "")
+    start = session_start(race.get("qualifyingDate") or "", race.get("qualifyingTime") or "")
     if start is None or now < start - ARM_BEFORE:
         return None
     target = (int(schedule["season"]), int(race["round"]))
@@ -521,13 +522,13 @@ def pending_session_starts(
     race = latest_armed_round(schedule, now)
     if race is not None and race > _have(asof):
         entry = _race_by_round(schedule, race[1])
-        start = entry and _race_start(entry.get("date", ""), entry.get("time", ""))
+        start = entry and session_start(entry.get("date", ""), entry.get("time", ""))
         if start:
             starts.append(start)
     quali = next_quali_target(schedule, asof, post_quali, now)
     if quali is not None:
         entry = _race_by_round(schedule, quali[1])
-        start = entry and _race_start(
+        start = entry and session_start(
             entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
         )
         if start:
@@ -760,7 +761,7 @@ Timing out is not an error: the pipeline runs anyway (idempotent).
 (b) Add `import os` to the stdlib imports (keep them sorted: `argparse, json, os, sys, time`), and change the guard import to:
 
 ```python
-from check_update_due import latest_armed_round, next_quali_target
+from check_update_due import is_update_due, latest_armed_round, next_quali_target
 ```
 
 (c) Replace the budget comment and constants with:
@@ -818,18 +819,15 @@ def _fetch_last_qualifying(season: int) -> object | None:
 def wait_target(schedule: dict, podigami: dict, now: datetime) -> tuple[str, int, int] | None:
     """What this run should wait for — ``(kind, season, round)`` — or None.
 
-    A race newer than ``asOf`` whose window is open comes first; otherwise the
-    next race's qualifying, if its window is open and ``postQuali`` doesn't cover
-    it yet. Nothing pending means return at once, holding no runner.
+    A race newer than ``asOf`` whose window is open comes first (the guard's own
+    rule, so the two can't disagree); otherwise the next race's qualifying, if its
+    window is open and ``postQuali`` doesn't cover it yet. Nothing pending means
+    return at once, holding no runner.
     """
     asof = podigami.get("asOf") or {}
-    try:
-        have = (int(asof["season"]), int(asof["round"]))
-    except (KeyError, ValueError, TypeError):
-        have = (-1, -1)
-    race = latest_armed_round(schedule, now)
-    if race is not None and race > have:
-        return ("race", race[0], race[1])
+    if is_update_due(schedule, asof, now):
+        season, rnd = latest_armed_round(schedule, now)  # not None when due
+        return ("race", season, rnd)
     quali = next_quali_target(schedule, asof, podigami.get("postQuali"), now)
     if quali is not None:
         return ("qualifying", quali[0], quali[1])
@@ -1131,6 +1129,13 @@ Then:
 
 1. Replace `#<PR>` in `CLAUDE.md` and `RELEASE_NOTES.md` with the printed number; `git commit -am "Reference #<number> in the release note"` (with the trailer) and `git push`.
 2. `gh pr checks <number> --watch` (7 checks), then `gh pr merge <number> --squash --delete-branch`.
+   Prove the merged workflow still runs against `main`'s older scripts. There the successor check just prints the old `update due` line, so no successor is dispatched:
+   ```bash
+   gh workflow run update.yml -f mode=auto -f force=true
+   sleep 20; run=$(gh run list --workflow=update.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+   gh run watch "$run" --exit-status
+   ```
+   Expected: green. If it fails, revert the merge on `develop` immediately.
 3. Promote only when no qualifying or race is within the next 48 h:
    ```bash
    gh pr create --base main --head develop --title "Promote develop to main: race-day watcher" \

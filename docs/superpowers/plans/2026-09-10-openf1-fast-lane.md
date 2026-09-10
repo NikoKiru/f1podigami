@@ -1186,6 +1186,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from check_update_due import session_start  # noqa: E402
 from datalib import (  # noqa: E402
     load_current_drivers,
     load_podiums,
@@ -1228,15 +1229,6 @@ MATCH_WINDOW = timedelta(hours=6)
 FREE_AFTER = timedelta(minutes=30)
 
 
-def _scheduled(date: str, time: str | None) -> datetime | None:
-    if not date:
-        return None
-    try:
-        return datetime.fromisoformat(f"{date}T{time or '23:59:59Z'}".replace("Z", "+00:00"))
-    except ValueError:
-        return None
-
-
 def _instant(value: str | None) -> datetime | None:
     try:
         return datetime.fromisoformat(value) if value else None
@@ -1251,7 +1243,7 @@ def _surname_key(name: str) -> str:
 
 def match_session(sessions: list[dict], date: str, time: str | None) -> dict | None:
     """The one non-cancelled session on the scheduled UTC date within MATCH_WINDOW."""
-    scheduled = _scheduled(date, time)
+    scheduled = session_start(date, time or "")
     if scheduled is None:
         return None
     found = []
@@ -1443,7 +1435,7 @@ def newest_started(schedule: dict, now: datetime, date_key: str, time_key: str) 
     """The newest scheduled race whose race (or qualifying) session has started by now."""
     newest = None
     for race in schedule.get("races", []):
-        start = _scheduled(race.get(date_key) or "", race.get(time_key))
+        start = session_start(race.get(date_key) or "", race.get(time_key) or "")
         if start is None or start > now:
             continue
         if newest is None or int(race["round"]) > int(newest["round"]):
@@ -1714,13 +1706,13 @@ def pending_session_starts(
     race = latest_armed_round(schedule, now)
     if race is not None and race > _have(asof):
         entry = _race_by_round(schedule, race[1])
-        start = entry and _race_start(entry.get("date", ""), entry.get("time", ""))
+        start = entry and session_start(entry.get("date", ""), entry.get("time", ""))
         if start:
             starts.append(start)
     quali = next_quali_target(schedule, asof, post_quali, now)
     if quali is not None:
         entry = _race_by_round(schedule, quali[1])
-        start = entry and _race_start(
+        start = entry and session_start(
             entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
         )
         if start:
@@ -1801,7 +1793,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
 
 - [ ] **Step 4: Watcher changes (`src/wait_for_results.py`)**
 
-Change the guard import to `from check_update_due import latest_armed_round, next_quali_target, read_unconfirmed`, and add `from fetch import fetch_openf1` after the `fetch.api_cache` import.
+Change the guard import to `from check_update_due import is_update_due, latest_armed_round, next_quali_target, read_unconfirmed`, and add `from fetch import fetch_openf1` after the `fetch.api_cache` import.
 
 Replace `wait_for_round` with a generic `wait_until` plus a thin `wait_for_round` (same behaviour as before, so its existing tests keep passing):
 
@@ -1869,7 +1861,9 @@ def _openf1_ready(kind: str, schedule: dict, season: int, rnd: int) -> bool:
         current = json.loads((DATA_DIR / "current_drivers.json").read_text(encoding="utf-8"))
         build = fetch_openf1.build_race if kind == "race" else fetch_openf1.build_qualifying
         return build(race, str(season), current.get("drivers", []), datetime.now(UTC)) is not None
-    except Exception:  # noqa: BLE001 - an OpenF1 surprise must never break the watch
+    except Exception as exc:  # noqa: BLE001 - an OpenF1 surprise must never break the watch
+        # Logged, not swallowed: the watch carries on waiting for Jolpica.
+        print(f"  OpenF1 readiness check failed ({exc!r}); treating it as not ready")
         return False
 ```
 
@@ -1936,8 +1930,16 @@ Insert after the `Run tests` step (before `Check whether a session is still pend
       # A round OpenF1 filled must be confirmed by Jolpica within 48h of its
       # session. Failing here (after the PR step, like validate/tests) trips
       # notify-failure's alert issue: Jolpica is down, or the sources disagree.
+      # Guarded: scheduled runs take this workflow from develop but main's
+      # scripts, and main's guard only learns --fail-on-stale when the fast lane
+      # (fetch_openf1.py) is promoted with it.
       - name: Fail if a round stays unconfirmed for over 48h
-        run: python src/check_update_due.py --fail-on-stale
+        run: |
+          if [ -f src/fetch/fetch_openf1.py ]; then
+            python src/check_update_due.py --fail-on-stale
+          else
+            echo "The OpenF1 fast lane is not on main yet; nothing can be unconfirmed."
+          fi
 ```
 
 (The successor condition `published != 'true'` already covers `published=fast`: after a fast-lane run, the successor waits for Jolpica's confirmation.)
@@ -2098,6 +2100,14 @@ Then:
 
 1. Replace `#<PR>` in `CLAUDE.md` and `RELEASE_NOTES.md` with the printed number; `git commit -am "Reference #<number> in the release note"` (with the trailer) and `git push`.
 2. `gh pr checks <number> --watch` (7 checks), then `gh pr merge <number> --squash --delete-branch`.
+   Prove the merged workflow still runs against `main`, which doesn't have the fast lane yet (the stale step must print its skip line):
+   ```bash
+   gh workflow run update.yml -f mode=auto -f force=true
+   sleep 20; run=$(gh run list --workflow=update.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+   gh run watch "$run" --exit-status
+   gh run view "$run" --log | grep "fast lane is not on main yet"
+   ```
+   Expected: green, with the skip line. If it fails, revert the merge on `develop` immediately.
 3. Promote only when no qualifying or race is within the next 48 h. The only data file this adds is the new `data/unconfirmed.json`; `main` has no copy, so the promotion's three-way merge cannot conflict on it:
    ```bash
    gh pr create --base main --head develop --title "Promote develop to main: OpenF1 fast lane" \
