@@ -83,6 +83,13 @@ def test_render_hero_driver_shows_full_name_and_team():
     assert "hd-id" not in out
 
 
+def test_render_hero_bills_antonelli_as_kimi():
+    """The API lists him as "Andrea Kimi Antonelli"; F1 calls him Kimi Antonelli."""
+    out = bp.render_hero(_hero_top(), 55.0, META)
+    assert 'class="hd-name">Kimi Antonelli' in out
+    assert "Andrea" not in out
+
+
 def test_render_hero_driver_names_the_grid_slot_after_qualifying():
     top = {
         "prob": 3.5,
@@ -143,7 +150,8 @@ def test_render_candidates_dots_and_broadcast_tooltip():
     ]
     out = bp.render_candidates(cands, META)
     assert 'class="cd"' in out
-    assert 'title="Andrea Kimi ANTONELLI"' in out  # broadcast full name
+    assert 'title="Kimi ANTONELLI"' in out  # broadcast full name, as F1 bills him
+    assert "Andrea" not in out
     assert "cand-bar" in out
 
 
@@ -620,6 +628,8 @@ def test_board_done_row_carries_history_and_combos_link():
     assert "3 times" in out
     assert "Dutch Grand Prix" in out
     assert "combos.html?d=" in out
+    # the link filters the combos table, which lists him as Kimi Antonelli
+    assert "d=Kimi+Antonelli" in out
 
 
 def test_board_new_row_has_no_bubble():

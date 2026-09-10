@@ -78,6 +78,26 @@ def test_longest_partnership_picks_the_widest_span_not_the_biggest_count():
     assert longest["num"] == "17"
 
 
+def test_render_pair_bills_antonelli_as_kimi():
+    p = bs.SoulmatePair(
+        a="Andrea Kimi Antonelli", b="George Russell", count=9, firstYear=2025, lastYear=2026
+    )
+    out = bs.render_pair(p)
+    assert '<span class="dn-full">Kimi Antonelli</span>' in out
+    assert ">K. Antonelli<" in out
+    assert "Andrea" not in out
+
+
+def test_fact_cards_bill_antonelli_as_kimi():
+    """Every card that names a driver uses the name the site shows everywhere else."""
+    facts = bs._compute_facts(
+        soulmates([pair("Andrea Kimi Antonelli", "George Russell", 9, 2025, 2026)])
+    )
+    details = " ".join(f["detail"] for f in facts)
+    assert "Kimi Antonelli" in details
+    assert "Andrea" not in details
+
+
 def test_facts_survive_a_single_season_partnership():
     """A pair that shared podiums in one season spans one season, never zero."""
     facts = bs._compute_facts(soulmates([pair("A One", "B Two", 3, 2021, 2021)]))

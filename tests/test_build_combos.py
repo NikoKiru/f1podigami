@@ -119,6 +119,26 @@ def test_render_combo_data_attributes():
     assert "max verstappen" in drivers_data
 
 
+def test_render_combo_bills_antonelli_as_kimi():
+    """Shown, abbreviated and searched as Kimi Antonelli, not the API's
+    "Andrea Kimi Antonelli" — the landing page's ?d= links filter on this."""
+    race = race_ref("2026", "12", "Dutch Grand Prix")
+    c = combo(
+        ["Andrea Kimi Antonelli", "Lando Norris", "George Russell"],
+        ["antonelli", "norris", "russell"],
+        1,
+        race,
+        race,
+        2026012,
+        [race],
+    )
+    out = bc.render_combo(c)
+    assert '<span class="dn-full">Kimi Antonelli</span>' in out
+    assert ">K. Antonelli<" in out
+    assert 'data-drivers="kimi antonelli | lando norris | george russell"' in out
+    assert "andrea" not in out.lower()
+
+
 def test_render_combo_includes_detail_row_with_races():
     out = bc.render_combo(_sample_combo())
     assert 'class="detail"' in out

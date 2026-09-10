@@ -97,8 +97,8 @@ def test_podigami_hero_trio_stacks_on_mobile():
 
     Replaces the old 720px check: the hero is no longer a two-column grid, so
     the 601-720px dead zone it guarded (#116) cannot recur. The surviving risk
-    is the 3-up trio row, which at 600px would leave ~158px a column — narrower
-    than "Andrea Kimi Antonelli".
+    is the 3-up trio row, which at 600px would leave ~158px a column — no room
+    to spare for a post-qualifying "Aston Martin · starts 12th" line.
     """
     import re
 

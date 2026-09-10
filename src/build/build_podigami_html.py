@@ -29,6 +29,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
     SITE_URL,
     asset,
+    driver_name,
     head,
     nav,
     organization_schema,
@@ -71,7 +72,7 @@ def display_name(name: str) -> str:
 def driver_view(entry: dict, meta: dict) -> dict:
     """Enrich a podigami driver entry with broadcast fields: surname, TLA code,
     car number, and the team colour (plus a legible ink for text on it)."""
-    name = entry["name"]
+    name = driver_name(entry["name"])
     parts = name.split()
     surname = parts[-1] if parts else name
     m = meta.get(entry.get("driverId", ""), {})
@@ -219,9 +220,10 @@ def combos_link(names: list[str]) -> str:
     """Combos-page URL pre-filtered to a specific trio (driver full names).
 
     The combos page reads these ``d`` params into its three driver filters, so
-    the table lands filtered down to exactly this trio.
+    the table lands filtered down to exactly this trio. They carry the names the
+    table shows (``driver_name``), which is what its filters match against.
     """
-    query = urllib.parse.urlencode([("d", n) for n in names])
+    query = urllib.parse.urlencode([("d", driver_name(n)) for n in names])
     return f"combos.html?{query}"
 
 
@@ -940,10 +942,12 @@ def main() -> int:
         schedule = load_schedule().model_dump()
     links = load_race_links()
     # Enrich the timeline entries with official F1 result URLs (wiki fallback) so the
-    # client-side slider (podigami.js) links out to F1 like the rest of the page.
+    # client-side slider (podigami.js) links out to F1 like the rest of the page,
+    # and give them the driver names the rest of the site shows.
     # Build-time only — the committed podigami.json is left untouched.
     for _season, _trios in data["bySeason"].items():
         for _trio in _trios:
+            _trio["names"] = [driver_name(n) for n in _trio["names"]]
             fr = _trio.get("firstRace")
             if fr:
                 fr["url"] = race_url(links, _season, fr["round"], fr["raceName"])

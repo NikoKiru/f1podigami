@@ -28,6 +28,7 @@ from _layout import (  # noqa: E402
     abbr_name,
     asset,
     breadcrumb_schema,
+    driver_name,
     head,
     nav,
     organization_schema,
@@ -80,7 +81,9 @@ def render_trio(names: list[str]) -> str:
         '<span class="dn-abbr" aria-hidden="true">{abbr}</span>'
         "</span>"
     )
-    return sep.join(driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in names)
+    return sep.join(
+        driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in map(driver_name, names)
+    )
 
 
 def _rates_cells(e: UnlikeliestTrio) -> str:
