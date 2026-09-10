@@ -19,6 +19,14 @@ unit-testable; :func:`main` is the CLI glue.
 
 from __future__ import annotations
 
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
 SLOTS = ("p1", "p2", "p3")
 
 
@@ -134,3 +142,69 @@ def issue_markdown(rev: dict) -> str:
         "season on every run, so a local revert would be overwritten.",
     ]
     return "\n".join(lines) + "\n"
+
+
+def _git_show(path: str) -> str | None:
+    """``HEAD:<path>`` as text, or None when git or the file is unavailable."""
+    try:
+        out = subprocess.run(
+            ["git", "show", f"HEAD:{path}"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=REPO,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return out.stdout
+
+
+def _parse_list(text: str | None) -> list[dict]:
+    """A JSON list, or [] for anything missing or unparseable (fail quiet, like the guards)."""
+    try:
+        data = json.loads(text) if text else []
+    except ValueError:
+        return []
+    return data if isinstance(data, list) else []
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--out-dir", type=Path, required=True, help="one issue file per revision")
+    args = ap.parse_args(argv)
+
+    data = REPO / "data"
+
+    def tree(name: str) -> list[dict]:
+        path = data / name
+        return _parse_list(path.read_text(encoding="utf-8") if path.exists() else None)
+
+    revisions = podium_revisions(
+        _parse_list(_git_show("data/podiums.json")),
+        tree("podiums.json"),
+        _parse_list(_git_show("data/combos.json")),
+        tree("combos.json"),
+    )
+
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    for rev in revisions:
+        print(issue_title(rev))
+        issue = args.out_dir / f"{rev['season']}-{rev['round']}.md"
+        issue.write_text(issue_markdown(rev), encoding="utf-8")
+    if not revisions:
+        print("No published podium changed.")
+
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        # Titles are single-line by construction; never hand API-derived text to
+        # the key=value format of $GITHUB_OUTPUT unflattened.
+        title = pr_title_suffix(revisions).replace("\n", " ")
+        with open(out, "a", encoding="utf-8") as fh:
+            fh.write(f"revised={'true' if revisions else 'false'}\n")
+            fh.write(f"title={title}\n")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())

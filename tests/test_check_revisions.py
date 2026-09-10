@@ -8,6 +8,10 @@ These lock in the check that makes such an edit loud.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+import check_revisions
 from check_revisions import (
     describe,
     issue_markdown,
@@ -136,3 +140,63 @@ def test_issue_markdown_puts_the_title_first_then_a_table():
     assert lines[1] == ""
     assert "| Before | Andrea Kimi Antonelli / Lewis Hamilton / Isack Hadjar | unknown |" in lines
     assert "| After | Andrea Kimi Antonelli / Lewis Hamilton / Pierre Gasly | unknown |" in lines
+
+
+def _cli(tmp_path, monkeypatch, head: dict[str, list | None], tree: dict[str, list]):
+    """Run main() against a fake HEAD (git show) and a fake working tree."""
+    (tmp_path / "data").mkdir()
+    for name, payload in tree.items():
+        (tmp_path / "data" / name).write_text(json.dumps(payload), encoding="utf-8")
+
+    def fake_git_show(path: str) -> str | None:
+        payload = head.get(Path(path).name)
+        return None if payload is None else json.dumps(payload)
+
+    out = tmp_path / "github_output"
+    monkeypatch.setattr(check_revisions, "REPO", tmp_path)
+    monkeypatch.setattr(check_revisions, "_git_show", fake_git_show)
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    assert check_revisions.main(["--out-dir", str(tmp_path / "issues")]) == 0
+    return out.read_text(encoding="utf-8").splitlines()
+
+
+def test_cli_reports_a_revision_and_writes_its_issue(tmp_path, monkeypatch):
+    lines = _cli(
+        tmp_path,
+        monkeypatch,
+        head={
+            "podiums.json": JUN8,
+            "combos.json": [combo(["antonelli", "hamilton", "hadjar"], [MONACO])],
+        },
+        tree={
+            "podiums.json": JUN16,
+            "combos.json": [combo(["antonelli", "hamilton", "gasly"], [MONACO])],
+        },
+    )
+    assert "revised=true" in lines
+    assert "title=Podium revised: 2026 R6 Monaco Grand Prix — Hadjar → Gasly" in lines
+    issue = (tmp_path / "issues" / "2026-6.md").read_text(encoding="utf-8")
+    assert issue.startswith("Podium revised: 2026 R6 Monaco Grand Prix — Hadjar → Gasly\n\n")
+    assert "PODIGAMI (first time)" in issue
+
+
+def test_cli_is_quiet_when_nothing_changed(tmp_path, monkeypatch):
+    lines = _cli(
+        tmp_path,
+        monkeypatch,
+        head={"podiums.json": JUN8, "combos.json": []},
+        tree={"podiums.json": JUN8, "combos.json": []},
+    )
+    assert lines == ["revised=false", "title="]
+    assert list((tmp_path / "issues").iterdir()) == []
+
+
+def test_cli_treats_a_missing_head_file_as_no_revision(tmp_path, monkeypatch):
+    """A first-ever run (or a git hiccup) must not invent revisions or crash."""
+    lines = _cli(
+        tmp_path,
+        monkeypatch,
+        head={"podiums.json": None, "combos.json": None},
+        tree={"podiums.json": JUN16, "combos.json": []},
+    )
+    assert lines == ["revised=false", "title="]
