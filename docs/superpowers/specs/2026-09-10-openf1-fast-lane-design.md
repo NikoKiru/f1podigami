@@ -25,6 +25,7 @@ The user's primary concern is **data discrepancy**. Evidence gathered for this d
 | OpenF1 and Jolpica agree on final results | Final podiums identical in **82 of 83** races since 2023; 2026 qualifying order identical in **13 of 13** (R4: OpenF1 omits one car that set no time). The one miss, Monaco 2026, is a post-race time penalty OpenF1 never applied. |
 | The at-the-flag result is F1's *provisional* classification | It changed the podium in **4 of 83** races: Austin 2023 (Hamilton DSQ), Spa 2024 (Russell DSQ), Las Vegas 2025 (Norris DSQ), Monaco 2026 (Gasly's unserved 2×5 s). |
 | f1api.dev is not independent | Matched Jolpica everywhere, Monaco correction included — a mirror, not a cross-check. |
+| OpenF1 rows map exactly onto Jolpica's | For 2026 R1–R13, OpenF1 rows mapped to Jolpica's shape are identical in **every field** — grid (`starting_grid`), position, laps, status, team — except Monaco's five penalty-shifted positions. Team names map 1:1 onto Jolpica constructor IDs (11 teams, no exceptions). |
 | OpenF1 `starting_grid` is exact | Matched Monza's official grid for all 22 cars including the 3/30/35/20 penalties (follow-up, see Non-goals). |
 
 ## Goals
@@ -103,17 +104,22 @@ newest scheduled round that is over:
    for Jolpica to finish rather than mix sources within a round). Never touches an
    earlier round or season.
 2. **Match the session**: OpenF1 `sessions?year=Y&session_name=Race|Qualifying`, matched to
-   exactly one `schedule.json` round by date *and* circuit. Zero or several → no write.
+   the `schedule.json` round by **UTC start date, start within 6 h of the scheduled start,
+   and not cancelled** — exactly one candidate, else no write. Country and circuit names
+   are deliberately not used: they differ between the sources ("USA" vs "United States";
+   2026 R16 is "Bahrain" in Kuala Lumpur), and exact start times fail when a race is moved
+   (Miami 2026 ran at 17:00Z, Jolpica's schedule still says 20:00Z).
 3. **Map drivers**: `driver_number` → `current_drivers.json` `number` → `driverId`, and
    the OpenF1 `last_name` must equal the last word of the committed name (accent- and
    case-insensitive, so `ANTONELLI` matches "Andrea Kimi Antonelli" and `HULKENBERG`
    matches "Nico Hülkenberg"). Any unknown number or name mismatch (e.g. a substitute's
    debut) → no write.
-4. **Map teams**: `constructorId` is the driver's seat in our own data for that weekend
-   (`qualifying.json` for the round if present, else the latest `race_results.json` seat)
-   and must agree with OpenF1's `team_name` through a small alias table
-   (`"Red Bull Racing" → red_bull`, `"Racing Bulls" → rb`, …). Unknown team or disagreement
-   (a mid-weekend seat swap) → no write.
+4. **Map teams**: `constructorId` comes from OpenF1's `team_name` through a fixed alias
+   table, verified 1:1 against every 2026 Jolpica row: Alpine → `alpine`, Aston Martin →
+   `aston_martin`, Audi → `audi`, Cadillac → `cadillac`, Ferrari → `ferrari`, Haas F1 Team →
+   `haas`, McLaren → `mclaren`, Mercedes → `mercedes`, Racing Bulls → `rb`, Red Bull Racing →
+   `red_bull`, Williams → `williams`. OpenF1 reports the car actually driven, so a seat swap
+   maps correctly; an unknown team name (a rebrand) → no write.
 5. **Race only — stewards' check** (Section 3). Hold → no write this pass.
 6. **Build rows in Jolpica's exact shape**, taking race name, date and circuit from
    `schedule.json` and driver names from `current_drivers.json` (both verified identical to
@@ -232,8 +238,8 @@ Every new path degrades to today's behaviour:
 | Condition | Result |
 |---|---|
 | OpenF1 down, error, `No results found`, paid live window | no write; keep polling; Jolpica path as today |
-| Session matches zero or several rounds | no write |
-| Unknown car number / name mismatch / team disagreement | no write for that session |
+| Session matches zero or several rounds, or is cancelled | no write |
+| Unknown car number / name mismatch / unknown team name | no write for that session |
 | Stewards' check holds | no write this pass |
 | Jolpica already has the round | OpenF1 step skips; Jolpica wins |
 | Jolpica later differs from OpenF1 | Jolpica overwrites; revision alert |
@@ -245,10 +251,12 @@ Every new path degrades to today's behaviour:
 All offline; OpenF1 responses recorded into `tests/fixtures/openf1/` (compact: only the
 fields and stewards' messages the code reads).
 
-- **Byte-identical rows:** for 2026 R1–R13, the fetcher's rows equal the committed Jolpica
-  rows — `podiums.json` exactly; `race_results.json` on driver, team, position, laps and
-  status; `qualifying.json` exactly except documented cases (R4: OpenF1 omits a car that
-  set no time). Monaco R6 is the expected podium mismatch and must be held by the gate.
+- **Byte-identical rows:** for 2026 R1–R13, the fetcher's rows equal a **frozen snapshot**
+  of Jolpica's rows (recorded next to the OpenF1 fixtures — never the live `data/`, which a
+  later Jolpica revision could change and turn this test into a stall vector):
+  `podiums.json` and `race_results.json` exactly, `qualifying.json` exactly except R4
+  (OpenF1 omits a car that set no time). Monaco R6 is the expected mismatch and must be
+  held by the gate.
 - **Stewards' check:** the 83-race backtest as a fixture test — holds Monaco 2026 and
   Jeddah 2023; publishes ≥ 75%.
 - **Fail-closed matrix:** each row of the error-handling table writes nothing.
