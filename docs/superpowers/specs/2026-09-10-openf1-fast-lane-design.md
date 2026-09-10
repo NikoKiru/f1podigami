@@ -158,7 +158,9 @@ newest scheduled round that is over:
 Runs on each poll once OpenF1 serves the race result.
 
 - **Scope:** only the three cars that crossed the line in the top 3 (order by laps, then
-  total time). Only the trio decides the verdict, so order inside the podium is ignored.
+  total time; a car OpenF1 already marks disqualified is left out). Only the trio decides
+  the verdict, so order inside the podium is ignored. If OpenF1's positions 1–3 disagree
+  with its own race times, hold.
 - **Holds** if any of them has:
   - an open incident — `UNDER INVESTIGATION`, `WILL BE INVESTIGATED AFTER THE RACE`,
     `SUMMONED`, or `DISQUALIFIED`;
@@ -169,15 +171,20 @@ Runs on each poll once OpenF1 serves the race result.
   text and the `(HH:MM:SS)` tag — for every car in it. `NOTED` alone does not block.
 - While holding, the watcher keeps polling; Jolpica publishing ends the wait (today's path).
 
-**Prototype backtest, all 83 races 2023–2026** (reproduce: OpenF1 `sessions`,
-`session_result`, `race_control` for every `Race`):
+**Backtest of the planned implementation, all 83 races 2023–2026** (reproduce: OpenF1
+`sessions`, `session_result`, `race_control` for every `Race`, messages up to session
+end + 30 min):
 
-- Publishes at the first look in **66 (80%)**, holds **17 (20%)** until Jolpica. Post-race
-  decisions never appear in OpenF1's feed, so no hold cleared early.
+- Publishes at the first look in **65 (78%)**, holds **18 (22%)** until Jolpica. Post-race
+  decisions never appear in OpenF1's feed, so no hold clears early.
 - Holds both real podium changes it can see: **Monaco 2026** and **Jeddah 2023** (Alonso's
   post-race penalty, later overturned — holding avoided two flips).
-- Cannot see scrutineering: **Austin 2023** and **Spa 2024** would have shown the
-  crossed-the-line trio for a few hours (Las Vegas 2025 was held for another reason).
+- Cannot see scrutineering: at the time, **Austin 2023** and **Spa 2024** would have shown
+  the crossed-the-line trio for a few hours. (The backtest holds Austin only because
+  OpenF1's data has since been updated for the disqualification; Las Vegas 2025 is held
+  for another reason.)
+- In 2026 it publishes 11 of 13 rounds — each byte-identical to Jolpica's rows — and holds
+  Monaco (unserved penalties) and Silverstone (a post-race investigation of Hamilton).
 
 ## Section 4 — Trigger, watcher and successor runs
 
@@ -294,7 +301,7 @@ README (sources and flow), CLAUDE.md (new failure modes: OpenF1 fetcher,
 - **Scrutineering disqualifications can't be foreseen.** About 2 in 83 races would show the
   trio that crossed the line for a few hours; Jolpica's data then corrects it with a
   revision alert.
-- **~20% of races fall back to today's timing** because the stewards were busy.
+- **~22% of races fall back to today's timing** because the stewards were busy.
 - **OpenF1 is free only after the live window** (session end + 30 min) and is itself a
   volunteer service. If it disappears, the fast lane is a silent no-op, not a failure.
 - **Runner holds** of up to ~5.5 h per run on race weekends (free on a public repository).
