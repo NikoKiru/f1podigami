@@ -63,16 +63,20 @@ def format_probability(score: float) -> str:
 
 
 def render_trio(names: list[str]) -> str:
-    """Three drivers with full and abbreviated forms for CSS to swap on narrow screens."""
+    """Three drivers with full and abbreviated forms for CSS to swap on narrow
+    screens. Each name carries the "/" after it, so inline a trio wraps only
+    after a separator, and on a phone it stacks one name per line."""
     sep = '<span class="sep">/</span>'
     driver = (
         '<span class="oddriver">'
         '<span class="dn-full">{full}</span>'
         '<span class="dn-abbr" aria-hidden="true">{abbr}</span>'
-        "</span>"
+        "{sep}</span>"
     )
-    return sep.join(
-        driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in map(driver_name, names)
+    names = [driver_name(n) for n in names]
+    return "".join(
+        driver.format(full=esc(n), abbr=esc(abbr_name(n)), sep=sep if i < len(names) - 1 else "")
+        for i, n in enumerate(names)
     )
 
 

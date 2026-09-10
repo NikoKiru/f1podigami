@@ -138,22 +138,6 @@ def render_combo(
 
     shared = shared or {}
 
-    names = [driver_name(d) for d in combo.drivers]
-    drivers_html = '<span class="sep">/</span>'.join(
-        f'<span class="driver">'
-        f'<span class="dn-full">{html.escape(d)}</span>'
-        f'<span class="dn-abbr" aria-hidden="true">{html.escape(abbr_name(d))}</span>'
-        f"</span>"
-        for d in names
-    )
-    drivers_data = " | ".join(names).lower()
-    last = combo.lastRace
-    last_html = (
-        f'<span class="year">{html.escape(last.season)}</span>'
-        f'<span class="race-name">{html.escape(last.raceName)}</span>'
-    )
-    n = combo.count
-
     is_shared = any((r.season, r.round) in shared for r in combo.races)
     shared_desc = "One podium step was a car shared by two drivers"
     badge = (
@@ -165,6 +149,28 @@ def render_combo(
         else ""
     )
 
+    names = [driver_name(d) for d in combo.drivers]
+    # Each .driver is one nowrap unit that carries what follows the name: the
+    # "/" for the first two, the badge for the last. Inline, a trio then wraps
+    # only after a separator (never mid-name, never "/" leading a line); stacked
+    # one per line on a phone, the badge stays beside its name.
+    sep = '<span class="sep">/</span>'
+    drivers_html = "".join(
+        f'<span class="driver">'
+        f'<span class="dn-full">{html.escape(d)}</span>'
+        f'<span class="dn-abbr" aria-hidden="true">{html.escape(abbr_name(d))}</span>'
+        f"{sep if i < len(names) - 1 else badge}"
+        f"</span>"
+        for i, d in enumerate(names)
+    )
+    drivers_data = " | ".join(names).lower()
+    last = combo.lastRace
+    last_html = (
+        f'<span class="year">{html.escape(last.season)}</span>'
+        f'<span class="race-name">{html.escape(last.raceName)}</span>'
+    )
+    n = combo.count
+
     races_data = ";".join(f"{r.season}|{r.round}|{r.raceName}" for r in combo.races)
 
     combo_row = (
@@ -172,7 +178,7 @@ def render_combo(
         f' data-last="{combo.lastRaceKey}"'
         f' data-races="{html.escape(races_data, quote=True)}"'
         f' data-drivers="{html.escape(drivers_data, quote=True)}">'
-        f'<td class="drivers">{drivers_html}{badge}</td>'
+        f'<td class="drivers">{drivers_html}</td>'
         f'<td class="count">{n}</td>'
         f'<td class="last">{last_html}</td>'
         f'<td class="expand"><span class="chev">&#9662;</span></td>'
