@@ -54,6 +54,13 @@ def test_render_trio_emits_full_and_abbreviated_names():
     assert "E. Ocon" in out  # abbreviated for narrow screens
 
 
+def test_render_trio_bills_antonelli_as_kimi():
+    out = bu.render_trio(["Andrea Kimi Antonelli", "Lando Norris", "George Russell"])
+    assert '<span class="dn-full">Kimi Antonelli</span>' in out
+    assert ">K. Antonelli<" in out
+    assert "Andrea" not in out
+
+
 def test_render_trio_escapes_names():
     out = bu.render_trio(["A & B", "C D", "E F"])
     assert "A &amp; B" in out

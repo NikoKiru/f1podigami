@@ -10,6 +10,11 @@ break the build.
 from __future__ import annotations
 
 import html
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _layout import driver_name  # noqa: E402  (needs the sys.path entry above)
 
 
 def esc(s) -> str:
@@ -54,7 +59,7 @@ def soulmates_hook(soulmates) -> str:
     if soulmates is not None and soulmates.topPairs:
         p = soulmates.topPairs[0]
         stat = (
-            f"<b>{esc(p.a)} &amp; {esc(p.b)}</b> shared the podium"
+            f"<b>{esc(driver_name(p.a))} &amp; {esc(driver_name(p.b))}</b> shared the podium"
             f" <b>{p.count}</b> times &mdash; F1&rsquo;s tightest duo"
         )
     return hook_card("Podium soulmates", stat, "soulmates.html", "See every partnership")

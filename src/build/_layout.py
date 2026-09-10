@@ -98,9 +98,21 @@ def race_url(links: dict, season: str, rnd, race_name: str) -> str:
     return wiki_url(season, race_name)
 
 
+# API name -> the name F1 bills the driver by, where the two differ. The API
+# keeps Antonelli's full given names; F1 and Mercedes call him Kimi Antonelli.
+# Display only: data/ keeps the API's spelling, so every page renders names
+# through driver_name() instead.
+DISPLAY_NAMES = {"Andrea Kimi Antonelli": "Kimi Antonelli"}
+
+
+def driver_name(name: str) -> str:
+    """The name the site shows for a driver (see ``DISPLAY_NAMES``)."""
+    return DISPLAY_NAMES.get(name, name)
+
+
 def abbr_name(name: str) -> str:
     """ "Esteban Ocon" -> "E. Ocon": first initial + surname, for narrow screens."""
-    parts = name.strip().split()
+    parts = driver_name(name).strip().split()
     if len(parts) < 2:
         return name
     return parts[0][0] + ". " + parts[-1]

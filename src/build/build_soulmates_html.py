@@ -22,6 +22,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     abbr_name,
     asset,
     breadcrumb_schema,
+    driver_name,
     head,
     nav,
     organization_schema,
@@ -41,6 +42,12 @@ def esc(s: str) -> str:
     return html.escape(str(s))
 
 
+def _who(name: str) -> str:
+    """A driver named in a fact card, escaped. The facts match drivers to pairs
+    on their data names, so the display name is swapped in only here."""
+    return esc(driver_name(name))
+
+
 def _seasons(p: SoulmatePair) -> int:
     """Seasons the pairing spanned, inclusive of both endpoints."""
     return p.lastYear - p.firstYear + 1
@@ -56,7 +63,9 @@ def render_pair(p: SoulmatePair) -> str:
         '<span class="dn-abbr" aria-hidden="true">{abbr}</span>'
         "</span>"
     )
-    return sep.join(driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in (p.a, p.b))
+    return sep.join(
+        driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in map(driver_name, (p.a, p.b))
+    )
 
 
 def _pair_stats(p: SoulmatePair) -> str:
@@ -99,7 +108,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
             "num": str(best_cnt),
             "unit": "connections",
             "label": "Most connected driver",
-            "detail": f"<b>{esc(best_name)}</b> shared at least one podium with {best_cnt} different "
+            "detail": f"<b>{_who(best_name)}</b> shared at least one podium with {best_cnt} different "
             f"drivers from the all-time top 40 — more than anyone else.",
         }
     )
@@ -116,7 +125,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
                 "num": str(span),
                 "unit": unit,
                 "label": "Longest partnership",
-                "detail": f"<b>{esc(longest.a)}</b> &amp; <b>{esc(longest.b)}</b> shared podiums "
+                "detail": f"<b>{_who(longest.a)}</b> &amp; <b>{_who(longest.b)}</b> shared podiums "
                 f"across {span} {unit} ({longest.firstYear}&ndash;{longest.lastYear}), "
                 f"the longest-running pairing in the top {len(top_pairs)}.",
             }
@@ -136,7 +145,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
                 "num": f"{rate:.1f}",
                 "unit": "per season",
                 "label": "Most intense rivalry",
-                "detail": f"<b>{esc(hot.a)}</b> &amp; <b>{esc(hot.b)}</b> averaged "
+                "detail": f"<b>{_who(hot.a)}</b> &amp; <b>{_who(hot.b)}</b> averaged "
                 f"{rate:.1f} shared podiums per season over their "
                 f"{seasons}-season overlap — the densest podium partnership on record.",
             }
@@ -162,7 +171,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
                 "unit": "year era gap",
                 "label": "Biggest cross-era connection",
                 "detail": (
-                    f"<b>{esc(older)}</b> (peak ~{older_med}) and <b>{esc(younger)}</b> "
+                    f"<b>{_who(older)}</b> (peak ~{older_med}) and <b>{_who(younger)}</b> "
                     f"(peak ~{younger_med}) still shared {cross.count} podiums "
                     f"despite their careers being {gap_years} years apart."
                 ),
@@ -189,7 +198,7 @@ def _compute_facts(soulmates: Soulmates) -> list[dict]:
             "num": str(least_cnt),
             "unit": "connections",
             "label": "Solo legend",
-            "detail": f"Despite {least_total} career podiums, <b>{esc(least_name)}</b> shared the box "
+            "detail": f"Despite {least_total} career podiums, <b>{_who(least_name)}</b> shared the box "
             f"with only {least_cnt} other driver{'s' if least_cnt != 1 else ''} "
             f"from the top 40 &mdash; a testament to era dominance.",
         }

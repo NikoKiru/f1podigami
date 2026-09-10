@@ -239,9 +239,24 @@ def test_display_name_uppercases_surname_only():
     from build.build_podigami_html import display_name
 
     assert display_name("Max Verstappen") == "Max VERSTAPPEN"
-    assert display_name("Andrea Kimi Antonelli") == "Andrea Kimi ANTONELLI"
+    assert display_name("Juan Pablo Montoya") == "Juan Pablo MONTOYA"
     assert display_name("Kimi Räikkönen") == "Kimi RÄIKKÖNEN"  # unicode-safe
     assert display_name("") == ""
+
+
+def test_antonelli_is_kimi_antonelli_on_every_page(dist):
+    """F1 and Mercedes call him Kimi Antonelli; the API still says "Andrea Kimi".
+
+    data/ keeps the API's spelling, so every page has to render names through
+    ``driver_name``. This catches any path that skips it — including the
+    lowercased search keys, the ``?d=`` filter links and the timeline's JSON.
+    """
+    api_form = re.compile(r"andrea[\s+]kimi|\bA\. Antonelli", re.IGNORECASE)
+    for page in sorted(dist.glob("*.html")):
+        text = page.read_text(encoding="utf-8")
+        assert not api_form.search(text), f"{page.name} still shows 'Andrea Kimi Antonelli'"
+    # He has podiums, so the combinations table always lists him.
+    assert "Kimi Antonelli" in (dist / "combos.html").read_text(encoding="utf-8")
 
 
 def test_landing_candidate_tooltip_uses_broadcast_name(dist):

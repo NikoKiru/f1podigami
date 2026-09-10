@@ -58,6 +58,13 @@ def test_render_trio_responsive_names():
     assert "E. Ocon" in out
 
 
+def test_render_trio_bills_antonelli_as_kimi():
+    out = bo.render_trio(["Andrea Kimi Antonelli", "Lando Norris", "George Russell"])
+    assert '<span class="dn-full">Kimi Antonelli</span>' in out
+    assert ">K. Antonelli<" in out
+    assert "Andrea" not in out
+
+
 def test_render_trio_escapes_and_separates():
     out = bo.render_trio(["A & B", "C Driver", "D Driver"])
     assert "A &amp; B" in out
