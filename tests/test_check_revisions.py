@@ -8,18 +8,27 @@ These lock in the check that makes such an edit loud.
 
 from __future__ import annotations
 
+import io
 import json
+import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 import check_revisions
 from check_revisions import (
+    MAX_ISSUES,
     describe,
     issue_markdown,
     issue_title,
     podium_revisions,
     pr_title_suffix,
     verdict,
+    write_revision_files,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 NAMES = {
     "antonelli": "Andrea Kimi Antonelli",
@@ -200,3 +209,106 @@ def test_cli_treats_a_missing_head_file_as_no_revision(tmp_path, monkeypatch):
         tree={"podiums.json": JUN16, "combos.json": []},
     )
     assert lines == ["revised=false", "title="]
+
+
+def _many_revisions(n: int) -> list[dict]:
+    """``n`` distinct revised races, one per round, for the MAX_ISSUES tests."""
+    before = [
+        pod("2026", str(i), f"Race {i}", "hadjar", "hamilton", "antonelli") for i in range(1, n + 1)
+    ]
+    after = [
+        pod("2026", str(i), f"Race {i}", "gasly", "hamilton", "antonelli") for i in range(1, n + 1)
+    ]
+    return podium_revisions(before, after)
+
+
+def test_up_to_max_issues_writes_one_file_per_revision(tmp_path):
+    revisions = _many_revisions(MAX_ISSUES)
+    write_revision_files(tmp_path, revisions)
+    files = sorted(tmp_path.iterdir())
+    assert len(files) == MAX_ISSUES
+    assert all(f.name != "summary.md" for f in files)
+
+
+def test_six_revisions_write_one_summary_titled_with_the_count(tmp_path):
+    revisions = _many_revisions(MAX_ISSUES + 1)
+    write_revision_files(tmp_path, revisions)
+    files = list(tmp_path.iterdir())
+    assert [f.name for f in files] == ["summary.md"]
+    text = files[0].read_text(encoding="utf-8")
+    lines = text.splitlines()
+    assert lines[0] == pr_title_suffix(revisions) == f"Podium revised: {MAX_ISSUES + 1} races"
+    assert lines[1] == ""
+    for rev in revisions:
+        assert rev["raceName"] in text
+
+
+def test_outputs_survive_a_console_encoding_crash(tmp_path, monkeypatch):
+    """Even if printing raises (a cp1252 console choking on an arrow), the
+    issue files and $GITHUB_OUTPUT must already be on disk: main() writes them
+    before it prints anything.
+    """
+
+    class CrashingStdout:
+        def write(self, _s):
+            raise UnicodeEncodeError("cp1252", "→", 0, 1, "boom")
+
+        def flush(self):
+            pass
+
+    monkeypatch.setattr(sys, "stdout", CrashingStdout())
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "podiums.json").write_text(json.dumps(JUN16), encoding="utf-8")
+    (tmp_path / "data" / "combos.json").write_text("[]", encoding="utf-8")
+    out = tmp_path / "github_output"
+
+    def fake_git_show(path: str) -> str:
+        return json.dumps(JUN8) if Path(path).name == "podiums.json" else "[]"
+
+    monkeypatch.setattr(check_revisions, "REPO", tmp_path)
+    monkeypatch.setattr(check_revisions, "_git_show", fake_git_show)
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    out_dir = tmp_path / "issues"
+
+    with pytest.raises(UnicodeEncodeError):
+        check_revisions.main(["--out-dir", str(out_dir)])
+
+    assert "revised=true" in out.read_text(encoding="utf-8")
+    assert list(out_dir.iterdir())
+
+
+def test_main_reconfigures_stdout_so_an_arrow_does_not_crash_a_cp1252_console(
+    tmp_path, monkeypatch
+):
+    buf = io.BytesIO()
+    stream = io.TextIOWrapper(buf, encoding="cp1252", errors="strict", newline="")
+    monkeypatch.setattr(sys, "stdout", stream)
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "podiums.json").write_text(json.dumps(JUN16), encoding="utf-8")
+    (tmp_path / "data" / "combos.json").write_text("[]", encoding="utf-8")
+    out = tmp_path / "github_output"
+
+    def fake_git_show(path: str) -> str:
+        return json.dumps(JUN8) if Path(path).name == "podiums.json" else "[]"
+
+    monkeypatch.setattr(check_revisions, "REPO", tmp_path)
+    monkeypatch.setattr(check_revisions, "_git_show", fake_git_show)
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    out_dir = tmp_path / "issues"
+
+    assert check_revisions.main(["--out-dir", str(out_dir)]) == 0
+
+    stream.flush()
+
+
+def test_cli_runs_as_a_real_subprocess(tmp_path):
+    """M9: exercise the actual entry point, not just main() in-process."""
+    out_dir = tmp_path / "issues"
+    result = subprocess.run(
+        [sys.executable, "src/check_revisions.py", "--out-dir", str(out_dir)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert out_dir.exists()

@@ -30,6 +30,7 @@ from build._layout import driver_name
 
 REPO = Path(__file__).resolve().parents[1]
 SLOTS = ("p1", "p2", "p3")
+MAX_ISSUES = 5
 
 
 def _ordinal(n: int) -> str:
@@ -150,6 +151,52 @@ def issue_markdown(rev: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def summary_markdown(revisions: list[dict]) -> str:
+    """One file for a mass revision (a mid-season renumbering, a --full run).
+
+    Title on the first line, a blank line, then one table row per race —
+    same shape as :func:`issue_markdown` but covering every revision instead
+    of opening one issue each (which could hit GitHub's secondary rate limit
+    mid-loop).
+    """
+    lines = [
+        pr_title_suffix(revisions),
+        "",
+        "A data update changed several podiums the site had already published.",
+        "",
+        "| Race | Before | After | Verdict |",
+        "|---|---|---|---|",
+    ]
+    for rev in revisions:
+        race = f"{rev['season']} R{rev['round']} {rev['raceName']}"
+        before = " / ".join(driver_name(n) for n in rev["before"])
+        after = " / ".join(driver_name(n) for n in rev["after"])
+        lines.append(
+            f"| {race} | {before} | {after} | {rev['verdictBefore']} → {rev['verdictAfter']} |"
+        )
+    lines += [
+        "",
+        "The data PR still auto-merges. Check the official classification on formula1.com. "
+        "If a new podium is wrong, report it upstream "
+        "(https://github.com/jolpica/jolpica-f1/issues): the fetchers re-read the whole "
+        "season on every run, so a local revert would be overwritten.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def write_revision_files(out_dir: Path, revisions: list[dict]) -> None:
+    """One ``<season>-<round>.md`` per revision, or a single ``summary.md``
+    when there are more than :data:`MAX_ISSUES` (see :func:`summary_markdown`).
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    if len(revisions) > MAX_ISSUES:
+        (out_dir / "summary.md").write_text(summary_markdown(revisions), encoding="utf-8")
+        return
+    for rev in revisions:
+        issue = out_dir / f"{rev['season']}-{rev['round']}.md"
+        issue.write_text(issue_markdown(rev), encoding="utf-8")
+
+
 def _git_show(path: str) -> str | None:
     """``HEAD:<path>`` as text, or None when git or the file is unavailable."""
     try:
@@ -176,6 +223,13 @@ def _parse_list(text: str | None) -> list[dict]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # A GitHub Actions runner is UTF-8, but this also runs from a plain
+    # PowerShell/cp1252 console; titles below carry "—" and "→". Widen what
+    # stdout can encode before anything is printed, rather than risk losing
+    # the $GITHUB_OUTPUT/issue-file writes below to a UnicodeEncodeError.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")
+
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out-dir", type=Path, required=True, help="one issue file per revision")
     args = ap.parse_args(argv)
@@ -193,13 +247,7 @@ def main(argv: list[str] | None = None) -> int:
         tree("combos.json"),
     )
 
-    args.out_dir.mkdir(parents=True, exist_ok=True)
-    for rev in revisions:
-        print(issue_title(rev))
-        issue = args.out_dir / f"{rev['season']}-{rev['round']}.md"
-        issue.write_text(issue_markdown(rev), encoding="utf-8")
-    if not revisions:
-        print("No published podium changed.")
+    write_revision_files(args.out_dir, revisions)
 
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
@@ -209,6 +257,15 @@ def main(argv: list[str] | None = None) -> int:
         with open(out, "a", encoding="utf-8") as fh:
             fh.write(f"revised={'true' if revisions else 'false'}\n")
             fh.write(f"title={title}\n")
+
+    # Printing last: everything a caller needs (issue files, $GITHUB_OUTPUT)
+    # is already on disk, so a console that still can't encode this text
+    # loses nothing but the log line.
+    if revisions:
+        for rev in revisions:
+            print(issue_title(rev))
+    else:
+        print("No published podium changed.")
     return 0
 
 
