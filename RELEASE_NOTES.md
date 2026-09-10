@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-09-10
+
+### Improvements
+- The landing page's tagline now reads **"Keeping track of every F1 podium trio ever and predicting the next one."** — it says what the site does in plain terms, where the previous line ("Spotting the podium trio F1 has never seen — and predicting who's about to make it happen") asked the reader to work out the scorigami premise before the first data on the page (#315)
+
 ## 2026-09-08
 
 ### Improvements
