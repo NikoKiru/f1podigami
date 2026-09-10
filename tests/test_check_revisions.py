@@ -138,8 +138,8 @@ def test_issue_markdown_puts_the_title_first_then_a_table():
     lines = issue_markdown(rev).splitlines()
     assert lines[0] == issue_title(rev)
     assert lines[1] == ""
-    assert "| Before | Andrea Kimi Antonelli / Lewis Hamilton / Isack Hadjar | unknown |" in lines
-    assert "| After | Andrea Kimi Antonelli / Lewis Hamilton / Pierre Gasly | unknown |" in lines
+    assert "| Before | Kimi Antonelli / Lewis Hamilton / Isack Hadjar | unknown |" in lines
+    assert "| After | Kimi Antonelli / Lewis Hamilton / Pierre Gasly | unknown |" in lines
 
 
 def _cli(tmp_path, monkeypatch, head: dict[str, list | None], tree: dict[str, list]):

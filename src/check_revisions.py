@@ -26,6 +26,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from build._layout import driver_name
+
 REPO = Path(__file__).resolve().parents[1]
 SLOTS = ("p1", "p2", "p3")
 
@@ -125,7 +127,11 @@ def pr_title_suffix(revisions: list[dict]) -> str:
 
 
 def issue_markdown(rev: dict) -> str:
-    """Title on the first line, a blank line, then the body (the workflow splits them)."""
+    """Title on the first line, a blank line, then the body (the workflow splits them).
+
+    Driver names are shown as the site bills them (via build._layout.driver_name);
+    the data keeps the API's spelling.
+    """
     lines = [
         issue_title(rev),
         "",
@@ -133,8 +139,8 @@ def issue_markdown(rev: dict) -> str:
         "",
         "| | Podium | Verdict |",
         "|---|---|---|",
-        f"| Before | {' / '.join(rev['before'])} | {rev['verdictBefore']} |",
-        f"| After | {' / '.join(rev['after'])} | {rev['verdictAfter']} |",
+        f"| Before | {' / '.join(driver_name(n) for n in rev['before'])} | {rev['verdictBefore']} |",
+        f"| After | {' / '.join(driver_name(n) for n in rev['after'])} | {rev['verdictAfter']} |",
         "",
         "The data PR still auto-merges. Check the official classification on formula1.com. "
         "If the new podium is wrong, report it upstream "
