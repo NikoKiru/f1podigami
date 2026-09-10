@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-788%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-851%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -166,7 +166,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (832 tests, run in CI)
+tests/          pytest suite (851 tests, run in CI)
 ```
 
 </details>
@@ -207,7 +207,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 832 tests + coverage gate (≥70%)
+pytest --cov                          # 851 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
@@ -223,7 +223,7 @@ Every push and PR runs a hardened pipeline:
 | [`codeql.yml`](.github/workflows/codeql.yml) | **CodeQL** static analysis of Python *and* the workflow files (weekly + on PRs) |
 | [`security.yml`](.github/workflows/security.yml) | **pip-audit** for vulnerable dependencies · **gitleaks** secret scanning |
 | [`deploy.yml`](.github/workflows/deploy.yml) | Test-gated publish to **GitHub Pages** |
-| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — polls every 15 min for a newly-finished race (1h40 buffer) *or* a just-completed qualifying session (90-min buffer, to publish the post-qualifying prediction update). When a race is due it waits in-run for the results to be published upstream, then opens an auto-merging PR; a weekly run forces a full reconciliation. A **watchdog** job checks that PR on every tick and raises an alert issue if it has sat unmerged for 45 min (failing check, conflict, auto-merge off); the issue stays quiet while the failure is unchanged and closes itself once no data PR is left open, so each new incident notifies afresh |
+| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — polls every 15 min for a newly-finished race (1h40 buffer) *or* a just-completed qualifying session (90-min buffer, to publish the post-qualifying prediction update). When a race is due it waits in-run for the results to be published upstream, then opens an auto-merging PR; a weekly run forces a full reconciliation. A **watchdog** job checks that PR on every tick and raises an alert issue if it has sat unmerged for 45 min (failing check, conflict, auto-merge off); the issue stays quiet while the failure is unchanged and closes itself once no data PR is left open, so each new incident notifies afresh. A data update that changes an **already-published podium** is flagged — the PR is retitled and labelled `podium-revised` and an issue opens — without blocking the merge. |
 | [`dependabot.yml`](.github/dependabot.yml) + [auto-merge](.github/workflows/dependabot-automerge.yml) | Weekly dependency PRs; patch/minor bumps auto-merge once CI is green |
 
 All workflows run with **least-privilege permissions**, **concurrency cancellation**, and **pip

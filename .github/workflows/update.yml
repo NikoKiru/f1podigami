@@ -121,6 +121,27 @@ jobs:
           else
             python src/update.py
           fi
+      # Jolpica can rewrite a race the site already published: the 2026 Monaco
+      # GP's P3 went Hadjar -> Gasly -> Hadjar and both edits merged unread, so
+      # the site listed a trio that never officially happened for 82 days.
+      # Compare every podium already on main with the refreshed data. A change
+      # retitles the PR and opens an issue (below) but never blocks the merge —
+      # holding this PR would hold every later race too.
+      #
+      # Guarded: a scheduled run takes this workflow from develop but checks out
+      # main's scripts, so between merging to develop and promoting to main the
+      # script is not there yet. Skip rather than fail every data update.
+      # continue-on-error: an unexpected crash here must never block the data PR.
+      - name: Detect podium revisions
+        id: revisions
+        continue-on-error: true
+        run: |
+          if [ -f src/check_revisions.py ]; then
+            python src/check_revisions.py --out-dir "$RUNNER_TEMP/podium-revisions"
+          else
+            echo "check_revisions.py is not on main yet; skipping."
+            echo "revised=false" >> "$GITHUB_OUTPUT"
+          fi
       # Open/refresh the PR BEFORE validating: a bad-data run then surfaces as a
       # visible red PR (whose required checks gate the auto-merge) instead of a
       # silently-skipped step. The validate + tests below still run, so a bad run
@@ -128,6 +149,7 @@ jobs:
       - name: Open or refresh the data PR and arm auto-merge
         env:
           GH_TOKEN: ${{ secrets.DATA_PUSH_TOKEN }}
+          REVISION_TITLE: ${{ steps.revisions.outputs.title }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -138,17 +160,71 @@ jobs:
           fi
           BRANCH="auto/update-data"
           DATE="$(date -u +%Y-%m-%dT%H:%MZ)"
+          TITLE="Update race data $DATE"
+          if [ -n "$REVISION_TITLE" ]; then
+            TITLE="$TITLE · $REVISION_TITLE"
+          fi
           # Dedicated bot-only branch, serialized by the workflow concurrency group,
           # so a plain force-push is safe.
           git checkout -B "$BRANCH"
-          git commit -m "Update race data $DATE"
+          git commit -m "$TITLE"
           git push --force origin "$BRANCH"
-          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
+          PR="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" || true
+          if [ -z "$PR" ]; then
             gh pr create --base main --head "$BRANCH" \
-              --title "Update race data $DATE" \
+              --title "$TITLE" \
               --body "Automated race-data refresh. Auto-merges once all required checks pass."
           fi
           gh pr merge --auto --squash --delete-branch "$BRANCH"
+          # A refresh re-derives the title from the comparison with main, so a
+          # revision shows even when it lands on a PR that was already open.
+          # Retitle AFTER auto-merge is armed, via the REST API (Pull requests:
+          # write is enough — unlike `gh pr edit`, which also queries
+          # projects/labels/milestones DATA_PUSH_TOKEN may not be allowed to
+          # read), and never fatally: a revision alert must not fail the
+          # data update.
+          if [ -n "$PR" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$PR" -f title="$TITLE" >/dev/null \
+              || echo "::warning::Could not retitle data PR #$PR"
+          fi
+      # The built-in token, not the PAT: DATA_PUSH_TOKEN carries no Issues
+      # permission. One issue per revision, deduplicated by title against OPEN
+      # podium-revised issues only — a human closing one re-arms it, so a
+      # repeat flip-flop after that still notifies — left open for a human
+      # since it's a notification, not a failure, so nothing auto-closes it.
+      # Issues are created FIRST and loudly (a failed `gh issue create` fails
+      # this step); the PR label is cosmetic and applied after, non-fatally.
+      # Close a podium-revised issue only after its data PR has merged: dedup
+      # is against OPEN issues, so closing one while the PR is still unmerged
+      # makes the next run open an identical one.
+      - name: Flag podium revisions for a human
+        if: steps.revisions.outputs.revised == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVISIONS_DIR: ${{ runner.temp }}/podium-revisions
+        run: |
+          gh label create podium-revised --repo "$GITHUB_REPOSITORY" \
+            --color FBCA04 --description "A data update changed an already-published podium" 2>/dev/null || true
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --label podium-revised \
+            --state open --limit 200 --json title --jq '.[].title')" || existing=""
+          for f in "$REVISIONS_DIR"/*.md; do
+            [ -e "$f" ] || continue
+            title="$(head -n 1 "$f")"
+            if printf '%s\n' "$existing" | grep -Fxq -- "$title"; then
+              echo "Already reported: $title"
+              continue
+            fi
+            tail -n +3 "$f" > "$RUNNER_TEMP/issue-body.md"
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" \
+              --label podium-revised --body-file "$RUNNER_TEMP/issue-body.md"
+          done
+          PR="$(gh pr list --repo "$GITHUB_REPOSITORY" --head auto/update-data --state open \
+            --json number --jq '.[0].number')" || true
+          if [ -n "$PR" ]; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR/labels" \
+              -f "labels[]=podium-revised" >/dev/null \
+              || echo "::warning::Could not label data PR #$PR"
+          fi
       - name: Validate datasets
         run: PYTHONPATH=src python -m datalib.validate
       - name: Run tests
