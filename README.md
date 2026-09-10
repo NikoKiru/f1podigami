@@ -50,7 +50,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 | | Page | What it shows |
 |---|---|---|
 | 🔮 | **`index.html`** | The **Podigami predictor** — next/last race (with the upcoming qualifying time), most likely brand-new trio and a **trio board** ranking every trio in play for the next race — already-happened ones muted with their history on hover/tap, never-happened ones highlighted — all of which **refresh after qualifying using the starting grid** (with a collapsible current-form tower), season debut timeline (with quick-pick season chips), FAQ, plus live-stat discovery hooks and a "Keep exploring" grid routing to every other page |
-| 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 — sortable, filterable by driver and season range (on mobile the filters fold into a slide-out panel), expandable (on phones each trio collapses to a single line, with its detail on tap), with shared-drive podiums marked |
+| 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 — sortable, filterable by driver and season range (on mobile the filters fold into a slide-out panel), expandable (on phones each trio collapses to one row — its three drivers stacked one per line beside the podium count — with its detail on tap), with shared-drive podiums marked |
 | ⏳ | `overdue.html` | Trios "overdue" to appear — driver pairs whose current form suggests a shared podium is imminent |
 | 🎲 | `unlikeliest.html` | The mirror of Overdue — podium trios that *did* happen ranked by how statistically improbable they were, led by the single biggest fluke in F1 history |
 | 🤝 | `soulmates.html` | Shared-podium matrix — which drivers have stood on the box together most often |
@@ -166,7 +166,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (788 tests, run in CI)
+tests/          pytest suite (832 tests, run in CI)
 ```
 
 </details>
@@ -207,7 +207,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 788 tests + coverage gate (≥70%)
+pytest --cov                          # 832 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami

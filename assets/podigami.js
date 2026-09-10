@@ -64,9 +64,12 @@
             : 'no new trios';
 
         listEl.innerHTML = entries.map(e => {
+            // Each name carries the "/" after it: inline, the trio wraps only
+            // after a separator; on a phone, CSS stacks one name per line.
             const names = e.names
-                .map(n => `<span class="pdriver">${esc(displayName(n))}</span>`)
-                .join('<span class="sep">/</span>');
+                .map((n, i, all) => `<span class="pdriver">${esc(displayName(n))}` +
+                    (i < all.length - 1 ? '<span class="sep">/</span>' : '') + '</span>')
+                .join('');
             const fr = e.firstRace;
             // Official F1 result URL embedded at build time; wiki as fallback.
             const url = fr.url || wikiUrl(year, fr.raceName);

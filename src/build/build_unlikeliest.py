@@ -73,16 +73,20 @@ def format_odds(score: float) -> str:
 
 def render_trio(names: list[str]) -> str:
     """The three drivers, each carrying a full and an abbreviated form so CSS can
-    swap to 'E. Ocon' on narrow screens (matching the combos table)."""
+    swap to 'E. Ocon' on narrow screens (matching the combos table). Each name
+    carries the "/" after it, so inline a trio wraps only after a separator,
+    and on a phone it stacks one name per line."""
     sep = '<span class="sep">/</span>'
     driver = (
         '<span class="undriver">'
         '<span class="dn-full">{full}</span>'
         '<span class="dn-abbr" aria-hidden="true">{abbr}</span>'
-        "</span>"
+        "{sep}</span>"
     )
-    return sep.join(
-        driver.format(full=esc(n), abbr=esc(abbr_name(n))) for n in map(driver_name, names)
+    names = [driver_name(n) for n in names]
+    return "".join(
+        driver.format(full=esc(n), abbr=esc(abbr_name(n)), sep=sep if i < len(names) - 1 else "")
+        for i, n in enumerate(names)
     )
 
 

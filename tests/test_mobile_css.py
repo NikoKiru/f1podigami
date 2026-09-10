@@ -55,6 +55,81 @@ def test_index_combo_rows_stay_one_table_on_mobile():
     assert "margin-bottom" not in body, "mobile combo rows must not be gapped apart"
 
 
+@pytest.mark.parametrize("name", ["index.css", "podigami.css"])
+def test_trio_driver_names_never_split_across_lines(name):
+    """A trio may wrap, but only between names — "M. Verstappen / L. Norris /"
+    then "O. Piastri", never "O." stranded above "Piastri". Driver spans are
+    nowrap; no breakpoint may switch one back to white-space: normal.
+    """
+    import re
+
+    assert not re.search(r"driver\s*\{[^}]*white-space:\s*normal", css(name)), (
+        "a breakpoint re-enables wrapping inside a driver's name"
+    )
+
+
+def test_combo_driver_names_are_nowrap():
+    import re
+
+    s = css("index.css")
+    assert re.search(r"td\.drivers \.driver\s*\{[^}]*white-space:\s*nowrap", s)
+
+
+def test_leaderboard_and_timeline_trios_stack_on_mobile():
+    """Overdue, Unlikeliest and the landing-page timeline stack a trio one
+    driver per line on phones, hairline between, as the combinations table
+    does. (Soulmates pairs are two short names and stay inline.)"""
+    import re
+
+    s = css("podigami.css")
+    block = s[s.index("@media (max-width: 600px)") :]
+    for drv in (r"\.rr-drivers \.oddriver", r"\.rr-drivers \.undriver", r"\.trio \.pdriver"):
+        assert re.search(drv + r"[^{]*\{[^}]*display:\s*block", block), f"{drv} must stack"
+    for pair in (
+        r"\.oddriver \+ \.oddriver",
+        r"\.undriver \+ \.undriver",
+        r"\.pdriver \+ \.pdriver",
+    ):
+        assert re.search(pair + r"[^{]*\{[^}]*border-top:\s*1px solid", block), (
+            f"{pair} needs a hairline between stacked names"
+        )
+    assert not re.search(r"\.smdriver[^{]*\{[^}]*display:\s*block", block)
+
+
+def test_trio_boundaries_outweigh_the_lines_inside_them_on_mobile():
+    """Stacked, a trio's inner hairlines must read fainter than the rule between
+    trios, or one trio's three names blur into the next three."""
+    import re
+
+    faint = r"border-top:\s*1px solid color-mix\("
+    idx = css("index.css")
+    idx = idx[idx.index("@media (max-width: 600px)") :]
+    assert re.search(r"tbody tr\.combo \{[^}]*border-top:\s*1px solid var\(--border-strong\)", idx)
+    assert re.search(r"\.driver \+ \.driver\s*\{[^}]*" + faint, idx)
+
+    pod = css("podigami.css")
+    pod = pod[pod.index("@media (max-width: 600px)") :]
+    assert re.search(r"\.rankrow \+ \.rankrow > details\s*\{[^}]*var\(--border-strong\)", pod)
+    assert re.search(r"\.tl-item\s*\{[^}]*var\(--border-strong\)", pod)
+    assert re.search(r"\.undriver \+ \.undriver\s*\{[^}]*" + faint, pod)
+    assert re.search(r"\.pdriver \+ \.pdriver\s*\{[^}]*" + faint, pod)
+
+
+def test_combo_trio_stacks_one_driver_per_line_on_mobile():
+    """On a phone each trio is three lines, one name apiece, with a hairline
+    between names in place of the "/" separators."""
+    import re
+
+    s = css("index.css")
+    block = s[s.index("@media (max-width: 600px)") :]
+    assert re.search(r"tbody tr\.combo td\.drivers \.driver\s*\{[^}]*display:\s*block", block)
+    assert re.search(r"tbody tr\.combo td\.drivers \.sep\s*\{[^}]*display:\s*none", block)
+    assert re.search(
+        r"tbody tr\.combo td\.drivers \.driver \+ \.driver\s*\{[^}]*border-top:\s*1px solid",
+        block,
+    ), "stacked names need a hairline between them"
+
+
 def test_index_inputs_prevent_ios_zoom():
     # >=16px font-size on inputs stops iOS auto-zoom on focus
     assert "font-size: 16px" in css("index.css")

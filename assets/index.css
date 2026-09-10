@@ -887,10 +887,6 @@ a.race-pill:hover {
         font-size: 13px;
     }
 
-    td.drivers .driver {
-        white-space: normal;
-    }
-
     td.last {
         font-size: 13px;
     }
@@ -934,9 +930,11 @@ a.race-pill:hover {
         column-gap: 10px;
         /* rows sit flush inside the table frame, divided by one hairline each
            (mirroring the desktop table) rather than floating as separate
-           cards — 754 of them read as a list, not a stack of panels */
-        border-top: 1px solid var(--border);
-        padding: 12px 14px;
+           cards — 754 of them read as a list, not a stack of panels. The
+           rule is the strong border so it outweighs the faint hairlines
+           between a trio's own stacked names. */
+        border-top: 1px solid var(--border-strong);
+        padding: 14px;
     }
 
     tbody tr.combo:first-child {
@@ -955,7 +953,7 @@ a.race-pill:hover {
         background: transparent;
     }
 
-    /* One line per trio: names, count, chevron, each pinned to an explicit
+    /* One grid row per trio: names, count, chevron, each pinned to an explicit
        grid cell. "Last seen" claims row 2 across all three columns when the
        row expands, so revealing it can never displace the chevron. */
     tbody tr.combo td.drivers {
@@ -966,15 +964,23 @@ a.race-pill:hover {
         line-height: 1.35;
     }
 
+    /* One driver per line, a hairline between them in place of the "/" —
+       a name is never split, and the trio reads as a list of three. */
     tbody tr.combo td.drivers .driver {
-        white-space: normal;
+        display: block;
+    }
+
+    tbody tr.combo td.drivers .driver + .driver {
+        border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+        margin-top: 5px;
+        padding-top: 5px;
     }
 
     tbody tr.combo td.drivers .dn-full { display: none; }
     tbody tr.combo td.drivers .dn-abbr { display: inline; }
 
     tbody tr.combo td.drivers .sep {
-        margin: 0 5px;
+        display: none;
     }
 
     /* The sort is podium count, so the number stays on the collapsed face —

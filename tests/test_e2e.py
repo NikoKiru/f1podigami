@@ -52,6 +52,51 @@ def test_slider_input_updates_year_and_count(dist):
         browser.close()
 
 
+# ── Trio names on phones (index.css, podigami.css, podigami.js) ────────────
+
+
+@pytest.mark.parametrize(
+    ("page_name", "group", "driver"),
+    [
+        ("combos.html", "tbody tr.combo td.drivers", ".driver"),
+        ("overdue.html", ".rr-drivers", ".oddriver"),
+        ("unlikeliest.html", ".rr-drivers", ".undriver"),
+        ("index.html", ".tl-item .trio", ".pdriver"),
+    ],
+)
+def test_trios_stack_one_whole_name_per_line_on_phones(dist, page_name, group, driver):
+    """On a phone every trio is three lines, one name apiece: a name never
+    splits ("M." above "Verstappen") and never shares a line with another."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 360, "height": 800})
+        page.goto(_url(dist, page_name))
+        page.wait_for_selector(f"{group} {driver}")
+        bad = page.evaluate(
+            """([group, driver]) => {
+                const bad = [];
+                for (const g of document.querySelectorAll(group)) {
+                    const tops = [];
+                    for (const d of g.querySelectorAll(driver)) {
+                        const name = d.querySelector('.dn-abbr') || d;
+                        const r = document.createRange();
+                        r.selectNodeContents(name.firstChild);
+                        const lines = r.getClientRects();
+                        if (lines.length !== 1) bad.push('split: ' + name.textContent);
+                        else tops.push(lines[0].top);
+                    }
+                    if (tops.some((t, i) => i && t <= tops[i - 1])) {
+                        bad.push('shared line: ' + g.textContent);
+                    }
+                }
+                return bad.slice(0, 5);
+            }""",
+            [group, driver],
+        )
+        browser.close()
+    assert bad == []
+
+
 # ── Info-tip tooltips (podigami.js) ────────────────────────────────────────
 
 
