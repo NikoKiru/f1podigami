@@ -1041,8 +1041,8 @@ def main() -> int:
 <header>
     <div class="container">
         <h1><span class="accent">F1</span> Podigami</h1>
-        <p class="tagline">Spotting the podium trio F1 has never seen &mdash;
-        and predicting who&rsquo;s about to make it happen.</p>
+        <p class="tagline">Keeping track of every F1 podium trio ever
+        and predicting the next one.</p>
     </div>
 </header>
 <main>
