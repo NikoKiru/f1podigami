@@ -5,54 +5,58 @@ race already reflected in the data, and reports whether an update should run. On
 then does the workflow run the full (network) update. Two independent triggers feed
 a single ``due`` output:
 
-- :func:`is_update_due` — a finished race that *should have results by now* is
-  newer than what we have (the primary, data-loss-sensitive trigger).
-- :func:`is_post_quali_update_due` — the next race's qualifying should be
-  classified by now but ``podigami.json``'s ``postQuali`` block doesn't cover that
-  round yet (refreshes the pre-race prediction with the grid; fail-safe, so any
-  missing/garbage input just stays quiet).
+- :func:`is_update_due` — the newest race whose watch window is open (it opens
+  ``ARM_BEFORE`` the scheduled start) is newer than what we have.
+- :func:`is_post_quali_update_due` — the next race's qualifying window is open
+  but ``podigami.json``'s ``postQuali`` block doesn't cover that round yet
+  (fail-safe, so any missing/garbage input just stays quiet).
 
-Both take loaded dicts (no IO) so they are trivially unit-testable; :func:`main`
+The window opens *before* the session on purpose: GitHub starts only a handful of
+scheduled runs a day, so being quick means already waiting when results appear.
+A run that lands in the window holds its runner in ``wait_for_results.py`` and
+acts only once the data is actually published.
+
+All take loaded dicts (no IO) so they are trivially unit-testable; :func:`main`
 loads the data, ORs the two triggers, and writes ``due=true|false`` to
-``$GITHUB_OUTPUT``.
+``$GITHUB_OUTPUT``. ``--successor`` instead reports whether a session is still
+pending inside ``SUCCESSOR_WINDOW`` — update.yml's cue to dispatch the next run
+itself rather than wait for the scheduler.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-# How long after its scheduled start a race is assumed to be *over* — i.e. when
-# it is worth starting to look for results. A GP runs ~100min (2h running / 3h
-# elapsed are only the regulatory caps; a red-flagged race is the rare
-# exception), so 1h40 clears the flag without ever polling mid-race.
-#
-# This is deliberately the *end of the race*, not "results are published": the
-# API's publish lag is absorbed by the in-run watcher (src/wait_for_results.py),
-# which polls until the round actually appears. Padding this constant instead
-# would just burn wall-clock on every race weekend, because a miss costs a whole
-# cron cycle (GitHub delivers ~1/hour against our 15-min schedule).
-RESULTS_BUFFER = timedelta(minutes=100)
+# How far ahead of a session's scheduled start the guard arms. Since 2026-08-27
+# GitHub has delivered only ~6-7 of our 96 daily cron slots, at unpredictable
+# times, so a run has to be in place *before* results appear. Replaying 14 days
+# of real scheduled runs, arming 3h early with a 5h watcher puts a run in place
+# for 93% of races and 91% of qualifying sessions (55% for the old
+# arm-after-the-flag / 2h budget). Early costs only idle runner time: the
+# watcher acts on nothing until the round is published.
+ARM_BEFORE = timedelta(hours=3)
 
-# How long after the scheduled qualifying start the classification is assumed
-# published. Quali runs ~1h; API publish lag is minutes. Being early is harmless
-# (same self-terminating no-op as RESULTS_BUFFER), being late only delays the
-# post-quali refresh, so 90min errs toward promptness.
-QUALI_BUFFER = timedelta(minutes=90)
+# A run that times out with a session still unpublished dispatches its own
+# successor (update.yml), but only until this long after the session's
+# scheduled start — which bounds the chain. 12h spans Jolpica's slowest publish
+# this season (~7h after the flag, 2026 Italian GP) with room to spare.
+SUCCESSOR_WINDOW = timedelta(hours=12)
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 
-def _race_start(date: str, time: str) -> datetime | None:
-    """Parse a race's scheduled start as a tz-aware UTC datetime.
+def session_start(date: str, time: str) -> datetime | None:
+    """Parse a session's scheduled start as a tz-aware UTC datetime.
 
     ``date`` is ``YYYY-MM-DD``; ``time`` is e.g. ``04:00:00Z`` (may be empty).
-    A missing time defaults to end-of-day UTC, so an unknown-time race (only ever
-    far-future, before the API sets a session time) is treated as finished well
-    after its date — conservative. Bad values yield ``None`` (race skipped).
+    A missing time defaults to end-of-day UTC, so an unknown-time session (only
+    ever far-future, before the API sets a time) arms late — conservative. Bad
+    values yield ``None`` (session skipped).
     """
     if not date:
         return None
@@ -63,11 +67,30 @@ def _race_start(date: str, time: str) -> datetime | None:
         return None
 
 
-def latest_finished_round(schedule: dict, now: datetime) -> tuple[int, int] | None:
-    """The newest ``(season, round)`` that should be over by ``now``, or None.
+def _have(asof: dict) -> tuple[int, int]:
+    """``asOf`` as a numeric (season, round). A missing/garbage asOf means "we
+    have nothing", so any armed race counts as newer."""
+    try:
+        return (int(asof["season"]), int(asof["round"]))
+    except (KeyError, ValueError, TypeError):
+        return (-1, -1)
+
+
+def _race_by_round(schedule: dict, rnd: int) -> dict | None:
+    for race in schedule.get("races", []):
+        try:
+            if int(race["round"]) == rnd:
+                return race
+        except (KeyError, ValueError, TypeError):
+            continue
+    return None
+
+
+def latest_armed_round(schedule: dict, now: datetime) -> tuple[int, int] | None:
+    """The newest ``(season, round)`` whose race window is open by ``now``, or None.
 
     Shared by :func:`is_update_due` (is it newer than what we have?) and the
-    watcher (which round should we wait for the API to publish?).
+    watcher (which round should it wait for the API to publish?).
     """
     try:
         season = int(schedule["season"])
@@ -76,9 +99,9 @@ def latest_finished_round(schedule: dict, now: datetime) -> tuple[int, int] | No
 
     latest: tuple[int, int] | None = None
     for race in schedule.get("races", []):
-        start = _race_start(race.get("date", ""), race.get("time", ""))
-        if start is None or now < start + RESULTS_BUFFER:
-            continue  # not started, mid-race, or unparseable -> no results yet
+        start = session_start(race.get("date", ""), race.get("time", ""))
+        if start is None or now < start - ARM_BEFORE:
+            continue  # window not open yet, or unparseable
         try:
             key = (season, int(race["round"]))
         except (KeyError, ValueError, TypeError):
@@ -89,25 +112,14 @@ def latest_finished_round(schedule: dict, now: datetime) -> tuple[int, int] | No
 
 
 def is_update_due(schedule: dict, asof: dict, now: datetime) -> bool:
-    """True if a race that should have results by ``now`` is newer than ``asof``.
+    """True if the newest race whose window is open is newer than ``asof``.
 
-    ``schedule``: parsed ``schedule.json`` for the current season.
-    ``asof``:     the latest race already reflected in the data — i.e.
-                  ``podigami.json``'s ``asOf`` (``{"season", "round", ...}``).
-    ``now``:      tz-aware UTC datetime.
+    Compared NUMERICALLY — a string compare would order round "9" after "10".
     """
-    # (season, round) we already have. Compared NUMERICALLY — a string compare
-    # would order round "9" after "10". A missing/garbage asOf means "we have
-    # nothing", so any finished race is due.
-    try:
-        have = (int(asof["season"]), int(asof["round"]))
-    except (KeyError, ValueError, TypeError):
-        have = (-1, -1)
-
-    latest_due = latest_finished_round(schedule, now)
+    latest_due = latest_armed_round(schedule, now)
     if latest_due is None:
-        return False  # nothing has finished this season yet (early/empty season)
-    return latest_due > have
+        return False  # no window open this season yet (early/empty season)
+    return latest_due > _have(asof)
 
 
 def _next_race_entry(schedule: dict, have: tuple[int, int]) -> dict | None:
@@ -129,56 +141,111 @@ def _next_race_entry(schedule: dict, have: tuple[int, int]) -> dict | None:
     return best[1] if best else None
 
 
-def is_post_quali_update_due(
+def next_quali_target(
     schedule: dict, asof: dict, post_quali: dict | None, now: datetime
-) -> bool:
-    """True when the next race's qualifying should be classified by ``now`` but
-    ``podigami.json``'s ``postQuali`` doesn't cover that round yet.
+) -> tuple[int, int] | None:
+    """The ``(season, round)`` whose qualifying window is open but uncovered, or None.
 
-    Fail-safe: any missing/garbage input means "don't fire" — unlike the race
-    trigger, there is no data-loss risk in staying quiet (the pre-quali
-    prediction remains live), and a schedule without quali fields (pre-rollout)
-    must never wedge the loop. A garbage ``asOf`` also stays quiet: without it
-    the "next" race is unknowable, and the race trigger already covers that case.
+    Fail-safe: any missing/garbage input means None — unlike the race trigger,
+    staying quiet loses nothing (the pre-quali prediction remains live), and a
+    schedule without quali fields must never wedge the loop. A garbage ``asOf``
+    also stays quiet: without it the "next" race is unknowable, and the race
+    trigger already covers that case.
     """
     try:
         have = (int(asof["season"]), int(asof["round"]))
     except (KeyError, ValueError, TypeError):
-        return False
+        return None
     race = _next_race_entry(schedule, have)
     if race is None:
-        return False
-    start = _race_start(race.get("qualifyingDate") or "", race.get("qualifyingTime") or "")
-    if start is None or now < start + QUALI_BUFFER:
-        return False
+        return None
+    start = session_start(race.get("qualifyingDate") or "", race.get("qualifyingTime") or "")
+    if start is None or now < start - ARM_BEFORE:
+        return None
+    target = (int(schedule["season"]), int(race["round"]))
     if post_quali:
         try:
             covered = (int(post_quali["season"]), int(post_quali["round"]))
         except (KeyError, ValueError, TypeError):
             covered = None
-        if covered == (int(schedule["season"]), int(race["round"])):
-            return False
-    return True
+        if covered == target:
+            return None
+    return target
 
 
-def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit tests
+def is_post_quali_update_due(
+    schedule: dict, asof: dict, post_quali: dict | None, now: datetime
+) -> bool:
+    """True when the next race's qualifying window is open but ``postQuali``
+    doesn't cover that round yet."""
+    return next_quali_target(schedule, asof, post_quali, now) is not None
+
+
+def pending_session_starts(
+    schedule: dict, asof: dict, post_quali: dict | None, now: datetime
+) -> list[datetime]:
+    """Scheduled starts of the sessions the data still lacks (race and/or qualifying)."""
+    starts: list[datetime] = []
+    race = latest_armed_round(schedule, now)
+    if race is not None and race > _have(asof):
+        entry = _race_by_round(schedule, race[1])
+        start = entry and session_start(entry.get("date", ""), entry.get("time", ""))
+        if start:
+            starts.append(start)
+    quali = next_quali_target(schedule, asof, post_quali, now)
+    if quali is not None:
+        entry = _race_by_round(schedule, quali[1])
+        start = entry and session_start(
+            entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
+        )
+        if start:
+            starts.append(start)
+    return starts
+
+
+def is_successor_due(schedule: dict, asof: dict, post_quali: dict | None, now: datetime) -> bool:
+    """True while a session is pending and ``now`` is inside its SUCCESSOR_WINDOW."""
+    return any(
+        now < start + SUCCESSOR_WINDOW
+        for start in pending_session_starts(schedule, asof, post_quali, now)
+    )
+
+
+def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI glue
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--successor",
+        action="store_true",
+        help="report successor=true|false (a session still pending) instead of due",
+    )
+    args = ap.parse_args(argv)
+
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
     asof = podigami.get("asOf", {})
-
+    post = podigami.get("postQuali")
     now = datetime.now(UTC)
-    race_due = is_update_due(schedule, asof, now)
-    quali_due = is_post_quali_update_due(schedule, asof, podigami.get("postQuali"), now)
-    due = race_due or quali_due
-    print(
-        f"update due: {due} (race={race_due} quali={quali_due} "
-        f"asOf season={asof.get('season')} round={asof.get('round')})"
-    )
+
+    if args.successor:
+        key = "successor"
+        value = is_successor_due(schedule, asof, post, now)
+        print(
+            f"successor due: {value} (asOf season={asof.get('season')} round={asof.get('round')})"
+        )
+    else:
+        key = "due"
+        race_due = is_update_due(schedule, asof, now)
+        quali_due = is_post_quali_update_due(schedule, asof, post, now)
+        value = race_due or quali_due
+        print(
+            f"update due: {value} (race={race_due} quali={quali_due} "
+            f"asOf season={asof.get('season')} round={asof.get('round')})"
+        )
 
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
         with open(out, "a", encoding="utf-8") as fh:
-            fh.write(f"due={'true' if due else 'false'}\n")
+            fh.write(f"{key}={'true' if value else 'false'}\n")
     return 0
 
 
