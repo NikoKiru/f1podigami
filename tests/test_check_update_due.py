@@ -7,8 +7,10 @@ is already waiting when results appear: GitHub starts only a handful of schedule
 runs a day. ``is_successor_due`` bounds the hand-over chain between runs.
 """
 
+import json
 from datetime import UTC, datetime
 
+import check_update_due as cud
 from check_update_due import (
     ARM_BEFORE,
     SUCCESSOR_WINDOW,
@@ -244,3 +246,43 @@ def test_successor_due_only_inside_the_window():
 
 def test_successor_not_due_when_nothing_is_pending():
     assert is_successor_due(qsched(R10), ASOF_R10, None, at("2026-07-19 16:00")) is False
+
+
+# --- main(): the CLI glue writes the right $GITHUB_OUTPUT key -----------------
+
+
+def _write_minimal_data(data_dir):
+    (data_dir / "schedule.json").write_text(
+        json.dumps(sched(("1", "2026-03-08", "04:00:00Z"))), encoding="utf-8"
+    )
+    (data_dir / "podigami.json").write_text(json.dumps({"asOf": ASOF_PREV}), encoding="utf-8")
+
+
+def test_main_writes_due_output(tmp_path, monkeypatch):
+    _write_minimal_data(tmp_path)
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    cud.main([])
+
+    lines = out.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    key, _, value = lines[0].partition("=")
+    assert key == "due"
+    assert value in ("true", "false")
+
+
+def test_main_successor_writes_successor_output(tmp_path, monkeypatch):
+    _write_minimal_data(tmp_path)
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    cud.main(["--successor"])
+
+    lines = out.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    key, _, value = lines[0].partition("=")
+    assert key == "successor"
+    assert value in ("true", "false")

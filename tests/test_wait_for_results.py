@@ -226,6 +226,25 @@ def test_qualifying_poll_is_none_on_garbage(monkeypatch):
     assert wfr._fetch_last_qualifying(2026) is None
 
 
+def test_qualifying_poll_short_circuits_when_the_season_has_no_rows_yet(monkeypatch):
+    """total=0 means no qualifying published this season: return the head body
+    (latest_published_round reads it as None) without a second, wasted request."""
+    import wait_for_results as wfr
+
+    calls = []
+    head_body = {"MRData": {"total": "0", "RaceTable": {"Races": []}}}
+
+    def fake_get(url, params=None, timeout=None):
+        calls.append((url, params))
+        return _Resp(head_body)
+
+    monkeypatch.setattr(wfr.requests, "get", fake_get)
+    body = wfr._fetch_last_qualifying(2026)
+    assert body == head_body
+    assert latest_published_round(body) is None
+    assert len(calls) == 1
+
+
 def test_report_tells_the_workflow_whether_the_round_was_seen(tmp_path, monkeypatch):
     import wait_for_results as wfr
 
