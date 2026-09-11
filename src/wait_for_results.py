@@ -1,33 +1,32 @@
-"""Hold the update run until the finished race actually appears upstream.
+"""Hold the update run until the pending session actually appears upstream.
 
 Why this exists
 ---------------
-``update.yml`` polls on a 15-min cron, but GitHub delivers only a fraction of
-scheduled slots — observed ~13 of 76 on a race Sunday, with multi-hour overnight
-gaps. So the retry cadence is really ~1/hour, and a run that fetches *before* the
-API has published the race costs a full hour before the next attempt. That is
-exactly what happened at the 2026 Belgian GP: the run fetched at 15:32Z, Jolpica
-had nothing for round 10 yet, and the site did not go live until 16:25Z — ~100
-minutes after the flag.
+``update.yml`` polls on a 15-min cron, but GitHub delivers only a handful of
+scheduled slots a day (~6-7 of 96 since 2026-08-27, at unpredictable times), so a
+run that fetches *before* the API has published a session can cost hours before
+the next attempt. That is how the 2026 Italian GP took ~7h to reach the site.
 
 Rather than fight the cron (denser schedules are throttled the same way), the
-update job holds its runner and polls the API itself until the round shows up,
-then runs the pipeline exactly once. Cron then only has to land *one* slot in a
-multi-hour window, which it reliably does.
+guard arms 3h before each race and qualifying session
+(``check_update_due.ARM_BEFORE``) and the update job holds its runner here,
+polling the API itself until the pending round shows up, then runs the pipeline
+exactly once. If the budget runs out first it reports ``published=false`` and
+update.yml hands over to a successor run, so the watch never lapses between
+scheduled slots.
 
-We poll ``/{season}/last/results.json`` — an aggregate feed. The round-indexed
-``/{season}/{round}/results.json`` endpoint can sit empty for hours after a race
-while the aggregates already carry the round (see CLAUDE.md, issue #178), so
-keying off it would defeat the whole point.
+We poll aggregate feeds — ``/{season}/last/results.json`` for a race, the last
+row of ``/{season}/qualifying.json`` for qualifying. The round-indexed endpoints
+can sit empty for hours while the aggregates already carry the round (#178).
 
-Timing out is not an error: the pipeline runs anyway (idempotent — a no-op run
-just makes no data change), and the guard re-fires on the next tick.
+Timing out is not an error: the pipeline runs anyway (idempotent).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from collections.abc import Callable
@@ -36,18 +35,18 @@ from pathlib import Path
 
 import requests
 
-from check_update_due import latest_finished_round
+from check_update_due import is_update_due, latest_armed_round, next_quali_target
 from fetch.api_cache import fresh
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
-# Poll every 3 min for up to 2h. The interval is well inside the API's rate
-# limits and still tight enough that publication is noticed promptly; the budget
-# comfortably covers the observed publish lag while staying far under the 6h
-# GitHub job limit.
+# Poll every 3 min for up to 5h. The interval is well inside the API's rate
+# limits; the budget lets a run that armed 3h before a race cover the race and
+# the usual publish lag, and fits update.yml's 345-min job timeout together with
+# the in-flight-PR wait (<=15 min) and the pipeline (~20 min).
 POLL_INTERVAL_S = 180
-POLL_TIMEOUT_S = 2 * 60 * 60
+POLL_TIMEOUT_S = 5 * 60 * 60
 
 
 def latest_published_round(payload: object) -> int | None:
@@ -88,20 +87,69 @@ def wait_for_round(
         sleep(interval_s)
 
 
-def _fetch_last_results(season: int) -> object | None:
-    """One request for the season's most recent classified race; None on failure.
+def _get_json(url: str, params: dict | None = None) -> object | None:
+    """One cache-busted GET; None on any failure (the poll just tries again).
 
-    Cache-busted: the API caches this feed per request-variant with a long TTL,
+    Cache-busted: the API caches each feed per request-variant with a long TTL,
     so an un-nonced poll re-reads the same stale body every interval and waits
-    out the entire budget on a race that is already published.
+    out the entire budget on a session that is already published (#239).
     """
     try:
-        resp = requests.get(f"{API_ROOT}/{season}/last/results.json", params=fresh(), timeout=30)
+        resp = requests.get(url, params=fresh(params), timeout=30)
         resp.raise_for_status()
         return resp.json()
     except (requests.RequestException, ValueError) as exc:
         print(f"  fetch failed ({exc}); will retry")
         return None
+
+
+def _fetch_last_results(season: int) -> object | None:
+    """The season's most recent classified race; None on failure."""
+    return _get_json(f"{API_ROOT}/{season}/last/results.json")
+
+
+def _fetch_last_qualifying(season: int) -> object | None:
+    """The season's newest qualifying row (one ``Races`` entry); None on failure.
+
+    Reads the aggregate feed's row count, then only its final row: two requests
+    per poll instead of paging the whole season.
+    """
+    url = f"{API_ROOT}/{season}/qualifying.json"
+    head = _get_json(url, {"limit": 1})
+    try:
+        total = int(head["MRData"]["total"])  # type: ignore[index]
+    except (KeyError, TypeError, ValueError):
+        return None
+    if total < 1:
+        return head  # no rows yet: latest_published_round reads None
+    return _get_json(url, {"limit": 1, "offset": total - 1})
+
+
+def wait_target(schedule: dict, podigami: dict, now: datetime) -> tuple[str, int, int] | None:
+    """What this run should wait for — ``(kind, season, round)`` — or None.
+
+    A race newer than ``asOf`` whose window is open comes first (the guard's own
+    rule, so the two can't disagree); otherwise the next race's qualifying, if its
+    window is open and ``postQuali`` doesn't cover it yet. Nothing pending means
+    return at once, holding no runner.
+    """
+    asof = podigami.get("asOf") or {}
+    if is_update_due(schedule, asof, now):
+        season, rnd = latest_armed_round(schedule, now)  # not None when due
+        return ("race", season, rnd)
+    quali = next_quali_target(schedule, asof, podigami.get("postQuali"), now)
+    if quali is not None:
+        return ("qualifying", quali[0], quali[1])
+    return None
+
+
+def report(published: str) -> None:
+    """Tell update.yml whether the round was seen ("true") or the watch timed out
+    ("false"); anything but "true" lets it hand over to a successor run."""
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a", encoding="utf-8") as fh:
+            fh.write(f"published={published}\n")
 
 
 def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit tests
@@ -112,34 +160,30 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
 
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
-    asof = podigami.get("asOf", {})
 
-    target = latest_finished_round(schedule, datetime.now(UTC))
+    target = wait_target(schedule, podigami, datetime.now(UTC))
     if target is None:
-        print("No finished race this season yet; nothing to wait for.")
+        print("Nothing pending upstream; nothing to wait for.")
+        report("true")
         return 0
 
-    season, rnd = target
-    try:
-        have = (int(asof["season"]), int(asof["round"]))
-    except (KeyError, ValueError, TypeError):
-        have = (-1, -1)
-    if target <= have:
-        # Only the post-qualifying trigger fired; there is no race to wait for.
-        print(f"Data already covers {season} round {rnd}; nothing to wait for.")
-        return 0
+    kind, season, rnd = target
 
-    print(f"Waiting for {season} round {rnd} to appear upstream...")
-    if wait_for_round(
-        rnd,
-        lambda: _fetch_last_results(season),
-        timeout_s=args.timeout,
-        interval_s=args.interval,
-    ):
-        print(f"Round {rnd} is published; running the pipeline.")
+    def fetch() -> object | None:
+        if kind == "race":
+            return _fetch_last_results(season)
+        return _fetch_last_qualifying(season)
+
+    print(f"Waiting for {season} round {rnd} {kind} to appear upstream...")
+    published = wait_for_round(rnd, fetch, timeout_s=args.timeout, interval_s=args.interval)
+    if published:
+        seen = datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ")
+        print(f"Round {rnd} {kind} seen upstream at {seen}; running the pipeline.")
     else:
-        # Not a failure: the pipeline is idempotent and the guard re-fires.
-        print(f"Round {rnd} still unpublished after the budget; running anyway.")
+        # Not a failure: the pipeline is idempotent and update.yml hands over to a
+        # successor run while the session is still inside its window.
+        print(f"Round {rnd} {kind} still unpublished after the budget; running anyway.")
+    report("true" if published else "false")
     return 0
 
 

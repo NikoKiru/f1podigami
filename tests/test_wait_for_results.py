@@ -10,7 +10,9 @@ pipeline exactly once.
 Time and network are injected so these tests are instant and offline.
 """
 
-from wait_for_results import latest_published_round, wait_for_round
+from datetime import UTC, datetime
+
+from wait_for_results import latest_published_round, wait_for_round, wait_target
 
 
 def payload(round_: str | None) -> dict:
@@ -130,3 +132,105 @@ def test_the_poll_request_bypasses_the_response_cache(monkeypatch):
     assert wfr._fetch_last_results(2026) is not None
     assert "2026/last/results.json" in seen["url"]
     assert CACHE_BUSTER in seen["params"]
+
+
+# --- what to wait for (race first, then qualifying) --------------------------------
+
+SCHEDULE = {
+    "season": "2026",
+    "races": [
+        {
+            "round": "13",
+            "date": "2026-09-06",
+            "time": "13:00:00Z",
+            "qualifyingDate": "2026-09-05",
+            "qualifyingTime": "14:00:00Z",
+        },
+        {
+            "round": "14",
+            "date": "2026-09-13",
+            "time": "13:00:00Z",
+            "qualifyingDate": "2026-09-12",
+            "qualifyingTime": "14:00:00Z",
+        },
+    ],
+}
+
+
+def at(s: str) -> datetime:
+    return datetime.fromisoformat(s).replace(tzinfo=UTC)
+
+
+def test_wait_target_is_the_armed_race_newer_than_the_data():
+    podigami = {"asOf": {"season": "2026", "round": "12"}, "postQuali": None}
+    assert wait_target(SCHEDULE, podigami, at("2026-09-06 10:00")) == ("race", 2026, 13)
+
+
+def test_wait_target_falls_back_to_the_next_qualifying():
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    assert wait_target(SCHEDULE, podigami, at("2026-09-12 11:00")) == ("qualifying", 2026, 14)
+
+
+def test_nothing_to_wait_for_once_post_quali_covers_the_round():
+    """The quali-day short-circuit: a covered round must not hold the runner."""
+    podigami = {
+        "asOf": {"season": "2026", "round": "13"},
+        "postQuali": {"season": "2026", "round": "14"},
+    }
+    assert wait_target(SCHEDULE, podigami, at("2026-09-12 18:00")) is None
+
+
+def test_nothing_to_wait_for_before_any_window_opens():
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    assert wait_target(SCHEDULE, podigami, at("2026-09-12 10:59")) is None
+
+
+# --- the qualifying poll: two cache-busted requests, only the last row -------------
+
+
+class _Resp:
+    def __init__(self, body):
+        self.body = body
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.body
+
+
+def test_qualifying_poll_reads_only_the_final_row(monkeypatch):
+    import wait_for_results as wfr
+    from fetch.api_cache import CACHE_BUSTER
+
+    calls = []
+
+    def fake_get(url, params=None, timeout=None):
+        calls.append((url, params))
+        rnd = "3" if params.get("offset") is not None else "1"
+        return _Resp({"MRData": {"total": "45", "RaceTable": {"Races": [{"round": rnd}]}}})
+
+    monkeypatch.setattr(wfr.requests, "get", fake_get)
+    assert latest_published_round(wfr._fetch_last_qualifying(2026)) == 3
+    assert all("2026/qualifying.json" in url for url, _ in calls)
+    assert calls[1][1]["offset"] == 44 and calls[1][1]["limit"] == 1
+    assert all(CACHE_BUSTER in params for _, params in calls)
+
+
+def test_qualifying_poll_is_none_on_garbage(monkeypatch):
+    import wait_for_results as wfr
+
+    monkeypatch.setattr(
+        wfr.requests, "get", lambda url, params=None, timeout=None: _Resp({"nope": 1})
+    )
+    assert wfr._fetch_last_qualifying(2026) is None
+
+
+def test_report_tells_the_workflow_whether_the_round_was_seen(tmp_path, monkeypatch):
+    import wait_for_results as wfr
+
+    out = tmp_path / "out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    wfr.report("false")
+    wfr.report("true")
+    assert out.read_text(encoding="utf-8").splitlines() == ["published=false", "published=true"]
