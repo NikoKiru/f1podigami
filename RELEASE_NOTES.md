@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-09-11
+
+### Improvements
+- **Race and qualifying results should now reach the site soon after the API publishes them, not at GitHub's next scheduled run.** Since late August GitHub has started only ~6–7 of the refresh workflow's 96 scheduled runs a day, at unpredictable times, which is how the 2026 Italian GP took ~7 hours to appear. The refresh now arms 3 hours *before* each race and qualifying session, so a run is usually already waiting (93% of races, replaying two weeks of real scheduled runs). It polls for up to 5 hours, and if the results still aren't out it starts its own successor run instead of waiting for the next slot, for up to 12 hours after the session (#<PR>)
+
 ## 2026-09-10
 
 ### Improvements

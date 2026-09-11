@@ -1,11 +1,11 @@
 """Tests for the in-run results watcher (wait_for_results).
 
-GitHub delivers only a fraction of the requested cron slots (observed ~1/hour
-against a 15-min schedule), so a run that fetches before the API has published
-the finished race costs a *full hour* before the next retry. The watcher closes
-that gap: once the guard says a race is due, the update job holds the runner and
-polls the aggregate results feed itself until the round appears, then runs the
-pipeline exactly once.
+GitHub starts only a handful of scheduled runs a day (not the requested 15-min
+frequency), so the guard arms 3 h before each race and qualifying session and
+the update job holds its runner here. It polls the aggregate results feeds for
+up to 5 h until the pending round appears (race or qualifying), reports
+`published=` so a timed-out watch can hand over to a successor run, then runs
+the pipeline once.
 
 Time and network are injected so these tests are instant and offline.
 """
