@@ -35,9 +35,13 @@ from pathlib import Path
 # How far ahead of a session's scheduled start the guard arms. Since 2026-08-27
 # GitHub has delivered only ~6-7 of our 96 daily cron slots, at unpredictable
 # times, so a run has to be in place *before* results appear. Replaying 14 days
-# of real scheduled runs, arming 3h early with a 5h watcher puts a run in place
-# for 93% of races and 91% of qualifying sessions (55% for the old
-# arm-after-the-flag / 2h budget). Early costs only idle runner time: the
+# of real scheduled runs, arming 3h early with a 5h watcher puts a run already
+# waiting when the data lands in 93% of races and 91% of qualifying sessions
+# (55% for the old arm-after-the-flag / 2h budget) — measured against OpenF1's
+# publish time (docs/superpowers/specs/2026-09-10-openf1-fast-lane-design.md
+# section 4), which this watcher does not poll. Against Jolpica's later, more
+# variable publish, the successor hand-over keeps a watch alive across the
+# gap, so coverage is at least as high. Early costs only idle runner time: the
 # watcher acts on nothing until the round is published.
 ARM_BEFORE = timedelta(hours=3)
 
@@ -189,17 +193,19 @@ def pending_session_starts(
     race = latest_armed_round(schedule, now)
     if race is not None and race > _have(asof):
         entry = _race_by_round(schedule, race[1])
-        start = entry and session_start(entry.get("date", ""), entry.get("time", ""))
-        if start:
-            starts.append(start)
+        if entry:
+            start = session_start(entry.get("date", ""), entry.get("time", ""))
+            if start:
+                starts.append(start)
     quali = next_quali_target(schedule, asof, post_quali, now)
     if quali is not None:
         entry = _race_by_round(schedule, quali[1])
-        start = entry and session_start(
-            entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
-        )
-        if start:
-            starts.append(start)
+        if entry:
+            start = session_start(
+                entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
+            )
+            if start:
+                starts.append(start)
     return starts
 
 
