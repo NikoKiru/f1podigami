@@ -17,11 +17,16 @@ on:
         description: "When mode=auto, run even if the guard says no update is due"
         type: boolean
         default: false
+      wait:
+        description: "Hold the runner and poll upstream like a scheduled run (successor runs set this)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
   pull-requests: write
   issues: write # open/refresh a failure-alert issue when an update run fails
+  actions: write # a watch that times out dispatches its own successor run (see the update job)
 
 # Never run two data updates at once, and don't cancel one mid-commit.
 concurrency:
@@ -79,9 +84,29 @@ jobs:
     needs: check
     if: needs.check.outputs.due == 'true'
     runs-on: ubuntu-latest
-    # Covers the watcher's 2h poll budget plus the pipeline, well under the 6h cap.
-    timeout-minutes: 180
+    # 15 min in-flight-PR wait + 5h watcher + ~20 min pipeline/PR/tests, under
+    # GitHub's 6h job cap.
+    timeout-minutes: 345
     steps:
+      # A successor run is dispatched at the very end of the run before it, often
+      # before that run's data PR has auto-merged. Checking out main now would
+      # compute on data that is about to change, so wait for the PR first. Give
+      # up after 15 min: a PR that never merges is the watchdog's to report.
+      - name: Wait for an in-flight data PR to merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for _ in $(seq 1 30); do
+            open="$(gh pr list --repo "$GITHUB_REPOSITORY" --head auto/update-data \
+              --state open --json number --jq 'length')"
+            if [ "$open" = "0" ]; then
+              echo "No data PR in flight."
+              exit 0
+            fi
+            echo "A data PR is still open; waiting 30s..."
+            sleep 30
+          done
+          echo "Data PR still open after 15 min; continuing (the watchdog reports a stuck PR)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Pin to main: the data branch must be cut from main (the PR base),
@@ -103,15 +128,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-      # GitHub honours only a fraction of our 15-min cron (~1 run/hour observed,
-      # with multi-hour overnight gaps), so a fetch that lands before the API has
-      # published the race costs a WHOLE HOUR before the next attempt — that is
-      # what put the 2026 Belgian GP on the site ~100min late. Hold the runner
-      # and poll until the round appears instead, so cron only has to land one
-      # slot in a wide window. Scheduled runs only: a human dispatch should act
-      # now, not block for up to 2h, and `full` is a reconciliation, not a race.
-      - name: Wait for the finished race to be published upstream
-        if: needs.check.outputs.mode != 'full' && github.event_name == 'schedule'
+      # GitHub starts only a handful of scheduled runs a day, so the guard arms 3h
+      # before each race and qualifying session and a run that lands in that window
+      # holds its runner here, polling until the session is published (up to 5h).
+      # Scheduled runs and successor runs (wait=true) only: a human dispatch should
+      # act now, and `full` is a reconciliation, not a session.
+      - name: Wait for the pending session to be published upstream
+        id: wait
+        if: needs.check.outputs.mode != 'full' && (github.event_name == 'schedule' || inputs.wait)
         run: python src/wait_for_results.py
 
       - name: Fetch latest data and rebuild site
@@ -229,6 +253,24 @@ jobs:
         run: PYTHONPATH=src python -m datalib.validate
       - name: Run tests
         run: pytest -q
+      # When the watch timed out with the session still unpublished, the next
+      # scheduled slot can be hours away, so hand over to a fresh run right away.
+      # Only after a full watch (published != 'true'): if upstream already had the
+      # data and the pipeline still doesn't cover it, an instant re-run would just
+      # loop, and the scheduled runs retry that case instead. The guard bounds the
+      # chain to 12h after the session's scheduled start.
+      - name: Check whether a session is still pending
+        id: successor
+        if: >-
+          needs.check.outputs.mode != 'full'
+          && (github.event_name == 'schedule' || inputs.wait)
+          && steps.wait.outputs.published != 'true'
+        run: python src/check_update_due.py --successor
+      - name: Hand over to a successor run
+        if: steps.successor.outputs.successor == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
 
   # A green update run is not the same as the data shipping. At the 2026
   # Hungarian GP every job passed — guard fired, pipeline ran, PR opened with
