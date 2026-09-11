@@ -97,8 +97,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for _ in $(seq 1 30); do
+            # A failed lookup counts as "unknown": keep waiting rather than fail the run.
             open="$(gh pr list --repo "$GITHUB_REPOSITORY" --head auto/update-data \
-              --state open --json number --jq 'length')"
+              --state open --json number --jq 'length')" || open="?"
             if [ "$open" = "0" ]; then
               echo "No data PR in flight."
               exit 0
