@@ -26,7 +26,6 @@ permissions:
   contents: write
   pull-requests: write
   issues: write # open/refresh a failure-alert issue when an update run fails
-  actions: write # a watch that times out dispatches its own successor run (see the update job)
 
 # Never run two data updates at once, and don't cancel one mid-commit.
 concurrency:
@@ -84,6 +83,14 @@ jobs:
     needs: check
     if: needs.check.outputs.due == 'true'
     runs-on: ubuntu-latest
+    # Job-level permissions replace the workflow-level block above for this job
+    # only, so `actions: write` (needed just for "Hand over to a successor run"
+    # below) is scoped to this job instead of every job in the workflow.
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
     # 15 min in-flight-PR wait + 5h watcher + ~20 min pipeline/PR/tests, under
     # GitHub's 6h job cap.
     timeout-minutes: 345
@@ -96,7 +103,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for _ in $(seq 1 30); do
+          for i in $(seq 1 30); do
             # A failed lookup counts as "unknown": keep waiting rather than fail the run.
             open="$(gh pr list --repo "$GITHUB_REPOSITORY" --head auto/update-data \
               --state open --json number --jq 'length')" || open="?"
@@ -105,7 +112,9 @@ jobs:
               exit 0
             fi
             echo "A data PR is still open; waiting 30s..."
-            sleep 30
+            # Not "[ ... ] && sleep": under bash -e, a false test there would make
+            # the whole compound command (and the step) fail on the last check.
+            if [ "$i" -lt 30 ]; then sleep 30; fi
           done
           echo "Data PR still open after 15 min; continuing (the watchdog reports a stuck PR)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -139,7 +148,42 @@ jobs:
         if: needs.check.outputs.mode != 'full' && (github.event_name == 'schedule' || inputs.wait)
         run: python src/wait_for_results.py
 
+      # A timed-out watch hands over to a successor run BEFORE the pipeline runs,
+      # not after: the successor can land within the hour (Jolpica's own rate
+      # limit), and running the full pipeline twice that close together risks the
+      # second run spending its whole budget in 429 backoff instead of fetching
+      # anything (2026-09-06). Only a genuine timeout (`published == 'false'`)
+      # hands over — `published == 'none'` means nothing was pending in the first
+      # place (nothing to check.py --successor for either), and a successful
+      # watch (`true`) falls through to the pipeline below as normal. The guard
+      # bounds the chain to 12h after the session's scheduled start.
+      #
+      # main's older check_update_due.py (before this PR is promoted to main)
+      # ignores --successor and writes only `due=`, leaving `successor` unset —
+      # so in that develop window this step never runs and nothing changes.
+      - name: Check whether a session is still pending
+        id: successor
+        if: >-
+          needs.check.outputs.mode != 'full'
+          && (github.event_name == 'schedule' || inputs.wait)
+          && steps.wait.outputs.published == 'false'
+        run: python src/check_update_due.py --successor
+      - name: Hand over to a successor run
+        if: steps.successor.outputs.successor == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
+
+      # Skip the rest of this job once a successor has taken over (it will redo
+      # this work) or once the watcher found nothing pending at all
+      # (`published == 'none'`) — running the pipeline right after a hold that
+      # had nothing to do would just repeat the same no-op. In the develop
+      # window both outputs are always unset (`!= 'true'` and `!= 'none'` are
+      # both true on an empty string), so every step below still runs exactly as
+      # it did before this gate existed.
       - name: Fetch latest data and rebuild site
+        if: steps.successor.outputs.successor != 'true' && steps.wait.outputs.published != 'none'
+        timeout-minutes: 25 # fail loudly on a runaway pipeline instead of the job being cancelled silently at 345 min
         run: |
           if [ "${{ needs.check.outputs.mode }}" = "full" ]; then
             python src/update.py --full
@@ -159,6 +203,7 @@ jobs:
       # continue-on-error: an unexpected crash here must never block the data PR.
       - name: Detect podium revisions
         id: revisions
+        if: steps.successor.outputs.successor != 'true' && steps.wait.outputs.published != 'none'
         continue-on-error: true
         run: |
           if [ -f src/check_revisions.py ]; then
@@ -172,6 +217,7 @@ jobs:
       # silently-skipped step. The validate + tests below still run, so a bad run
       # also goes red and trips the failure alert (notify-failure job).
       - name: Open or refresh the data PR and arm auto-merge
+        if: steps.successor.outputs.successor != 'true' && steps.wait.outputs.published != 'none'
         env:
           GH_TOKEN: ${{ secrets.DATA_PUSH_TOKEN }}
           REVISION_TITLE: ${{ steps.revisions.outputs.title }}
@@ -223,7 +269,10 @@ jobs:
       # is against OPEN issues, so closing one while the PR is still unmerged
       # makes the next run open an identical one.
       - name: Flag podium revisions for a human
-        if: steps.revisions.outputs.revised == 'true'
+        if: >-
+          steps.successor.outputs.successor != 'true'
+          && steps.wait.outputs.published != 'none'
+          && steps.revisions.outputs.revised == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVISIONS_DIR: ${{ runner.temp }}/podium-revisions
@@ -251,27 +300,11 @@ jobs:
               || echo "::warning::Could not label data PR #$PR"
           fi
       - name: Validate datasets
+        if: steps.successor.outputs.successor != 'true' && steps.wait.outputs.published != 'none'
         run: PYTHONPATH=src python -m datalib.validate
       - name: Run tests
+        if: steps.successor.outputs.successor != 'true' && steps.wait.outputs.published != 'none'
         run: pytest -q
-      # When the watch timed out with the session still unpublished, the next
-      # scheduled slot can be hours away, so hand over to a fresh run right away.
-      # Only after a full watch (published != 'true'): if upstream already had the
-      # data and the pipeline still doesn't cover it, an instant re-run would just
-      # loop, and the scheduled runs retry that case instead. The guard bounds the
-      # chain to 12h after the session's scheduled start.
-      - name: Check whether a session is still pending
-        id: successor
-        if: >-
-          needs.check.outputs.mode != 'full'
-          && (github.event_name == 'schedule' || inputs.wait)
-          && steps.wait.outputs.published != 'true'
-        run: python src/check_update_due.py --successor
-      - name: Hand over to a successor run
-        if: steps.successor.outputs.successor == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
 
   # A green update run is not the same as the data shipping. At the 2026
   # Hungarian GP every job passed — guard fired, pipeline ran, PR opened with

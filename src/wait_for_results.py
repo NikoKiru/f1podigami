@@ -4,22 +4,30 @@ Why this exists
 ---------------
 ``update.yml`` polls on a 15-min cron, but GitHub delivers only a handful of
 scheduled slots a day (~6-7 of 96 since 2026-08-27, at unpredictable times), so a
-run that fetches *before* the API has published a session can cost hours before
-the next attempt. That is how the 2026 Italian GP took ~7h to reach the site.
+run that fetched *before* the API had published a session previously had to wait
+for the next surviving cron slot — about an hour at the 2026 Italian GP, on top
+of Jolpica's own ~5h45 publish lag that this module does not touch (that gap is
+the OpenF1 fast lane's target, not this one's).
 
 Rather than fight the cron (denser schedules are throttled the same way), the
 guard arms 3h before each race and qualifying session
 (``check_update_due.ARM_BEFORE``) and the update job holds its runner here,
 polling the API itself until the pending round shows up, then runs the pipeline
 exactly once. If the budget runs out first it reports ``published=false`` and
-update.yml hands over to a successor run, so the watch never lapses between
-scheduled slots.
+update.yml hands the run over to a successor immediately, skipping the
+pipeline, so a later link in the chain (or the next scheduled run, once the
+chain's window elapses) runs it instead — the watch never lapses between
+scheduled slots, and two pipelines never race Jolpica's hourly rate limit
+minutes apart. A run whose watcher finds nothing pending at all reports
+``published=none`` and also skips the pipeline.
 
 We poll aggregate feeds — ``/{season}/last/results.json`` for a race, the last
 row of ``/{season}/qualifying.json`` for qualifying. The round-indexed endpoints
 can sit empty for hours while the aggregates already carry the round (#178).
 
-Timing out is not an error: the pipeline runs anyway (idempotent).
+Timing out is not an error: the successor chain (or the next scheduled run)
+covers it. Only once the successor window has already elapsed does this run's
+own pipeline run anyway (idempotent), as a last-resort fallback.
 """
 
 from __future__ import annotations
@@ -144,8 +152,9 @@ def wait_target(schedule: dict, podigami: dict, now: datetime) -> tuple[str, int
 
 
 def report(published: str) -> None:
-    """Tell update.yml whether the round was seen ("true") or the watch timed out
-    ("false"); anything but "true" lets it hand over to a successor run."""
+    """Tell update.yml what happened: "true" if the round was seen upstream,
+    "false" if the watch timed out, or "none" if nothing was pending to wait
+    for. Only "false" lets update.yml hand over to a successor run."""
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
         with open(out, "a", encoding="utf-8") as fh:
@@ -164,7 +173,7 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
     target = wait_target(schedule, podigami, datetime.now(UTC))
     if target is None:
         print("Nothing pending upstream; nothing to wait for.")
-        report("true")
+        report("none")
         return 0
 
     kind, season, rnd = target
@@ -180,9 +189,11 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
         seen = datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ")
         print(f"Round {rnd} {kind} seen upstream at {seen}; running the pipeline.")
     else:
-        # Not a failure: the pipeline is idempotent and update.yml hands over to a
-        # successor run while the session is still inside its window.
-        print(f"Round {rnd} {kind} still unpublished after the budget; running anyway.")
+        # Not a failure: update.yml hands over to a successor run while the
+        # session is still inside its window, skipping the pipeline here; only
+        # once that window has elapsed does update.yml run the pipeline anyway
+        # (idempotent), as a fallback.
+        print(f"Round {rnd} {kind} still unpublished after the budget.")
     report("true" if published else "false")
     return 0
 
