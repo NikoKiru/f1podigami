@@ -29,6 +29,7 @@ import argparse
 import json
 import os
 import sys
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -50,6 +51,11 @@ ARM_BEFORE = timedelta(hours=3)
 # scheduled start — which bounds the chain. 12h spans Jolpica's slowest publish
 # this season (~7h after the flag, 2026 Italian GP) with room to spare.
 SUCCESSOR_WINDOW = timedelta(hours=12)
+
+# A round OpenF1 filled must be confirmed by Jolpica within this long of its
+# session ending, or the run fails loudly (reusing the auto-update-failure
+# alert): Jolpica is down, or the two sources disagree about the round.
+STALE_UNCONFIRMED = timedelta(hours=48)
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
@@ -185,10 +191,47 @@ def is_post_quali_update_due(
     return next_quali_target(schedule, asof, post_quali, now) is not None
 
 
+def read_unconfirmed(data_dir: Path = DATA_DIR) -> list[dict]:
+    """data/unconfirmed.json as plain dicts; [] when absent or unreadable."""
+    path = data_dir / "unconfirmed.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def is_confirmation_due(unconfirmed: Sequence[dict]) -> bool:
+    """True while any round's rows still await Jolpica."""
+    return bool(unconfirmed)
+
+
+def stale_unconfirmed(unconfirmed: Sequence[dict], now: datetime) -> list[str]:
+    """Rounds still unconfirmed more than STALE_UNCONFIRMED after their session ended."""
+    stale = []
+    for e in unconfirmed:
+        try:
+            since = datetime.fromisoformat(e["since"])
+        except (KeyError, TypeError, ValueError):
+            stale.append(f"{e.get('season')} R{e.get('round')} (unreadable 'since')")
+            continue
+        if now - since > STALE_UNCONFIRMED:
+            stale.append(
+                f"{e['season']} R{e['round']} {e['kind']}: "
+                f"{', '.join(e['pending'])} pending since {e['since']}"
+            )
+    return stale
+
+
 def pending_session_starts(
-    schedule: dict, asof: dict, post_quali: dict | None, now: datetime
+    schedule: dict,
+    asof: dict,
+    post_quali: dict | None,
+    now: datetime,
+    unconfirmed: Sequence[dict] = (),
 ) -> list[datetime]:
-    """Scheduled starts of the sessions the data still lacks (race and/or qualifying)."""
+    """Scheduled starts of the sessions the data still lacks (race and/or qualifying),
+    plus the session end of each round still awaiting Jolpica's confirmation."""
     starts: list[datetime] = []
     race = latest_armed_round(schedule, now)
     if race is not None and race > _have(asof):
@@ -206,14 +249,25 @@ def pending_session_starts(
             )
             if start:
                 starts.append(start)
+    for e in unconfirmed:
+        try:
+            starts.append(datetime.fromisoformat(e["since"]))
+        except (KeyError, TypeError, ValueError):
+            continue
     return starts
 
 
-def is_successor_due(schedule: dict, asof: dict, post_quali: dict | None, now: datetime) -> bool:
+def is_successor_due(
+    schedule: dict,
+    asof: dict,
+    post_quali: dict | None,
+    now: datetime,
+    unconfirmed: Sequence[dict] = (),
+) -> bool:
     """True while a session is pending and ``now`` is inside its SUCCESSOR_WINDOW."""
     return any(
         now < start + SUCCESSOR_WINDOW
-        for start in pending_session_starts(schedule, asof, post_quali, now)
+        for start in pending_session_starts(schedule, asof, post_quali, now, unconfirmed)
     )
 
 
@@ -224,17 +278,29 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
         action="store_true",
         help="report successor=true|false (a session still pending) instead of due",
     )
+    ap.add_argument(
+        "--fail-on-stale",
+        action="store_true",
+        help="exit 1 when a round stays unconfirmed past STALE_UNCONFIRMED",
+    )
     args = ap.parse_args(argv)
 
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
     asof = podigami.get("asOf", {})
     post = podigami.get("postQuali")
+    unconfirmed = read_unconfirmed(DATA_DIR)
     now = datetime.now(UTC)
+
+    if args.fail_on_stale:
+        stale = stale_unconfirmed(unconfirmed, now)
+        for line in stale:
+            print(f"::error::Jolpica has not confirmed {line}")
+        return 1 if stale else 0
 
     if args.successor:
         key = "successor"
-        value = is_successor_due(schedule, asof, post, now)
+        value = is_successor_due(schedule, asof, post, now, unconfirmed)
         print(
             f"successor due: {value} (asOf season={asof.get('season')} round={asof.get('round')})"
         )
@@ -242,9 +308,10 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
         key = "due"
         race_due = is_update_due(schedule, asof, now)
         quali_due = is_post_quali_update_due(schedule, asof, post, now)
-        value = race_due or quali_due
+        confirm_due = is_confirmation_due(unconfirmed)
+        value = race_due or quali_due or confirm_due
         print(
-            f"update due: {value} (race={race_due} quali={quali_due} "
+            f"update due: {value} (race={race_due} quali={quali_due} confirm={confirm_due} "
             f"asOf season={asof.get('season')} round={asof.get('round')})"
         )
 

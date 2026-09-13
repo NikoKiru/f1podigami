@@ -100,6 +100,7 @@ jobs:
       # compute on data that is about to change, so wait for the PR first. Give
       # up after 15 min: a PR that never merges is the watchdog's to report.
       - name: Wait for an in-flight data PR to merge
+        id: inflight
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -109,6 +110,7 @@ jobs:
               --state open --json number --jq 'length')" || open="?"
             if [ "$open" = "0" ]; then
               echo "No data PR in flight."
+              echo "still_open=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             echo "A data PR is still open; waiting 30s..."
@@ -116,7 +118,10 @@ jobs:
             # the whole compound command (and the step) fail on the last check.
             if [ "$i" -lt 30 ]; then sleep 30; fi
           done
-          echo "Data PR still open after 15 min; continuing (the watchdog reports a stuck PR)."
+          # The earlier data PR (maybe a fast-lane result) hasn't merged, so main may
+          # lack it: this run must not publish OpenF1's result again (JOLPICA_ONLY).
+          echo "still_open=true" >> "$GITHUB_OUTPUT"
+          echo "Data PR still open after 15 min; continuing Jolpica-only (the watchdog reports a stuck PR)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Pin to main: the data branch must be cut from main (the PR base),
@@ -146,6 +151,8 @@ jobs:
       - name: Wait for the pending session to be published upstream
         id: wait
         if: needs.check.outputs.mode != 'full' && (github.event_name == 'schedule' || inputs.wait)
+        env:
+          JOLPICA_ONLY: ${{ steps.inflight.outputs.still_open }}
         run: python src/wait_for_results.py
 
       # A timed-out watch hands over to a successor run BEFORE the pipeline runs,
@@ -196,6 +203,8 @@ jobs:
         # full reconciliations take ~24 min and never run the watcher, so they get 60;
         # a normal run after a 5h watch keeps 25 so the job stays under 345 min.
         timeout-minutes: ${{ needs.check.outputs.mode == 'full' && 60 || 25 }}
+        env:
+          JOLPICA_ONLY: ${{ steps.inflight.outputs.still_open }}
         run: |
           if [ "${{ needs.check.outputs.mode }}" = "full" ]; then
             python src/update.py --full
@@ -317,6 +326,36 @@ jobs:
       - name: Run tests
         if: steps.successor.outputs.successor != 'true' && (steps.wait.outputs.published != 'none' || inputs.force)
         run: pytest -q
+      # A round OpenF1 filled must be confirmed by Jolpica within 48h of its
+      # session. Failing here (after the PR step, like validate/tests) trips
+      # notify-failure's alert issue: Jolpica is down, or the sources disagree.
+      # Guarded: scheduled runs take this workflow from develop but main's
+      # scripts, and main's guard only learns --fail-on-stale when the fast lane
+      # (fetch_openf1.py) is promoted with it.
+      - name: Fail if a round stays unconfirmed for over 48h
+        if: steps.successor.outputs.successor != 'true' && (steps.wait.outputs.published != 'none' || inputs.force)
+        run: |
+          if [ -f src/fetch/fetch_openf1.py ]; then
+            python src/check_update_due.py --fail-on-stale
+          else
+            echo "The OpenF1 fast lane is not on main yet; nothing can be unconfirmed."
+          fi
+      # A fast-lane run published OpenF1's result; hand over to a run that waits for
+      # Jolpica to confirm it. Own step ids on purpose: the pipeline gate reads
+      # `steps.successor`. No status function, so a failed fast pipeline ends red
+      # (and alerts) instead of handing over. It can't loop: the next run never
+      # reports `fast` for this round. Either the fast PR merged (the round is in
+      # unconfirmed.json, so the watch is a confirmation watch), or the PR is still
+      # open after the in-flight wait and the run is Jolpica-only.
+      - name: Check whether Jolpica still has to confirm
+        id: confirm
+        if: steps.wait.outputs.published == 'fast'
+        run: python src/check_update_due.py --successor
+      - name: Hand over to a confirmation run
+        if: steps.confirm.outputs.successor == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
 
   # A green update run is not the same as the data shipping. At the 2026
   # Hungarian GP every job passed — guard fired, pipeline ran, PR opened with
