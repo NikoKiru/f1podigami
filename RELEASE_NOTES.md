@@ -1,9 +1,9 @@
 # Release Notes
 
-## 2026-09-11
+## 2026-09-13
 
 ### Improvements
-- **Race and qualifying results should now reach the site without waiting for GitHub's next scheduled run.** Since late August GitHub has started only ~6–7 of the refresh workflow's 96 scheduled runs a day, at unpredictable times — at the 2026 Italian GP that cost about an hour waiting for a surviving cron slot, on top of Jolpica's own ~5h45 publish lag that this change doesn't touch (that gap is what the OpenF1 fast lane, next up, targets). The refresh now arms 3 hours *before* each race and qualifying session and polls for up to 5 hours once it lands, so a run is usually already waiting when the data lands (93% of races / 91% of qualifying sessions, measured against OpenF1's faster publish time; against Jolpica's own, later publish the hand-over below keeps a watch alive, so coverage is at least as high). If the results still aren't out when the budget runs out, it hands over to a successor run instead of running the pipeline itself, for up to 12 hours after the session (#<PR>)
+- **Race and qualifying results should now reach the site without waiting for GitHub's next scheduled run.** Since late August GitHub has started only ~6–7 of the refresh workflow's 96 scheduled runs a day, at unpredictable times — at the 2026 Italian GP that cost about an hour waiting for a surviving cron slot, on top of Jolpica's own ~5h45 publish lag that this change doesn't touch (that gap is what the OpenF1 fast lane, next up, targets). The refresh now arms 3 hours *before* each race and qualifying session and polls for up to 5 hours once it lands, so a run is usually already waiting when the data lands (93% of races / 91% of qualifying sessions, measured against OpenF1's faster publish time; against Jolpica's own, later publish the hand-over below keeps a watch alive, so coverage is at least as high). If the results still aren't out when the budget runs out, it hands over to a successor run instead of running the pipeline itself, for up to 12 hours after the session (#323)
 
 ## 2026-09-10
 
