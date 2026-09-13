@@ -206,7 +206,13 @@ jobs:
         timeout-minutes: ${{ needs.check.outputs.mode == 'full' && 60 || 25 }}
         env:
           JOLPICA_ONLY: ${{ steps.inflight.outputs.still_open }}
+        # Re-sync first: a data PR can merge during the up-to-5h watch above (the
+        # in-flight wait may have given up with it still open), and computing on the
+        # original checkout would compare revisions with a stale HEAD and very likely
+        # conflict. Non-fatal on purpose: a failed fetch keeps the original checkout.
         run: |
+          git fetch --quiet origin main && git reset --hard --quiet origin/main \
+            || echo "::warning::Could not re-sync to origin/main; computing on this run's original checkout."
           if [ "${{ needs.check.outputs.mode }}" = "full" ]; then
             python src/update.py --full
           else
