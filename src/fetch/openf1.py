@@ -10,7 +10,9 @@ Rate limit: the free tier allows 30 requests per minute and answers beyond that
 with HTTP 429 and ``Retry-After: 60`` (measured 2026-09-13: requests 1-30
 succeeded, the 31st was refused). Requests are spaced at least ``MIN_INTERVAL``
 apart, and a 429 is retried after the advertised delay a bounded number of times
-before failing closed.
+before failing closed. Once a process has waited ``MAX_TOTAL_RETRY_WAIT`` in
+total across all requests, further 429s fail closed immediately, so a partial
+OpenF1 outage can't push the pipeline step or the watcher off schedule.
 
 Free-tier data for a session opens 30 min after it ends; earlier requests hit the
 paid live window and come back as errors, i.e. ``None``.
@@ -27,8 +29,10 @@ USER_AGENT = "f1podigami/0.1 (https://github.com/NikoKiru/f1podigami)"
 MIN_INTERVAL = 2.1  # seconds between request starts, so fewer than 30 per minute
 MAX_RATE_LIMIT_RETRIES = 2
 MAX_RETRY_AFTER = 65.0  # cap on a single Retry-After sleep
+MAX_TOTAL_RETRY_WAIT = 130.0  # cap on total waiting time per process
 
 _last_request = float("-inf")
+_retry_waited = 0.0
 
 
 def _pace() -> None:
@@ -42,12 +46,13 @@ def _pace() -> None:
 
 def _retry_after(resp: requests.Response) -> float:
     try:
-        return min(float(resp.headers.get("Retry-After", 60)), MAX_RETRY_AFTER)
+        return max(0.0, min(float(resp.headers.get("Retry-After", 60)), MAX_RETRY_AFTER))
     except (TypeError, ValueError):
         return 60.0
 
 
 def get(endpoint: str, **params) -> list[dict] | None:
+    global _retry_waited
     for attempt in range(MAX_RATE_LIMIT_RETRIES + 1):
         _pace()
         try:
@@ -62,9 +67,11 @@ def get(endpoint: str, **params) -> list[dict] | None:
             return None
         if resp.status_code == 429 and attempt < MAX_RATE_LIMIT_RETRIES:
             delay = _retry_after(resp)
-            print(f"  OpenF1 {endpoint}: rate limited, retrying in {delay:.0f}s")
-            time.sleep(delay)
-            continue
+            if _retry_waited + delay <= MAX_TOTAL_RETRY_WAIT:
+                print(f"  OpenF1 {endpoint}: rate limited, retrying in {delay:.0f}s")
+                _retry_waited += delay
+                time.sleep(delay)
+                continue
         break
     if resp.status_code != 200:
         print(f"  OpenF1 {endpoint}: HTTP {resp.status_code}")

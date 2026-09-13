@@ -41,6 +41,7 @@ def clock(monkeypatch):
     monkeypatch.setattr(openf1.time, "monotonic", fake.monotonic)
     monkeypatch.setattr(openf1.time, "sleep", fake.sleep)
     monkeypatch.setattr(openf1, "_last_request", float("-inf"))
+    monkeypatch.setattr(openf1, "_retry_waited", 0.0)
     return fake
 
 
@@ -95,3 +96,37 @@ def test_errors_and_sentinels_are_none(monkeypatch, clock):
     assert openf1.get("session_result", session_key=1) is None
     assert openf1.get("session_result", session_key=1) is None
     assert openf1.get("session_result", session_key=1) is None
+
+
+def test_negative_retry_after_is_clamped(monkeypatch, clock):
+    serve(monkeypatch, [Resp(429, headers={"Retry-After": "-5"}), Resp(200, [{"a": 1}])])
+    assert openf1.get("drivers", session_key=1) == [{"a": 1}]
+    assert len(clock.slept) >= 1
+    assert all(s >= 0 for s in clock.slept)
+
+
+def test_total_retry_wait_budget(monkeypatch, clock):
+    monkeypatch.setattr(openf1, "_retry_waited", 0.0)
+    # Three calls: 1st gets 429 (waits 60, within budget); 2nd gets 429 (waits 60, budget full);
+    # 3rd gets 429 (exceeds budget, fails closed immediately).
+    serve(
+        monkeypatch,
+        [
+            Resp(429, headers={"Retry-After": "60"}),
+            Resp(200, [{"a": 1}]),
+            Resp(429, headers={"Retry-After": "60"}),
+            Resp(200, [{"b": 2}]),
+            Resp(429, headers={"Retry-After": "60"}),
+        ],
+    )
+    result1 = openf1.get("drivers", session_key=1)
+    result2 = openf1.get("drivers", session_key=2)
+    result3 = openf1.get("drivers", session_key=3)
+
+    assert result1 == [{"a": 1}]
+    assert result2 == [{"b": 2}]
+    assert result3 is None
+    # Count only the 60+ s sleeps (the rate-limit waits), not the 2.1 s pacing sleeps
+    rate_limit_waits = [s for s in clock.slept if s >= 60]
+    assert len(rate_limit_waits) == 2
+    assert sum(rate_limit_waits) <= openf1.MAX_TOTAL_RETRY_WAIT
