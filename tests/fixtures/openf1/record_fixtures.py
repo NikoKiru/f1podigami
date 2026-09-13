@@ -58,6 +58,12 @@ STEWARDS_WORDS = (
 )
 
 
+def require(rows: list[dict] | None, what: str) -> list[dict]:
+    if rows is None:
+        sys.exit(f"OpenF1 {what} failed; no fixtures written")
+    return rows
+
+
 def trim(rows: list[dict] | None, keys: tuple[str, ...]) -> list[dict]:
     return [{k: row.get(k) for k in keys} for row in rows or []]
 
@@ -84,15 +90,15 @@ def git_json(path: str):
     return json.loads(out.stdout)
 
 
-def write(name: str, payload) -> None:
-    with gzip.open(HERE / name, "wt", encoding="utf-8") as fh:
-        json.dump(payload, fh, separators=(",", ":"), sort_keys=True)
+def write(name: str, payload: dict | list) -> None:
+    data = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    (HERE / name).write_bytes(gzip.compress(data, mtime=0))
     print(f"wrote {name} ({(HERE / name).stat().st_size // 1024} KB)")
 
 
-def record_2026(schedule: dict) -> None:
-    races = openf1.sessions(2026, "Race") or []
-    qualis = openf1.sessions(2026, "Qualifying") or []
+def record_2026(schedule: dict) -> dict:
+    races = require(openf1.sessions(2026, "Race"), "sessions(2026, Race)")
+    qualis = require(openf1.sessions(2026, "Qualifying"), "sessions(2026, Qualifying)")
     out = {
         "sessions": {"Race": trim(races, SESSION_KEYS), "Qualifying": trim(qualis, SESSION_KEYS)},
         "session_result": {},
@@ -108,49 +114,56 @@ def record_2026(schedule: dict) -> None:
             if s["date_start"][:10] not in days:
                 continue
             key = str(s["session_key"])
-            out["session_result"][key] = trim(openf1.session_result(s["session_key"]), RESULT_KEYS)
-            out["drivers"][key] = trim(openf1.drivers(s["session_key"]), DRIVER_KEYS)
+            out["session_result"][key] = trim(
+                require(openf1.session_result(s["session_key"]), f"session_result({key})"),
+                RESULT_KEYS,
+            )
+            out["drivers"][key] = trim(
+                require(openf1.drivers(s["session_key"]), f"drivers({key})"),
+                DRIVER_KEYS,
+            )
             if s["session_name"] == "Race":
-                out["race_control"][key] = stewards(openf1.race_control(s["session_key"]))
+                out["race_control"][key] = stewards(
+                    require(openf1.race_control(s["session_key"]), f"race_control({key})")
+                )
             else:
-                grid = openf1.starting_grid(s["session_key"])
+                grid = require(openf1.starting_grid(s["session_key"]), f"starting_grid({key})")
                 out["starting_grid"][key] = trim(grid, ("driver_number", "position"))
-    write("openf1_2026.json.gz", out)
+    return out
 
 
-def record_jolpica(schedule: dict) -> None:
+def record_jolpica(schedule: dict) -> dict:
     rounds = {str(r) for r in range(1, LAST_ROUND + 1)}
 
     def pick(rows: list[dict]) -> list[dict]:
         return [r for r in rows if r["season"] == "2026" and r["round"] in rounds]
 
-    write(
-        "jolpica_2026.json.gz",
-        {
-            "schedule": {
-                "season": schedule["season"],
-                "races": [{k: r.get(k) for k in SCHEDULE_KEYS} for r in schedule["races"]],
-            },
-            "current_drivers": git_json("data/current_drivers.json"),
-            "podiums": pick(git_json("data/podiums.json")),
-            "race_results": pick(git_json("data/race_results.json")),
-            "qualifying": pick(git_json("data/qualifying.json")),
+    return {
+        "schedule": {
+            "season": schedule["season"],
+            "races": [{k: r.get(k) for k in SCHEDULE_KEYS} for r in schedule["races"]],
         },
-    )
+        "current_drivers": git_json("data/current_drivers.json"),
+        "podiums": pick(git_json("data/podiums.json")),
+        "race_results": pick(git_json("data/race_results.json")),
+        "qualifying": pick(git_json("data/qualifying.json")),
+    }
 
 
-def record_backtest() -> None:
+def record_backtest() -> list[dict]:
     now = datetime.now(UTC)
     races = []
     for year in range(2023, now.year + 1):
-        for s in openf1.sessions(year, "Race") or []:
+        for s in require(openf1.sessions(year, "Race"), f"sessions({year}, Race)"):
             end = datetime.fromisoformat(s["date_end"])
             if s.get("is_cancelled") or end > now:
                 continue
-            result = openf1.session_result(s["session_key"])
-            messages = openf1.race_control(s["session_key"])
-            if not result or messages is None:
-                continue
+            result = require(
+                openf1.session_result(s["session_key"]), f"session_result({s['session_key']})"
+            )
+            messages = require(
+                openf1.race_control(s["session_key"]), f"race_control({s['session_key']})"
+            )
             first_look = end + timedelta(minutes=30)
             races.append(
                 {
@@ -163,11 +176,15 @@ def record_backtest() -> None:
                     ],
                 }
             )
-    write("gate_backtest.json.gz", races)
+    return races
 
 
 if __name__ == "__main__":
+    openf1.MAX_TOTAL_RETRY_WAIT = float("inf")
     schedule = git_json("data/schedule.json")
-    record_2026(schedule)
-    record_jolpica(schedule)
-    record_backtest()
+    payload_2026 = record_2026(schedule)
+    payload_jolpica = record_jolpica(schedule)
+    payload_backtest = record_backtest()
+    write("openf1_2026.json.gz", payload_2026)
+    write("jolpica_2026.json.gz", payload_jolpica)
+    write("gate_backtest.json.gz", payload_backtest)
