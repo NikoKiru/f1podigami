@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-865%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-954%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -112,6 +112,7 @@ flowchart TD
     classDef json fill:#161b22,stroke:#58a6ff,color:#8b949e
 
     API(("Jolpica F1 API"))
+    OF(("OpenF1 API"))
 
     subgraph FETCH ["① Fetch  →  data/*.json"]
         direction LR
@@ -120,9 +121,11 @@ flowchart TD
         FQ["fetch_qualifying"]:::fetch
         FG["fetch_current_drivers"]:::fetch
         FS["fetch_schedule"]:::fetch
+        FO["fetch_openf1"]:::fetch
     end
 
     API -.-> FETCH
+    OF -.-> FO
 
     subgraph COMPUTE ["② Compute  →  data/*.json"]
         direction LR
@@ -166,7 +169,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (865 tests, run in CI)
+tests/          pytest suite (954 tests, run in CI)
 ```
 
 </details>
@@ -207,7 +210,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 865 tests + coverage gate (≥70%)
+pytest --cov                          # 954 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
@@ -303,6 +306,8 @@ flowchart LR
 
 All race data comes from the **[Jolpica F1 API](https://api.jolpi.ca)** — an Ergast-compatible
 endpoint, no API key required. Race reports link to the **official Formula 1** result pages (with a Wikipedia fallback for any race not yet mapped).
+
+The **newest** race and qualifying session come first from **[OpenF1](https://openf1.org)**: it usually has the classification within about an hour of the race, often hours before Jolpica. OpenF1's rows are written in Jolpica's exact format, held back while the stewards could still change the podium, and replaced by Jolpica's as soon as it publishes (a changed podium raises an alert). All history comes from Jolpica.
 
 <div align="center">
 <sub>Includes the Indy 500 (1950–1960) · excludes Sprint races · predictions are for fun, not betting 🏎️</sub>
