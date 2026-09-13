@@ -35,6 +35,7 @@ from .schemas import (
     RetirementRace,
     Schedule,
     Soulmates,
+    UnconfirmedRound,
     Unlikeliest,
 )
 
@@ -58,6 +59,7 @@ REGISTRY: dict[str, TypeAdapter] = {
     "qualifying.json": TypeAdapter(list[QualifyingEntry]),
     "grid_penalties.json": TypeAdapter(list[GridPenaltyRace]),
     "retirements.json": TypeAdapter(list[RetirementRace]),
+    "unconfirmed.json": TypeAdapter(list[UnconfirmedRound]),
 }
 
 # Bulky raw datasets written single-line to keep the repo (and git deltas) lean.
@@ -215,3 +217,11 @@ def load_retirements() -> list[RetirementRace]:
 
 def save_retirements(data: Any) -> None:
     _save("retirements.json", data)
+
+
+def load_unconfirmed() -> list[UnconfirmedRound]:
+    return _load("unconfirmed.json")
+
+
+def save_unconfirmed(data: Any) -> None:
+    _save("unconfirmed.json", data)

@@ -556,3 +556,43 @@ def test_podium_carries_shared_drive_codrivers():
     pod = Podium.model_validate(payload)
     assert pod.coDrivers["p3"][0].driverId == "moss"
     assert pod.model_dump(mode="json") == payload
+
+
+# --- unconfirmed.json (OpenF1 rounds awaiting Jolpica) ----------------------------
+
+
+_UNCONFIRMED = {
+    "season": "2026",
+    "round": "14",
+    "kind": "race",
+    "pending": ["podiums", "race_results"],
+    "since": "2026-09-13T15:00:00+00:00",
+}
+
+
+def test_save_unconfirmed_roundtrips(tmp_path, monkeypatch):
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    repository.save_unconfirmed([_UNCONFIRMED])
+    raw = (tmp_path / "unconfirmed.json").read_text(encoding="utf-8")
+    adapter = REGISTRY["unconfirmed.json"]
+    dumped = adapter.dump_python(adapter.validate_python(json.loads(raw)), mode="json")
+    assert json.dumps(dumped, indent=2, ensure_ascii=False) == raw
+    assert repository.load_unconfirmed()[0].pending == ["podiums", "race_results"]
+
+
+def test_unconfirmed_at_rest_is_an_empty_list(tmp_path, monkeypatch):
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    repository.save_unconfirmed([])
+    assert (tmp_path / "unconfirmed.json").read_text(encoding="utf-8") == "[]"
+
+
+def test_unconfirmed_rejects_an_unknown_dataset_or_kind():
+    adapter = REGISTRY["unconfirmed.json"]
+    with pytest.raises(ValidationError):
+        adapter.validate_python([{**_UNCONFIRMED, "pending": ["combos"]}])
+    with pytest.raises(ValidationError):
+        adapter.validate_python([{**_UNCONFIRMED, "kind": "sprint"}])
