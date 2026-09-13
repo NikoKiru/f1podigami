@@ -131,7 +131,7 @@ def test_nothing_is_written_inside_the_live_window():
 
 
 def test_an_unknown_car_writes_nothing():
-    current = [d for d in CURRENT if d["driverId"] != "hadjar"]
+    current = [d for d in CURRENT if d["driverId"] != "russell"]
     assert build_race(RACES["13"], "2026", current, NOW, FakeClient(OPENF1)) is None
 
 
