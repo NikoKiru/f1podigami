@@ -23,6 +23,8 @@
   - Round unconfirmed > **48 h** after its session ended → the run fails (existing `auto-update-failure` alert).
 - **Verified expectations** (scratchpad run against real OpenF1 data, 2026-09-10): rounds 1–5, 7, 8, 10–13 produce podium and race-results entries *identical* to Jolpica's. Round 6 (Monaco, unserved penalties) and round 9 (Silverstone, post-race investigation of Hamilton) are **held**. Qualifying matches by position for all 13, except round 4 (OpenF1 omits Hadjar, who set no time). Jolpica's stored qualifying *order* is not always by position (rounds 5 and 10), so tests compare by position. The gate backtest over 83 races publishes **65 (78%)** and holds Monaco 2026 and Jeddah 2023.
 - Tests are offline, replaying **frozen fixtures** (never live `data/`: a Jolpica revision would turn a byte-identical test into a stall vector).
+- **PR 2's workflow contract (confirm on `develop` in Task 0):** the watcher step (`id: wait`) writes `published` = `true` (Jolpica has the round), `false` (timed out) or `none` (nothing pending); this plan adds `fast` (OpenF1 has it and the stewards are clear). A timed-out watch hands over *before* the pipeline (steps with `id: successor`, only on `published == 'false'`), and every pipeline step is gated on `steps.successor.outputs.successor != 'true' && (steps.wait.outputs.published != 'none' || inputs.force)`. `fast` passes that gate, runs the pipeline, then hands over to a confirmation run from NEW steps after `Run tests` (id `confirm`, never `successor`, which the gate reads) with no status function, so a failed fast pipeline ends red and alerts instead of handing over.
+- **Loop protection:** PR 2's chain is safe because every hand-over follows a 5 h hold; a `fast` hand-over has no hold. So a run must never report `fast` when its checkout might lack an earlier fast result: when the in-flight PR wait (the job's first step) gives up with the data PR still open it writes `still_open=true`, and `JOLPICA_ONLY=true` makes the watcher ignore OpenF1 and `fetch_openf1.py` skip the fill. A confirmation watch (`confirm-race` / `confirm-qualifying`) never accepts OpenF1 either.
 - Branch `feat/openf1-fast-lane` from `develop` after PRs 1 and 2 merged; PR into `develop`; promote only when no qualifying or race is within 48 h.
 - Every PR updates `RELEASE_NOTES.md`, README and CLAUDE.md where they describe behaviour.
 - Commit messages end with:
@@ -43,11 +45,11 @@
 | `src/fetch/fetch_podiums.py`, `fetch_race_results.py`, `fetch_qualifying.py` (modify) | Confirm the rounds the API returned |
 | `src/fetch/openf1.py` (create) | Thin fail-closed OpenF1 client |
 | `src/fetch/stewards_gate.py` (create) | Pure stewards' check |
-| `src/fetch/fetch_openf1.py` (create) | Match, map, build rows, fill the newest round; CLI (`--now` for rehearsals) |
+| `src/fetch/fetch_openf1.py` (create) | Match, map, build rows, fill the newest round; CLI (`--now` for rehearsals); skips while `JOLPICA_ONLY=true` |
 | `src/update.py` (modify) | Run `fetch_openf1.py` after the Jolpica fetchers |
 | `src/check_update_due.py` (modify) | Confirmation trigger, stale check, successor includes unconfirmed |
-| `src/wait_for_results.py` (modify) | OpenF1 as a ready source; confirmation targets; `published=fast` |
-| `.github/workflows/update.yml` (modify) | Stale-unconfirmed step |
+| `src/wait_for_results.py` (modify) | OpenF1 as a ready source (`choose_source`, never for a confirmation watch or under `JOLPICA_ONLY`); confirmation targets; `published=fast` |
+| `.github/workflows/update.yml` (modify) | In-flight `still_open` + `JOLPICA_ONLY`, stale-unconfirmed step, confirmation hand-over |
 | `tests/fixtures/openf1/record_fixtures.py` + 3 `.json.gz` (create) | Frozen OpenF1 + Jolpica fixtures |
 | `tests/test_unconfirmed.py`, `test_stewards_gate.py`, `test_fetch_openf1.py` (create); `test_datalib.py`, `test_check_update_due.py`, `test_wait_for_results.py` (extend) | Tests |
 | `CLAUDE.md`, `README.md`, `RELEASE_NOTES.md` | Docs |
@@ -61,9 +63,10 @@
 ```bash
 git switch develop && git pull
 git switch -c feat/openf1-fast-lane
-grep -n "ARM_BEFORE\|def report" src/check_update_due.py src/wait_for_results.py
+grep -n "ARM_BEFORE\|def report\|report(\"none\")" src/check_update_due.py src/wait_for_results.py
+grep -n "id: wait\|id: successor\|published != 'none' || inputs.force" .github/workflows/update.yml
 ```
-Expected: PR 2's `ARM_BEFORE` and `report(published: str)` are present. If not, stop: PR 2 must be merged first.
+Expected: PR 2's `ARM_BEFORE`, `report(published: str)` and `report("none")` are present, and `update.yml` has the `wait` / `successor` step ids and the pipeline gate quoted in Global Constraints. If not, stop: PR 2 (including both of its fix waves) must be merged first.
 
 ---
 
@@ -1144,6 +1147,19 @@ def test_fill_never_mixes_sources_within_a_round():
     podiums, race_results, qualifying = _datasets()
     race_results = [r for r in race_results if r["round"] != "13"]
     assert fill(SCHEDULE, CURRENT, podiums, race_results, qualifying, [], NOW, FakeClient(OPENF1)) == set()
+
+
+def test_main_leaves_the_round_to_jolpica_while_a_data_pr_is_open(monkeypatch):
+    """JOLPICA_ONLY (set by update.yml) must stop the fast lane before any data is read."""
+    import fetch.fetch_openf1 as fetcher
+
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("the fast lane ran although an earlier data PR is open")
+
+    monkeypatch.setenv("JOLPICA_ONLY", "true")
+    monkeypatch.setattr(fetcher, "fill", must_not_run)
+    monkeypatch.setattr(fetcher, "load_schedule", must_not_run)
+    assert fetcher.main([]) == 0
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -1179,6 +1195,7 @@ is recorded in data/unconfirmed.json until Jolpica confirms it.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import traceback
 import unicodedata
@@ -1500,6 +1517,12 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--now", help="ISO-8601 instant to act as 'now' (rehearsals)")
     args = ap.parse_args(argv)
+    if os.environ.get("JOLPICA_ONLY") == "true":
+        # update.yml sets this when an earlier data PR is still unmerged after the
+        # in-flight wait: main may lack that fast result, so filling the round again
+        # would only re-push the same rows and restart the PR's checks. Jolpica's turn.
+        print("OpenF1 fast lane: skipped (an earlier data PR is still open).")
+        return 0
     now = datetime.fromisoformat(args.now) if args.now else datetime.now(UTC)
 
     schedule = load_schedule().model_dump()
@@ -1559,7 +1582,7 @@ Claude-Session: https://claude.ai/code/session_015pzWdc2NQZLoSKCEQGuHsD"
 
 **Interfaces:**
 - Consumes: `build_race`, `build_qualifying` (Task 5); PR 2's `wait_target`, `report(published: str)`, `pending_session_starts`, `is_successor_due`.
-- Produces: `check_update_due.STALE_UNCONFIRMED` (48 h), `is_confirmation_due(unconfirmed) -> bool`, `stale_unconfirmed(unconfirmed, now) -> list[str]`, `read_unconfirmed(data_dir: Path = DATA_DIR) -> list[dict]`; `pending_session_starts`/`is_successor_due` gain `unconfirmed: Sequence[dict] = ()`; CLI `--fail-on-stale`. `wait_for_results.wait_target(..., unconfirmed=())` can return `("confirm-race"|"confirm-qualifying", season, round)`; `wait_until(ready, *, timeout_s, interval_s, sleep, now) -> str | None`; `report("fast")`.
+- Produces: `check_update_due.STALE_UNCONFIRMED` (48 h), `is_confirmation_due(unconfirmed) -> bool`, `stale_unconfirmed(unconfirmed, now) -> list[str]`, `read_unconfirmed(data_dir: Path = DATA_DIR) -> list[dict]`; `pending_session_starts`/`is_successor_due` gain `unconfirmed: Sequence[dict] = ()`; CLI `--fail-on-stale`. `wait_for_results.wait_target(..., unconfirmed=())` can return `("confirm-race"|"confirm-qualifying", season, round)`; `wait_until(ready, *, timeout_s, interval_s, sleep, now) -> str | None`; `choose_source(kind, published_round, rnd, openf1_ready, *, jolpica_only) -> str | None`; `report("fast")`. The watcher and `fetch_openf1.py` honour `JOLPICA_ONLY=true`; the in-flight wait step gets `id: inflight` and writes `still_open`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1601,7 +1624,7 @@ Append to `tests/test_wait_for_results.py`:
 ```python
 # --- OpenF1 fast lane: confirmation targets, first-ready source, "fast" ------------
 
-from wait_for_results import report, wait_until  # noqa: E402
+from wait_for_results import choose_source, report, wait_until  # noqa: E402
 
 UNCONFIRMED_13 = [
     {"season": "2026", "round": "13", "kind": "race", "pending": ["race_results"],
@@ -1637,6 +1660,32 @@ def test_report_fast(tmp_path, monkeypatch):
     monkeypatch.setenv("GITHUB_OUTPUT", str(out))
     report("fast")
     assert out.read_text(encoding="utf-8") == "published=fast\n"
+
+
+def test_jolpica_always_ends_the_watch():
+    assert choose_source("race", 13, 13, lambda: False, jolpica_only=True) == "jolpica"
+    assert choose_source("confirm-race", 14, 13, lambda: False, jolpica_only=False) == "jolpica"
+
+
+def test_openf1_ends_only_a_pending_session_watch():
+    assert choose_source("race", 12, 13, lambda: True, jolpica_only=False) == "openf1"
+    assert choose_source("qualifying", None, 13, lambda: True, jolpica_only=False) == "openf1"
+    assert choose_source("race", 12, 13, lambda: False, jolpica_only=False) is None
+    # A confirmation watch exists to wait for Jolpica; OpenF1 must never end it.
+    assert choose_source("confirm-race", 12, 13, lambda: True, jolpica_only=False) is None
+
+
+def test_an_open_data_pr_makes_the_watch_jolpica_only():
+    """Loop protection: with the earlier fast PR unmerged this checkout may lack that
+    result, so OpenF1 must not trigger a second fast pipeline (it isn't even asked)."""
+    asked = []
+
+    def openf1_ready():
+        asked.append(1)
+        return True
+
+    assert choose_source("race", 12, 13, openf1_ready, jolpica_only=True) is None
+    assert asked == []
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -1690,7 +1739,7 @@ def stale_unconfirmed(unconfirmed: Sequence[dict], now: datetime) -> list[str]:
     return stale
 ```
 
-Change `pending_session_starts` and `is_successor_due` to take unconfirmed rounds (their windows run from the session end):
+Change `pending_session_starts` and `is_successor_due` to take unconfirmed rounds (their windows run from the session end). Apart from the new `unconfirmed` parameter and the final loop, this is PR 2's code unchanged:
 
 ```python
 def pending_session_starts(
@@ -1700,23 +1749,25 @@ def pending_session_starts(
     now: datetime,
     unconfirmed: Sequence[dict] = (),
 ) -> list[datetime]:
-    """Starts of the sessions the data still lacks, plus the session end of each
-    round still awaiting Jolpica's confirmation."""
+    """Scheduled starts of the sessions the data still lacks (race and/or qualifying),
+    plus the session end of each round still awaiting Jolpica's confirmation."""
     starts: list[datetime] = []
     race = latest_armed_round(schedule, now)
     if race is not None and race > _have(asof):
         entry = _race_by_round(schedule, race[1])
-        start = entry and session_start(entry.get("date", ""), entry.get("time", ""))
-        if start:
-            starts.append(start)
+        if entry:
+            start = session_start(entry.get("date", ""), entry.get("time", ""))
+            if start:
+                starts.append(start)
     quali = next_quali_target(schedule, asof, post_quali, now)
     if quali is not None:
         entry = _race_by_round(schedule, quali[1])
-        start = entry and session_start(
-            entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
-        )
-        if start:
-            starts.append(start)
+        if entry:
+            start = session_start(
+                entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
+            )
+            if start:
+                starts.append(start)
     for e in unconfirmed:
         try:
             starts.append(datetime.fromisoformat(e["since"]))
@@ -1739,7 +1790,7 @@ def is_successor_due(
     )
 ```
 
-Replace `main` with:
+Replace `main` (PR 2's version, which already has `--successor`) with the one below. It reads `read_unconfirmed(DATA_DIR)` explicitly: PR 2's tests monkeypatch the module's `DATA_DIR`, which a default argument captured at import time would ignore.
 
 ```python
 def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI glue
@@ -1760,7 +1811,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
     asof = podigami.get("asOf", {})
     post = podigami.get("postQuali")
-    unconfirmed = read_unconfirmed()
+    unconfirmed = read_unconfirmed(DATA_DIR)
     now = datetime.now(UTC)
 
     if args.fail_on_stale:
@@ -1772,7 +1823,9 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
     if args.successor:
         key = "successor"
         value = is_successor_due(schedule, asof, post, now, unconfirmed)
-        print(f"successor due: {value} (asOf season={asof.get('season')} round={asof.get('round')})")
+        print(
+            f"successor due: {value} (asOf season={asof.get('season')} round={asof.get('round')})"
+        )
     else:
         key = "due"
         race_due = is_update_due(schedule, asof, now)
@@ -1867,7 +1920,37 @@ def _openf1_ready(kind: str, schedule: dict, season: int, rnd: int) -> bool:
         return False
 ```
 
-Replace `main` with:
+Add the source selection as a pure function (tested in Step 1), just below `_openf1_ready`:
+
+```python
+def choose_source(
+    kind: str,
+    published_round: int | None,
+    rnd: int,
+    openf1_ready: Callable[[], bool],
+    *,
+    jolpica_only: bool,
+) -> str | None:
+    """Which source, if any, ends this watch: "jolpica", "openf1" or None.
+
+    Jolpica always wins. OpenF1 ends only a watch for a pending race or
+    qualifying session — never a confirmation watch, which exists to wait for
+    Jolpica — and never when ``jolpica_only`` is set. update.yml sets that when an
+    earlier data PR is still unmerged after the in-flight wait: this checkout may
+    then lack that fast result, and a second fast pipeline would re-push the same
+    rows and restart the PR's checks, over and over. ``openf1_ready`` is called
+    only when OpenF1 could actually end the watch (it makes network requests).
+    """
+    if published_round is not None and published_round >= rnd:
+        return "jolpica"
+    if kind in ("race", "qualifying") and not jolpica_only and openf1_ready():
+        return "openf1"
+    return None
+```
+
+Extend `report()`'s docstring with the new value: `"fast"` means OpenF1 has the session and the stewards are clear; update.yml runs the pipeline and then hands over to a confirmation run.
+
+Replace `main` (PR 2's version) with:
 
 ```python
 def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit tests
@@ -1879,24 +1962,28 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
     unconfirmed = read_unconfirmed(DATA_DIR)
+    jolpica_only = os.environ.get("JOLPICA_ONLY") == "true"
 
     target = wait_target(schedule, podigami, datetime.now(UTC), unconfirmed)
     if target is None:
         print("Nothing pending upstream; nothing to wait for.")
-        report("true")
+        report("none")
         return 0
 
     kind, season, rnd = target
     races_feed = kind in ("race", "confirm-race")
+    if jolpica_only:
+        print("An earlier data PR is still open: waiting on Jolpica only.")
 
     def ready() -> str | None:
         feed = _fetch_last_results(season) if races_feed else _fetch_last_qualifying(season)
-        published = latest_published_round(feed)
-        if published is not None and published >= rnd:
-            return "jolpica"
-        if kind in ("race", "qualifying") and _openf1_ready(kind, schedule, season, rnd):
-            return "openf1"
-        return None
+        return choose_source(
+            kind,
+            latest_published_round(feed),
+            rnd,
+            lambda: _openf1_ready(kind, schedule, season, rnd),
+            jolpica_only=jolpica_only,
+        )
 
     print(f"Waiting for {season} round {rnd} ({kind}) upstream...")
     source = wait_until(ready, timeout_s=args.timeout, interval_s=args.interval)
@@ -1906,9 +1993,9 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
         report("true")
     elif source == "openf1":
         print(f"OpenF1 has round {rnd} ({kind}), stewards clear, at {stamp}; fast lane.")
-        report("fast")  # the successor run then waits for Jolpica to confirm
+        report("fast")  # update.yml runs the pipeline, then hands over for confirmation
     else:
-        print(f"Round {rnd} ({kind}) still unpublished after the budget; running anyway.")
+        print(f"Round {rnd} ({kind}) still unpublished after the budget.")
         report("false")
     return 0
 ```
@@ -1922,9 +2009,38 @@ In `STEPS`, directly after `("Fetching qualifying", "fetch/fetch_qualifying.py")
     ("Filling the newest round from OpenF1", "fetch/fetch_openf1.py"),
 ```
 
-- [ ] **Step 6: Workflow stale check (`.github/workflows/update.yml`)**
+- [ ] **Step 6: Workflow (`.github/workflows/update.yml`)**
 
-Insert after the `Run tests` step (before `Check whether a session is still pending`):
+Read the whole `update` job first. PR 2 set its order: in-flight PR wait, checkout, setup, the watcher (`id: wait`), the early hand-over (`id: successor`), the gated pipeline steps, `Run tests`. Four edits:
+
+1. The in-flight wait (the job's first step): give it `id: inflight` and make it report whether it gave up with a PR still open. Keep PR 2's text; the two `still_open` writes, the new comment and the last echo's wording are the only changes:
+
+```bash
+          for i in $(seq 1 30); do
+            # A failed lookup counts as "unknown": keep waiting rather than fail the run.
+            open="$(gh pr list --repo "$GITHUB_REPOSITORY" --head auto/update-data \
+              --state open --json number --jq 'length')" || open="?"
+            if [ "$open" = "0" ]; then
+              echo "No data PR in flight."
+              echo "still_open=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "A data PR is still open; waiting 30s..."
+            if [ "$i" -lt 30 ]; then sleep 30; fi
+          done
+          # The earlier data PR (maybe a fast-lane result) hasn't merged, so main may
+          # lack it: this run must not publish OpenF1's result again (JOLPICA_ONLY).
+          echo "still_open=true" >> "$GITHUB_OUTPUT"
+          echo "Data PR still open after 15 min; continuing Jolpica-only (the watchdog reports a stuck PR)."
+```
+
+2. Give the watcher step (`id: wait`) and the pipeline step (`Fetch latest data and rebuild site`) this variable, adding to or creating each step's `env:`:
+
+```yaml
+          JOLPICA_ONLY: ${{ steps.inflight.outputs.still_open }}
+```
+
+3. After `Run tests`, the stale check, gated like the other pipeline steps:
 
 ```yaml
       # A round OpenF1 filled must be confirmed by Jolpica within 48h of its
@@ -1934,6 +2050,7 @@ Insert after the `Run tests` step (before `Check whether a session is still pend
       # scripts, and main's guard only learns --fail-on-stale when the fast lane
       # (fetch_openf1.py) is promoted with it.
       - name: Fail if a round stays unconfirmed for over 48h
+        if: steps.successor.outputs.successor != 'true' && (steps.wait.outputs.published != 'none' || inputs.force)
         run: |
           if [ -f src/fetch/fetch_openf1.py ]; then
             python src/check_update_due.py --fail-on-stale
@@ -1942,7 +2059,28 @@ Insert after the `Run tests` step (before `Check whether a session is still pend
           fi
 ```
 
-(The successor condition `published != 'true'` already covers `published=fast`: after a fast-lane run, the successor waits for Jolpica's confirmation.)
+4. Last, the confirmation hand-over after a fast-lane run:
+
+```yaml
+      # A fast-lane run published OpenF1's result; hand over to a run that waits for
+      # Jolpica to confirm it. Own step ids on purpose: the pipeline gate reads
+      # `steps.successor`. No status function, so a failed fast pipeline ends red
+      # (and alerts) instead of handing over. It can't loop: the next run never
+      # reports `fast` for this round. Either the fast PR merged (the round is in
+      # unconfirmed.json, so the watch is a confirmation watch), or the PR is still
+      # open after the in-flight wait and the run is Jolpica-only.
+      - name: Check whether Jolpica still has to confirm
+        id: confirm
+        if: steps.wait.outputs.published == 'fast'
+        run: python src/check_update_due.py --successor
+      - name: Hand over to a confirmation run
+        if: steps.confirm.outputs.successor == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
+```
+
+In the develop window (this workflow running main's PR 2 scripts) nothing changes: main's watcher never reports `fast` and ignores `JOLPICA_ONLY`, and main's `update.py` has no OpenF1 step. Verify with PyYAML: print each `update` step's name, `id`, `if:` and `env` keys, and paste it into the report.
 
 - [ ] **Step 7: Run everything touched**
 
@@ -2027,7 +2165,7 @@ git worktree remove --force ../f1p-rehearsal
 
 `src/fetch/fetch_openf1.py` runs right after the Jolpica fetchers. For the newest race and qualifying session Jolpica does not have yet, it writes OpenF1's classification (api.openf1.org, ~30 min after the session) into `podiums.json` / `race_results.json` / `qualifying.json` in Jolpica's exact row shape, so the whole site rolls forward ~40 min after the flag. For every 2026 round it lets through, its rows were identical to Jolpica's.
 - **Fail closed.** No write on any OpenF1 error, an unmatched/cancelled session (matched by UTC date + 6 h window), an unknown car number, a surname mismatch, an unknown team name (`TEAM_TO_CONSTRUCTOR` — a rebrand needs a new alias), or a held **stewards' check** (`src/fetch/stewards_gate.py`: open incident, unserved drive-through or time penalties that would change the podium *trio*). Holds ~22% of races; those keep the Jolpica timing.
-- **Jolpica always wins.** A race is only filled when both `podiums.json` and `race_results.json` lack it. Each written round is listed in `data/unconfirmed.json` (per dataset); each Jolpica fetcher confirms the rounds its API returned (`fetch/unconfirmed.py`). The guard stays armed while anything is unconfirmed; after a fast-lane run (`published=fast`) the successor run waits for Jolpica.
+- **Jolpica always wins.** A race is only filled when both `podiums.json` and `race_results.json` lack it. Each written round is listed in `data/unconfirmed.json` (per dataset); each Jolpica fetcher confirms the rounds its API returned (`fetch/unconfirmed.py`). The guard stays armed while anything is unconfirmed. A fast-lane run (`published=fast`) runs the pipeline, then hands over to a confirmation run (`Check whether Jolpica still has to confirm` → `Hand over to a confirmation run`) that waits on Jolpica only. **No double publish:** if the fast PR hasn't merged by the next run's in-flight wait, that step writes `still_open=true` and the run is Jolpica-only (`JOLPICA_ONLY`: the watcher ignores OpenF1 and `fetch_openf1.py` doesn't fill), so a result is never pushed twice and the chain can't loop.
 - **Discrepancies are loud.** Jolpica's confirmation overwrites OpenF1's rows; a changed podium triggers the podium revision alert. A round unconfirmed > 48 h after its session fails the run (`--fail-on-stale`) → `auto-update-failure` issue.
 - **Can't be foreseen:** post-race scrutineering disqualifications (Austin 2023, Spa 2024, Las Vegas 2025). The site shows the crossed-the-line trio for a few hours, then corrects itself with a revision alert.
 - Rehearse with `python src/fetch/fetch_openf1.py --now <ISO>` in a scratch worktree (see the plan's Task 7).
@@ -2102,7 +2240,7 @@ Then:
 2. `gh pr checks <number> --watch` (7 checks), then `gh pr merge <number> --squash --delete-branch`.
    Prove the merged workflow still runs against `main`, which doesn't have the fast lane yet (the stale step must print its skip line):
    ```bash
-   gh workflow run update.yml -f mode=auto -f force=true
+   gh workflow run update.yml -f mode=auto -f force=true -f wait=true
    sleep 20; run=$(gh run list --workflow=update.yml --limit 1 --json databaseId --jq '.[0].databaseId')
    gh run watch "$run" --exit-status
    gh run view "$run" --log | grep "fast lane is not on main yet"
