@@ -195,6 +195,32 @@ def test_fill_never_mixes_sources_within_a_round():
     )
 
 
+@pytest.mark.parametrize(
+    "kind, drop, pending",
+    [
+        ("race", {"drop_race": "13"}, ["podiums", "race_results"]),
+        ("qualifying", {"drop_quali": "13"}, ["qualifying"]),
+    ],
+)
+def test_fill_does_not_list_a_refilled_round_twice(kind, drop, pending):
+    """A --full rebuild drops an unconfirmed fast round and fill writes it again: the
+    round must stay listed once, or unconfirmed.json is no longer a fixed point."""
+    podiums, race_results, qualifying = _datasets(**drop)
+    listed = {
+        "season": "2026",
+        "round": "13",
+        "kind": kind,
+        "pending": pending,
+        "since": "2026-09-06T15:00:00+00:00",
+    }
+    unconfirmed = [dict(listed)]
+    written = fill(
+        SCHEDULE, CURRENT, podiums, race_results, qualifying, unconfirmed, NOW, FakeClient(OPENF1)
+    )
+    assert written == {kind}
+    assert unconfirmed == [listed]
+
+
 def test_main_leaves_the_round_to_jolpica_while_a_data_pr_is_open(monkeypatch):
     """JOLPICA_ONLY (set by update.yml) must stop the fast lane before any data is read."""
     import fetch.fetch_openf1 as fetcher

@@ -304,6 +304,18 @@ def _rounds(rows: list[dict]) -> set[tuple[str, str]]:
     return {(r["season"], r["round"]) for r in rows}
 
 
+def _record(unconfirmed: list[dict], entry: dict) -> None:
+    """List ``entry`` in ``unconfirmed`` unless its season, round and kind already are.
+
+    A --full run rebuilds the datasets from Jolpica, dropping a fast round Jolpica
+    hasn't confirmed, and fill then writes that round again. A second identical
+    entry would stop unconfirmed.json from being a fixed point.
+    """
+    key = (entry["season"], entry["round"], entry["kind"])
+    if all((u["season"], u["round"], u["kind"]) != key for u in unconfirmed):
+        unconfirmed.append(entry)
+
+
 def fill(
     schedule: dict,
     current: list[dict],
@@ -317,8 +329,8 @@ def fill(
     """Write the newest race and qualifying Jolpica lacks into the lists, in place.
 
     Returns the kinds written ({"race", "qualifying"}); each written round is
-    appended to ``unconfirmed``. A race is only written when *both* podiums and
-    race_results lack it, so a round never mixes sources.
+    listed in ``unconfirmed`` (once). A race is only written when *both* podiums
+    and race_results lack it, so a round never mixes sources.
     """
     season = str(schedule["season"])
     written: set[str] = set()
@@ -331,14 +343,15 @@ def fill(
             if built is not None:
                 podiums.append(built["podium"])
                 race_results.append(built["race"])
-                unconfirmed.append(
+                _record(
+                    unconfirmed,
                     {
                         "season": season,
                         "round": race["round"],
                         "kind": "race",
                         "pending": ["podiums", "race_results"],
                         "since": built["sessionEnd"],
-                    }
+                    },
                 )
                 written.add("race")
 
@@ -347,14 +360,15 @@ def fill(
         built = build_qualifying(quali, season, current, now, client)
         if built is not None:
             qualifying.append(built["entry"])
-            unconfirmed.append(
+            _record(
+                unconfirmed,
                 {
                     "season": season,
                     "round": quali["round"],
                     "kind": "qualifying",
                     "pending": ["qualifying"],
                     "since": built["sessionEnd"],
-                }
+                },
             )
             written.add("qualifying")
 
