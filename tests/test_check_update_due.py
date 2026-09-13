@@ -286,3 +286,33 @@ def test_main_successor_writes_successor_output(tmp_path, monkeypatch):
     key, _, value = lines[0].partition("=")
     assert key == "successor"
     assert value in ("true", "false")
+
+
+# --- OpenF1 rounds awaiting Jolpica ---------------------------------------------
+
+from check_update_due import is_confirmation_due, stale_unconfirmed  # noqa: E402
+
+UNCONFIRMED_R10 = {
+    "season": "2026",
+    "round": "10",
+    "kind": "race",
+    "pending": ["race_results"],
+    "since": "2026-07-19T15:00:00+00:00",
+}
+
+
+def test_an_unconfirmed_round_keeps_the_guard_armed():
+    assert is_confirmation_due([]) is False
+    assert is_confirmation_due([UNCONFIRMED_R10]) is True
+
+
+def test_a_round_unconfirmed_for_over_48h_is_stale():
+    assert stale_unconfirmed([UNCONFIRMED_R10], at("2026-07-21 15:00")) == []
+    assert len(stale_unconfirmed([UNCONFIRMED_R10], at("2026-07-21 15:01"))) == 1
+
+
+def test_the_successor_waits_for_confirmation_inside_the_window():
+    s = qsched(R10)
+    # Jolpica hasn't confirmed; the chain may run until 12h after the session ended.
+    assert is_successor_due(s, ASOF_R10, None, at("2026-07-20 02:59"), [UNCONFIRMED_R10]) is True
+    assert is_successor_due(s, ASOF_R10, None, at("2026-07-20 03:00"), [UNCONFIRMED_R10]) is False

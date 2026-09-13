@@ -253,3 +253,86 @@ def test_report_tells_the_workflow_whether_the_round_was_seen(tmp_path, monkeypa
     wfr.report("false")
     wfr.report("true")
     assert out.read_text(encoding="utf-8").splitlines() == ["published=false", "published=true"]
+
+
+# --- OpenF1 fast lane: confirmation targets, first-ready source, "fast" ------------
+
+from wait_for_results import choose_source, report, wait_until  # noqa: E402
+
+UNCONFIRMED_13 = [
+    {
+        "season": "2026",
+        "round": "13",
+        "kind": "race",
+        "pending": ["race_results"],
+        "since": "2026-09-06T15:00:00+00:00",
+    }
+]
+
+
+def test_wait_target_waits_for_jolpica_to_confirm_an_openf1_round():
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    target = wait_target(SCHEDULE, podigami, at("2026-09-06 16:00"), UNCONFIRMED_13)
+    assert target == ("confirm-race", 2026, 13)
+
+
+def test_a_pending_session_outranks_a_confirmation():
+    podigami = {"asOf": {"season": "2026", "round": "12"}, "postQuali": None}
+    assert wait_target(SCHEDULE, podigami, at("2026-09-06 16:00"), UNCONFIRMED_13) == (
+        "race",
+        2026,
+        13,
+    )
+
+
+def test_wait_until_returns_the_first_ready_source():
+    clock = Clock()
+    feed = [None, None, "openf1"]
+    assert (
+        wait_until(
+            lambda: feed.pop(0), timeout_s=3600, interval_s=180, sleep=clock.sleep, now=clock
+        )
+        == "openf1"
+    )
+    assert clock.slept == [180, 180]
+
+
+def test_wait_until_gives_up_with_none():
+    clock = Clock()
+    assert (
+        wait_until(lambda: None, timeout_s=600, interval_s=180, sleep=clock.sleep, now=clock)
+        is None
+    )
+
+
+def test_report_fast(tmp_path, monkeypatch):
+    out = tmp_path / "out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    report("fast")
+    assert out.read_text(encoding="utf-8") == "published=fast\n"
+
+
+def test_jolpica_always_ends_the_watch():
+    assert choose_source("race", 13, 13, lambda: False, jolpica_only=True) == "jolpica"
+    assert choose_source("confirm-race", 14, 13, lambda: False, jolpica_only=False) == "jolpica"
+
+
+def test_openf1_ends_only_a_pending_session_watch():
+    assert choose_source("race", 12, 13, lambda: True, jolpica_only=False) == "openf1"
+    assert choose_source("qualifying", None, 13, lambda: True, jolpica_only=False) == "openf1"
+    assert choose_source("race", 12, 13, lambda: False, jolpica_only=False) is None
+    # A confirmation watch exists to wait for Jolpica; OpenF1 must never end it.
+    assert choose_source("confirm-race", 12, 13, lambda: True, jolpica_only=False) is None
+
+
+def test_an_open_data_pr_makes_the_watch_jolpica_only():
+    """Loop protection: with the earlier fast PR unmerged this checkout may lack that
+    result, so OpenF1 must not trigger a second fast pipeline (it isn't even asked)."""
+    asked = []
+
+    def openf1_ready():
+        asked.append(1)
+        return True
+
+    assert choose_source("race", 12, 13, openf1_ready, jolpica_only=True) is None
+    assert asked == []

@@ -23,6 +23,8 @@ STEPS = [
     ("Fetching podiums", "fetch/fetch_podiums.py"),
     ("Fetching race results", "fetch/fetch_race_results.py"),
     ("Fetching qualifying", "fetch/fetch_qualifying.py"),
+    # After the Jolpica fetchers, so Jolpica always wins a round it already has.
+    ("Filling the newest round from OpenF1", "fetch/fetch_openf1.py"),
     ("Counting combos", "compute/count_combos.py"),
     ("Computing soulmates", "compute/compute_soulmates.py"),
     ("Fetching current grid", "fetch/fetch_current_drivers.py"),

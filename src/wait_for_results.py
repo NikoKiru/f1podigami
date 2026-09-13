@@ -37,13 +37,14 @@ import json
 import os
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
 
-from check_update_due import is_update_due, latest_armed_round, next_quali_target
+from check_update_due import is_update_due, latest_armed_round, next_quali_target, read_unconfirmed
+from fetch import fetch_openf1
 from fetch.api_cache import fresh
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
@@ -70,6 +71,29 @@ def latest_published_round(payload: object) -> int | None:
         return None
 
 
+def wait_until(
+    ready: Callable[[], str | None],
+    *,
+    timeout_s: float = POLL_TIMEOUT_S,
+    interval_s: float = POLL_INTERVAL_S,
+    sleep: Callable[[float], None] = time.sleep,
+    now: Callable[[], float] = time.monotonic,
+) -> str | None:
+    """Poll ``ready`` until it names a source, or None once the budget runs out.
+
+    Never sleeps when the data is already there, and stops before a sleep that
+    would overrun ``timeout_s`` rather than spinning past it.
+    """
+    deadline = now() + timeout_s
+    while True:
+        source = ready()
+        if source is not None:
+            return source
+        if now() + interval_s > deadline:
+            return None
+        sleep(interval_s)
+
+
 def wait_for_round(
     target: int,
     fetch: Callable[[], object | None],
@@ -79,20 +103,16 @@ def wait_for_round(
     sleep: Callable[[float], None] = time.sleep,
     now: Callable[[], float] = time.monotonic,
 ) -> bool:
-    """Poll ``fetch`` until the feed reports round >= ``target``.
+    """Poll ``fetch`` until the feed reports round >= ``target``."""
 
-    Returns True as soon as the round is published, False if the budget runs out.
-    Never sleeps when the data is already there, and stops before a sleep that
-    would overrun ``timeout_s`` rather than spinning past it.
-    """
-    deadline = now() + timeout_s
-    while True:
+    def ready() -> str | None:
         published = latest_published_round(fetch())
-        if published is not None and published >= target:
-            return True
-        if now() + interval_s > deadline:
-            return False
-        sleep(interval_s)
+        return "published" if published is not None and published >= target else None
+
+    return (
+        wait_until(ready, timeout_s=timeout_s, interval_s=interval_s, sleep=sleep, now=now)
+        is not None
+    )
 
 
 def _get_json(url: str, params: dict | None = None) -> object | None:
@@ -133,12 +153,15 @@ def _fetch_last_qualifying(season: int) -> object | None:
     return _get_json(url, {"limit": 1, "offset": total - 1})
 
 
-def wait_target(schedule: dict, podigami: dict, now: datetime) -> tuple[str, int, int] | None:
+def wait_target(
+    schedule: dict, podigami: dict, now: datetime, unconfirmed: Sequence[dict] = ()
+) -> tuple[str, int, int] | None:
     """What this run should wait for — ``(kind, season, round)`` — or None.
 
     A race newer than ``asOf`` whose window is open comes first (the guard's own
     rule, so the two can't disagree); otherwise the next race's qualifying, if its
-    window is open and ``postQuali`` doesn't cover it yet. Nothing pending means
+    window is open and ``postQuali`` doesn't cover it yet; otherwise the oldest
+    round OpenF1 filled that Jolpica hasn't confirmed yet. Nothing pending means
     return at once, holding no runner.
     """
     asof = podigami.get("asOf") or {}
@@ -148,13 +171,60 @@ def wait_target(schedule: dict, podigami: dict, now: datetime) -> tuple[str, int
     quali = next_quali_target(schedule, asof, podigami.get("postQuali"), now)
     if quali is not None:
         return ("qualifying", quali[0], quali[1])
+    for e in unconfirmed:
+        try:
+            return (f"confirm-{e['kind']}", int(e["season"]), int(e["round"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return None
+
+
+def _openf1_ready(kind: str, schedule: dict, season: int, rnd: int) -> bool:
+    """Would fetch_openf1 write this session right now?"""
+    race = next((r for r in schedule.get("races", []) if str(r.get("round")) == str(rnd)), None)
+    if race is None:
+        return False
+    try:
+        current = json.loads((DATA_DIR / "current_drivers.json").read_text(encoding="utf-8"))
+        build = fetch_openf1.build_race if kind == "race" else fetch_openf1.build_qualifying
+        return build(race, str(season), current.get("drivers", []), datetime.now(UTC)) is not None
+    except Exception as exc:  # noqa: BLE001 - an OpenF1 surprise must never break the watch
+        # Logged, not swallowed: the watch carries on waiting for Jolpica.
+        print(f"  OpenF1 readiness check failed ({exc!r}); treating it as not ready")
+        return False
+
+
+def choose_source(
+    kind: str,
+    published_round: int | None,
+    rnd: int,
+    openf1_ready: Callable[[], bool],
+    *,
+    jolpica_only: bool,
+) -> str | None:
+    """Which source, if any, ends this watch: "jolpica", "openf1" or None.
+
+    Jolpica always wins. OpenF1 ends only a watch for a pending race or
+    qualifying session — never a confirmation watch, which exists to wait for
+    Jolpica — and never when ``jolpica_only`` is set. update.yml sets that when an
+    earlier data PR is still unmerged after the in-flight wait: this checkout may
+    then lack that fast result, and a second fast pipeline would re-push the same
+    rows and restart the PR's checks, over and over. ``openf1_ready`` is called
+    only when OpenF1 could actually end the watch (it makes network requests).
+    """
+    if published_round is not None and published_round >= rnd:
+        return "jolpica"
+    if kind in ("race", "qualifying") and not jolpica_only and openf1_ready():
+        return "openf1"
     return None
 
 
 def report(published: str) -> None:
     """Tell update.yml what happened: "true" if the round was seen upstream,
-    "false" if the watch timed out, or "none" if nothing was pending to wait
-    for. Only "false" lets update.yml hand over to a successor run."""
+    "false" if the watch timed out, "none" if nothing was pending to wait for, or
+    "fast" if OpenF1 has the session and the stewards are clear — update.yml runs
+    the pipeline and then hands over to a confirmation run. Only "false" lets
+    update.yml hand over to a successor run."""
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
         with open(out, "a", encoding="utf-8") as fh:
@@ -169,32 +239,42 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
 
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
+    unconfirmed = read_unconfirmed(DATA_DIR)
+    jolpica_only = os.environ.get("JOLPICA_ONLY") == "true"
 
-    target = wait_target(schedule, podigami, datetime.now(UTC))
+    target = wait_target(schedule, podigami, datetime.now(UTC), unconfirmed)
     if target is None:
         print("Nothing pending upstream; nothing to wait for.")
         report("none")
         return 0
 
     kind, season, rnd = target
+    races_feed = kind in ("race", "confirm-race")
+    if jolpica_only:
+        print("An earlier data PR is still open: waiting on Jolpica only.")
 
-    def fetch() -> object | None:
-        if kind == "race":
-            return _fetch_last_results(season)
-        return _fetch_last_qualifying(season)
+    def ready() -> str | None:
+        feed = _fetch_last_results(season) if races_feed else _fetch_last_qualifying(season)
+        return choose_source(
+            kind,
+            latest_published_round(feed),
+            rnd,
+            lambda: _openf1_ready(kind, schedule, season, rnd),
+            jolpica_only=jolpica_only,
+        )
 
-    print(f"Waiting for {season} round {rnd} {kind} to appear upstream...")
-    published = wait_for_round(rnd, fetch, timeout_s=args.timeout, interval_s=args.interval)
-    if published:
-        seen = datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ")
-        print(f"Round {rnd} {kind} seen upstream at {seen}; running the pipeline.")
+    print(f"Waiting for {season} round {rnd} ({kind}) upstream...")
+    source = wait_until(ready, timeout_s=args.timeout, interval_s=args.interval)
+    stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ")
+    if source == "jolpica":
+        print(f"Jolpica has round {rnd} ({kind}) at {stamp}; running the pipeline.")
+        report("true")
+    elif source == "openf1":
+        print(f"OpenF1 has round {rnd} ({kind}), stewards clear, at {stamp}; fast lane.")
+        report("fast")  # update.yml runs the pipeline, then hands over for confirmation
     else:
-        # Not a failure: update.yml hands over to a successor run while the
-        # session is still inside its window, skipping the pipeline here; only
-        # once that window has elapsed does update.yml run the pipeline anyway
-        # (idempotent), as a fallback.
-        print(f"Round {rnd} {kind} still unpublished after the budget.")
-    report("true" if published else "false")
+        print(f"Round {rnd} ({kind}) still unpublished after the budget.")
+        report("false")
     return 0
 
 
