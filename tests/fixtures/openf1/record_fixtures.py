@@ -164,6 +164,8 @@ def record_backtest() -> list[dict]:
             messages = require(
                 openf1.race_control(s["session_key"]), f"race_control({s['session_key']})"
             )
+            if not result:
+                continue
             first_look = end + timedelta(minutes=30)
             races.append(
                 {
