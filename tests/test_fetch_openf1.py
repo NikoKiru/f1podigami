@@ -206,3 +206,40 @@ def test_main_leaves_the_round_to_jolpica_while_a_data_pr_is_open(monkeypatch):
     monkeypatch.setattr(fetcher, "fill", must_not_run)
     monkeypatch.setattr(fetcher, "load_schedule", must_not_run)
     assert fetcher.main([]) == 0
+
+
+# --- report_filled: the confirmation hand-over's loop-safety signal ---------------
+
+
+def test_report_filled_writes_the_written_kinds(tmp_path, monkeypatch):
+    from fetch.fetch_openf1 import report_filled
+
+    out = tmp_path / "out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    report_filled({"race"})
+    assert out.read_text(encoding="utf-8") == "filled=race\n"
+
+
+def test_report_filled_sorts_multiple_kinds(tmp_path, monkeypatch):
+    from fetch.fetch_openf1 import report_filled
+
+    out = tmp_path / "out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    report_filled({"race", "qualifying"})
+    assert out.read_text(encoding="utf-8") == "filled=qualifying,race\n"
+
+
+def test_report_filled_writes_nothing_when_nothing_was_filled(tmp_path, monkeypatch):
+    from fetch.fetch_openf1 import report_filled
+
+    out = tmp_path / "out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    report_filled(set())
+    assert not out.exists() or out.read_text(encoding="utf-8") == ""
+
+
+def test_report_filled_without_github_output_does_not_raise(monkeypatch):
+    from fetch.fetch_openf1 import report_filled
+
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    report_filled({"race"})  # must not raise

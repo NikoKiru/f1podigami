@@ -199,6 +199,7 @@ jobs:
       # window, so those paths are unaffected. Parentheses are required since
       # `&&` binds tighter than `||`.
       - name: Fetch latest data and rebuild site
+        id: pipeline
         if: steps.successor.outputs.successor != 'true' && (steps.wait.outputs.published != 'none' || inputs.force)
         # full reconciliations take ~24 min and never run the watcher, so they get 60;
         # a normal run after a 5h watch keeps 25 so the job stays under 345 min.
@@ -346,10 +347,19 @@ jobs:
       # (and alerts) instead of handing over. It can't loop: the next run never
       # reports `fast` for this round. Either the fast PR merged (the round is in
       # unconfirmed.json, so the watch is a confirmation watch), or the PR is still
-      # open after the in-flight wait and the run is Jolpica-only.
+      # open after the in-flight wait and the run is Jolpica-only. A third case:
+      # `published == 'fast'` but the pipeline step's `filled` output is empty
+      # because fetch_openf1.py failed closed (a transient OpenF1 error, exhausted
+      # 429 retries, an exception) and wrote nothing — this run must NOT hand over
+      # without a hold, or the next run could report `fast` again for the same
+      # round and repeat the pipeline back-to-back. `steps.pipeline.outputs.filled`
+      # gates on that: a same-round retry then waits for the next scheduled run
+      # instead. In the develop window `filled` is never set (main's older
+      # fetch_openf1.py isn't there yet) and `fast` never occurs either, so
+      # nothing changes there.
       - name: Check whether Jolpica still has to confirm
         id: confirm
-        if: steps.wait.outputs.published == 'fast'
+        if: steps.wait.outputs.published == 'fast' && steps.pipeline.outputs.filled != ''
         run: python src/check_update_due.py --successor
       - name: Hand over to a confirmation run
         if: steps.confirm.outputs.successor == 'true'

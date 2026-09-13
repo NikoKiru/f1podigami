@@ -2,14 +2,16 @@
 
 The scheduled poll runs this first: it reads the committed schedule and the latest
 race already reflected in the data, and reports whether an update should run. Only
-then does the workflow run the full (network) update. Two independent triggers feed
-a single ``due`` output:
+then does the workflow run the full (network) update. Three independent triggers
+feed a single ``due`` output:
 
 - :func:`is_update_due` — the newest race whose watch window is open (it opens
   ``ARM_BEFORE`` the scheduled start) is newer than what we have.
 - :func:`is_post_quali_update_due` — the next race's qualifying window is open
   but ``podigami.json``'s ``postQuali`` block doesn't cover that round yet
   (fail-safe, so any missing/garbage input just stays quiet).
+- :func:`is_confirmation_due` — a round OpenF1 filled (``data/unconfirmed.json``)
+  is still waiting on Jolpica to confirm it.
 
 The window opens *before* the session on purpose: GitHub starts only a handful of
 scheduled runs a day, so being quick means already waiting when results appear.
@@ -17,10 +19,13 @@ A run that lands in the window holds its runner in ``wait_for_results.py`` and
 acts only once the data is actually published.
 
 All take loaded dicts (no IO) so they are trivially unit-testable; :func:`main`
-loads the data, ORs the two triggers, and writes ``due=true|false`` to
+loads the data, ORs the three triggers, and writes ``due=true|false`` to
 ``$GITHUB_OUTPUT``. ``--successor`` instead reports whether a session is still
 pending inside ``SUCCESSOR_WINDOW`` — update.yml's cue to dispatch the next run
-itself rather than wait for the scheduler.
+itself rather than wait for the scheduler. ``--fail-on-stale`` reports neither: it
+exits 1 (and prints an ``::error::`` line the run's own logs surface, tripping the
+existing auto-update-failure alert) when a round has sat unconfirmed for longer
+than :data:`STALE_UNCONFIRMED`, and exits 0 otherwise.
 """
 
 from __future__ import annotations
