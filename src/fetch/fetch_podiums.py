@@ -22,6 +22,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from datalib import save_podiums  # noqa: E402
 from fetch.api_cache import fresh  # noqa: E402
+from fetch.unconfirmed import confirm_on_disk  # noqa: E402
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 PAGE_SIZE = 100
@@ -204,6 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         seasons_to_fetch = list(range(latest, latest + 2))
         print(f"Incremental fetch: latest season on disk is {latest}; fetching {seasons_to_fetch}")
 
+    received: dict[tuple[str, str], set[int]] = {}
     # season is None only for the unscoped history rebuild, which is immutable.
     for season in seasons_to_fetch:
         live = season is not None and season >= date.today().year
@@ -225,6 +227,7 @@ def main(argv: list[str] | None = None) -> int:
                 if not results:
                     continue
                 entry[f"p{position}"] = driver_record(results[0])
+                received.setdefault(key, set()).add(position)
                 extras = [driver_record(r) for r in results[1:]]
                 if extras:
                     entry.setdefault("coDrivers", {})[f"p{position}"] = extras
@@ -245,6 +248,9 @@ def main(argv: list[str] | None = None) -> int:
             r.pop("coDrivers", None)
 
     save_podiums(complete)
+
+    # A round OpenF1 filled is confirmed once the API returned all three steps.
+    confirm_on_disk("podiums", {k for k, got in received.items() if got == {1, 2, 3}})
 
     seasons = sorted({int(r["season"]) for r in complete})
     print()
