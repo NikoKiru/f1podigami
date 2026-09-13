@@ -136,6 +136,11 @@ def test_an_unserved_drive_through_holds():
     ) == ["#4 has an unserved drive-through or stop-go"]
 
 
+def test_an_unidentified_car_in_the_top_three_holds():
+    rows = [row(None, 1, time=5000.0), *FINISH[1:]]
+    assert hold_reasons(rows, []) == ["a car in the top three has no driver number"]
+
+
 def test_positions_that_disagree_with_race_times_hold():
     """Austin 2023 as OpenF1 has it now: Hamilton unclassified but timed in 2nd."""
     rows = [*FINISH[:3], row(44, None, time=5005.0)]

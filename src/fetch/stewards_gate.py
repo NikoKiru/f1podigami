@@ -118,6 +118,8 @@ def hold_reasons(rows: list[dict], messages: list[dict]) -> list[str]:
     order = crossing_order(rows)
     if len(order) < 3:
         return ["fewer than three timed finishers"]
+    if any(not isinstance(r.get("driver_number"), int) for r in order[:3]):
+        return ["a car in the top three has no driver number"]
     top3 = [r["driver_number"] for r in order[:3]]
     listed = {r.get("driver_number") for r in rows if r.get("position") in (1, 2, 3)}
     if listed != set(top3):
