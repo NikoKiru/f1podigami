@@ -316,3 +316,34 @@ def test_the_successor_waits_for_confirmation_inside_the_window():
     # Jolpica hasn't confirmed; the chain may run until 12h after the session ended.
     assert is_successor_due(s, ASOF_R10, None, at("2026-07-20 02:59"), [UNCONFIRMED_R10]) is True
     assert is_successor_due(s, ASOF_R10, None, at("2026-07-20 03:00"), [UNCONFIRMED_R10]) is False
+
+
+# --- main(): --fail-on-stale and the confirmation trigger ----------------------
+
+
+def test_main_due_true_from_an_unconfirmed_round_alone(tmp_path, monkeypatch):
+    """Nothing else is pending: only the unconfirmed round should make due=true."""
+    (tmp_path / "schedule.json").write_text(json.dumps(sched(season="2026")), encoding="utf-8")
+    (tmp_path / "podigami.json").write_text(json.dumps({"asOf": {}}), encoding="utf-8")
+    (tmp_path / "unconfirmed.json").write_text(json.dumps([UNCONFIRMED_R10]), encoding="utf-8")
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    cud.main([])
+
+    assert out.read_text(encoding="utf-8").splitlines() == ["due=true"]
+
+
+def test_main_fail_on_stale_returns_0_with_nothing_unconfirmed(tmp_path, monkeypatch):
+    _write_minimal_data(tmp_path)
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    assert cud.main(["--fail-on-stale"]) == 0
+
+
+def test_main_fail_on_stale_returns_1_with_a_stale_round(tmp_path, monkeypatch):
+    _write_minimal_data(tmp_path)
+    stale = {**UNCONFIRMED_R10, "since": "2000-01-01T00:00:00+00:00"}
+    (tmp_path / "unconfirmed.json").write_text(json.dumps([stale]), encoding="utf-8")
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    assert cud.main(["--fail-on-stale"]) == 1

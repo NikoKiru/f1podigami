@@ -363,6 +363,20 @@ def fill(
     return written
 
 
+def report_filled(written: set[str]) -> None:
+    """Tell update.yml which kinds this run wrote ("race", "qualifying"), if any.
+
+    The confirmation hand-over keys off this output, not off "a session is
+    pending": a fast run whose fill failed closed wrote nothing and must not hand
+    over without a hold. Writes nothing when nothing was filled (the output stays
+    unset, i.e. empty in the workflow).
+    """
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out and written:
+        with open(out, "a", encoding="utf-8") as fh:
+            fh.write(f"filled={','.join(sorted(written))}\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--now", help="ISO-8601 instant to act as 'now' (rehearsals)")
@@ -400,6 +414,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"OpenF1 filled: {', '.join(sorted(written))} (awaiting Jolpica)")
     else:
         print("OpenF1 fast lane: nothing to fill.")
+    report_filled(written)
     return 0
 
 

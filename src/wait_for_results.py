@@ -28,6 +28,25 @@ can sit empty for hours while the aggregates already carry the round (#178).
 Timing out is not an error: the successor chain (or the next scheduled run)
 covers it. Only once the successor window has already elapsed does this run's
 own pipeline run anyway (idempotent), as a last-resort fallback.
+
+The OpenF1 fast lane
+--------------------
+A race or qualifying watch (never a confirmation watch — see below) also ends
+the moment OpenF1 has the session and the stewards' check is clear
+(:func:`choose_source`), reported as ``published=fast``: update.yml runs the
+pipeline immediately (``fetch_openf1.py`` fills the round Jolpica hasn't
+published yet) instead of waiting out Jolpica's own publish lag. Once that round
+is recorded in ``data/unconfirmed.json``, this module waits for a
+``confirm-race``/``confirm-qualifying`` target instead (:func:`wait_target`) —
+that watch accepts Jolpica only; OpenF1 can never end it, since it exists to wait
+for Jolpica to confirm what OpenF1 already wrote. Setting ``JOLPICA_ONLY=true``
+(update.yml does, when an earlier fast PR is still unmerged after the in-flight
+wait) disables OpenF1 for the run entirely — loop protection, since this
+checkout may not have that PR's result yet.
+
+So ``published`` takes one of four values: ``true`` (Jolpica has the round),
+``fast`` (OpenF1 has it and the stewards are clear), ``false`` (the budget ran
+out) or ``none`` (nothing was pending to wait for).
 """
 
 from __future__ import annotations
@@ -44,7 +63,6 @@ from pathlib import Path
 import requests
 
 from check_update_due import is_update_due, latest_armed_round, next_quali_target, read_unconfirmed
-from fetch import fetch_openf1
 from fetch.api_cache import fresh
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
@@ -185,6 +203,10 @@ def _openf1_ready(kind: str, schedule: dict, season: int, rnd: int) -> bool:
     if race is None:
         return False
     try:
+        # Imported lazily, inside this try: an import-time error in the fast-lane
+        # modules must never take down the whole watcher, Jolpica path included.
+        from fetch import fetch_openf1
+
         current = json.loads((DATA_DIR / "current_drivers.json").read_text(encoding="utf-8"))
         build = fetch_openf1.build_race if kind == "race" else fetch_openf1.build_qualifying
         return build(race, str(season), current.get("drivers", []), datetime.now(UTC)) is not None

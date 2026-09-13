@@ -336,3 +336,30 @@ def test_an_open_data_pr_makes_the_watch_jolpica_only():
 
     assert choose_source("race", 12, 13, openf1_ready, jolpica_only=True) is None
     assert asked == []
+
+
+def test_wait_target_skips_a_malformed_unconfirmed_entry():
+    """A row missing 'kind' can't build a confirmation target; the next valid row does."""
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    malformed = {"season": "2026", "round": "13", "pending": ["race_results"]}  # no "kind"
+    assert wait_target(
+        SCHEDULE, podigami, at("2026-09-06 16:00"), [malformed, *UNCONFIRMED_13]
+    ) == ("confirm-race", 2026, 13)
+
+
+def test_wait_target_confirms_a_pending_qualifying_round():
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    unconfirmed = [
+        {
+            "season": "2026",
+            "round": "13",
+            "kind": "qualifying",
+            "pending": ["qualifying"],
+            "since": "2026-09-05T16:00:00+00:00",
+        }
+    ]
+    assert wait_target(SCHEDULE, podigami, at("2026-09-06 16:00"), unconfirmed) == (
+        "confirm-qualifying",
+        2026,
+        13,
+    )
