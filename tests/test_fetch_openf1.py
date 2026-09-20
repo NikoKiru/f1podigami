@@ -135,6 +135,51 @@ def test_an_unknown_car_writes_nothing():
     assert build_race(RACES["13"], "2026", current, NOW, FakeClient(OPENF1)) is None
 
 
+class NoResultClient(FakeClient):
+    """The session exists but its classification does not yet — at the 2026 Spanish
+    GP session_result was still a 404 at 15:40Z, 2h40 after the start."""
+
+    def session_result(self, key):
+        return None
+
+
+def test_a_session_without_a_classification_writes_nothing():
+    client = NoResultClient(OPENF1)
+    assert build_race(RACES["13"], "2026", CURRENT, NOW, client) is None
+    assert build_qualifying(RACES["13"], "2026", CURRENT, NOW, client) is None
+
+
+class TrimmedClient(FakeClient):
+    """Replays only the first ``keep`` classified cars of each session result."""
+
+    def __init__(self, data, keep):
+        super().__init__(data)
+        self.keep = keep
+
+    def session_result(self, key):
+        rows = self.data["session_result"].get(str(key))
+        if rows is None:
+            return None
+        classified = sorted(
+            (r for r in rows if isinstance(r.get("position"), int)), key=lambda r: r["position"]
+        )
+        return classified[: self.keep]
+
+
+def test_a_race_without_a_full_podium_writes_nothing(monkeypatch, capsys):
+    """The podium rule that sits behind the stewards' check: with the gate cleared and
+    only two classified cars there is no trio to publish."""
+    import fetch.fetch_openf1 as fetcher
+
+    monkeypatch.setattr(fetcher, "hold_reasons", lambda rows, messages: [])
+    assert build_race(RACES["13"], "2026", CURRENT, NOW, TrimmedClient(OPENF1, 2)) is None
+    assert "no complete podium" in capsys.readouterr().out
+
+
+def test_qualifying_with_fewer_than_three_cars_writes_nothing():
+    assert build_qualifying(RACES["13"], "2026", CURRENT, NOW, TrimmedClient(OPENF1, 2)) is None
+
+
 def _datasets(drop_race=None, drop_quali=None):
     def keep(rows, rnd):
         return [dict(r) for r in rows if r["round"] != rnd]
@@ -232,6 +277,80 @@ def test_main_leaves_the_round_to_jolpica_while_a_data_pr_is_open(monkeypatch):
     monkeypatch.setattr(fetcher, "fill", must_not_run)
     monkeypatch.setattr(fetcher, "load_schedule", must_not_run)
     assert fetcher.main([]) == 0
+
+
+# --- main: validate every payload before writing any -----------------------------
+
+
+def _data_dir(tmp_path, monkeypatch):
+    """A tmp data/ with the datasets main() reads, saved canonically; returns it and
+    a snapshot of its bytes. The schedule is a minimal valid one: fill is replaced."""
+    from datalib import repository
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    monkeypatch.setattr(repository, "DATA_DIR", data_dir)
+    monkeypatch.delenv("JOLPICA_ONLY", raising=False)
+    repository.save_schedule({"season": "2026", "totalRounds": 0, "races": []})
+    repository.save_current_drivers(JOLPICA["current_drivers"])
+    repository.save_podiums(JOLPICA["podiums"])
+    repository.save_race_results(JOLPICA["race_results"])
+    repository.save_qualifying(JOLPICA["qualifying"])
+    repository.save_unconfirmed([])
+    return data_dir, _snapshot(data_dir)
+
+
+def _snapshot(data_dir):
+    return {p.name: p.read_bytes() for p in sorted(data_dir.iterdir())}
+
+
+def test_main_writes_nothing_when_a_filled_payload_is_invalid(tmp_path, monkeypatch, capsys):
+    """A valid podium with an invalid race row must not reach disk: saving podiums.json
+    and then failing on race_results.json would leave the datasets disagreeing."""
+    import fetch.fetch_openf1 as fetcher
+
+    data_dir, before = _data_dir(tmp_path, monkeypatch)
+    out = tmp_path / "github_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    def fill_with_an_invalid_race_row(
+        schedule, current, podiums, race_results, qualifying, unconfirmed, now
+    ):
+        podiums.append({**jolpica("podiums", "13"), "round": "14"})
+        race_results.append({"season": "2026", "round": "14"})  # no race header or rows
+        unconfirmed.append(
+            {
+                "season": "2026",
+                "round": "14",
+                "kind": "race",
+                "pending": ["podiums", "race_results"],
+                "since": "2026-09-13T15:00:00+00:00",
+            }
+        )
+        return {"race"}
+
+    monkeypatch.setattr(fetcher, "fill", fill_with_an_invalid_race_row)
+    assert fetcher.main([]) == 0
+    assert _snapshot(data_dir) == before
+    assert not out.exists()  # no filled= output, so no confirmation hand-over
+    assert "failed validation" in capsys.readouterr().out
+
+
+def test_main_writes_nothing_when_the_fill_raises(tmp_path, monkeypatch, capsys):
+    import fetch.fetch_openf1 as fetcher
+
+    data_dir, before = _data_dir(tmp_path, monkeypatch)
+    out = tmp_path / "github_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    def broken_fill(*args):
+        raise RuntimeError("an OpenF1 surprise")
+
+    monkeypatch.setattr(fetcher, "fill", broken_fill)
+    assert fetcher.main([]) == 0
+    assert _snapshot(data_dir) == before
+    assert not out.exists()
+    assert "leaving the round to Jolpica" in capsys.readouterr().out
 
 
 # --- report_filled: the confirmation hand-over's loop-safety signal ---------------

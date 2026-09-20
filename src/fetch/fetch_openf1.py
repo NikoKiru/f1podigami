@@ -31,6 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from check_update_due import session_start  # noqa: E402
 from datalib import (  # noqa: E402
+    REGISTRY,
     load_current_drivers,
     load_podiums,
     load_qualifying,
@@ -377,6 +378,24 @@ def fill(
     return written
 
 
+def _to_write(
+    written: set[str],
+    podiums: list[dict],
+    race_results: list[dict],
+    qualifying: list[dict],
+    unconfirmed: list[dict],
+) -> list[tuple[str, list[dict]]]:
+    """``(dataset, payload)`` for every file this run would save, in save order."""
+    pairs: list[tuple[str, list[dict]]] = []
+    if "race" in written:
+        pairs += [("podiums.json", podiums), ("race_results.json", race_results)]
+    if "qualifying" in written:
+        pairs.append(("qualifying.json", qualifying))
+    if written:
+        pairs.append(("unconfirmed.json", unconfirmed))
+    return pairs
+
+
 def report_filled(written: set[str]) -> None:
     """Tell update.yml which kinds this run wrote ("race", "qualifying"), if any.
 
@@ -418,6 +437,20 @@ def main(argv: list[str] | None = None) -> int:
         print("OpenF1 fast lane failed; leaving the round to Jolpica.")
         return 0
 
+    # Validate every payload before writing any of them. Saving podiums.json and then
+    # failing on race_results.json would leave the two disagreeing about the round,
+    # and the uncaught error would abort update.py before the rest of the pipeline.
+    for name, payload in _to_write(written, podiums, race_results, qualifying, unconfirmed):
+        try:
+            REGISTRY[name].validate_python(payload)
+        except Exception:  # noqa: BLE001 - any doubt about the payload writes nothing
+            traceback.print_exc()
+            print(f"OpenF1 fast lane: {name} failed validation; leaving the round to Jolpica.")
+            return 0
+
+    # The saves stay outside the guard on purpose: every payload has validated, so a
+    # failure here is an I/O error. Swallowing it once podiums.json is written would
+    # publish skewed data silently, while a crash makes the run red and loud.
     if "race" in written:
         save_podiums(podiums)
         save_race_results(race_results)
