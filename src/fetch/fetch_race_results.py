@@ -26,6 +26,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from datalib import save_race_results  # noqa: E402
 from fetch.api_cache import fresh  # noqa: E402
+from fetch.unconfirmed import confirm_on_disk  # noqa: E402
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 PAGE_SIZE = 100
@@ -178,6 +179,8 @@ def main(argv: list[str] | None = None) -> int:
 
     combined = merge_entries(existing, fetched)
     save_race_results(combined)
+
+    confirm_on_disk("race_results", {(r["season"], r["round"]) for r in fetched if r["results"]})
 
     n_rows = sum(len(r["results"]) for r in combined)
     seasons_out = sorted({int(r["season"]) for r in combined})

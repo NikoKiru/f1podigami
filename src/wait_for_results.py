@@ -1,53 +1,80 @@
-"""Hold the update run until the finished race actually appears upstream.
+"""Hold the update run until the pending session actually appears upstream.
 
 Why this exists
 ---------------
-``update.yml`` polls on a 15-min cron, but GitHub delivers only a fraction of
-scheduled slots — observed ~13 of 76 on a race Sunday, with multi-hour overnight
-gaps. So the retry cadence is really ~1/hour, and a run that fetches *before* the
-API has published the race costs a full hour before the next attempt. That is
-exactly what happened at the 2026 Belgian GP: the run fetched at 15:32Z, Jolpica
-had nothing for round 10 yet, and the site did not go live until 16:25Z — ~100
-minutes after the flag.
+``update.yml`` polls on a 15-min cron, but GitHub delivers only a handful of
+scheduled slots a day (~6-7 of 96 since 2026-08-27, at unpredictable times), so a
+run that fetched *before* the API had published a session previously had to wait
+for the next surviving cron slot — about an hour at the 2026 Italian GP, on top
+of Jolpica's own ~5h45 publish lag. This module now watches both sources: the
+fast lane ends the watch early when OpenF1 has the round and the stewards are
+clear (``choose_source``), and Jolpica always wins when it has it.
 
 Rather than fight the cron (denser schedules are throttled the same way), the
-update job holds its runner and polls the API itself until the round shows up,
-then runs the pipeline exactly once. Cron then only has to land *one* slot in a
-multi-hour window, which it reliably does.
+guard arms 3h before each race and qualifying session
+(``check_update_due.ARM_BEFORE``) and the update job holds its runner here,
+polling the API itself until the pending round shows up, then runs the pipeline
+exactly once. If the budget runs out first it reports ``published=false`` and
+update.yml hands the run over to a successor immediately, skipping the
+pipeline, so a later link in the chain (or the next scheduled run, once the
+chain's window elapses) runs it instead — the watch never lapses between
+scheduled slots, and two pipelines never race Jolpica's hourly rate limit
+minutes apart. A run whose watcher finds nothing pending at all reports
+``published=none`` and also skips the pipeline.
 
-We poll ``/{season}/last/results.json`` — an aggregate feed. The round-indexed
-``/{season}/{round}/results.json`` endpoint can sit empty for hours after a race
-while the aggregates already carry the round (see CLAUDE.md, issue #178), so
-keying off it would defeat the whole point.
+We poll aggregate feeds — ``/{season}/last/results.json`` for a race, the last
+row of ``/{season}/qualifying.json`` for qualifying. The round-indexed endpoints
+can sit empty for hours while the aggregates already carry the round (#178).
 
-Timing out is not an error: the pipeline runs anyway (idempotent — a no-op run
-just makes no data change), and the guard re-fires on the next tick.
+Timing out is not an error: the successor chain (or the next scheduled run)
+covers it. Only once the successor window has already elapsed does this run's
+own pipeline run anyway (idempotent), as a last-resort fallback.
+
+The OpenF1 fast lane
+--------------------
+A race or qualifying watch (never a confirmation watch — see below) also ends
+the moment OpenF1 has the session and the stewards' check is clear
+(:func:`choose_source`), reported as ``published=fast``: update.yml runs the
+pipeline immediately (``fetch_openf1.py`` fills the round Jolpica hasn't
+published yet) instead of waiting out Jolpica's own publish lag. Once that round
+is recorded in ``data/unconfirmed.json``, this module waits for a
+``confirm-race``/``confirm-qualifying`` target instead (:func:`wait_target`) —
+that watch accepts Jolpica only; OpenF1 can never end it, since it exists to wait
+for Jolpica to confirm what OpenF1 already wrote. Setting ``JOLPICA_ONLY=true``
+(update.yml does, when an earlier fast PR is still unmerged after the in-flight
+wait) disables OpenF1 for the run entirely — loop protection, since this
+checkout may not have that PR's result yet.
+
+So ``published`` takes one of four values: ``true`` (Jolpica has the round),
+``fast`` (OpenF1 has it and the stewards are clear), ``false`` (the budget ran
+out) or ``none`` (nothing was pending to wait for).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
 
-from check_update_due import latest_finished_round
+from check_update_due import is_update_due, latest_armed_round, next_quali_target, read_unconfirmed
 from fetch.api_cache import fresh
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
-# Poll every 3 min for up to 2h. The interval is well inside the API's rate
-# limits and still tight enough that publication is noticed promptly; the budget
-# comfortably covers the observed publish lag while staying far under the 6h
-# GitHub job limit.
+# Poll every 3 min for up to 5h. The interval is well inside the API's rate
+# limits; the budget lets a run that armed 3h before a race cover the race and
+# the usual publish lag, and fits update.yml's 345-min job timeout together with
+# the in-flight-PR wait (<=15 min) and the pipeline (~20 min).
 POLL_INTERVAL_S = 180
-POLL_TIMEOUT_S = 2 * 60 * 60
+POLL_TIMEOUT_S = 5 * 60 * 60
 
 
 def latest_published_round(payload: object) -> int | None:
@@ -63,6 +90,29 @@ def latest_published_round(payload: object) -> int | None:
         return None
 
 
+def wait_until(
+    ready: Callable[[], str | None],
+    *,
+    timeout_s: float = POLL_TIMEOUT_S,
+    interval_s: float = POLL_INTERVAL_S,
+    sleep: Callable[[float], None] = time.sleep,
+    now: Callable[[], float] = time.monotonic,
+) -> str | None:
+    """Poll ``ready`` until it names a source, or None once the budget runs out.
+
+    Never sleeps when the data is already there, and stops before a sleep that
+    would overrun ``timeout_s`` rather than spinning past it.
+    """
+    deadline = now() + timeout_s
+    while True:
+        source = ready()
+        if source is not None:
+            return source
+        if now() + interval_s > deadline:
+            return None
+        sleep(interval_s)
+
+
 def wait_for_round(
     target: int,
     fetch: Callable[[], object | None],
@@ -72,36 +122,136 @@ def wait_for_round(
     sleep: Callable[[float], None] = time.sleep,
     now: Callable[[], float] = time.monotonic,
 ) -> bool:
-    """Poll ``fetch`` until the feed reports round >= ``target``.
+    """Poll ``fetch`` until the feed reports round >= ``target``."""
 
-    Returns True as soon as the round is published, False if the budget runs out.
-    Never sleeps when the data is already there, and stops before a sleep that
-    would overrun ``timeout_s`` rather than spinning past it.
-    """
-    deadline = now() + timeout_s
-    while True:
+    def ready() -> str | None:
         published = latest_published_round(fetch())
-        if published is not None and published >= target:
-            return True
-        if now() + interval_s > deadline:
-            return False
-        sleep(interval_s)
+        return "published" if published is not None and published >= target else None
+
+    return (
+        wait_until(ready, timeout_s=timeout_s, interval_s=interval_s, sleep=sleep, now=now)
+        is not None
+    )
 
 
-def _fetch_last_results(season: int) -> object | None:
-    """One request for the season's most recent classified race; None on failure.
+def _get_json(url: str, params: dict | None = None) -> object | None:
+    """One cache-busted GET; None on any failure (the poll just tries again).
 
-    Cache-busted: the API caches this feed per request-variant with a long TTL,
+    Cache-busted: the API caches each feed per request-variant with a long TTL,
     so an un-nonced poll re-reads the same stale body every interval and waits
-    out the entire budget on a race that is already published.
+    out the entire budget on a session that is already published (#239).
     """
     try:
-        resp = requests.get(f"{API_ROOT}/{season}/last/results.json", params=fresh(), timeout=30)
+        resp = requests.get(url, params=fresh(params), timeout=30)
         resp.raise_for_status()
         return resp.json()
     except (requests.RequestException, ValueError) as exc:
         print(f"  fetch failed ({exc}); will retry")
         return None
+
+
+def _fetch_last_results(season: int) -> object | None:
+    """The season's most recent classified race; None on failure."""
+    return _get_json(f"{API_ROOT}/{season}/last/results.json")
+
+
+def _fetch_last_qualifying(season: int) -> object | None:
+    """The season's newest qualifying row (one ``Races`` entry); None on failure.
+
+    Reads the aggregate feed's row count, then only its final row: two requests
+    per poll instead of paging the whole season.
+    """
+    url = f"{API_ROOT}/{season}/qualifying.json"
+    head = _get_json(url, {"limit": 1})
+    try:
+        total = int(head["MRData"]["total"])  # type: ignore[index]
+    except (KeyError, TypeError, ValueError):
+        return None
+    if total < 1:
+        return head  # no rows yet: latest_published_round reads None
+    return _get_json(url, {"limit": 1, "offset": total - 1})
+
+
+def wait_target(
+    schedule: dict, podigami: dict, now: datetime, unconfirmed: Sequence[dict] = ()
+) -> tuple[str, int, int] | None:
+    """What this run should wait for — ``(kind, season, round)`` — or None.
+
+    A race newer than ``asOf`` whose window is open comes first (the guard's own
+    rule, so the two can't disagree); otherwise the next race's qualifying, if its
+    window is open and ``postQuali`` doesn't cover it yet; otherwise the oldest
+    round OpenF1 filled that Jolpica hasn't confirmed yet. Nothing pending means
+    return at once, holding no runner.
+    """
+    asof = podigami.get("asOf") or {}
+    if is_update_due(schedule, asof, now):
+        season, rnd = latest_armed_round(schedule, now)  # not None when due
+        return ("race", season, rnd)
+    quali = next_quali_target(schedule, asof, podigami.get("postQuali"), now)
+    if quali is not None:
+        return ("qualifying", quali[0], quali[1])
+    for e in unconfirmed:
+        try:
+            return (f"confirm-{e['kind']}", int(e["season"]), int(e["round"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return None
+
+
+def _openf1_ready(kind: str, schedule: dict, season: int, rnd: int) -> bool:
+    """Would fetch_openf1 write this session right now?"""
+    race = next((r for r in schedule.get("races", []) if str(r.get("round")) == str(rnd)), None)
+    if race is None:
+        return False
+    try:
+        # Imported lazily, inside this try: an import-time error in the fast-lane
+        # modules must never take down the whole watcher, Jolpica path included.
+        from fetch import fetch_openf1
+
+        current = json.loads((DATA_DIR / "current_drivers.json").read_text(encoding="utf-8"))
+        build = fetch_openf1.build_race if kind == "race" else fetch_openf1.build_qualifying
+        return build(race, str(season), current.get("drivers", []), datetime.now(UTC)) is not None
+    except Exception as exc:  # noqa: BLE001 - an OpenF1 surprise must never break the watch
+        # Logged, not swallowed: the watch carries on waiting for Jolpica.
+        print(f"  OpenF1 readiness check failed ({exc!r}); treating it as not ready")
+        return False
+
+
+def choose_source(
+    kind: str,
+    published_round: int | None,
+    rnd: int,
+    openf1_ready: Callable[[], bool],
+    *,
+    jolpica_only: bool,
+) -> str | None:
+    """Which source, if any, ends this watch: "jolpica", "openf1" or None.
+
+    Jolpica always wins. OpenF1 ends only a watch for a pending race or
+    qualifying session — never a confirmation watch, which exists to wait for
+    Jolpica — and never when ``jolpica_only`` is set. update.yml sets that when an
+    earlier data PR is still unmerged after the in-flight wait: this checkout may
+    then lack that fast result, and a second fast pipeline would re-push the same
+    rows and restart the PR's checks, over and over. ``openf1_ready`` is called
+    only when OpenF1 could actually end the watch (it makes network requests).
+    """
+    if published_round is not None and published_round >= rnd:
+        return "jolpica"
+    if kind in ("race", "qualifying") and not jolpica_only and openf1_ready():
+        return "openf1"
+    return None
+
+
+def report(published: str) -> None:
+    """Tell update.yml what happened: "true" if the round was seen upstream,
+    "false" if the watch timed out, "none" if nothing was pending to wait for, or
+    "fast" if OpenF1 has the session and the stewards are clear — update.yml runs
+    the pipeline and then hands over to a confirmation run. Only "false" lets
+    update.yml hand over to a successor run."""
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a", encoding="utf-8") as fh:
+            fh.write(f"published={published}\n")
 
 
 def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit tests
@@ -112,34 +262,42 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
 
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
-    asof = podigami.get("asOf", {})
+    unconfirmed = read_unconfirmed(DATA_DIR)
+    jolpica_only = os.environ.get("JOLPICA_ONLY") == "true"
 
-    target = latest_finished_round(schedule, datetime.now(UTC))
+    target = wait_target(schedule, podigami, datetime.now(UTC), unconfirmed)
     if target is None:
-        print("No finished race this season yet; nothing to wait for.")
+        print("Nothing pending upstream; nothing to wait for.")
+        report("none")
         return 0
 
-    season, rnd = target
-    try:
-        have = (int(asof["season"]), int(asof["round"]))
-    except (KeyError, ValueError, TypeError):
-        have = (-1, -1)
-    if target <= have:
-        # Only the post-qualifying trigger fired; there is no race to wait for.
-        print(f"Data already covers {season} round {rnd}; nothing to wait for.")
-        return 0
+    kind, season, rnd = target
+    races_feed = kind in ("race", "confirm-race")
+    if jolpica_only:
+        print("An earlier data PR is still open: waiting on Jolpica only.")
 
-    print(f"Waiting for {season} round {rnd} to appear upstream...")
-    if wait_for_round(
-        rnd,
-        lambda: _fetch_last_results(season),
-        timeout_s=args.timeout,
-        interval_s=args.interval,
-    ):
-        print(f"Round {rnd} is published; running the pipeline.")
+    def ready() -> str | None:
+        feed = _fetch_last_results(season) if races_feed else _fetch_last_qualifying(season)
+        return choose_source(
+            kind,
+            latest_published_round(feed),
+            rnd,
+            lambda: _openf1_ready(kind, schedule, season, rnd),
+            jolpica_only=jolpica_only,
+        )
+
+    print(f"Waiting for {season} round {rnd} ({kind}) upstream...")
+    source = wait_until(ready, timeout_s=args.timeout, interval_s=args.interval)
+    stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ")
+    if source == "jolpica":
+        print(f"Jolpica has round {rnd} ({kind}) at {stamp}; running the pipeline.")
+        report("true")
+    elif source == "openf1":
+        print(f"OpenF1 has round {rnd} ({kind}), stewards clear, at {stamp}; fast lane.")
+        report("fast")  # update.yml runs the pipeline, then hands over for confirmation
     else:
-        # Not a failure: the pipeline is idempotent and the guard re-fires.
-        print(f"Round {rnd} still unpublished after the budget; running anyway.")
+        print(f"Round {rnd} ({kind}) still unpublished after the budget.")
+        report("false")
     return 0
 
 

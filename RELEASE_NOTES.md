@@ -1,8 +1,22 @@
 # Release Notes
 
+## 2026-09-20
+
+### Fixes
+- Test hygiene: the watcher's poll test no longer does its polling inside an `assert`, so it still tests something when Python runs with `-O` (#330)
+
+## 2026-09-13
+
+### Features
+- **Race results can now reach the site well before Jolpica publishes them.** The newest race and qualifying session are checked first against OpenF1: at the one race measured so far, the 2026 Spanish GP, the fast lane had the result about three hours after the start, and Jolpica published the identical classification nearly four hours after that. OpenF1's rows are written in exactly Jolpica's format, so when Jolpica does publish, nothing changes for a normal race. The fast lane holds back whenever the stewards could still change the podium trio — an open investigation or an unserved penalty, about one race in five — and those races keep following the old Jolpica-only timing. A result Jolpica later changes (a post-race disqualification, for instance) is corrected automatically and raises the existing podium-revision alert (#321, #327)
+
+### Improvements
+- **Race and qualifying results should now reach the site without waiting for GitHub's next scheduled run.** Since late August GitHub has started only ~6–7 of the refresh workflow's 96 scheduled runs a day, at unpredictable times — at the 2026 Italian GP that cost about an hour waiting for a surviving cron slot, on top of Jolpica's own ~5h45 publish lag that this change doesn't touch (that gap is what the OpenF1 fast lane, next up, targets). The refresh now arms 3 hours *before* each race and qualifying session and polls for up to 5 hours once it lands, so a run is usually already waiting when the data lands (93% of races / 91% of qualifying sessions, measured against OpenF1's faster publish time; against Jolpica's own, later publish the hand-over below keeps a watch alive, so coverage is at least as high). If the results still aren't out when the budget runs out, it hands over to a successor run instead of running the pipeline itself, for up to 12 hours after the session (#323)
+
 ## 2026-09-10
 
 ### Improvements
+- **A data update that changes a podium the site already published now raises an alert.** Jolpica can edit a settled race after the fact: the 2026 Monaco GP's third place went Hadjar → Gasly → Hadjar in its data, and both edits merged in routine automated updates, so for 82 days the site listed Antonelli / Hamilton / Gasly as a new trio that never officially happened. Each automated refresh now compares every published podium with the new data; a change retitles the data PR, labels it `podium-revised` and opens an issue showing the before/after trio and both verdicts. The update still merges on its own (#321)
 - **On phones a podium trio now lists its three drivers one per line, with a hairline between them**, on the combinations table, the Overdue and Unlikeliest leaderboards, and the landing page's "New podiums through the years" timeline. Laid out inline, a trio that ran out of room broke wherever a space fell, so a name could split across two lines (`K. Antonelli / L. Hamilton / M.` above `Verstappen`). Each name is now one unbreakable unit. The hairlines inside a trio are faint and the rule between trios uses the stronger border, so each trio reads as its own block rather than blurring into the next three names. Wider screens keep the inline `A / B / C` form, which now wraps only after a `/`, never before one. The combinations table's shared-car badge stays beside the last name (#319)
 - The landing page's tagline now reads **"Keeping track of every F1 podium trio ever and predicting the next one."** — it says what the site does in plain terms, where the previous line ("Spotting the podium trio F1 has never seen — and predicting who's about to make it happen") asked the reader to work out the scorigami premise before the first data on the page (#315)
 - **Andrea Kimi Antonelli is now Kimi Antonelli across the site**, the name F1 and Mercedes use for him: in the hero, the trio board's tooltips, the timeline, the combinations table (where `K. Antonelli` is the narrow-screen form and searching "kimi antonelli" finds him), and on the other pages as well. The Jolpica API still lists his full given names and the committed data keeps them. The pages swap in the billed name when they render, so the automated data refreshes are unaffected (#317)

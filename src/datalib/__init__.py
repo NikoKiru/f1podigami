@@ -25,6 +25,7 @@ from .repository import (
     load_retirements,
     load_schedule,
     load_soulmates,
+    load_unconfirmed,
     load_unlikeliest,
     save_combos,
     save_constructor_standings,
@@ -41,6 +42,7 @@ from .repository import (
     save_retirements,
     save_schedule,
     save_soulmates,
+    save_unconfirmed,
     save_unlikeliest,
 )
 from .schemas import (
@@ -87,6 +89,7 @@ from .schemas import (
     SoulmatePair,
     Soulmates,
     TrioBoardEntry,
+    UnconfirmedRound,
     Unlikeliest,
     UnlikeliestParams,
     UnlikeliestPerDriver,
@@ -128,8 +131,10 @@ __all__ = [
     "save_qualifying",
     "load_grid_penalties",
     "load_retirements",
+    "load_unconfirmed",
     "save_grid_penalties",
     "save_retirements",
+    "save_unconfirmed",
     # schemas
     "RaceRef",
     "RaceLink",
@@ -178,4 +183,5 @@ __all__ = [
     "GridPenalty",
     "GridPenaltyRace",
     "RetirementRace",
+    "UnconfirmedRound",
 ]

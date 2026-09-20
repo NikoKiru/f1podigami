@@ -8,6 +8,8 @@ of silently passing through.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, model_serializer, model_validator
 
 
@@ -566,3 +568,23 @@ class RetirementRace(_Base):
     season: str
     round: str
     driverIds: list[str]
+
+
+# --- unconfirmed.json ---------------------------------------------------------
+
+
+class UnconfirmedRound(_Base):
+    """A round whose rows came from OpenF1 and still await Jolpica, per dataset.
+
+    Written by ``fetch/fetch_openf1.py`` when it fills the newest round ahead of
+    Jolpica. Each Jolpica fetcher removes its dataset from ``pending`` once the
+    API returns that round, and the entry disappears when nothing is pending.
+    ``since`` is OpenF1's scheduled session end — deterministic, so rewriting the
+    file never churns it. The update guard stays armed while any entry exists.
+    """
+
+    season: str
+    round: str
+    kind: Literal["race", "qualifying"]
+    pending: list[Literal["podiums", "race_results", "qualifying"]]
+    since: str

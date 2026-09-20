@@ -88,6 +88,51 @@ def test_mutable_season_podiums_bypass_the_response_cache(monkeypatch):
     assert calls and not any(CACHE_BUSTER in p for p in calls)
 
 
+# --- podium fetcher: confirming rounds OpenF1 filled ---------------------------
+
+
+def test_podiums_confirm_only_rounds_whose_three_steps_arrived(tmp_path, monkeypatch):
+    """A round OpenF1 filled counts as confirmed once the API returned P1, P2 and P3.
+    The three position feeds lag one another, so a partial answer leaves it pending."""
+    from datalib import repository
+    from fetch import fetch_podiums as fp
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(fp, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(fp, "OUT_PATH", tmp_path / "podiums.json")
+    monkeypatch.setattr(fp.time, "sleep", lambda *_: None)
+
+    def race(rnd, position):
+        driver = {"driverId": f"d{position}", "givenName": "A", "familyName": f"B{position}"}
+        return {
+            "season": "2026",
+            "round": rnd,
+            "raceName": f"Grand Prix {rnd}",
+            "Results": [{"Driver": driver}],
+        }
+
+    def fake_fetch(position, season=None, *, fresh_data=False):
+        # Round 14 comes back complete; round 15 has only its winner so far.
+        extra = [race("15", position)] if position == 1 else []
+        return [race("14", position), *extra]
+
+    monkeypatch.setattr(fp, "fetch_all_for_position", fake_fetch)
+    pending = {
+        "kind": "race",
+        "pending": ["podiums", "race_results"],
+        "since": "2026-09-13T15:00:00+00:00",
+    }
+    repository.save_unconfirmed(
+        [{"season": "2026", "round": "14", **pending}, {"season": "2026", "round": "15", **pending}]
+    )
+
+    assert fp.main(["--full"]) == 0
+    assert [(u.round, u.pending) for u in repository.load_unconfirmed()] == [
+        ("14", ["race_results"]),
+        ("15", ["podiums", "race_results"]),
+    ]
+
+
 def test_current_drivers_request_bypasses_the_response_cache(monkeypatch):
     """The grid feeds the prediction hero; a cached round would silently drop a
     mid-season seat change."""
