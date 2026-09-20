@@ -6,8 +6,9 @@ Why this exists
 scheduled slots a day (~6-7 of 96 since 2026-08-27, at unpredictable times), so a
 run that fetched *before* the API had published a session previously had to wait
 for the next surviving cron slot — about an hour at the 2026 Italian GP, on top
-of Jolpica's own ~5h45 publish lag that this module does not touch (that gap is
-the OpenF1 fast lane's target, not this one's).
+of Jolpica's own ~5h45 publish lag. This module now watches both sources: the
+fast lane ends the watch early when OpenF1 has the round and the stewards are
+clear (``choose_source``), and Jolpica always wins when it has it.
 
 Rather than fight the cron (denser schedules are throttled the same way), the
 guard arms 3h before each race and qualifying session

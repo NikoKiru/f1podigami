@@ -45,9 +45,11 @@ from pathlib import Path
 # waiting when the data lands in 93% of races and 91% of qualifying sessions
 # (55% for the old arm-after-the-flag / 2h budget) — measured against OpenF1's
 # publish time (docs/superpowers/specs/2026-09-10-openf1-fast-lane-design.md
-# section 4), which this watcher does not poll. Against Jolpica's later, more
-# variable publish, the successor hand-over keeps a watch alive across the
-# gap, so coverage is at least as high. Early costs only idle runner time: the
+# section 4), assuming OpenF1 has the result ~40 min after the flag. At the 2026
+# Spanish GP it came later than that, so a run armed right at the start of the
+# window can time out before either source has the round. Against Jolpica's
+# later, more variable publish too, the successor hand-over keeps a watch alive
+# across the gap, so coverage is at least as high. Early costs only idle runner time: the
 # watcher acts on nothing until the round is published.
 ARM_BEFORE = timedelta(hours=3)
 
