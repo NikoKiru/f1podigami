@@ -138,6 +138,56 @@ def test_mutable_season_pages_bypass_the_response_cache(monkeypatch):
     assert calls and all(CACHE_BUSTER in p for p in calls)
 
 
+# --- confirming rounds OpenF1 filled ------------------------------------------
+
+
+def test_only_rounds_that_came_back_with_rows_are_confirmed(tmp_path, monkeypatch):
+    """A round OpenF1 filled stays pending until Jolpica returns actual rows for it."""
+    import json
+
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(frr, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(frr, "OUT_PATH", tmp_path / "race_results.json")
+    monkeypatch.setattr(frr.time, "sleep", lambda *_: None)
+    committed = [
+        {
+            "season": "2026",
+            "round": "13",
+            "raceName": "Italian Grand Prix",
+            "date": "2026-09-06",
+            "circuitId": "monza",
+            "results": [],
+        }
+    ]
+    (tmp_path / "race_results.json").write_text(json.dumps(committed), encoding="utf-8")
+
+    def fake_season(season, *, fresh_data=False):
+        if season != 2026:
+            return []
+        return [
+            dict(_ERGAST_RACE, season="2026", round="14"),
+            dict(_ERGAST_RACE, season="2026", round="15", Results=[]),
+        ]
+
+    monkeypatch.setattr(frr, "fetch_season_races", fake_season)
+    pending = {
+        "kind": "race",
+        "pending": ["podiums", "race_results"],
+        "since": "2026-09-13T15:00:00+00:00",
+    }
+    repository.save_unconfirmed(
+        [{"season": "2026", "round": "14", **pending}, {"season": "2026", "round": "15", **pending}]
+    )
+
+    assert frr.main([]) == 0
+    assert [(u.round, u.pending) for u in repository.load_unconfirmed()] == [
+        ("14", ["podiums"]),
+        ("15", ["podiums", "race_results"]),
+    ]
+
+
 def test_settled_season_pages_stay_cacheable(monkeypatch):
     """1950-2025 is immutable; busting the cache there would make a --full
     rebuild an origin miss on every page for no freshness gain."""

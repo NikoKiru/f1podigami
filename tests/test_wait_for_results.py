@@ -347,6 +347,67 @@ def test_wait_target_skips_a_malformed_unconfirmed_entry():
     ) == ("confirm-race", 2026, 13)
 
 
+# --- _openf1_ready: an OpenF1 surprise must never take the Jolpica watch down ------
+
+
+def _only_drivers_on_disk(tmp_path, monkeypatch):
+    """Point the watcher's DATA_DIR at a tmp current_drivers.json (all it reads)."""
+    import json
+
+    import wait_for_results as wfr
+
+    (tmp_path / "current_drivers.json").write_text(
+        json.dumps({"season": "2026", "drivers": []}), encoding="utf-8"
+    )
+    monkeypatch.setattr(wfr, "DATA_DIR", tmp_path)
+
+
+def test_openf1_readiness_survives_a_broken_import(tmp_path, monkeypatch, capsys):
+    """The fast-lane modules are imported lazily inside the check: an import error
+    there is logged and read as "not ready", never raised into the watch."""
+    import sys
+
+    import fetch
+    import wait_for_results as wfr
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+    monkeypatch.delattr(fetch, "fetch_openf1", raising=False)
+    monkeypatch.setitem(sys.modules, "fetch.fetch_openf1", None)
+
+    assert wfr._openf1_ready("race", SCHEDULE, 2026, 13) is False
+    assert "readiness check failed" in capsys.readouterr().out
+
+
+def test_openf1_readiness_survives_a_failing_build(tmp_path, monkeypatch, capsys):
+    import wait_for_results as wfr
+    from fetch import fetch_openf1
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("an OpenF1 surprise")
+
+    monkeypatch.setattr(fetch_openf1, "build_race", boom)
+    monkeypatch.setattr(fetch_openf1, "build_qualifying", boom)
+
+    assert wfr._openf1_ready("race", SCHEDULE, 2026, 13) is False
+    assert wfr._openf1_ready("qualifying", SCHEDULE, 2026, 13) is False
+    assert "readiness check failed" in capsys.readouterr().out
+
+
+def test_openf1_is_never_ready_for_a_round_outside_the_schedule(tmp_path, monkeypatch):
+    """No scheduled race to build from, so OpenF1 isn't even asked."""
+    import wait_for_results as wfr
+    from fetch import fetch_openf1
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+    asked = []
+    monkeypatch.setattr(fetch_openf1, "build_race", lambda *a, **k: asked.append(1))
+
+    assert wfr._openf1_ready("race", SCHEDULE, 2026, 99) is False
+    assert asked == []
+
+
 def test_wait_target_confirms_a_pending_qualifying_round():
     podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
     unconfirmed = [
