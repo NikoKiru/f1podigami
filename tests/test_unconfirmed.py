@@ -53,6 +53,20 @@ def test_confirm_on_disk_updates_the_file(tmp_path, monkeypatch):
     ]
 
 
+def test_confirm_on_disk_accepts_rounds_as_a_generator(tmp_path, monkeypatch, capsys):
+    """The rounds are used twice, to confirm and then to log, so a one-shot
+    iterable must still update the file and name the round it confirmed."""
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    repository.save_unconfirmed([RACE])
+    confirm_on_disk("race_results", (key for key in [("2026", "14")]))
+    assert [u.model_dump() for u in repository.load_unconfirmed()] == [
+        {**RACE, "pending": ["podiums"]}
+    ]
+    assert "Jolpica confirmed race_results for 2026 R14" in capsys.readouterr().out
+
+
 def test_confirm_on_disk_without_the_file_is_a_no_op(tmp_path, monkeypatch):
     from datalib import repository
 

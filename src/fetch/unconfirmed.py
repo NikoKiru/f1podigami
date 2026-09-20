@@ -32,16 +32,17 @@ def confirm(entries: list[dict], dataset: str, rounds: set[tuple[str, str]]) -> 
 
 def confirm_on_disk(dataset: str, rounds: Iterable[tuple[str, str]]) -> None:
     """Apply :func:`confirm` to data/unconfirmed.json; a no-op when nothing changes."""
+    rounds = set(rounds)  # read twice below, so a one-shot iterable is materialised once
     if not (repository.DATA_DIR / "unconfirmed.json").exists():
         return
     entries = [u.model_dump() for u in repository.load_unconfirmed()]
-    updated = confirm(entries, dataset, set(rounds))
+    updated = confirm(entries, dataset, rounds)
     if updated == entries:
         return
     repository.save_unconfirmed(updated)
     confirmed = sorted(
         f"{e['season']} R{e['round']}"
         for e in entries
-        if dataset in e["pending"] and (e["season"], e["round"]) in set(rounds)
+        if dataset in e["pending"] and (e["season"], e["round"]) in rounds
     )
     print(f"Jolpica confirmed {dataset} for {', '.join(confirmed)}")
