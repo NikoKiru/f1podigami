@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-09-20
+
+### Fixes
+- Test hygiene: the watcher's poll test no longer does its polling inside an `assert`, so it still tests something when Python runs with `-O` (#330)
+
 ## 2026-09-13
 
 ### Features

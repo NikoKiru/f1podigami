@@ -288,12 +288,12 @@ def test_a_pending_session_outranks_a_confirmation():
 def test_wait_until_returns_the_first_ready_source():
     clock = Clock()
     feed = [None, None, "openf1"]
-    assert (
-        wait_until(
-            lambda: feed.pop(0), timeout_s=3600, interval_s=180, sleep=clock.sleep, now=clock
-        )
-        == "openf1"
+    # Polling outside the assert: under `python -O` asserts are stripped, and a call
+    # with side effects inside one would make this test do nothing at all.
+    source = wait_until(
+        lambda: feed.pop(0), timeout_s=3600, interval_s=180, sleep=clock.sleep, now=clock
     )
+    assert source == "openf1"
     assert clock.slept == [180, 180]
 
 
