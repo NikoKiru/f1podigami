@@ -253,3 +253,174 @@ def test_report_tells_the_workflow_whether_the_round_was_seen(tmp_path, monkeypa
     wfr.report("false")
     wfr.report("true")
     assert out.read_text(encoding="utf-8").splitlines() == ["published=false", "published=true"]
+
+
+# --- OpenF1 fast lane: confirmation targets, first-ready source, "fast" ------------
+
+from wait_for_results import choose_source, report, wait_until  # noqa: E402
+
+UNCONFIRMED_13 = [
+    {
+        "season": "2026",
+        "round": "13",
+        "kind": "race",
+        "pending": ["race_results"],
+        "since": "2026-09-06T15:00:00+00:00",
+    }
+]
+
+
+def test_wait_target_waits_for_jolpica_to_confirm_an_openf1_round():
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    target = wait_target(SCHEDULE, podigami, at("2026-09-06 16:00"), UNCONFIRMED_13)
+    assert target == ("confirm-race", 2026, 13)
+
+
+def test_a_pending_session_outranks_a_confirmation():
+    podigami = {"asOf": {"season": "2026", "round": "12"}, "postQuali": None}
+    assert wait_target(SCHEDULE, podigami, at("2026-09-06 16:00"), UNCONFIRMED_13) == (
+        "race",
+        2026,
+        13,
+    )
+
+
+def test_wait_until_returns_the_first_ready_source():
+    clock = Clock()
+    feed = [None, None, "openf1"]
+    assert (
+        wait_until(
+            lambda: feed.pop(0), timeout_s=3600, interval_s=180, sleep=clock.sleep, now=clock
+        )
+        == "openf1"
+    )
+    assert clock.slept == [180, 180]
+
+
+def test_wait_until_gives_up_with_none():
+    clock = Clock()
+    assert (
+        wait_until(lambda: None, timeout_s=600, interval_s=180, sleep=clock.sleep, now=clock)
+        is None
+    )
+
+
+def test_report_fast(tmp_path, monkeypatch):
+    out = tmp_path / "out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    report("fast")
+    assert out.read_text(encoding="utf-8") == "published=fast\n"
+
+
+def test_jolpica_always_ends_the_watch():
+    assert choose_source("race", 13, 13, lambda: False, jolpica_only=True) == "jolpica"
+    assert choose_source("confirm-race", 14, 13, lambda: False, jolpica_only=False) == "jolpica"
+
+
+def test_openf1_ends_only_a_pending_session_watch():
+    assert choose_source("race", 12, 13, lambda: True, jolpica_only=False) == "openf1"
+    assert choose_source("qualifying", None, 13, lambda: True, jolpica_only=False) == "openf1"
+    assert choose_source("race", 12, 13, lambda: False, jolpica_only=False) is None
+    # A confirmation watch exists to wait for Jolpica; OpenF1 must never end it.
+    assert choose_source("confirm-race", 12, 13, lambda: True, jolpica_only=False) is None
+
+
+def test_an_open_data_pr_makes_the_watch_jolpica_only():
+    """Loop protection: with the earlier fast PR unmerged this checkout may lack that
+    result, so OpenF1 must not trigger a second fast pipeline (it isn't even asked)."""
+    asked = []
+
+    def openf1_ready():
+        asked.append(1)
+        return True
+
+    assert choose_source("race", 12, 13, openf1_ready, jolpica_only=True) is None
+    assert asked == []
+
+
+def test_wait_target_skips_a_malformed_unconfirmed_entry():
+    """A row missing 'kind' can't build a confirmation target; the next valid row does."""
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    malformed = {"season": "2026", "round": "13", "pending": ["race_results"]}  # no "kind"
+    assert wait_target(
+        SCHEDULE, podigami, at("2026-09-06 16:00"), [malformed, *UNCONFIRMED_13]
+    ) == ("confirm-race", 2026, 13)
+
+
+# --- _openf1_ready: an OpenF1 surprise must never take the Jolpica watch down ------
+
+
+def _only_drivers_on_disk(tmp_path, monkeypatch):
+    """Point the watcher's DATA_DIR at a tmp current_drivers.json (all it reads)."""
+    import json
+
+    import wait_for_results as wfr
+
+    (tmp_path / "current_drivers.json").write_text(
+        json.dumps({"season": "2026", "drivers": []}), encoding="utf-8"
+    )
+    monkeypatch.setattr(wfr, "DATA_DIR", tmp_path)
+
+
+def test_openf1_readiness_survives_a_broken_import(tmp_path, monkeypatch, capsys):
+    """The fast-lane modules are imported lazily inside the check: an import error
+    there is logged and read as "not ready", never raised into the watch."""
+    import sys
+
+    import fetch
+    import wait_for_results as wfr
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+    monkeypatch.delattr(fetch, "fetch_openf1", raising=False)
+    monkeypatch.setitem(sys.modules, "fetch.fetch_openf1", None)
+
+    assert wfr._openf1_ready("race", SCHEDULE, 2026, 13) is False
+    assert "readiness check failed" in capsys.readouterr().out
+
+
+def test_openf1_readiness_survives_a_failing_build(tmp_path, monkeypatch, capsys):
+    import wait_for_results as wfr
+    from fetch import fetch_openf1
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("an OpenF1 surprise")
+
+    monkeypatch.setattr(fetch_openf1, "build_race", boom)
+    monkeypatch.setattr(fetch_openf1, "build_qualifying", boom)
+
+    assert wfr._openf1_ready("race", SCHEDULE, 2026, 13) is False
+    assert wfr._openf1_ready("qualifying", SCHEDULE, 2026, 13) is False
+    assert "readiness check failed" in capsys.readouterr().out
+
+
+def test_openf1_is_never_ready_for_a_round_outside_the_schedule(tmp_path, monkeypatch):
+    """No scheduled race to build from, so OpenF1 isn't even asked."""
+    import wait_for_results as wfr
+    from fetch import fetch_openf1
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+    asked = []
+    monkeypatch.setattr(fetch_openf1, "build_race", lambda *a, **k: asked.append(1))
+
+    assert wfr._openf1_ready("race", SCHEDULE, 2026, 99) is False
+    assert asked == []
+
+
+def test_wait_target_confirms_a_pending_qualifying_round():
+    podigami = {"asOf": {"season": "2026", "round": "13"}, "postQuali": None}
+    unconfirmed = [
+        {
+            "season": "2026",
+            "round": "13",
+            "kind": "qualifying",
+            "pending": ["qualifying"],
+            "since": "2026-09-05T16:00:00+00:00",
+        }
+    ]
+    assert wait_target(SCHEDULE, podigami, at("2026-09-06 16:00"), unconfirmed) == (
+        "confirm-qualifying",
+        2026,
+        13,
+    )

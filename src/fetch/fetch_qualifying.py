@@ -23,6 +23,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from datalib import save_qualifying  # noqa: E402
 from fetch.api_cache import fresh  # noqa: E402
+from fetch.unconfirmed import confirm_on_disk  # noqa: E402
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
 PAGE_SIZE = 100
@@ -157,6 +158,8 @@ def main(argv: list[str] | None = None) -> int:
 
     combined = merge_entries(existing, fetched)
     save_qualifying(combined)
+
+    confirm_on_disk("qualifying", {(e["season"], e["round"]) for e in fetched})
 
     n_rows = sum(len(r["results"]) for r in combined)
     seasons_out = sorted({int(r["season"]) for r in combined})

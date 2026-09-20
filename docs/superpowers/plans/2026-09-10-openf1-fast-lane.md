@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Python `>=3.11`; ruff `>=0.15.22,<0.16`, line length 100, rules `E,W,F,I,UP,B,C4` (no lambda assignment; `zip(..., strict=)`). `python -m ruff check .` / `python -m ruff format --check .` must pass.
-- No new dependencies. OpenF1 is `https://api.openf1.org/v1`, no auth, ~3 req/s: sleep 0.4 s between requests.
+- No new dependencies. OpenF1 is `https://api.openf1.org/v1`, no auth. **Its free tier caps a client at 30 requests/minute** (HTTP 429 + `Retry-After: 60` beyond that; probed 2026-09-13). `fetch/openf1.py` spaces request starts ≥ 2.1 s apart, retries a 429 after its Retry-After (clamped to 0–65 s, at most 2 times per request, at most 130 s in total per process) and then fails closed. Never add extra sleeps or a second client; go through it.
 - **Fail closed everywhere:** any OpenF1 error, non-list body, `{"detail": …}`, unmatched or cancelled session, unknown car number, surname mismatch, unknown team name, incomplete podium, or held stewards' check → **write nothing**. An unexpected exception inside the fetcher is caught in `main()` and also writes nothing. The Jolpica path must behave exactly as before.
 - **Jolpica always wins:** OpenF1 only fills a current-season round absent from the datasets it would write (for a race, absent from **both** `podiums.json` and `race_results.json`). It never touches an earlier round.
 - **Values fixed by the spec / verified evidence:**
@@ -391,6 +391,8 @@ Claude-Session: https://claude.ai/code/session_015pzWdc2NQZLoSKCEQGuHsD"
   - `gate_backtest.json.gz`: `[{"label": "2026 Monte Carlo", "result": [...], "messages": [...]}, ...]`
 
 - [ ] **Step 1: Write the client**
+
+> **Superseded during execution (2026-09-13).** The client below spaced requests 0.4 s apart and never retried, and OpenF1 refused 42 of the first recording's ~80 requests: its free tier caps a client at 30 requests/minute. The committed `src/fetch/openf1.py` spaces request starts ≥ 2.1 s apart, retries a 429 after its `Retry-After` (clamped to 0–65 s, at most twice per request, at most 130 s per process), and still fails closed. `tests/test_openf1.py` covers pacing, retry, the budget, the clamp and the error sentinels. The recorder aborts on any failed request and writes deterministic gzip. Treat the committed code, not this block, as the reference.
 
 Create `src/fetch/openf1.py`:
 
@@ -1100,7 +1102,8 @@ def test_nothing_is_written_inside_the_live_window():
 
 
 def test_an_unknown_car_writes_nothing():
-    current = [d for d in CURRENT if d["driverId"] != "hadjar"]
+    # Russell started round 13 (P2); hadjar did not, so removing him proves nothing.
+    current = [d for d in CURRENT if d["driverId"] != "russell"]
     assert build_race(RACES["13"], "2026", current, NOW, FakeClient(OPENF1)) is None
 
 
