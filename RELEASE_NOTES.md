@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-09-22
+
+### Improvements
+- Lint tooling: ruff moves to 0.16.x. Its 0.16 release started formatting Python code blocks inside Markdown, which rewrote 19 historical plans and specs in `docs/` — in one case turning a snippet into code that no longer meant what it was written to mean — so ruff is now configured to skip `*.md` and stay on Python files as before. No source file changed shape (#332)
+
 ## 2026-09-20
 
 ### Fixes
