@@ -4,8 +4,8 @@
   },
   "asOf": {
     "season": "2026",
-    "round": "13",
-    "raceName": "Italian Grand Prix"
+    "round": "14",
+    "raceName": "Spanish Grand Prix"
   },
   "trios": [
     {
@@ -260,7 +260,7 @@
         "Alexander Wurz"
       ],
       "racesTogether": 1,
-      "score": 0.0053,
+      "score": 0.0052,
       "count": 1,
       "happened": {
         "season": "2005",
@@ -271,8 +271,8 @@
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 441,
-          "rate": 0.2404
+          "starts": 442,
+          "rate": 0.2398
         },
         {
           "name": "Michael Schumacher",
@@ -419,7 +419,7 @@
         "Sergio Pérez",
         "Lance Stroll"
       ],
-      "racesTogether": 157,
+      "racesTogether": 158,
       "score": 0.0063,
       "count": 1,
       "happened": {
@@ -431,20 +431,20 @@
         {
           "name": "Esteban Ocon",
           "podiums": 4,
-          "starts": 193,
-          "rate": 0.0207
+          "starts": 194,
+          "rate": 0.0206
         },
         {
           "name": "Sergio Pérez",
           "podiums": 39,
-          "starts": 296,
-          "rate": 0.1318
+          "starts": 297,
+          "rate": 0.1313
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 204,
-          "rate": 0.0147
+          "starts": 205,
+          "rate": 0.0146
         }
       ]
     },
@@ -619,8 +619,8 @@
         "Carlos Sainz",
         "Lance Stroll"
       ],
-      "racesTogether": 188,
-      "score": 0.0086,
+      "racesTogether": 189,
+      "score": 0.0085,
       "count": 1,
       "happened": {
         "season": "2020",
@@ -631,20 +631,20 @@
         {
           "name": "Pierre Gasly",
           "podiums": 5,
-          "starts": 191,
-          "rate": 0.0262
+          "starts": 192,
+          "rate": 0.026
         },
         {
           "name": "Carlos Sainz",
           "podiums": 29,
-          "starts": 245,
-          "rate": 0.1184
+          "starts": 246,
+          "rate": 0.1179
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 204,
-          "rate": 0.0147
+          "starts": 205,
+          "rate": 0.0146
         }
       ]
     },

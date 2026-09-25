@@ -19916,5 +19916,22 @@
       "driverId": "max_verstappen",
       "name": "Max Verstappen"
     }
+  },
+  {
+    "season": "2026",
+    "round": "14",
+    "raceName": "Spanish Grand Prix",
+    "p1": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p2": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p3": {
+      "driverId": "norris",
+      "name": "Lando Norris"
+    }
   }
 ]
