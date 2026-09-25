@@ -3,7 +3,7 @@
 ## 2026-09-25
 
 ### Improvements
-- Grid penalties for the 2026 Azerbaijan GP (round 15): Alonso and Stroll start from the back of the grid (replacement of multiple power-unit components), entered ahead of qualifying so the post-qualifying prediction uses the real starting grid from its first update
+- Grid penalties for the 2026 Azerbaijan GP (round 15): Alonso and Stroll start from the back of the grid (replacement of multiple power-unit components), entered ahead of qualifying so the post-qualifying prediction uses the real starting grid from its first update (#336)
 
 ## 2026-09-22
 
