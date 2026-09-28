@@ -48,7 +48,7 @@
         "Oscar Piastri",
         "George Russell"
       ],
-      "prob": 3.064,
+      "prob": 3.063,
       "perDriver": [
         {
           "driverId": "antonelli",
@@ -693,7 +693,7 @@
         "max_verstappen",
         "russell"
       ],
-      "prob": 7.311,
+      "prob": 7.31,
       "happened": true
     },
     {
@@ -765,7 +765,7 @@
         "piastri",
         "russell"
       ],
-      "prob": 3.064,
+      "prob": 3.063,
       "happened": false
     },
     {
