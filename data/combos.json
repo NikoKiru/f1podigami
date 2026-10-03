@@ -14382,6 +14382,37 @@
     "drivers": [
       "Isack Hadjar",
       "Max Verstappen",
+      "George Russell"
+    ],
+    "driverIds": [
+      "hadjar",
+      "max_verstappen",
+      "russell"
+    ],
+    "count": 1,
+    "lastRace": {
+      "season": "2026",
+      "round": "15",
+      "raceName": "Azerbaijan Grand Prix"
+    },
+    "firstRace": {
+      "season": "2026",
+      "round": "15",
+      "raceName": "Azerbaijan Grand Prix"
+    },
+    "lastRaceKey": 2026015,
+    "races": [
+      {
+        "season": "2026",
+        "round": "15",
+        "raceName": "Azerbaijan Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
+      "Isack Hadjar",
+      "Max Verstappen",
       "Oscar Piastri"
     ],
     "driverIds": [

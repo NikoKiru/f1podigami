@@ -172,7 +172,7 @@
     },
     {
       "name": "Max Verstappen",
-      "total": 133,
+      "total": 134,
       "medianYear": 2022
     },
     {
@@ -197,7 +197,7 @@
     },
     {
       "name": "George Russell",
-      "total": 31,
+      "total": 32,
       "medianYear": 2025
     }
   ],
@@ -1670,7 +1670,7 @@
       16,
       28,
       29,
-      17
+      18
     ],
     [
       0,
@@ -1875,7 +1875,7 @@
       9,
       0,
       0,
-      17,
+      18,
       3,
       4,
       7,
@@ -2089,11 +2089,11 @@
       "lastYear": 2012
     },
     {
-      "a": "Ayrton Senna",
-      "b": "Gerhard Berger",
-      "count": 17,
-      "firstYear": 1986,
-      "lastYear": 1992
+      "a": "Max Verstappen",
+      "b": "George Russell",
+      "count": 18,
+      "firstYear": 2021,
+      "lastYear": 2026
     }
   ]
 }
