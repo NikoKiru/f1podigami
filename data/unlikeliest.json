@@ -4,8 +4,8 @@
   },
   "asOf": {
     "season": "2026",
-    "round": "14",
-    "raceName": "Spanish Grand Prix"
+    "round": "15",
+    "raceName": "Azerbaijan Grand Prix"
   },
   "trios": [
     {
@@ -271,8 +271,8 @@
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 442,
-          "rate": 0.2398
+          "starts": 443,
+          "rate": 0.2393
         },
         {
           "name": "Michael Schumacher",
@@ -419,8 +419,8 @@
         "Sergio Pérez",
         "Lance Stroll"
       ],
-      "racesTogether": 158,
-      "score": 0.0063,
+      "racesTogether": 159,
+      "score": 0.0062,
       "count": 1,
       "happened": {
         "season": "2020",
@@ -431,19 +431,19 @@
         {
           "name": "Esteban Ocon",
           "podiums": 4,
-          "starts": 194,
-          "rate": 0.0206
+          "starts": 195,
+          "rate": 0.0205
         },
         {
           "name": "Sergio Pérez",
           "podiums": 39,
-          "starts": 297,
-          "rate": 0.1313
+          "starts": 298,
+          "rate": 0.1309
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 205,
+          "starts": 206,
           "rate": 0.0146
         }
       ]
@@ -619,8 +619,8 @@
         "Carlos Sainz",
         "Lance Stroll"
       ],
-      "racesTogether": 189,
-      "score": 0.0085,
+      "racesTogether": 190,
+      "score": 0.0084,
       "count": 1,
       "happened": {
         "season": "2020",
@@ -631,19 +631,19 @@
         {
           "name": "Pierre Gasly",
           "podiums": 5,
-          "starts": 192,
-          "rate": 0.026
+          "starts": 193,
+          "rate": 0.0259
         },
         {
           "name": "Carlos Sainz",
           "podiums": 29,
-          "starts": 246,
-          "rate": 0.1179
+          "starts": 247,
+          "rate": 0.1174
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 205,
+          "starts": 206,
           "rate": 0.0146
         }
       ]
