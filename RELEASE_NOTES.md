@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-10-03
+
+### Improvements
+- Grid penalties for the 2026 Bahrain GP in Malaysia (round 16): Hadjar drops five places (P3 → P8, power-unit elements), Colapinto 15 (five for the Azerbaijan collision plus ten for power-unit elements, P15 → P21) and Lindblad 30 (power-unit elements, P16 → P22), so the post-qualifying prediction now uses the official starting grid (#348)
+
 ## 2026-09-25
 
 ### Fixes
