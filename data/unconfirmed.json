@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "season": "2026",
+    "round": "16",
+    "kind": "qualifying",
+    "pending": [
+      "qualifying"
+    ],
+    "since": "2026-10-03T09:00:00+00:00"
+  }
+]
