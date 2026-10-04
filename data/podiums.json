@@ -19950,5 +19950,22 @@
       "driverId": "hadjar",
       "name": "Isack Hadjar"
     }
+  },
+  {
+    "season": "2026",
+    "round": "16",
+    "raceName": "Bahrain Grand Prix in Malaysia",
+    "p1": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p2": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p3": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton"
+    }
   }
 ]
