@@ -145,7 +145,8 @@ jobs:
           pip install -r requirements-dev.txt
       # GitHub starts only a handful of scheduled runs a day, so the guard arms 3h
       # before each race and qualifying session and a run that lands in that window
-      # holds its runner here, polling until the session is published (up to 5h).
+      # holds its runner here, polling until the session is published (up to 5h);
+      # between qualifying and the race it also waits for F1's official starting grid.
       # Scheduled runs and successor runs (wait=true) only: a human dispatch should
       # act now, and `full` is a reconciliation, not a session.
       - name: Wait for the pending session to be published upstream
@@ -369,6 +370,26 @@ jobs:
         run: python src/check_update_due.py --successor
       - name: Hand over to a confirmation run
         if: steps.confirm.outputs.successor == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
+      # The watch ended because OpenF1 published F1's official starting grid, or
+      # revised it on race morning, and the pipeline above put it on the site.
+      # Hand over if a session is still pending. On race day that resumes the
+      # results watch this run left to republish the grid. By the successor's
+      # in-flight wait the grid PR has normally merged (data PRs take ~1-2 min),
+      # so its watch finds the grid unchanged and waits for results as usual. If
+      # the PR is still open, that run is JOLPICA_ONLY, which also disables every
+      # grid check, so the hand-over can't loop. No status function, like the
+      # fast lane's: a failed pipeline ends red and alerts instead of handing
+      # over. Safe in the develop window: main's older watcher never reports
+      # `grid`, so neither step runs until the scripts are promoted.
+      - name: Check whether a session is still pending after a grid update
+        id: regrid
+        if: steps.wait.outputs.published == 'grid'
+        run: python src/check_update_due.py --successor
+      - name: Hand over after a grid update
+        if: steps.regrid.outputs.successor == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
