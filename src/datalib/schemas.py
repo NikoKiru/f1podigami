@@ -300,8 +300,9 @@ class DriverStrength(_Base):
     # v2 engine extras: modelled finish probability and rating uncertainty (std).
     finishProb: float | None = None
     uncertainty: float | None = None
-    # Post-quali only: the driver's starting slot — the qualifying classification
-    # adjusted for any grid penalties (data/grid_penalties.json).
+    # Post-quali only: the driver's starting slot. F1's official grid
+    # (data/starting_grids.json) once published, else the qualifying
+    # classification adjusted for any grid penalties (data/grid_penalties.json).
     gridPosition: int | None = None
 
 

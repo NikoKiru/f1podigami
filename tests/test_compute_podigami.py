@@ -1006,6 +1006,136 @@ def test_post_quali_retirement_deterministic(scenario_post_quali):
     assert cp.compute(podiums, combos, grid, **kw) == cp.compute(podiums, combos, grid, **kw)
 
 
+# --- official starting grid -----------------------------------------------------------
+
+
+def _official(season, rnd, order, cid_map=None):
+    """A starting_grids.json payload: drivers in grid order."""
+    return [
+        {
+            "season": str(season),
+            "round": str(rnd),
+            "grid": [
+                {
+                    "driverId": d,
+                    "constructorId": (cid_map or {}).get(d, "car_" + d),
+                    "position": i + 1,
+                }
+                for i, d in enumerate(order)
+            ],
+        }
+    ]
+
+
+def _kw(con, rres, quali):
+    return {
+        "constructor_data": con,
+        "race_results": rres,
+        "qualifying": quali,
+        "schedule": SCHED_R6,
+    }
+
+
+def test_official_grid_gives_the_same_prediction_as_the_same_grid_from_penalties(
+    scenario_post_quali,
+):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    cid = con["driverConstructor"]
+    pens = [
+        {
+            "season": "2025",
+            "round": "6",
+            "penalties": [
+                {"driverId": "eli", "penaltyPlaces": 3, "backOfGrid": None},
+                {"driverId": "bob", "penaltyPlaces": None, "backOfGrid": True},
+            ],
+        }
+    ]
+    via_pens = cp.compute(podiums, combos, grid, grid_penalties=pens, **_kw(con, rres, quali))
+    official = _official(2025, 6, ["alf", "cas", "dan", "eli", "bob"], cid)
+    via_grid = cp.compute(podiums, combos, grid, starting_grids=official, **_kw(con, rres, quali))
+    assert via_grid == via_pens
+
+
+def test_official_grid_wins_over_hand_entered_penalties(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    pens = [
+        {
+            "season": "2025",
+            "round": "6",
+            "penalties": [{"driverId": "eli", "penaltyPlaces": 3, "backOfGrid": None}],
+        }
+    ]
+    # F1's grid is the plain qualifying order: the penalty entry is out of date.
+    official = _official(2025, 6, ["eli", "alf", "bob", "cas", "dan"], con["driverConstructor"])
+    both = cp.compute(
+        podiums,
+        combos,
+        grid,
+        grid_penalties=pens,
+        starting_grids=official,
+        **_kw(con, rres, quali),
+    )
+    assert both == cp.compute(podiums, combos, grid, **_kw(con, rres, quali))
+
+
+def test_official_grid_adds_a_driver_without_a_lap_time(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    cid = dict(con["driverConstructor"], zed_zephyr="teamA")
+    official = _official(2025, 6, ["eli", "alf", "bob", "cas", "dan", "zed_zephyr"], cid)
+    res = cp.compute(podiums, combos, grid, starting_grids=official, **_kw(con, rres, quali))
+    form = {d["driverId"]: d for d in res["postQuali"]["driverForm"]}
+    assert set(form) == {"eli", "alf", "bob", "cas", "dan", "zed_zephyr"}
+    assert form["zed_zephyr"]["gridPosition"] == 6
+    assert form["zed_zephyr"]["constructorId"] == "teamA"
+    assert form["zed_zephyr"]["constructorStrength"] == pytest.approx(1.0)
+
+
+def test_official_grid_leaves_out_a_qualifier_who_will_not_start(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    official = _official(2025, 6, ["eli", "alf", "bob", "cas"], con["driverConstructor"])
+    res = cp.compute(podiums, combos, grid, starting_grids=official, **_kw(con, rres, quali))
+    assert {d["driverId"] for d in res["postQuali"]["driverForm"]} == {"eli", "alf", "bob", "cas"}
+    assert all("dan" not in c["driverIds"] for c in res["postQuali"]["candidates"])
+
+
+def test_official_grid_for_another_round_is_ignored(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    stale = _official(2025, 5, ["dan", "cas", "bob", "alf", "eli"], con["driverConstructor"])
+    assert cp.compute(
+        podiums, combos, grid, starting_grids=stale, **_kw(con, rres, quali)
+    ) == cp.compute(podiums, combos, grid, **_kw(con, rres, quali))
+
+
+def test_official_grid_still_honours_retirements(scenario_post_quali):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    cid = dict(con["driverConstructor"], zed_zephyr="teamA")
+    official = _official(2025, 6, ["eli", "alf", "bob", "cas", "dan", "zed_zephyr"], cid)
+    res = cp.compute(
+        podiums,
+        combos,
+        grid,
+        starting_grids=official,
+        retirements=_retirements(2025, 6, "zed_zephyr"),
+        **_kw(con, rres, quali),
+    )
+    form = {d["driverId"]: d["gridPosition"] for d in res["postQuali"]["driverForm"]}
+    assert "zed_zephyr" not in form
+    assert form == {"eli": 1, "alf": 2, "bob": 3, "cas": 4, "dan": 5}
+
+
+def test_official_grid_payload_is_deterministic_and_valid(scenario_post_quali):
+    from datalib import REGISTRY
+
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    cid = dict(con["driverConstructor"], zed_zephyr="teamA")
+    official = _official(2025, 6, ["alf", "eli", "bob", "cas", "dan", "zed_zephyr"], cid)
+    a = cp.compute(podiums, combos, grid, starting_grids=official, **_kw(con, rres, quali))
+    b = cp.compute(podiums, combos, grid, starting_grids=official, **_kw(con, rres, quali))
+    assert a == b
+    REGISTRY["podigami.json"].validate_python(a)  # must not raise
+
+
 # ── trio board ───────────────────────────────────────────────────────────────
 # The board merges already-happened trios back in beside the new ones, ranked
 # together by probability, so the panel can show what has happened rather than
