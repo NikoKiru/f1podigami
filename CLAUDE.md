@@ -194,7 +194,7 @@ The consequence that actually hurts: the Jolpica API often has not published a j
 - **One comparison.** `fetch_starting_grid.fresh_grid` decides "is there a new grid" for both the fetcher and the watcher, so a watch never ends on a grid the pipeline won't write.
 - **Fail closed.** Nothing is written when OpenF1 errors or returns 404, no single qualifying session matches, a car won't map, the positions aren't exactly 1..N, or the grid isn't exactly the qualifying entrants. `JOLPICA_ONLY` skips every grid check and write. The schema rejects gaps and repeated positions or drivers.
 - **`grid_penalties.json` is now the fallback,** used only until the official grid exists. It is still worth filling in for penalties known before qualifying (e.g. power-unit changes), because the official grid comes hours later.
-- **Measure it.** The watcher prints `OpenF1 has a new official starting grid for round N at <UTC>`, and the fetcher prints who isn't starting where they qualified.
+- **Measure it.** The watcher prints `OpenF1 has a new official starting grid for round N at <UTC>`, and the fetcher prints who starts behind where they qualified: the penalties, pit-lane starts and drivers with no lap time.
 - **Rehearse** with `python src/fetch/fetch_starting_grid.py --now <ISO>` and `python src/check_update_due.py --now <ISO>` on a copy of `data/` from before a race.
 
 #### ⚠️ When a finished race doesn't appear (silent-stall failure mode)

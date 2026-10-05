@@ -143,7 +143,12 @@ def upsert(grids: list[dict], entry: dict) -> list[dict]:
 
 
 def moved(entry: dict, qualifying: list[dict]) -> list[str]:
-    """For the log: every driver who doesn't start where he qualified."""
+    """For the log: every driver who starts behind where he qualified, or set no time.
+
+    Those are the penalties (and pit-lane starts) F1 applied. A car promoted into a
+    slot a penalised driver vacated is left out: listing every one of those would
+    bury the few names that matter.
+    """
     key = (entry["season"], entry["round"])
     quali = next((q for q in qualifying if (q["season"], q["round"]) == key), None)
     if quali is None:
@@ -154,18 +159,18 @@ def moved(entry: dict, qualifying: list[dict]) -> list[str]:
         if g["driverId"] in qpos
         else f"{g['driverId']} (no lap time) P{g['position']}"
         for g in entry["grid"]
-        if qpos.get(g["driverId"]) != g["position"]
+        if g["driverId"] not in qpos or g["position"] > qpos[g["driverId"]]
     ]
 
 
 def _log_moves(entry: dict) -> None:
-    """Print who starts somewhere other than where he qualified. Never raises."""
+    """Print who starts behind where he qualified. Never raises."""
     try:
         shifted = moved(entry, [q.model_dump() for q in load_qualifying()])
     except Exception:  # noqa: BLE001 - this is only a log line
         return
     if shifted:
-        print("  Not starting where they qualified: " + ", ".join(shifted))
+        print("  Starting behind where they qualified: " + ", ".join(shifted))
 
 
 def main(argv: list[str] | None = None, client=openf1) -> int:

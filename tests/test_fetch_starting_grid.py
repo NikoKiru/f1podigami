@@ -162,13 +162,15 @@ def test_upsert_replaces_the_round_and_keeps_rounds_in_order():
     assert fsg.upsert([r9], r11) == [r9, r11]
 
 
-def test_moved_names_everyone_not_starting_where_he_qualified():
+def test_moved_names_only_drivers_starting_behind_where_they_qualified():
+    """The penalised and the timeless; a car promoted into a vacated slot is noise."""
+
     def rows(*pairs):
         return [{"driverId": d, "constructorId": "x", "position": p} for d, p in pairs]
 
     entry = {"season": "2026", "round": "16", "grid": rows(("a", 1), ("c", 2), ("b", 3), ("d", 4))}
     quali = [{"season": "2026", "round": "16", "results": rows(("a", 1), ("b", 2), ("c", 3))}]
-    assert fsg.moved(entry, quali) == ["c P3 -> P2", "b P2 -> P3", "d (no lap time) P4"]
+    assert fsg.moved(entry, quali) == ["b P2 -> P3", "d (no lap time) P4"]
     assert fsg.moved(entry, []) == []
 
 
@@ -265,7 +267,7 @@ def test_main_writes_the_official_grid(monza_saturday, capsys):
     }
     out = capsys.readouterr().out
     assert "22 cars written" in out
-    assert "Not starting where they qualified" in out
+    assert "Starting behind where they qualified" in out
 
 
 def test_main_rewrites_nothing_when_the_grid_is_unchanged(monza_saturday, capsys):
