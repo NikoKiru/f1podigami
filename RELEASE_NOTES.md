@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-10-05
+
+### Features
+- **The post-qualifying prediction now uses F1's official starting grid automatically.** Grid penalties no longer have to be entered by hand. A few hours after qualifying, the official grid (penalties applied) is picked up from OpenF1, which mirrors formula1.com's starting-grid page. The race-day watch checks it again in the hours before the start, so race-morning changes such as pit-lane starts still reach the prediction. Drivers who set no qualifying time are now part of it too. Across all 16 races of 2026 so far, the official grid matched the grid each race started from every time. The hand-entered penalties had missed changes in four of the seven races since the post-qualifying prediction launched (#352)
+
 ## 2026-10-03
 
 ### Improvements

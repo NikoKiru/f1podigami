@@ -300,8 +300,9 @@ class DriverStrength(_Base):
     # v2 engine extras: modelled finish probability and rating uncertainty (std).
     finishProb: float | None = None
     uncertainty: float | None = None
-    # Post-quali only: the driver's starting slot — the qualifying classification
-    # adjusted for any grid penalties (data/grid_penalties.json).
+    # Post-quali only: the driver's starting slot. F1's official grid
+    # (data/starting_grids.json) once published, else the qualifying
+    # classification adjusted for any grid penalties (data/grid_penalties.json).
     gridPosition: int | None = None
 
 
@@ -568,6 +569,40 @@ class RetirementRace(_Base):
     season: str
     round: str
     driverIds: list[str]
+
+
+# --- starting_grids.json ------------------------------------------------------
+
+
+class StartingGridRow(_Base):
+    driverId: str
+    constructorId: str
+    position: int
+
+
+class StartingGridRace(_Base):
+    """F1's official starting grid for one race: penalties applied, as published.
+
+    Written by ``fetch/fetch_starting_grid.py`` from OpenF1's ``starting_grid``.
+    That endpoint mirrors the "Starting grid" page F1 puts up a few hours after
+    qualifying, once the FIA has applied grid penalties, and updates on race
+    morning (pit-lane starts, power-unit elements fitted overnight). The
+    post-qualifying prediction uses it instead of ``grid_penalties.json`` for its
+    round. One entry per round, kept as history.
+    """
+
+    season: str
+    round: str
+    grid: list[StartingGridRow]
+
+    @model_validator(mode="after")
+    def _a_complete_grid(self) -> StartingGridRace:
+        if sorted(row.position for row in self.grid) != list(range(1, len(self.grid) + 1)):
+            raise ValueError("grid positions must run 1..N with no gaps or repeats")
+        drivers = [row.driverId for row in self.grid]
+        if not drivers or len(set(drivers)) != len(drivers):
+            raise ValueError("a grid needs at least one car, each driver once")
+        return self
 
 
 # --- unconfirmed.json ---------------------------------------------------------

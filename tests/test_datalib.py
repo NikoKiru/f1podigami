@@ -596,3 +596,52 @@ def test_unconfirmed_rejects_an_unknown_dataset_or_kind():
         adapter.validate_python([{**_UNCONFIRMED, "pending": ["combos"]}])
     with pytest.raises(ValidationError):
         adapter.validate_python([{**_UNCONFIRMED, "kind": "sprint"}])
+
+
+# --- starting_grids.json (F1's official grid, via OpenF1) ------------------------
+
+
+def _official_grid(*driver_ids):
+    return {
+        "season": "2026",
+        "round": "17",
+        "grid": [
+            {"driverId": d, "constructorId": "car_" + d, "position": i + 1}
+            for i, d in enumerate(driver_ids)
+        ],
+    }
+
+
+def test_save_starting_grids_roundtrips(tmp_path, monkeypatch):
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    repository.save_starting_grids([_official_grid("max_verstappen", "hamilton", "antonelli")])
+    raw = (tmp_path / "starting_grids.json").read_text(encoding="utf-8")
+    adapter = REGISTRY["starting_grids.json"]
+    dumped = adapter.dump_python(adapter.validate_python(json.loads(raw)), mode="json")
+    assert json.dumps(dumped, indent=2, ensure_ascii=False) == raw
+    assert repository.load_starting_grids()[0].grid[2].driverId == "antonelli"
+
+
+def test_starting_grids_at_rest_is_an_empty_list(tmp_path, monkeypatch):
+    from datalib import repository
+
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    repository.save_starting_grids([])
+    assert (tmp_path / "starting_grids.json").read_text(encoding="utf-8") == "[]"
+
+
+def test_starting_grid_must_be_a_complete_grid():
+    adapter = REGISTRY["starting_grids.json"]
+    good = _official_grid("a", "b", "c")
+    adapter.validate_python([good])  # must not raise
+    rows = good["grid"]
+    for bad_rows in (
+        [],  # no cars
+        [rows[0], rows[2]],  # positions 1, 3: a gap
+        [*rows, {**rows[0], "driverId": "d"}],  # position 1 twice
+        [rows[0], rows[1], {**rows[0], "position": 3}],  # driver a twice
+    ):
+        with pytest.raises(ValidationError):
+            adapter.validate_python([{**good, "grid": bad_rows}])

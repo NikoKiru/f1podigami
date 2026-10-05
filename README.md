@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-968%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1049%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -73,7 +73,7 @@ The predictor is a **dynamic Bayesian rating engine** ([`src/compute/model_v2.py
 - **Time** — ratings diffuse a little every race, more over a winter, a lot for cars when the technical regulations reset (2009, 2014, 2022, 2026…).
 - **Survival** — exponentially-decayed DNF hazards, era-relative: mechanical failures charge the car, incidents charge the driver.
 - **Chaos** — each circuit's grid→finish shuffle and DNF propensity adjust the prediction temperature and finish odds.
-- **Grid** — once a race's qualifying is classified, the grid order feeds back through the ratings and a **circuit-modulated track-position term** shifts each driver's finishing odds — amplified at processional circuits where the grid rarely reshuffles, damped where it does — so the headline refreshes after qualifying. Known grid penalties (hand-curated in `data/grid_penalties.json`: place drops and back-of-grid starts) rebuild the actual starting slots for this term, while the qualifying order itself still counts at face value — a penalised driver demonstrated that pace regardless of where they start. Mid-race retirements can be recorded the same way (`data/retirements.json`), taking a crashed or broken-down car out of the running field so the headline can be refreshed while the race is live.
+- **Grid** — once a race's qualifying is classified, the grid order feeds back through the ratings and a **circuit-modulated track-position term** shifts each driver's finishing odds — amplified at processional circuits where the grid rarely reshuffles, damped where it does — so the headline refreshes after qualifying. The starting slots for this term are **F1's official starting grid** — penalties applied, drivers without a lap time included — picked up automatically a few hours after qualifying and re-checked by the race-day watch in the hours before the start, so race-morning changes such as pit-lane starts count too; until it is published, hand-curated penalties in `data/grid_penalties.json` rebuild the grid from the qualifying order. The qualifying order itself still counts at face value — a penalised driver demonstrated that pace regardless of where they start. Mid-race retirements can be recorded by hand (`data/retirements.json`), taking a crashed or broken-down car out of the running field so the headline can be refreshed while the race is live.
 - **Prediction** — the engine simulates the next race (deterministic seed): skill noise + who survives, with *exact* conditional Plackett–Luce trio probabilities per draw. `P(next race is new)` is the exact complement of every already-seen trio.
 
 > **Why this model?** Walk-forward evaluation — tuned on 2010–2018 only, then scored once on a frozen 2019–2026 test window (165 races) it never saw:
@@ -122,10 +122,12 @@ flowchart TD
         FG["fetch_current_drivers"]:::fetch
         FS["fetch_schedule"]:::fetch
         FO["fetch_openf1"]:::fetch
+        FSG["fetch_starting_grid"]:::fetch
     end
 
     API -.-> FETCH
     OF -.-> FO
+    OF -.-> FSG
 
     subgraph COMPUTE ["② Compute  →  data/*.json"]
         direction LR
@@ -169,7 +171,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (968 tests, run in CI)
+tests/          pytest suite (1049 tests, run in CI)
 ```
 
 </details>
@@ -210,7 +212,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 968 tests + coverage gate (≥70%)
+pytest --cov                          # 1049 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
@@ -226,7 +228,7 @@ Every push and PR runs a hardened pipeline:
 | [`codeql.yml`](.github/workflows/codeql.yml) | **CodeQL** static analysis of Python *and* the workflow files (weekly + on PRs) |
 | [`security.yml`](.github/workflows/security.yml) | **pip-audit** for vulnerable dependencies · **gitleaks** secret scanning |
 | [`deploy.yml`](.github/workflows/deploy.yml) | Test-gated publish to **GitHub Pages** |
-| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — arms 3 h before every race and qualifying session (the post-qualifying prediction update included), so a run is already waiting when results appear. It polls upstream in-run for up to 5 h and hands over to a fresh run if the results still aren't out, then opens an auto-merging PR; a weekly run forces a full reconciliation. A **watchdog** job checks that PR on every tick and raises an alert issue if it has sat unmerged for 45 min (failing check, conflict, auto-merge off); the issue stays quiet while the failure is unchanged and closes itself once no data PR is left open, so each new incident notifies afresh. A data update that changes an **already-published podium** is flagged — the PR is retitled and labelled `podium-revised` and an issue opens — without blocking the merge. |
+| [`update.yml`](.github/workflows/update.yml) | Guarded **data refresh** — arms 3 h before every race and qualifying session (the post-qualifying prediction update included), then waits for F1's official starting grid and re-checks it on race morning, so a run is already waiting when results appear. It polls upstream in-run for up to 5 h and hands over to a fresh run if the results still aren't out, then opens an auto-merging PR; a weekly run forces a full reconciliation. A **watchdog** job checks that PR on every tick and raises an alert issue if it has sat unmerged for 45 min (failing check, conflict, auto-merge off); the issue stays quiet while the failure is unchanged and closes itself once no data PR is left open, so each new incident notifies afresh. A data update that changes an **already-published podium** is flagged — the PR is retitled and labelled `podium-revised` and an issue opens — without blocking the merge. |
 | [`dependabot.yml`](.github/dependabot.yml) + [auto-merge](.github/workflows/dependabot-automerge.yml) | Weekly dependency PRs; patch/minor bumps auto-merge once CI is green |
 
 All workflows run with **least-privilege permissions**, **concurrency cancellation**, and **pip
@@ -268,6 +270,8 @@ flowchart LR
 | `src/fetch/fetch_schedule.py` | Fetch race calendar + circuit track outlines → `data/schedule.json` |
 | `src/fetch/fetch_constructor_standings.py` | Fetch constructor championship standings → `data/constructor_standings.json` |
 | `src/fetch/fetch_driver_races.py` | Fetch per-driver race participation → `data/driver_races.json` |
+| `src/fetch/fetch_openf1.py` | OpenF1 fast lane: fill the newest race/qualifying before Jolpica publishes |
+| `src/fetch/fetch_starting_grid.py` | F1's official starting grid (penalties applied) for the next race, via OpenF1 → `data/starting_grids.json` |
 | `src/fetch/api_cache.py` | Cache-buster for freshness-critical API reads (see below) |
 | `src/fetch/track_geo.py` | Resolve circuit SVG track paths from geo data |
 | **Compute** | |
@@ -307,7 +311,7 @@ flowchart LR
 All race data comes from the **[Jolpica F1 API](https://api.jolpi.ca)** — an Ergast-compatible
 endpoint, no API key required. Race reports link to the **official Formula 1** result pages (with a Wikipedia fallback for any race not yet mapped).
 
-The **newest** race and qualifying session come first from **[OpenF1](https://openf1.org)**: at the one race measured so far (the 2026 Spanish GP) it had the classification about three hours after the start, nearly four hours before Jolpica. OpenF1's rows are written in Jolpica's exact format, held back while the stewards could still change the podium, and replaced by Jolpica's as soon as it publishes (a changed podium raises an alert). All history comes from Jolpica.
+The **newest** race and qualifying session come first from **[OpenF1](https://openf1.org)**: at the one race measured so far (the 2026 Spanish GP) it had the classification about three hours after the start, nearly four hours before Jolpica. OpenF1's rows are written in Jolpica's exact format, held back while the stewards could still change the podium, and replaced by Jolpica's as soon as it publishes (a changed podium raises an alert). All history comes from Jolpica. The post-qualifying prediction's starting grid is F1's official one, from OpenF1's mirror of formula1.com's starting-grid page.
 
 <div align="center">
 <sub>Includes the Indy 500 (1950–1960) · excludes Sprint races · predictions are for fun, not betting 🏎️</sub>

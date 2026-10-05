@@ -31,6 +31,9 @@ STEPS = [
     ("Fetching race schedule", "fetch/fetch_schedule.py"),
     ("Fetching official race links", "fetch/fetch_race_links.py"),
     ("Fetching constructor standings", "fetch/fetch_constructor_standings.py"),
+    # After current drivers and the schedule are refreshed: the grid maps cars by
+    # number and finds the race that sits between its qualifying and its start.
+    ("Fetching the official starting grid", "fetch/fetch_starting_grid.py"),
     ("Computing podigami", "compute/compute_podigami.py"),
     ("Fetching driver races", "fetch/fetch_driver_races.py"),
     ("Computing overdue podiums", "compute/compute_overdue.py"),
