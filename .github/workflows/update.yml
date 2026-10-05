@@ -378,18 +378,27 @@ jobs:
       # Hand over if a session is still pending. On race day that resumes the
       # results watch this run left to republish the grid. By the successor's
       # in-flight wait the grid PR has normally merged (data PRs take ~1-2 min),
-      # so its watch finds the grid unchanged and waits for results as usual. If
-      # the PR is still open, that run is JOLPICA_ONLY, which also disables every
-      # grid check, so the hand-over can't loop. No status function, like the
-      # fast lane's: a failed pipeline ends red and alerts instead of handing
-      # over. Safe in the develop window: main's older watcher never reports
-      # `grid`, so neither step runs until the scripts are promoted.
+      # so its watch finds the grid unchanged and waits for results as usual.
+      #
+      # `!cancelled()`, unlike the fast lane's confirmation hand-over. That one
+      # follows a watch that already had its result. This one gave up the results
+      # watch, so a step that fails after a successful pipeline must not drop it:
+      # a PR push error, a red test, or `--fail-on-stale`, which stays red for a
+      # whole Jolpica outage, exactly when the OpenF1 fast lane matters. A failed
+      # pipeline still doesn't hand over, and neither step can loop for long:
+      # - an open red PR makes the successor JOLPICA_ONLY, which disables every
+      #   grid check (that successor's results watch then runs without the OpenF1
+      #   fast lane; rare, since data PRs merge in ~1-2 min);
+      # - a missing PR is re-detected, and that ends at the race start on Sunday
+      #   and at qualifying start + 12 h on Saturday.
+      # Safe in the develop window: main's older watcher never reports `grid`, so
+      # neither step runs until the scripts are promoted.
       - name: Check whether a session is still pending after a grid update
         id: regrid
-        if: steps.wait.outputs.published == 'grid'
+        if: ${{ !cancelled() && steps.wait.outputs.published == 'grid' && steps.pipeline.outcome == 'success' }}
         run: python src/check_update_due.py --successor
       - name: Hand over after a grid update
-        if: steps.regrid.outputs.successor == 'true'
+        if: ${{ !cancelled() && steps.regrid.outputs.successor == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
