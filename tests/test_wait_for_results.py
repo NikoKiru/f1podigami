@@ -171,13 +171,39 @@ def test_wait_target_falls_back_to_the_next_qualifying():
     assert wait_target(SCHEDULE, podigami, at("2026-09-12 11:00")) == ("qualifying", 2026, 14)
 
 
-def test_nothing_to_wait_for_once_post_quali_covers_the_round():
-    """The quali-day short-circuit: a covered round must not hold the runner."""
+def test_nothing_to_wait_for_once_post_quali_and_the_official_grid_cover_the_round():
+    """The quali-day short-circuit: a fully covered round must not hold the runner."""
     podigami = {
         "asOf": {"season": "2026", "round": "13"},
         "postQuali": {"season": "2026", "round": "14"},
     }
-    assert wait_target(SCHEDULE, podigami, at("2026-09-12 18:00")) is None
+    grids = [{"season": "2026", "round": "14", "grid": []}]
+    assert wait_target(SCHEDULE, podigami, at("2026-09-12 18:00"), (), grids) is None
+
+
+def test_wait_target_waits_for_the_official_grid_after_qualifying():
+    podigami = {
+        "asOf": {"season": "2026", "round": "13"},
+        "postQuali": {"season": "2026", "round": "14"},
+    }
+    assert wait_target(SCHEDULE, podigami, at("2026-09-12 18:00")) == ("grid", 2026, 14)
+
+
+def test_an_open_data_pr_skips_the_grid_watch():
+    """Only OpenF1 can end a grid watch, and JOLPICA_ONLY switches OpenF1 off."""
+    podigami = {
+        "asOf": {"season": "2026", "round": "13"},
+        "postQuali": {"season": "2026", "round": "14"},
+    }
+    assert wait_target(SCHEDULE, podigami, at("2026-09-12 18:00"), jolpica_only=True) is None
+
+
+def test_the_race_watch_takes_over_from_the_grid_watch():
+    podigami = {
+        "asOf": {"season": "2026", "round": "13"},
+        "postQuali": {"season": "2026", "round": "14"},
+    }
+    assert wait_target(SCHEDULE, podigami, at("2026-09-13 10:00")) == ("race", 2026, 14)
 
 
 def test_nothing_to_wait_for_before_any_window_opens():
@@ -424,3 +450,145 @@ def test_wait_target_confirms_a_pending_qualifying_round():
         2026,
         13,
     )
+
+
+# --- the official starting grid ------------------------------------------------------
+
+from wait_for_results import watch_budget  # noqa: E402
+
+
+def test_a_grid_watch_ends_only_on_a_new_grid():
+    assert (
+        choose_source("grid", None, 14, lambda: True, jolpica_only=False, grid_ready=lambda: True)
+        == "grid"
+    )
+    assert (
+        choose_source("grid", None, 14, lambda: True, jolpica_only=False, grid_ready=lambda: False)
+        is None
+    )
+    # Neither results feed ends a grid watch.
+    assert (
+        choose_source("grid", 14, 14, lambda: True, jolpica_only=False, grid_ready=lambda: False)
+        is None
+    )
+
+
+def test_the_race_watch_republishes_a_revised_grid_before_the_start():
+    def watch(published, grid_ready, before_start):
+        return choose_source(
+            "race",
+            published,
+            14,
+            lambda: False,
+            jolpica_only=False,
+            grid_ready=grid_ready,
+            before_start=before_start,
+        )
+
+    assert watch(13, lambda: True, True) == "grid"
+    assert watch(13, lambda: True, False) is None  # lights out: the grid is history
+    assert watch(13, lambda: False, True) is None
+    assert watch(14, lambda: True, True) == "jolpica"  # results still win
+
+
+def test_an_open_data_pr_disables_every_grid_check():
+    asked = []
+
+    def grid_ready():
+        asked.append(1)
+        return True
+
+    assert (
+        choose_source("grid", None, 14, lambda: False, jolpica_only=True, grid_ready=grid_ready)
+        is None
+    )
+    assert (
+        choose_source(
+            "race",
+            13,
+            14,
+            lambda: False,
+            jolpica_only=True,
+            grid_ready=grid_ready,
+            before_start=True,
+        )
+        is None
+    )
+    assert asked == []
+
+
+def test_a_confirmation_watch_never_checks_the_grid():
+    assert (
+        choose_source(
+            "confirm-race",
+            13,
+            14,
+            lambda: False,
+            jolpica_only=False,
+            grid_ready=lambda: True,
+            before_start=True,
+        )
+        is None
+    )
+
+
+def test_a_grid_watch_hands_the_runner_back_before_the_race_window():
+    five_hours = 5 * 3600
+    # R14 starts 13:00 Sunday; its window opens 10:00. At 08:00 only 2 h remain.
+    assert watch_budget("grid", SCHEDULE, 14, at("2026-09-13 08:00"), five_hours) == 2 * 3600
+    assert watch_budget("grid", SCHEDULE, 14, at("2026-09-12 18:00"), five_hours) == five_hours
+    assert watch_budget("grid", SCHEDULE, 14, at("2026-09-13 11:00"), five_hours) == 0
+    assert watch_budget("race", SCHEDULE, 14, at("2026-09-13 08:00"), five_hours) == five_hours
+    assert watch_budget("grid", SCHEDULE, 99, at("2026-09-13 08:00"), five_hours) == five_hours
+
+
+def test_report_grid(tmp_path, monkeypatch):
+    out = tmp_path / "out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    report("grid")
+    assert out.read_text(encoding="utf-8") == "published=grid\n"
+
+
+def test_grid_readiness_follows_fresh_grid(tmp_path, monkeypatch):
+    import wait_for_results as wfr
+    from fetch import fetch_starting_grid
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+    seen = []
+
+    def fresh(race, season, current, grids):
+        seen.append((race["round"], season, grids))
+        return {"season": season, "round": race["round"], "grid": []}
+
+    monkeypatch.setattr(fetch_starting_grid, "fresh_grid", fresh)
+    committed = [{"season": "2026", "round": "13", "grid": []}]
+    assert wfr._grid_ready(SCHEDULE, 2026, 14, committed) is True
+    assert seen == [("14", "2026", committed)]
+
+    monkeypatch.setattr(fetch_starting_grid, "fresh_grid", lambda *a, **k: None)
+    assert wfr._grid_ready(SCHEDULE, 2026, 14, committed) is False
+
+
+def test_grid_readiness_survives_a_failing_check(tmp_path, monkeypatch, capsys):
+    import wait_for_results as wfr
+    from fetch import fetch_starting_grid
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("an OpenF1 surprise")
+
+    monkeypatch.setattr(fetch_starting_grid, "fresh_grid", boom)
+    assert wfr._grid_ready(SCHEDULE, 2026, 14, []) is False
+    assert "starting-grid check failed" in capsys.readouterr().out
+
+
+def test_grid_is_never_ready_for_a_round_outside_the_schedule(tmp_path, monkeypatch):
+    import wait_for_results as wfr
+    from fetch import fetch_starting_grid
+
+    _only_drivers_on_disk(tmp_path, monkeypatch)
+    asked = []
+    monkeypatch.setattr(fetch_starting_grid, "fresh_grid", lambda *a, **k: asked.append(1))
+    assert wfr._grid_ready(SCHEDULE, 2026, 99, []) is False
+    assert asked == []

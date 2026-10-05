@@ -45,9 +45,25 @@ for Jolpica to confirm what OpenF1 already wrote. Setting ``JOLPICA_ONLY=true``
 wait) disables OpenF1 for the run entirely — loop protection, since this
 checkout may not have that PR's result yet.
 
-So ``published`` takes one of four values: ``true`` (Jolpica has the round),
-``fast`` (OpenF1 has it and the stewards are clear), ``false`` (the budget ran
-out) or ``none`` (nothing was pending to wait for).
+The official starting grid
+--------------------------
+Once ``postQuali`` covers the next race but data/starting_grids.json has no
+grid for it, the run waits for F1's official starting grid (``grid``). That is
+OpenF1's mirror of the grid F1 publishes a few hours after qualifying. Only
+OpenF1 can end that watch, so it never starts under ``JOLPICA_ONLY``. Its budget
+ends when the race's own window opens (:func:`watch_budget`). From then on the
+race watch re-checks the grid at every poll until the scheduled start, so a grid
+revised on race morning (a pit-lane start, new power-unit elements) still reaches
+the prediction. Both report ``published=grid``: update.yml runs the pipeline,
+then hands over if a session is still pending, which on race day resumes the
+results watch. Whether there is a new grid is decided by
+``fetch_starting_grid.fresh_grid``, the same comparison the pipeline's write
+uses.
+
+So ``published`` takes one of five values: ``true`` (Jolpica has the round),
+``fast`` (OpenF1 has it and the stewards are clear), ``grid`` (OpenF1 has an
+official starting grid data/ lacks), ``false`` (the budget ran out) or ``none``
+(nothing was pending to wait for).
 """
 
 from __future__ import annotations
@@ -63,7 +79,16 @@ from pathlib import Path
 
 import requests
 
-from check_update_due import is_update_due, latest_armed_round, next_quali_target, read_unconfirmed
+from check_update_due import (
+    ARM_BEFORE,
+    is_update_due,
+    latest_armed_round,
+    next_grid_target,
+    next_quali_target,
+    read_grids,
+    read_unconfirmed,
+    session_start,
+)
 from fetch.api_cache import fresh
 
 API_ROOT = "https://api.jolpi.ca/ergast/f1"
@@ -173,23 +198,39 @@ def _fetch_last_qualifying(season: int) -> object | None:
 
 
 def wait_target(
-    schedule: dict, podigami: dict, now: datetime, unconfirmed: Sequence[dict] = ()
+    schedule: dict,
+    podigami: dict,
+    now: datetime,
+    unconfirmed: Sequence[dict] = (),
+    grids: Sequence[dict] = (),
+    jolpica_only: bool = False,
 ) -> tuple[str, int, int] | None:
     """What this run should wait for — ``(kind, season, round)`` — or None.
 
-    A race newer than ``asOf`` whose window is open comes first (the guard's own
-    rule, so the two can't disagree); otherwise the next race's qualifying, if its
-    window is open and ``postQuali`` doesn't cover it yet; otherwise the oldest
-    round OpenF1 filled that Jolpica hasn't confirmed yet. Nothing pending means
-    return at once, holding no runner.
+    Checked in this order:
+
+    1. A race newer than ``asOf`` whose window is open (the guard's own rule, so
+       the two can't disagree).
+    2. The next race's qualifying, if its window is open and ``postQuali``
+       doesn't cover it yet.
+    3. F1's official starting grid for that race, once ``postQuali`` covers it but
+       data/starting_grids.json doesn't. Never with ``jolpica_only``: only OpenF1
+       can end that watch.
+    4. The oldest round OpenF1 filled that Jolpica hasn't confirmed yet.
+
+    Nothing pending means return at once, holding no runner.
     """
     asof = podigami.get("asOf") or {}
     if is_update_due(schedule, asof, now):
         season, rnd = latest_armed_round(schedule, now)  # not None when due
         return ("race", season, rnd)
-    quali = next_quali_target(schedule, asof, podigami.get("postQuali"), now)
+    post_quali = podigami.get("postQuali")
+    quali = next_quali_target(schedule, asof, post_quali, now)
     if quali is not None:
         return ("qualifying", quali[0], quali[1])
+    grid = None if jolpica_only else next_grid_target(schedule, asof, post_quali, grids, now)
+    if grid is not None:
+        return ("grid", grid[0], grid[1])
     for e in unconfirmed:
         try:
             return (f"confirm-{e['kind']}", int(e["season"]), int(e["round"]))
@@ -198,9 +239,14 @@ def wait_target(
     return None
 
 
+def _scheduled_race(schedule: dict, rnd: int) -> dict | None:
+    """The schedule.json entry for round ``rnd``, or None."""
+    return next((r for r in schedule.get("races", []) if str(r.get("round")) == str(rnd)), None)
+
+
 def _openf1_ready(kind: str, schedule: dict, season: int, rnd: int) -> bool:
     """Would fetch_openf1 write this session right now?"""
-    race = next((r for r in schedule.get("races", []) if str(r.get("round")) == str(rnd)), None)
+    race = _scheduled_race(schedule, rnd)
     if race is None:
         return False
     try:
@@ -217,6 +263,26 @@ def _openf1_ready(kind: str, schedule: dict, season: int, rnd: int) -> bool:
         return False
 
 
+def _grid_ready(schedule: dict, season: int, rnd: int, grids: Sequence[dict]) -> bool:
+    """Does OpenF1 have an official starting grid for this round that data/ lacks?"""
+    race = _scheduled_race(schedule, rnd)
+    if race is None:
+        return False
+    try:
+        # Imported lazily, inside this try, like _openf1_ready's fast-lane modules:
+        # a grid surprise must never take the results watch down.
+        from fetch import fetch_starting_grid
+
+        current = json.loads((DATA_DIR / "current_drivers.json").read_text(encoding="utf-8"))
+        fresh = fetch_starting_grid.fresh_grid(
+            race, str(season), current.get("drivers", []), list(grids)
+        )
+        return fresh is not None
+    except Exception as exc:  # noqa: BLE001 - an OpenF1 surprise must never break the watch
+        print(f"  OpenF1 starting-grid check failed ({exc!r}); treating it as unchanged")
+        return False
+
+
 def choose_source(
     kind: str,
     published_round: int | None,
@@ -224,30 +290,67 @@ def choose_source(
     openf1_ready: Callable[[], bool],
     *,
     jolpica_only: bool,
+    grid_ready: Callable[[], bool] | None = None,
+    before_start: bool = False,
 ) -> str | None:
-    """Which source, if any, ends this watch: "jolpica", "openf1" or None.
+    """Which source, if any, ends this watch: "jolpica", "openf1", "grid" or None.
 
     Jolpica always wins. OpenF1 ends only a watch for a pending race or
     qualifying session — never a confirmation watch, which exists to wait for
     Jolpica — and never when ``jolpica_only`` is set. update.yml sets that when an
     earlier data PR is still unmerged after the in-flight wait: this checkout may
     then lack that fast result, and a second fast pipeline would re-push the same
-    rows and restart the PR's checks, over and over. ``openf1_ready`` is called
-    only when OpenF1 could actually end the watch (it makes network requests).
+    rows and restart the PR's checks, over and over.
+
+    "grid" means OpenF1 has an official starting grid that data/ lacks. It alone
+    ends a grid watch, and it also ends a race watch while ``before_start``, so a
+    grid revised on race morning reaches the prediction before the lights go out.
+    ``jolpica_only`` disables both, for the same loop reason. ``openf1_ready`` and
+    ``grid_ready`` are called only when they could actually end the watch (they
+    make network requests).
     """
+    if kind == "grid":
+        return "grid" if not jolpica_only and grid_ready is not None and grid_ready() else None
     if published_round is not None and published_round >= rnd:
         return "jolpica"
     if kind in ("race", "qualifying") and not jolpica_only and openf1_ready():
         return "openf1"
+    if (
+        kind == "race"
+        and before_start
+        and not jolpica_only
+        and grid_ready is not None
+        and grid_ready()
+    ):
+        return "grid"
     return None
+
+
+def watch_budget(kind: str, schedule: dict, rnd: int, now: datetime, timeout_s: float) -> float:
+    """How long this watch may hold the runner, in seconds.
+
+    A grid watch hands the runner back by the time the race's own window opens
+    (``ARM_BEFORE`` its start). The race watch re-checks the grid from then on, so
+    a grid watch can never delay the results watch. Every other watch gets
+    ``timeout_s``.
+    """
+    if kind != "grid":
+        return timeout_s
+    race = _scheduled_race(schedule, rnd)
+    start = session_start(race.get("date") or "", race.get("time") or "") if race else None
+    if start is None:
+        return timeout_s
+    return max(0.0, min(timeout_s, (start - ARM_BEFORE - now).total_seconds()))
 
 
 def report(published: str) -> None:
     """Tell update.yml what happened: "true" if the round was seen upstream,
     "false" if the watch timed out, "none" if nothing was pending to wait for, or
     "fast" if OpenF1 has the session and the stewards are clear — update.yml runs
-    the pipeline and then hands over to a confirmation run. Only "false" lets
-    update.yml hand over to a successor run."""
+    the pipeline and then hands over to a confirmation run. "grid" if OpenF1 has
+    an official starting grid the data lacks — update.yml runs the pipeline, then
+    hands over if a session is still pending. Only "false" lets update.yml hand
+    over to a successor run before the pipeline."""
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
         with open(out, "a", encoding="utf-8") as fh:
@@ -263,9 +366,10 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
     podigami = json.loads((DATA_DIR / "podigami.json").read_text(encoding="utf-8"))
     unconfirmed = read_unconfirmed(DATA_DIR)
+    grids = read_grids(DATA_DIR)
     jolpica_only = os.environ.get("JOLPICA_ONLY") == "true"
 
-    target = wait_target(schedule, podigami, datetime.now(UTC), unconfirmed)
+    target = wait_target(schedule, podigami, datetime.now(UTC), unconfirmed, grids, jolpica_only)
     if target is None:
         print("Nothing pending upstream; nothing to wait for.")
         report("none")
@@ -275,19 +379,27 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
     races_feed = kind in ("race", "confirm-race")
     if jolpica_only:
         print("An earlier data PR is still open: waiting on Jolpica only.")
+    race = _scheduled_race(schedule, rnd)
+    start = session_start(race.get("date") or "", race.get("time") or "") if race else None
 
     def ready() -> str | None:
-        feed = _fetch_last_results(season) if races_feed else _fetch_last_qualifying(season)
+        published = None
+        if kind != "grid":  # a grid watch waits on OpenF1 alone
+            feed = _fetch_last_results(season) if races_feed else _fetch_last_qualifying(season)
+            published = latest_published_round(feed)
         return choose_source(
             kind,
-            latest_published_round(feed),
+            published,
             rnd,
             lambda: _openf1_ready(kind, schedule, season, rnd),
             jolpica_only=jolpica_only,
+            grid_ready=lambda: _grid_ready(schedule, season, rnd, grids),
+            before_start=start is not None and datetime.now(UTC) < start,
         )
 
+    budget = watch_budget(kind, schedule, rnd, datetime.now(UTC), args.timeout)
     print(f"Waiting for {season} round {rnd} ({kind}) upstream...")
-    source = wait_until(ready, timeout_s=args.timeout, interval_s=args.interval)
+    source = wait_until(ready, timeout_s=budget, interval_s=args.interval)
     stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ")
     if source == "jolpica":
         print(f"Jolpica has round {rnd} ({kind}) at {stamp}; running the pipeline.")
@@ -295,6 +407,12 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
     elif source == "openf1":
         print(f"OpenF1 has round {rnd} ({kind}), stewards clear, at {stamp}; fast lane.")
         report("fast")  # update.yml runs the pipeline, then hands over for confirmation
+    elif source == "grid":
+        print(
+            f"OpenF1 has a new official starting grid for round {rnd} at {stamp}; "
+            "running the pipeline."
+        )
+        report("grid")  # update.yml runs the pipeline, then hands over if anything is pending
     else:
         print(f"Round {rnd} ({kind}) still unpublished after the budget.")
         report("false")
