@@ -7,6 +7,6 @@
 # only in a deliberate PR that carries whatever `ruff format` now wants.
 # 0.16 added Markdown to ruff's default `include`; pyproject excludes `*.md`
 # so docs/ snippets stay as written (#332).
-ruff>=0.16.9,<0.17
+ruff>=0.16.10,<0.17
 pytest-cov>=7.1.0
 pip-audit>=2.10.1
