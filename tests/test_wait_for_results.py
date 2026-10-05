@@ -454,7 +454,82 @@ def test_wait_target_confirms_a_pending_qualifying_round():
 
 # --- the official starting grid ------------------------------------------------------
 
-from wait_for_results import watch_budget  # noqa: E402
+from datetime import timedelta  # noqa: E402
+
+from check_update_due import is_successor_due  # noqa: E402
+from wait_for_results import watch_budget, window_wait  # noqa: E402
+
+ASOF_13 = {"season": "2026", "round": "13"}
+POST_QUALI_14 = {"season": "2026", "round": "14"}
+
+
+def test_a_grid_watch_cut_short_by_the_race_window_waits_into_it():
+    """wait_until stops up to one poll early. Without waiting out those last seconds,
+    the successor check runs before the race is armed, and no race watch follows."""
+    five_hours = 5 * 3600
+    window = at("2026-09-13 10:00")  # R14 starts 13:00
+    budget = watch_budget("grid", SCHEDULE, 14, at("2026-09-13 08:00"), five_hours)
+    ended = window - timedelta(seconds=120)
+    wait = window_wait("grid", SCHEDULE, 14, ended, budget, five_hours)
+    assert wait == 121
+    # The grid's own successor window (quali start + 12 h) closed overnight...
+    assert is_successor_due(SCHEDULE, ASOF_13, POST_QUALI_14, ended) is False
+    # ...so it is waiting into the race window that lets the hand-over start the race watch.
+    assert is_successor_due(SCHEDULE, ASOF_13, POST_QUALI_14, ended + timedelta(seconds=wait))
+
+
+def test_only_a_grid_watch_cut_short_by_the_window_waits():
+    five_hours = 5 * 3600
+    ended = at("2026-09-13 09:58")
+    assert window_wait("grid", SCHEDULE, 14, ended, five_hours, five_hours) == 0  # full budget
+    assert window_wait("race", SCHEDULE, 14, ended, 100, five_hours) == 0
+    assert window_wait("grid", SCHEDULE, 14, at("2026-09-13 10:05"), 100, five_hours) == 0
+    assert window_wait("grid", SCHEDULE, 99, ended, 100, five_hours) == 0  # not scheduled
+
+
+from wait_for_results import poll  # noqa: E402
+
+R14_START = at("2026-09-13 13:00")
+
+
+def test_a_grid_watch_never_reads_the_jolpica_feed():
+    read = []
+    source = poll(
+        "grid",
+        14,
+        fetch_feed=lambda: read.append(1),
+        openf1_ready=lambda: False,
+        grid_ready=lambda: True,
+        jolpica_only=False,
+        start=R14_START,
+        now=lambda: at("2026-09-12 18:00"),
+    )
+    assert source == "grid"
+    assert read == []
+
+
+def test_a_race_watch_asks_about_the_grid_only_before_the_start():
+    asked = []
+
+    def grid_ready():
+        asked.append(1)
+        return True
+
+    def race_poll(now):
+        return poll(
+            "race",
+            14,
+            fetch_feed=lambda: payload("13"),
+            openf1_ready=lambda: False,
+            grid_ready=grid_ready,
+            jolpica_only=False,
+            start=R14_START,
+            now=lambda: now,
+        )
+
+    assert race_poll(at("2026-09-13 12:59")) == "grid"
+    assert race_poll(R14_START) is None  # lights out: never even asked
+    assert asked == [1]
 
 
 def test_a_grid_watch_ends_only_on_a_new_grid():

@@ -343,6 +343,57 @@ def watch_budget(kind: str, schedule: dict, rnd: int, now: datetime, timeout_s: 
     return max(0.0, min(timeout_s, (start - ARM_BEFORE - now).total_seconds()))
 
 
+def window_wait(
+    kind: str, schedule: dict, rnd: int, now: datetime, budget: float, timeout_s: float
+) -> float:
+    """Seconds a grid watch that ran out of budget should still wait before reporting.
+
+    :func:`watch_budget` cuts a grid watch short at the race window, but
+    :func:`wait_until` stops up to one poll before its deadline. The watch therefore
+    ends just before the window opens, when update.yml's successor check doesn't
+    see the race armed yet (and the grid's own successor window closed overnight),
+    so no race watch would follow. Waiting out those last seconds, plus one, lets
+    the hand-over start the race watch, which re-checks the grid until the start.
+    Zero for every other watch, and for a grid watch that used its full budget.
+    """
+    if kind != "grid" or budget >= timeout_s:
+        return 0.0
+    race = _scheduled_race(schedule, rnd)
+    start = session_start(race.get("date") or "", race.get("time") or "") if race else None
+    if start is None:
+        return 0.0
+    return max(0.0, (start - ARM_BEFORE - now).total_seconds() + 1.0)
+
+
+def poll(
+    kind: str,
+    rnd: int,
+    *,
+    fetch_feed: Callable[[], object | None],
+    openf1_ready: Callable[[], bool],
+    grid_ready: Callable[[], bool],
+    jolpica_only: bool,
+    start: datetime | None,
+    now: Callable[[], datetime],
+) -> str | None:
+    """One look upstream: which source, if any, ends this watch.
+
+    A grid watch waits on OpenF1 alone, so it never reads the Jolpica feed. A race
+    watch also asks about the grid while the race hasn't started (``start``), so a
+    grid revised on race morning ends it. After the start it never asks.
+    """
+    published = None if kind == "grid" else latest_published_round(fetch_feed())
+    return choose_source(
+        kind,
+        published,
+        rnd,
+        openf1_ready,
+        jolpica_only=jolpica_only,
+        grid_ready=grid_ready,
+        before_start=start is not None and now() < start,
+    )
+
+
 def report(published: str) -> None:
     """Tell update.yml what happened: "true" if the round was seen upstream,
     "false" if the watch timed out, "none" if nothing was pending to wait for, or
@@ -383,23 +434,27 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
     start = session_start(race.get("date") or "", race.get("time") or "") if race else None
 
     def ready() -> str | None:
-        published = None
-        if kind != "grid":  # a grid watch waits on OpenF1 alone
-            feed = _fetch_last_results(season) if races_feed else _fetch_last_qualifying(season)
-            published = latest_published_round(feed)
-        return choose_source(
+        return poll(
             kind,
-            published,
             rnd,
-            lambda: _openf1_ready(kind, schedule, season, rnd),
-            jolpica_only=jolpica_only,
+            fetch_feed=lambda: (
+                _fetch_last_results(season) if races_feed else _fetch_last_qualifying(season)
+            ),
+            openf1_ready=lambda: _openf1_ready(kind, schedule, season, rnd),
             grid_ready=lambda: _grid_ready(schedule, season, rnd, grids),
-            before_start=start is not None and datetime.now(UTC) < start,
+            jolpica_only=jolpica_only,
+            start=start,
+            now=lambda: datetime.now(UTC),
         )
 
     budget = watch_budget(kind, schedule, rnd, datetime.now(UTC), args.timeout)
     print(f"Waiting for {season} round {rnd} ({kind}) upstream...")
     source = wait_until(ready, timeout_s=budget, interval_s=args.interval)
+    if source is None:
+        settle = window_wait(kind, schedule, rnd, datetime.now(UTC), budget, args.timeout)
+        if settle:
+            print(f"The race window opens in {settle:.0f}s; the race watch takes over from there.")
+            time.sleep(settle)
     stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ")
     if source == "jolpica":
         print(f"Jolpica has round {rnd} ({kind}) at {stamp}; running the pipeline.")
