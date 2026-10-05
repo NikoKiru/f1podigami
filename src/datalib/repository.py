@@ -35,6 +35,7 @@ from .schemas import (
     RetirementRace,
     Schedule,
     Soulmates,
+    StartingGridRace,
     UnconfirmedRound,
     Unlikeliest,
 )
@@ -59,6 +60,7 @@ REGISTRY: dict[str, TypeAdapter] = {
     "qualifying.json": TypeAdapter(list[QualifyingEntry]),
     "grid_penalties.json": TypeAdapter(list[GridPenaltyRace]),
     "retirements.json": TypeAdapter(list[RetirementRace]),
+    "starting_grids.json": TypeAdapter(list[StartingGridRace]),
     "unconfirmed.json": TypeAdapter(list[UnconfirmedRound]),
 }
 
@@ -225,3 +227,11 @@ def load_unconfirmed() -> list[UnconfirmedRound]:
 
 def save_unconfirmed(data: Any) -> None:
     _save("unconfirmed.json", data)
+
+
+def load_starting_grids() -> list[StartingGridRace]:
+    return _load("starting_grids.json")
+
+
+def save_starting_grids(data: Any) -> None:
+    _save("starting_grids.json", data)
