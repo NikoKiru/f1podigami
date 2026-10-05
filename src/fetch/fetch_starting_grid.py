@@ -184,6 +184,8 @@ def main(argv: list[str] | None = None, client=openf1) -> int:
         print("Official starting grid: skipped (an earlier data PR is still open).")
         return 0
     now = datetime.fromisoformat(args.now) if args.now else datetime.now(UTC)
+    if now.tzinfo is None:  # a rehearsal --now without an offset means UTC
+        now = now.replace(tzinfo=UTC)
 
     schedule = load_schedule().model_dump()
     race = target_race(schedule, [p.model_dump() for p in load_podiums()], now)

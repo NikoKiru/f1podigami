@@ -363,6 +363,8 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
     unconfirmed = read_unconfirmed(DATA_DIR)
     grids = read_grids(DATA_DIR)
     now = datetime.fromisoformat(args.now) if args.now else datetime.now(UTC)
+    if now.tzinfo is None:  # a rehearsal --now without an offset means UTC
+        now = now.replace(tzinfo=UTC)
 
     if args.fail_on_stale:
         stale = stale_unconfirmed(unconfirmed, now)

@@ -28,8 +28,8 @@ Evidence (research of 2026-10-05, all 16 rounds of 2026):
 
 - The post-quali prediction uses F1's official starting grid automatically, within minutes
   of OpenF1 publishing it, both on Saturday evening and when it is revised on race morning.
-- Drivers with no qualifying time are part of the simulated field; a qualifier who will not
-  start is not.
+- Drivers with no qualifying time are part of the simulated field. (F1 keeps a car that
+  won't start on its grid, so `retirements.json` remains the way to take one out.)
 - No manual step on a normal weekend. `grid_penalties.json` keeps working as the fallback
   until the official grid exists.
 - Keep every existing property: fail closed, deterministic compute, byte-identical
@@ -48,7 +48,7 @@ Evidence (research of 2026-10-05, all 16 rounds of 2026):
 ## Decisions (user-approved)
 
 1. **Scope: Saturday and Sunday.** The official grid is picked up after qualifying, and the
-   race-day watch also re-checks it until the start.
+   race-day watch also re-checks it until the start while it holds the runner.
 2. **Source: OpenF1 `starting_grid`.** Not F1.com.
 3. **The official grid wins.** For its round it replaces `grid_penalties.json`. The manual
    file stays as the fallback before the grid is published (e.g. power-unit penalties
@@ -105,9 +105,11 @@ positions to be exactly 1..N and driver IDs to be unique. It is registered in
   **single comparison** used by both the fetcher and the watcher, so they can never
   disagree about whether something changed.
 - **`main()`** honours `JOLPICA_ONLY` (skips, like the fast lane) and `--now`
-  (rehearsals). It replaces or appends the round's entry, validates the payload, saves
-  it, and prints which drivers start somewhere other than their qualifying position.
-  Any exception is printed and leaves the file untouched (exit 0).
+  (rehearsals; a value without an offset means UTC). It replaces or appends the round's
+  entry, validates the payload, saves it, and prints which drivers start behind their
+  qualifying position. An OpenF1 surprise (any exception while building or validating
+  the grid) is printed and leaves the file untouched (exit 0). A corrupt local dataset,
+  or a failed save, still fails loudly, since those are outside that guard on purpose.
 - **`update.py`** runs it after "Fetching constructor standings" (so `current_drivers.json`
   and `schedule.json` are fresh) and before "Computing podigami".
 
@@ -149,18 +151,28 @@ comment is updated to name both sources.
 - `grid_ready` wraps `fetch_starting_grid.fresh_grid`. It is imported lazily and any
   exception reads as "not ready" (the same pattern as `_openf1_ready`).
 - A grid watch's budget is `min(POLL_TIMEOUT_S, race start − ARM_BEFORE − now)`, so it
-  can never hold the runner into the race window.
+  can never hold the runner into the race window. `wait_until` stops up to one poll
+  before its deadline, so a capped watch then waits into the window (`window_wait`).
+  Only from there does the successor check see the race armed and start the race watch.
+  The grid's own successor window has usually closed overnight by then.
+- `poll()` holds the per-poll logic, with an injectable clock: a grid watch never reads
+  the Jolpica feed, and a race watch asks about the grid only before the start.
 - Outcome `grid` reports `published=grid` and logs
   `OpenF1 has a new official starting grid for round N at <UTC>`. That line is the
   timing measurement.
 
 **Workflow (`update.yml`).**
 - `published=grid` already passes the pipeline gate (`!= 'none'`).
-- After the tests, two new steps mirror the fast lane's confirmation hand-over: `id:
-  regrid` runs `check_update_due.py --successor` when `published == 'grid'`, and
-  "Hand over after a grid update" dispatches `update.yml -f mode=auto -f wait=true`.
+- After the tests, two new steps: `id: regrid` runs `check_update_due.py --successor`
+  when `published == 'grid'` and the pipeline succeeded, and "Hand over after a grid
+  update" dispatches `update.yml -f mode=auto -f wait=true`. Unlike the fast lane's
+  confirmation hand-over, both run under `!cancelled()`. A grid ending gave up the
+  results watch, so a later red step (a PR push error, a failed test, or
+  `--fail-on-stale` during a Jolpica outage) must not drop it.
+  `tests/test_update_workflow.py` pins these conditions.
 - On race day the successor's in-flight wait sees the grid PR merge (median 1.3 min), and
-  its race watch then finds no change.
+  its race watch then finds no change. If the PR is still open after 15 min, that
+  successor runs `JOLPICA_ONLY`, so its results watch goes without the OpenF1 fast lane.
 
 **Loop and stall analysis.**
 - The fetcher and the watcher share `fresh_grid`, so the watcher only fires on something
@@ -168,7 +180,12 @@ comment is updated to name both sources.
 - A transient OpenF1 failure inside the pipeline costs one extra iteration, at most until
   the start.
 - `JOLPICA_ONLY` (an earlier data PR still open) disables every grid check and write.
-- A failed pipeline ends red and alerts, like the fast lane, so it doesn't hand over.
+- A failed pipeline ends red and alerts, and doesn't hand over. If the pipeline succeeds
+  but a later step fails, it still hands over. A red PR left open makes the successor
+  `JOLPICA_ONLY`, and a missing PR is re-detected, which ends at the start (Sunday) or at
+  qualifying start + 12 h (Saturday).
+- A grid watch outranks a qualifying confirmation watch. Jolpica's qualifying
+  confirmation then lands with that run's pipeline or the next one.
 - **Develop-window safety:** main's current watcher never reports `grid`, so the new
   steps are inert until the scripts are promoted.
 
@@ -194,8 +211,8 @@ race window, so a grid that never appears can't keep runs firing.
   It also covers target selection (before qualifying, after the start, race already
   classified), and write/replace/no-change handling (byte-identical).
 - **`test_compute_podigami.py`.** The official grid overrides penalties; a driver with no
-  lap time joins the field; a non-starter leaves it; another round's entry is ignored;
-  retirements still apply; the output is deterministic and schema-valid.
+  lap time joins the field; the field is exactly the grid's cars; another round's entry is
+  ignored; retirements still apply; the output is deterministic and schema-valid.
 - **`test_check_update_due.py` / `test_wait_for_results.py`.** Cover:
   - when the grid trigger is due and not due, and where it is bounded;
   - successor windows;
@@ -224,6 +241,11 @@ race window, so a grid that never appears can't keep runs firing.
   back to today's behaviour. The logs show it, and the manual file still works.
 - A Sunday change costs one pipeline run (~20 min) and a hand-over inside the race watch.
   That is well before results arrive (OpenF1 needs at least 30 min after the flag).
+- Race-morning revisions are caught only while a race watch holds the runner. If no run is
+  in place, for example because the grid was captured on Saturday and nothing was pending
+  overnight, the re-check starts when a scheduled run lands in the race window.
+- A substitute who wasn't in qualifying makes the official grid fail closed. That race
+  keeps qualifying plus penalties.
 - If OpenF1 ever served a pre-penalty grid, it would win over manual penalties. This is
   unlikely: F1.com shows "No results available" until the FIA grid exists, and OpenF1
   mirrors F1.com.

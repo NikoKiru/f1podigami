@@ -317,8 +317,9 @@ def _post_quali_block(
 
     Entrants are the qualifying participants, with the constructor each qualified
     for (handles seat swaps/substitutes). Once F1 has published the official
-    starting grid (``starting_grids``), the entrants are exactly that grid's cars:
-    a driver with no lap time is added, and a qualifier who won't start leaves.
+    starting grid (``starting_grids``), the entrants are exactly that grid's cars,
+    so a driver with no lap time is added. F1 keeps a car that won't start on its
+    grid, so ``retirements`` is still how to take one out of the field.
     Two effects on top of the already-advanced filter state in ``v2["hf"]``: the
     quali order through the standard rating channel, then grid_offsets folded into
     the means. Seeded with the backtest convention so the output is a
@@ -369,8 +370,8 @@ def _post_quali_block(
     disp = hf.circuits.disp_ratio(circuit) if circuit else 1.0
 
     # Actual starting slots. F1's official grid once it is published: penalties
-    # applied, drivers without a lap time on it, a non-starter off it. Until then,
-    # the quali classification adjusted for the hand-entered grid penalties.
+    # applied, drivers without a lap time on it. Until then, the quali
+    # classification adjusted for the hand-entered grid penalties.
     official = next(
         (e["grid"] for e in (starting_grids or []) if e["season"] == season and e["round"] == rnd),
         None,

@@ -422,6 +422,17 @@ def test_main_due_true_from_a_missing_official_grid_alone(tmp_path, monkeypatch)
     assert out.read_text(encoding="utf-8").splitlines() == ["due=true"]
 
 
+def test_main_reads_a_now_without_a_timezone_as_utc(tmp_path, monkeypatch):
+    _write_saturday_evening(tmp_path)
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    cud.main(["--now", "2026-07-18T18:00:00"])
+
+    assert out.read_text(encoding="utf-8").splitlines() == ["due=true"]
+
+
 def test_main_quiet_once_the_official_grid_is_in(tmp_path, monkeypatch):
     _write_saturday_evening(tmp_path)
     (tmp_path / "starting_grids.json").write_text(json.dumps(GRID_R10), encoding="utf-8")

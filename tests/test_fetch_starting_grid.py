@@ -278,6 +278,26 @@ def test_main_rewrites_nothing_when_the_grid_is_unchanged(monza_saturday, capsys
     assert "nothing new" in capsys.readouterr().out
 
 
+def test_main_replaces_a_revised_grid(monza_saturday, capsys):
+    """Race morning: the committed Saturday grid is replaced, not kept beside the new one."""
+    fsg.main(SATURDAY_EVENING, client=FakeClient())
+    path = monza_saturday / "starting_grids.json"
+    saturday = json.loads(path.read_text(encoding="utf-8"))
+    first, second = saturday[0]["grid"][0], saturday[0]["grid"][1]
+    first["driverId"], second["driverId"] = second["driverId"], first["driverId"]
+    path.write_text(json.dumps(saturday), encoding="utf-8")
+
+    assert fsg.main(SATURDAY_EVENING, client=FakeClient()) == 0
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert written == [fsg.build_grid(RACES["13"], "2026", CURRENT, FakeClient())]
+    assert "22 cars written" in capsys.readouterr().out
+
+
+def test_main_reads_a_now_without_a_timezone_as_utc(monza_saturday):
+    assert fsg.main(["--now", "2026-09-05T20:00:00"], client=FakeClient()) == 0
+    assert (monza_saturday / "starting_grids.json").exists()
+
+
 def test_main_is_skipped_while_an_earlier_data_pr_is_open(monza_saturday, monkeypatch):
     monkeypatch.setenv("JOLPICA_ONLY", "true")
     assert fsg.main(SATURDAY_EVENING, client=FakeClient()) == 0

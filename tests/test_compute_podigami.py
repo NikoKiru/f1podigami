@@ -1091,7 +1091,9 @@ def test_official_grid_adds_a_driver_without_a_lap_time(scenario_post_quali):
     assert form["zed_zephyr"]["constructorStrength"] == pytest.approx(1.0)
 
 
-def test_official_grid_leaves_out_a_qualifier_who_will_not_start(scenario_post_quali):
+def test_the_field_is_exactly_the_official_grid(scenario_post_quali):
+    """A qualifier the official grid doesn't list isn't simulated. (The fetcher only
+    writes a grid of exactly the qualifying field, so this guards compute itself.)"""
     podiums, combos, grid, con, rres, quali = scenario_post_quali
     official = _official(2025, 6, ["eli", "alf", "bob", "cas"], con["driverConstructor"])
     res = cp.compute(podiums, combos, grid, starting_grids=official, **_kw(con, rres, quali))
