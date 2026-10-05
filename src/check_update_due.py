@@ -2,7 +2,7 @@
 
 The scheduled poll runs this first: it reads the committed schedule and the latest
 race already reflected in the data, and reports whether an update should run. Only
-then does the workflow run the full (network) update. Three independent triggers
+then does the workflow run the full (network) update. Four independent triggers
 feed a single ``due`` output:
 
 - :func:`is_update_due` — the newest race whose watch window is open (it opens
@@ -10,6 +10,9 @@ feed a single ``due`` output:
 - :func:`is_post_quali_update_due` — the next race's qualifying window is open
   but ``podigami.json``'s ``postQuali`` block doesn't cover that round yet
   (fail-safe, so any missing/garbage input just stays quiet).
+- :func:`next_grid_target` — ``postQuali`` covers the next race, but F1's official
+  starting grid for it isn't in ``data/starting_grids.json`` yet. Due only until
+  that race's own window opens; the race watch re-checks the grid from then on.
 - :func:`is_confirmation_due` — a round OpenF1 filled (``data/unconfirmed.json``)
   is still waiting on Jolpica to confirm it.
 
@@ -19,13 +22,14 @@ A run that lands in the window holds its runner in ``wait_for_results.py`` and
 acts only once the data is actually published.
 
 All take loaded dicts (no IO) so they are trivially unit-testable; :func:`main`
-loads the data, ORs the three triggers, and writes ``due=true|false`` to
+loads the data, ORs the four triggers, and writes ``due=true|false`` to
 ``$GITHUB_OUTPUT``. ``--successor`` instead reports whether a session is still
 pending inside ``SUCCESSOR_WINDOW`` — update.yml's cue to dispatch the next run
 itself rather than wait for the scheduler. ``--fail-on-stale`` reports neither: it
 exits 1 (and prints an ``::error::`` line the run's own logs surface, tripping the
 existing auto-update-failure alert) when a round has sat unconfirmed for longer
-than :data:`STALE_UNCONFIRMED`, and exits 0 otherwise.
+than :data:`STALE_UNCONFIRMED`, and exits 0 otherwise. ``--now`` overrides the
+clock for rehearsals.
 """
 
 from __future__ import annotations
@@ -198,14 +202,61 @@ def is_post_quali_update_due(
     return next_quali_target(schedule, asof, post_quali, now) is not None
 
 
-def read_unconfirmed(data_dir: Path = DATA_DIR) -> list[dict]:
-    """data/unconfirmed.json as plain dicts; [] when absent or unreadable."""
-    path = data_dir / "unconfirmed.json"
+def next_grid_target(
+    schedule: dict,
+    asof: dict,
+    post_quali: dict | None,
+    grids: Sequence[dict],
+    now: datetime,
+) -> tuple[int, int] | None:
+    """The ``(season, round)`` still waiting for F1's official starting grid, or None.
+
+    Due once ``postQuali`` covers the next race (its qualifying is in) while
+    data/starting_grids.json has no grid for it. F1 publishes the grid a few hours
+    after qualifying. Due only until that race's own window opens (``ARM_BEFORE``
+    its start), because from then on the race watch re-checks the grid itself
+    until the lights go out. Fail-safe like :func:`next_quali_target`.
+    """
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        have = (int(asof["season"]), int(asof["round"]))
+        covered = (int(post_quali["season"]), int(post_quali["round"]))  # type: ignore[index]
+    except (KeyError, ValueError, TypeError):
+        return None
+    race = _next_race_entry(schedule, have)
+    if race is None:
+        return None
+    target = (int(schedule["season"]), int(race["round"]))
+    if covered != target:
+        return None
+    start = session_start(race.get("date", ""), race.get("time", ""))
+    if start is None or now >= start - ARM_BEFORE:
+        return None
+    for g in grids:
+        try:
+            if (int(g["season"]), int(g["round"])) == target:
+                return None
+        except (KeyError, ValueError, TypeError):
+            continue
+    return target
+
+
+def _read_list(name: str, data_dir: Path) -> list[dict]:
+    """A committed list dataset as plain dicts; [] when absent or unreadable."""
+    try:
+        data = json.loads((data_dir / name).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return []
     return data if isinstance(data, list) else []
+
+
+def read_unconfirmed(data_dir: Path = DATA_DIR) -> list[dict]:
+    """data/unconfirmed.json as plain dicts; [] when absent or unreadable."""
+    return _read_list("unconfirmed.json", data_dir)
+
+
+def read_grids(data_dir: Path = DATA_DIR) -> list[dict]:
+    """data/starting_grids.json as plain dicts; [] when absent or unreadable."""
+    return _read_list("starting_grids.json", data_dir)
 
 
 def is_confirmation_due(unconfirmed: Sequence[dict]) -> bool:
@@ -236,9 +287,11 @@ def pending_session_starts(
     post_quali: dict | None,
     now: datetime,
     unconfirmed: Sequence[dict] = (),
+    grids: Sequence[dict] = (),
 ) -> list[datetime]:
     """Scheduled starts of the sessions the data still lacks (race and/or qualifying),
-    plus the session end of each round still awaiting Jolpica's confirmation."""
+    plus the qualifying start of a race still waiting for its official grid, and the
+    session end of each round still awaiting Jolpica's confirmation."""
     starts: list[datetime] = []
     race = latest_armed_round(schedule, now)
     if race is not None and race > _have(asof):
@@ -250,6 +303,15 @@ def pending_session_starts(
     quali = next_quali_target(schedule, asof, post_quali, now)
     if quali is not None:
         entry = _race_by_round(schedule, quali[1])
+        if entry:
+            start = session_start(
+                entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
+            )
+            if start:
+                starts.append(start)
+    grid = next_grid_target(schedule, asof, post_quali, grids, now)
+    if grid is not None:
+        entry = _race_by_round(schedule, grid[1])
         if entry:
             start = session_start(
                 entry.get("qualifyingDate") or "", entry.get("qualifyingTime") or ""
@@ -270,11 +332,12 @@ def is_successor_due(
     post_quali: dict | None,
     now: datetime,
     unconfirmed: Sequence[dict] = (),
+    grids: Sequence[dict] = (),
 ) -> bool:
     """True while a session is pending and ``now`` is inside its SUCCESSOR_WINDOW."""
     return any(
         now < start + SUCCESSOR_WINDOW
-        for start in pending_session_starts(schedule, asof, post_quali, now, unconfirmed)
+        for start in pending_session_starts(schedule, asof, post_quali, now, unconfirmed, grids)
     )
 
 
@@ -290,6 +353,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
         action="store_true",
         help="exit 1 when a round stays unconfirmed past STALE_UNCONFIRMED",
     )
+    ap.add_argument("--now", help="ISO-8601 instant to act as 'now' (rehearsals)")
     args = ap.parse_args(argv)
 
     schedule = json.loads((DATA_DIR / "schedule.json").read_text(encoding="utf-8"))
@@ -297,7 +361,8 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
     asof = podigami.get("asOf", {})
     post = podigami.get("postQuali")
     unconfirmed = read_unconfirmed(DATA_DIR)
-    now = datetime.now(UTC)
+    grids = read_grids(DATA_DIR)
+    now = datetime.fromisoformat(args.now) if args.now else datetime.now(UTC)
 
     if args.fail_on_stale:
         stale = stale_unconfirmed(unconfirmed, now)
@@ -307,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
 
     if args.successor:
         key = "successor"
-        value = is_successor_due(schedule, asof, post, now, unconfirmed)
+        value = is_successor_due(schedule, asof, post, now, unconfirmed, grids)
         print(
             f"successor due: {value} (asOf season={asof.get('season')} round={asof.get('round')})"
         )
@@ -315,11 +380,12 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
         key = "due"
         race_due = is_update_due(schedule, asof, now)
         quali_due = is_post_quali_update_due(schedule, asof, post, now)
+        grid_due = next_grid_target(schedule, asof, post, grids, now) is not None
         confirm_due = is_confirmation_due(unconfirmed)
-        value = race_due or quali_due or confirm_due
+        value = race_due or quali_due or grid_due or confirm_due
         print(
-            f"update due: {value} (race={race_due} quali={quali_due} confirm={confirm_due} "
-            f"asOf season={asof.get('season')} round={asof.get('round')})"
+            f"update due: {value} (race={race_due} quali={quali_due} grid={grid_due} "
+            f"confirm={confirm_due} asOf season={asof.get('season')} round={asof.get('round')})"
         )
 
     out = os.environ.get("GITHUB_OUTPUT")
