@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-10-10
+
+### Improvements
+- Starting grid for the 2026 Singapore GP (round 17) entered by hand ahead of F1's official grid: Russell drops 40 places for power-unit elements (P6 → P21) and Hadjar, who set no qualifying time, starts P22. The post-qualifying prediction uses it, and F1's own grid replaces it once published (#357)
+
 ## 2026-10-05
 
 ### Features
