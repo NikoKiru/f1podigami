@@ -347,3 +347,99 @@ def test_main_fail_on_stale_returns_1_with_a_stale_round(tmp_path, monkeypatch):
     (tmp_path / "unconfirmed.json").write_text(json.dumps([stale]), encoding="utf-8")
     monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
     assert cud.main(["--fail-on-stale"]) == 1
+
+
+# --- official starting grid -------------------------------------------------------
+
+from check_update_due import next_grid_target  # noqa: E402
+
+GRID_R10 = [{"season": "2026", "round": "10", "grid": []}]
+
+
+def test_grid_due_once_post_quali_covers_the_round():
+    assert next_grid_target(qsched(R10), ASOF_R9, PQ_R10, [], at("2026-07-18 16:00")) == (2026, 10)
+
+
+def test_grid_not_due_once_the_official_grid_is_in():
+    assert next_grid_target(qsched(R10), ASOF_R9, PQ_R10, GRID_R10, at("2026-07-18 16:00")) is None
+
+
+def test_grid_not_due_before_post_quali_covers_the_round():
+    """Qualifying itself is still pending: that is the quali trigger's job."""
+    assert next_grid_target(qsched(R10), ASOF_R9, None, [], at("2026-07-18 16:00")) is None
+    stale = {"season": "2026", "round": "9", "raceName": "R9"}
+    assert next_grid_target(qsched(R10), ASOF_R9, stale, [], at("2026-07-18 16:00")) is None
+
+
+def test_grid_trigger_hands_over_to_the_race_window():
+    # The race starts 13:00 Sunday; from 10:00 the race watch re-checks the grid itself.
+    assert next_grid_target(qsched(R10), ASOF_R9, PQ_R10, [], at("2026-07-19 09:59")) == (2026, 10)
+    assert next_grid_target(qsched(R10), ASOF_R9, PQ_R10, [], at("2026-07-19 10:00")) is None
+
+
+def test_grid_trigger_is_fail_safe():
+    assert next_grid_target(qsched(R10), {}, PQ_R10, [], at("2026-07-18 16:00")) is None
+    garbage = [{"season": "x", "round": "10"}, {"nope": 1}]
+    assert next_grid_target(qsched(R10), ASOF_R9, PQ_R10, garbage, at("2026-07-18 16:00")) == (
+        2026,
+        10,
+    )
+    bad_time = qsched(("10", "2026-07-19", "not-a-time", "2026-07-18", "14:00:00Z"))
+    assert next_grid_target(bad_time, ASOF_R9, PQ_R10, [], at("2026-07-18 16:00")) is None
+
+
+def test_pending_starts_include_a_missing_official_grid():
+    # Saturday evening, quali covered, no grid yet: pending since the quali start.
+    now = at("2026-07-18 18:00")
+    assert pending_session_starts(qsched(R10), ASOF_R9, PQ_R10, now) == [at("2026-07-18 14:00")]
+    assert pending_session_starts(qsched(R10), ASOF_R9, PQ_R10, now, (), GRID_R10) == []
+    assert is_successor_due(qsched(R10), ASOF_R9, PQ_R10, now) is True
+
+
+def test_read_grids_is_fail_safe(tmp_path):
+    assert cud.read_grids(tmp_path) == []
+    (tmp_path / "starting_grids.json").write_text("not json", encoding="utf-8")
+    assert cud.read_grids(tmp_path) == []
+    (tmp_path / "starting_grids.json").write_text(json.dumps(GRID_R10), encoding="utf-8")
+    assert cud.read_grids(tmp_path) == GRID_R10
+
+
+def _write_saturday_evening(data_dir):
+    (data_dir / "schedule.json").write_text(json.dumps(qsched(R10)), encoding="utf-8")
+    (data_dir / "podigami.json").write_text(
+        json.dumps({"asOf": ASOF_R9, "postQuali": PQ_R10}), encoding="utf-8"
+    )
+
+
+def test_main_due_true_from_a_missing_official_grid_alone(tmp_path, monkeypatch):
+    _write_saturday_evening(tmp_path)
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    cud.main(["--now", "2026-07-18T18:00:00+00:00"])
+
+    assert out.read_text(encoding="utf-8").splitlines() == ["due=true"]
+
+
+def test_main_reads_a_now_without_a_timezone_as_utc(tmp_path, monkeypatch):
+    _write_saturday_evening(tmp_path)
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    cud.main(["--now", "2026-07-18T18:00:00"])
+
+    assert out.read_text(encoding="utf-8").splitlines() == ["due=true"]
+
+
+def test_main_quiet_once_the_official_grid_is_in(tmp_path, monkeypatch):
+    _write_saturday_evening(tmp_path)
+    (tmp_path / "starting_grids.json").write_text(json.dumps(GRID_R10), encoding="utf-8")
+    monkeypatch.setattr(cud, "DATA_DIR", tmp_path)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+
+    cud.main(["--now", "2026-07-18T18:00:00+00:00"])
+
+    assert out.read_text(encoding="utf-8").splitlines() == ["due=false"]

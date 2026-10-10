@@ -13,8 +13,8 @@ podium together.
 Inputs : data/podiums.json, data/combos.json, data/current_drivers.json,
          data/constructor_standings.json, data/race_results.json,
          data/qualifying.json, data/schedule.json, data/grid_penalties.json,
-         data/retirements.json
-         (the last five optional)
+         data/retirements.json, data/starting_grids.json
+         (the last six optional)
 Output : data/podigami.json
 """
 
@@ -44,6 +44,7 @@ QUALIFYING_PATH = DATA_DIR / "qualifying.json"
 SCHEDULE_PATH = DATA_DIR / "schedule.json"
 GRID_PENALTIES_PATH = DATA_DIR / "grid_penalties.json"
 RETIREMENTS_PATH = DATA_DIR / "retirements.json"
+STARTING_GRIDS_PATH = DATA_DIR / "starting_grids.json"
 OUT_PATH = DATA_DIR / "podigami.json"
 
 RECENT_WINDOW = 10  # races, for the "recent form" display stat
@@ -310,20 +311,25 @@ def _post_quali_block(
     using_constructors: bool,
     grid_penalties: list[dict] | None = None,
     retirements: list[dict] | None = None,
+    starting_grids: list[dict] | None = None,
 ) -> dict | None:
     """Grid-aware prediction for the next race, or None before its quali exists.
 
-    Entrants are exactly the qualifying participants with the constructor each
-    qualified for (handles seat swaps/substitutes). Two effects on top of the
-    already-advanced filter state in ``v2["hf"]``: the quali order through the
-    standard rating channel, then grid_offsets folded into the means. Seeded
-    with the backtest convention so the output is a deterministic function of
-    its inputs.
+    Entrants are the qualifying participants, with the constructor each qualified
+    for (handles seat swaps/substitutes). Once F1 has published the official
+    starting grid (``starting_grids``), the entrants are exactly that grid's cars,
+    so a driver with no lap time is added. F1 keeps a car that won't start on its
+    grid, so ``retirements`` is still how to take one out of the field.
+    Two effects on top of the already-advanced filter state in ``v2["hf"]``: the
+    quali order through the standard rating channel, then grid_offsets folded into
+    the means. Seeded with the backtest convention so the output is a
+    deterministic function of its inputs.
 
     The quali order feeds the rating channel untouched — a penalised driver
     still demonstrated that pace — but the causal grid term and the displayed
-    ``gridPosition`` use the actual starting slots, i.e. the classification
-    adjusted by any ``grid_penalties`` entry for this season/round.
+    ``gridPosition`` use the actual starting slots: F1's official grid for this
+    season/round when published, else the classification adjusted by any
+    ``grid_penalties`` entry.
 
     A ``retirements`` entry marks cars already out of the *running* race. They
     keep their start slot (the grid offsets stay centred on the grid that
@@ -363,16 +369,27 @@ def _post_quali_block(
     temp = hf.circuits.temp(circuit, params["chaos_eta"]) if circuit else 1.0
     disp = hf.circuits.disp_ratio(circuit) if circuit else 1.0
 
-    # Actual starting slots: quali classification adjusted for grid penalties.
-    pens = next(
-        (
-            e["penalties"]
-            for e in (grid_penalties or [])
-            if e["season"] == season and e["round"] == rnd
-        ),
-        [],
+    # Actual starting slots. F1's official grid once it is published: penalties
+    # applied, drivers without a lap time on it. Until then, the quali
+    # classification adjusted for the hand-entered grid penalties.
+    official = next(
+        (e["grid"] for e in (starting_grids or []) if e["season"] == season and e["round"] == rnd),
+        None,
     )
-    gpos = _apply_grid_penalties(qpos, pens)
+    if official:
+        gpos = {row["driverId"]: row["position"] for row in official}
+        for row in official:
+            qcid.setdefault(row["driverId"], row["constructorId"])
+    else:
+        pens = next(
+            (
+                e["penalties"]
+                for e in (grid_penalties or [])
+                if e["season"] == season and e["round"] == rnd
+            ),
+            [],
+        )
+        gpos = _apply_grid_penalties(qpos, pens)
 
     # Cars already out of the running race: off the entrant list, still on the
     # grid that set the offsets. Unknown driverIds are ignored (a stale or
@@ -382,9 +399,9 @@ def _post_quali_block(
         for e in (retirements or [])
         if e["season"] == season and e["round"] == rnd
         for d in e["driverIds"]
-        if d in qpos
+        if d in gpos
     }
-    running = [d for d in sorted(qpos) if d not in retired]
+    running = [d for d in sorted(gpos) if d not in retired]
     if len(running) < 3:
         return None
 
@@ -450,6 +467,7 @@ def compute(
     schedule: dict | None = None,
     grid_penalties: list[dict] | None = None,
     retirements: list[dict] | None = None,
+    starting_grids: list[dict] | None = None,
 ) -> dict:
     """Pure core: returns the podigami.json payload. No file IO."""
     races = sorted(podiums, key=lambda r: (int(r["season"]), int(r["round"])))
@@ -565,6 +583,7 @@ def compute(
             using_constructors,
             grid_penalties=grid_penalties,
             retirements=retirements,
+            starting_grids=starting_grids,
         )
 
     # Per-season debut trios (podigamis), grouped from combos[].firstRace.
@@ -651,6 +670,9 @@ def main() -> int:
     retirements = None
     if RETIREMENTS_PATH.exists():
         retirements = json.loads(RETIREMENTS_PATH.read_text(encoding="utf-8"))
+    starting_grids = None
+    if STARTING_GRIDS_PATH.exists():
+        starting_grids = json.loads(STARTING_GRIDS_PATH.read_text(encoding="utf-8"))
 
     payload = compute(
         podiums,
@@ -662,6 +684,7 @@ def main() -> int:
         schedule=schedule,
         grid_penalties=grid_penalties,
         retirements=retirements,
+        starting_grids=starting_grids,
     )
     save_podigami(payload)
 

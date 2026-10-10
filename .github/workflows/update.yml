@@ -145,7 +145,8 @@ jobs:
           pip install -r requirements-dev.txt
       # GitHub starts only a handful of scheduled runs a day, so the guard arms 3h
       # before each race and qualifying session and a run that lands in that window
-      # holds its runner here, polling until the session is published (up to 5h).
+      # holds its runner here, polling until the session is published (up to 5h);
+      # between qualifying and the race it also waits for F1's official starting grid.
       # Scheduled runs and successor runs (wait=true) only: a human dispatch should
       # act now, and `full` is a reconciliation, not a session.
       - name: Wait for the pending session to be published upstream
@@ -369,6 +370,35 @@ jobs:
         run: python src/check_update_due.py --successor
       - name: Hand over to a confirmation run
         if: steps.confirm.outputs.successor == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
+      # The watch ended because OpenF1 published F1's official starting grid, or
+      # revised it on race morning, and the pipeline above put it on the site.
+      # Hand over if a session is still pending. On race day that resumes the
+      # results watch this run left to republish the grid. By the successor's
+      # in-flight wait the grid PR has normally merged (data PRs take ~1-2 min),
+      # so its watch finds the grid unchanged and waits for results as usual.
+      #
+      # `!cancelled()`, unlike the fast lane's confirmation hand-over. That one
+      # follows a watch that already had its result. This one gave up the results
+      # watch, so a step that fails after a successful pipeline must not drop it:
+      # a PR push error, a red test, or `--fail-on-stale`, which stays red for a
+      # whole Jolpica outage, exactly when the OpenF1 fast lane matters. A failed
+      # pipeline still doesn't hand over, and neither step can loop for long:
+      # - an open red PR makes the successor JOLPICA_ONLY, which disables every
+      #   grid check (that successor's results watch then runs without the OpenF1
+      #   fast lane; rare, since data PRs merge in ~1-2 min);
+      # - a missing PR is re-detected, and that ends at the race start on Sunday
+      #   and at qualifying start + 12 h on Saturday.
+      # Safe in the develop window: main's older watcher never reports `grid`, so
+      # neither step runs until the scripts are promoted.
+      - name: Check whether a session is still pending after a grid update
+        id: regrid
+        if: ${{ !cancelled() && steps.wait.outputs.published == 'grid' && steps.pipeline.outcome == 'success' }}
+        run: python src/check_update_due.py --successor
+      - name: Hand over after a grid update
+        if: ${{ !cancelled() && steps.regrid.outputs.successor == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" -f mode=auto -f wait=true
