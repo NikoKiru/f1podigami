@@ -19967,5 +19967,22 @@
       "driverId": "hamilton",
       "name": "Lewis Hamilton"
     }
+  },
+  {
+    "season": "2026",
+    "round": "17",
+    "raceName": "Singapore Grand Prix",
+    "p1": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p2": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc"
+    },
+    "p3": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    }
   }
 ]

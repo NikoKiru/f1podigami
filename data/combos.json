@@ -4784,6 +4784,42 @@
   {
     "drivers": [
       "Andrea Kimi Antonelli",
+      "Charles Leclerc",
+      "Max Verstappen"
+    ],
+    "driverIds": [
+      "antonelli",
+      "leclerc",
+      "max_verstappen"
+    ],
+    "count": 2,
+    "lastRace": {
+      "season": "2026",
+      "round": "17",
+      "raceName": "Singapore Grand Prix"
+    },
+    "firstRace": {
+      "season": "2026",
+      "round": "10",
+      "raceName": "Belgian Grand Prix"
+    },
+    "lastRaceKey": 2026017,
+    "races": [
+      {
+        "season": "2026",
+        "round": "10",
+        "raceName": "Belgian Grand Prix"
+      },
+      {
+        "season": "2026",
+        "round": "17",
+        "raceName": "Singapore Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
+      "Andrea Kimi Antonelli",
       "Lewis Hamilton",
       "Max Verstappen"
     ],
@@ -8614,37 +8650,6 @@
         "season": "2026",
         "round": "1",
         "raceName": "Australian Grand Prix"
-      }
-    ]
-  },
-  {
-    "drivers": [
-      "Andrea Kimi Antonelli",
-      "Charles Leclerc",
-      "Max Verstappen"
-    ],
-    "driverIds": [
-      "antonelli",
-      "leclerc",
-      "max_verstappen"
-    ],
-    "count": 1,
-    "lastRace": {
-      "season": "2026",
-      "round": "10",
-      "raceName": "Belgian Grand Prix"
-    },
-    "firstRace": {
-      "season": "2026",
-      "round": "10",
-      "raceName": "Belgian Grand Prix"
-    },
-    "lastRaceKey": 2026010,
-    "races": [
-      {
-        "season": "2026",
-        "round": "10",
-        "raceName": "Belgian Grand Prix"
       }
     ]
   },
