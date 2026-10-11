@@ -5,35 +5,35 @@
     {
       "constructorId": "mercedes",
       "name": "Mercedes",
-      "points": 561.0,
+      "points": 578.0,
       "position": 1,
       "wins": 11
     },
     {
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 418.0,
+      "points": 444.0,
       "position": 2,
       "wins": 2
     },
     {
       "constructorId": "mclaren",
       "name": "McLaren",
-      "points": 317.0,
+      "points": 339.0,
       "position": 3,
       "wins": 2
     },
     {
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 306.0,
+      "points": 332.0,
       "position": 4,
-      "wins": 1
+      "wins": 2
     },
     {
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 94.0,
+      "points": 100.0,
       "position": 5,
       "wins": 0
     },
@@ -54,7 +54,7 @@
     {
       "constructorId": "audi",
       "name": "Audi",
-      "points": 19.0,
+      "points": 23.0,
       "position": 8,
       "wins": 0
     },
@@ -82,26 +82,26 @@
   ],
   "driverConstructor": {
     "max_verstappen": "red_bull",
-    "antonelli": "mercedes",
-    "hamilton": "ferrari",
     "leclerc": "ferrari",
-    "hadjar": "red_bull",
-    "piastri": "mclaren",
-    "lawson": "rb",
-    "alonso": "aston_martin",
+    "antonelli": "mercedes",
     "norris": "mclaren",
-    "arvid_lindblad": "rb",
+    "piastri": "mclaren",
+    "hamilton": "ferrari",
+    "lawson": "rb",
     "hulkenberg": "audi",
-    "stroll": "aston_martin",
-    "colapinto": "alpine",
+    "russell": "mercedes",
+    "hadjar": "red_bull",
+    "gasly": "alpine",
     "bearman": "haas",
     "ocon": "haas",
-    "gasly": "alpine",
     "sainz": "williams",
-    "bortoleto": "audi",
+    "arvid_lindblad": "rb",
+    "alonso": "aston_martin",
     "perez": "cadillac",
-    "russell": "mercedes",
     "albon": "williams",
-    "bottas": "cadillac"
+    "bottas": "cadillac",
+    "stroll": "aston_martin",
+    "colapinto": "alpine",
+    "bortoleto": "audi"
   }
 }

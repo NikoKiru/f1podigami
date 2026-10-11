@@ -20,26 +20,26 @@
         "Max Verstappen",
         "Oscar Piastri"
       ],
-      "racesTogether": 86,
-      "score": 8.0328,
+      "racesTogether": 87,
+      "score": 7.9805,
       "perDriver": [
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         },
         {
           "name": "Oscar Piastri",
           "podiums": 28,
-          "starts": 86,
-          "rate": 0.3256
+          "starts": 87,
+          "rate": 0.3218
         }
       ]
     },
@@ -54,26 +54,26 @@
         "Charles Leclerc",
         "Lando Norris"
       ],
-      "racesTogether": 167,
-      "score": 7.4451,
+      "racesTogether": 168,
+      "score": 7.3876,
       "perDriver": [
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Charles Leclerc",
           "podiums": 55,
-          "starts": 189,
-          "rate": 0.291
+          "starts": 190,
+          "rate": 0.2895
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         }
       ]
     },
@@ -88,26 +88,26 @@
         "Valtteri Bottas",
         "Lewis Hamilton"
       ],
-      "racesTogether": 222,
-      "score": 7.0919,
+      "racesTogether": 223,
+      "score": 7.0631,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         }
       ]
     },
@@ -123,19 +123,19 @@
         "Sebastian Vettel"
       ],
       "racesTogether": 120,
-      "score": 6.3633,
+      "score": 6.3236,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         },
         {
           "name": "Sebastian Vettel",
@@ -157,13 +157,13 @@
         "Sebastian Vettel"
       ],
       "racesTogether": 58,
-      "score": 6.2347,
+      "score": 6.219,
       "perDriver": [
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Michael Schumacher",
@@ -190,26 +190,26 @@
         "Valtteri Bottas",
         "Max Verstappen"
       ],
-      "racesTogether": 184,
-      "score": 6.1122,
+      "racesTogether": 185,
+      "score": 6.084,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         }
       ]
     },
@@ -224,26 +224,26 @@
         "Charles Leclerc",
         "Max Verstappen"
       ],
-      "racesTogether": 151,
-      "score": 5.7298,
+      "racesTogether": 152,
+      "score": 5.7016,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Charles Leclerc",
           "podiums": 55,
-          "starts": 189,
-          "rate": 0.291
+          "starts": 190,
+          "rate": 0.2895
         },
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         }
       ]
     },
@@ -258,26 +258,26 @@
         "Lewis Hamilton",
         "Lando Norris"
       ],
-      "racesTogether": 143,
-      "score": 5.581,
+      "racesTogether": 144,
+      "score": 5.5516,
       "perDriver": [
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         }
       ]
     },
@@ -292,26 +292,26 @@
         "Lewis Hamilton",
         "Charles Leclerc"
       ],
-      "racesTogether": 151,
-      "score": 5.5102,
+      "racesTogether": 152,
+      "score": 5.4913,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Charles Leclerc",
           "podiums": 55,
-          "starts": 189,
-          "rate": 0.291
+          "starts": 190,
+          "rate": 0.2895
         }
       ]
     },
@@ -361,19 +361,19 @@
         "Sebastian Vettel"
       ],
       "racesTogether": 80,
-      "score": 5.1827,
+      "score": 5.1314,
       "perDriver": [
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         },
         {
           "name": "Sebastian Vettel",
@@ -395,19 +395,19 @@
         "Sebastian Vettel"
       ],
       "racesTogether": 79,
-      "score": 4.9218,
+      "score": 4.8803,
       "perDriver": [
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         },
         {
           "name": "Sebastian Vettel",
@@ -429,13 +429,13 @@
         "Sebastian Vettel"
       ],
       "racesTogether": 177,
-      "score": 4.7549,
+      "score": 4.7442,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Nico Rosberg",
@@ -462,54 +462,54 @@
         "Lewis Hamilton",
         "Lando Norris"
       ],
-      "racesTogether": 130,
-      "score": 4.7547,
+      "racesTogether": 131,
+      "score": 4.7402,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         }
       ]
     },
     {
       "driverIds": [
-        "max_verstappen",
-        "perez",
+        "raikkonen",
+        "rosberg",
         "vettel"
       ],
       "names": [
-        "Max Verstappen",
-        "Sergio Pérez",
+        "Kimi Räikkönen",
+        "Nico Rosberg",
         "Sebastian Vettel"
       ],
-      "racesTogether": 159,
-      "score": 4.6065,
+      "racesTogether": 139,
+      "score": 4.5767,
       "perDriver": [
         {
-          "name": "Max Verstappen",
-          "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "name": "Kimi Räikkönen",
+          "podiums": 103,
+          "starts": 352,
+          "rate": 0.2926
         },
         {
-          "name": "Sergio Pérez",
-          "podiums": 39,
-          "starts": 299,
-          "rate": 0.1304
+          "name": "Nico Rosberg",
+          "podiums": 57,
+          "starts": 206,
+          "rate": 0.2767
         },
         {
           "name": "Sebastian Vettel",
@@ -532,26 +532,26 @@
         "Max Verstappen",
         "Oscar Piastri"
       ],
-      "racesTogether": 86,
-      "score": 8.0328,
+      "racesTogether": 87,
+      "score": 7.9805,
       "perDriver": [
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         },
         {
           "name": "Oscar Piastri",
           "podiums": 28,
-          "starts": 86,
-          "rate": 0.3256
+          "starts": 87,
+          "rate": 0.3218
         }
       ]
     },
@@ -566,26 +566,26 @@
         "Charles Leclerc",
         "Lando Norris"
       ],
-      "racesTogether": 167,
-      "score": 7.4451,
+      "racesTogether": 168,
+      "score": 7.3876,
       "perDriver": [
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Charles Leclerc",
           "podiums": 55,
-          "starts": 189,
-          "rate": 0.291
+          "starts": 190,
+          "rate": 0.2895
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         }
       ]
     },
@@ -600,26 +600,26 @@
         "Valtteri Bottas",
         "Lewis Hamilton"
       ],
-      "racesTogether": 222,
-      "score": 7.0919,
+      "racesTogether": 223,
+      "score": 7.0631,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         }
       ]
     },
@@ -634,26 +634,26 @@
         "Valtteri Bottas",
         "Max Verstappen"
       ],
-      "racesTogether": 184,
-      "score": 6.1122,
+      "racesTogether": 185,
+      "score": 6.084,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         }
       ]
     },
@@ -668,26 +668,26 @@
         "Charles Leclerc",
         "Max Verstappen"
       ],
-      "racesTogether": 151,
-      "score": 5.7298,
+      "racesTogether": 152,
+      "score": 5.7016,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Charles Leclerc",
           "podiums": 55,
-          "starts": 189,
-          "rate": 0.291
+          "starts": 190,
+          "rate": 0.2895
         },
         {
           "name": "Max Verstappen",
           "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
+          "starts": 250,
+          "rate": 0.544
         }
       ]
     },
@@ -702,26 +702,26 @@
         "Lewis Hamilton",
         "Lando Norris"
       ],
-      "racesTogether": 143,
-      "score": 5.581,
+      "racesTogether": 144,
+      "score": 5.5516,
       "perDriver": [
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         }
       ]
     },
@@ -736,26 +736,26 @@
         "Lewis Hamilton",
         "Charles Leclerc"
       ],
-      "racesTogether": 151,
-      "score": 5.5102,
+      "racesTogether": 152,
+      "score": 5.4913,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Charles Leclerc",
           "podiums": 55,
-          "starts": 189,
-          "rate": 0.291
+          "starts": 190,
+          "rate": 0.2895
         }
       ]
     },
@@ -770,26 +770,26 @@
         "Lewis Hamilton",
         "Lando Norris"
       ],
-      "racesTogether": 130,
-      "score": 4.7547,
+      "racesTogether": 131,
+      "score": 4.7402,
       "perDriver": [
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
+          "starts": 445,
+          "rate": 0.2382
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Lando Norris",
           "podiums": 49,
-          "starts": 168,
-          "rate": 0.2917
+          "starts": 169,
+          "rate": 0.2899
         }
       ]
     },
@@ -804,26 +804,26 @@
         "Lewis Hamilton",
         "Sergio Pérez"
       ],
-      "racesTogether": 260,
-      "score": 4.5379,
+      "racesTogether": 261,
+      "score": 4.5116,
       "perDriver": [
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "Sergio Pérez",
           "podiums": 39,
-          "starts": 299,
-          "rate": 0.1304
+          "starts": 300,
+          "rate": 0.13
         }
       ]
     },
@@ -836,96 +836,96 @@
       "names": [
         "Valtteri Bottas",
         "Max Verstappen",
+        "George Russell"
+      ],
+      "racesTogether": 145,
+      "score": 3.7905,
+      "perDriver": [
+        {
+          "name": "Valtteri Bottas",
+          "podiums": 67,
+          "starts": 264,
+          "rate": 0.2538
+        },
+        {
+          "name": "Max Verstappen",
+          "podiums": 136,
+          "starts": 250,
+          "rate": 0.544
+        },
+        {
+          "name": "George Russell",
+          "podiums": 32,
+          "starts": 169,
+          "rate": 0.1893
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "alonso",
+        "max_verstappen",
+        "piastri"
+      ],
+      "names": [
+        "Fernando Alonso",
+        "Max Verstappen",
+        "Oscar Piastri"
+      ],
+      "racesTogether": 87,
+      "score": 3.6283,
+      "perDriver": [
+        {
+          "name": "Fernando Alonso",
+          "podiums": 106,
+          "starts": 445,
+          "rate": 0.2382
+        },
+        {
+          "name": "Max Verstappen",
+          "podiums": 136,
+          "starts": 250,
+          "rate": 0.544
+        },
+        {
+          "name": "Oscar Piastri",
+          "podiums": 28,
+          "starts": 87,
+          "rate": 0.3218
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "bottas",
+        "hamilton",
+        "russell"
+      ],
+      "names": [
+        "Valtteri Bottas",
+        "Lewis Hamilton",
         "George Russell"
       ],
       "racesTogether": 144,
-      "score": 3.8165,
+      "score": 3.6255,
       "perDriver": [
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
-        },
-        {
-          "name": "Max Verstappen",
-          "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
-        },
-        {
-          "name": "George Russell",
-          "podiums": 32,
-          "starts": 168,
-          "rate": 0.1905
-        }
-      ]
-    },
-    {
-      "driverIds": [
-        "alonso",
-        "max_verstappen",
-        "piastri"
-      ],
-      "names": [
-        "Fernando Alonso",
-        "Max Verstappen",
-        "Oscar Piastri"
-      ],
-      "racesTogether": 86,
-      "score": 3.6511,
-      "perDriver": [
-        {
-          "name": "Fernando Alonso",
-          "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
-        },
-        {
-          "name": "Max Verstappen",
-          "podiums": 136,
-          "starts": 249,
-          "rate": 0.5462
-        },
-        {
-          "name": "Oscar Piastri",
-          "podiums": 28,
-          "starts": 86,
-          "rate": 0.3256
-        }
-      ]
-    },
-    {
-      "driverIds": [
-        "bottas",
-        "hamilton",
-        "russell"
-      ],
-      "names": [
-        "Valtteri Bottas",
-        "Lewis Hamilton",
-        "George Russell"
-      ],
-      "racesTogether": 143,
-      "score": 3.6447,
-      "perDriver": [
-        {
-          "name": "Valtteri Bottas",
-          "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
           "name": "Lewis Hamilton",
           "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
+          "starts": 397,
+          "rate": 0.5239
         },
         {
           "name": "George Russell",
           "podiums": 32,
-          "starts": 168,
-          "rate": 0.1905
+          "starts": 169,
+          "rate": 0.1893
         }
       ]
     },
@@ -938,96 +938,96 @@
       "names": [
         "Valtteri Bottas",
         "Max Verstappen",
+        "Carlos Sainz"
+      ],
+      "racesTogether": 225,
+      "score": 3.6179,
+      "perDriver": [
+        {
+          "name": "Valtteri Bottas",
+          "podiums": 67,
+          "starts": 264,
+          "rate": 0.2538
+        },
+        {
+          "name": "Max Verstappen",
+          "podiums": 136,
+          "starts": 250,
+          "rate": 0.544
+        },
+        {
+          "name": "Carlos Sainz",
+          "podiums": 29,
+          "starts": 249,
+          "rate": 0.1165
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "alonso",
+        "hamilton",
+        "piastri"
+      ],
+      "names": [
+        "Fernando Alonso",
+        "Lewis Hamilton",
+        "Oscar Piastri"
+      ],
+      "racesTogether": 87,
+      "score": 3.4944,
+      "perDriver": [
+        {
+          "name": "Fernando Alonso",
+          "podiums": 106,
+          "starts": 445,
+          "rate": 0.2382
+        },
+        {
+          "name": "Lewis Hamilton",
+          "podiums": 208,
+          "starts": 397,
+          "rate": 0.5239
+        },
+        {
+          "name": "Oscar Piastri",
+          "podiums": 28,
+          "starts": 87,
+          "rate": 0.3218
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "bottas",
+        "hamilton",
+        "sainz"
+      ],
+      "names": [
+        "Valtteri Bottas",
+        "Lewis Hamilton",
         "Carlos Sainz"
       ],
       "racesTogether": 224,
-      "score": 3.6446,
+      "score": 3.4689,
       "perDriver": [
         {
           "name": "Valtteri Bottas",
           "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
+          "starts": 264,
+          "rate": 0.2538
         },
         {
-          "name": "Max Verstappen",
-          "podiums": 136,
+          "name": "Lewis Hamilton",
+          "podiums": 208,
+          "starts": 397,
+          "rate": 0.5239
+        },
+        {
+          "name": "Carlos Sainz",
+          "podiums": 29,
           "starts": 249,
-          "rate": 0.5462
-        },
-        {
-          "name": "Carlos Sainz",
-          "podiums": 29,
-          "starts": 248,
-          "rate": 0.1169
-        }
-      ]
-    },
-    {
-      "driverIds": [
-        "alonso",
-        "hamilton",
-        "piastri"
-      ],
-      "names": [
-        "Fernando Alonso",
-        "Lewis Hamilton",
-        "Oscar Piastri"
-      ],
-      "racesTogether": 86,
-      "score": 3.5111,
-      "perDriver": [
-        {
-          "name": "Fernando Alonso",
-          "podiums": 106,
-          "starts": 444,
-          "rate": 0.2387
-        },
-        {
-          "name": "Lewis Hamilton",
-          "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
-        },
-        {
-          "name": "Oscar Piastri",
-          "podiums": 28,
-          "starts": 86,
-          "rate": 0.3256
-        }
-      ]
-    },
-    {
-      "driverIds": [
-        "bottas",
-        "hamilton",
-        "sainz"
-      ],
-      "names": [
-        "Valtteri Bottas",
-        "Lewis Hamilton",
-        "Carlos Sainz"
-      ],
-      "racesTogether": 223,
-      "score": 3.4893,
-      "perDriver": [
-        {
-          "name": "Valtteri Bottas",
-          "podiums": 67,
-          "starts": 263,
-          "rate": 0.2548
-        },
-        {
-          "name": "Lewis Hamilton",
-          "podiums": 208,
-          "starts": 396,
-          "rate": 0.5253
-        },
-        {
-          "name": "Carlos Sainz",
-          "podiums": 29,
-          "starts": 248,
-          "rate": 0.1169
+          "rate": 0.1165
         }
       ]
     }
