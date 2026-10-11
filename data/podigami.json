@@ -2,8 +2,8 @@
   "currentSeason": "2026",
   "asOf": {
     "season": "2026",
-    "round": "16",
-    "raceName": "Bahrain Grand Prix in Malaysia"
+    "round": "17",
+    "raceName": "Singapore Grand Prix"
   },
   "params": {
     "model": "dbpl-v2",
@@ -30,63 +30,63 @@
     "con_adapt_gain": 0.0,
     "con_adapt_hl": 1.0,
     "usingQualifying": true,
-    "circuitId": "marina_bay",
+    "circuitId": "americas",
     "nDraws": 512,
     "seed": 20260704
   },
-  "gridSize": 23,
-  "chanceNextRaceNew": 38.3,
+  "gridSize": 22,
+  "chanceNextRaceNew": 36.1,
   "candidates": [
     {
       "driverIds": [
         "antonelli",
-        "hadjar",
-        "russell"
+        "hamilton",
+        "leclerc"
       ],
       "names": [
         "Andrea Kimi Antonelli",
-        "Isack Hadjar",
-        "George Russell"
+        "Lewis Hamilton",
+        "Charles Leclerc"
       ],
-      "prob": 2.173,
+      "prob": 2.845,
       "perDriver": [
         {
           "driverId": "antonelli",
           "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
           "constructorId": "mercedes",
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
           "gridPosition": null
         },
         {
-          "driverId": "hadjar",
-          "name": "Isack Hadjar",
-          "weight": 30.572,
-          "seasonPodiums": 2,
-          "recentPodiums": 1,
-          "constructorId": "red_bull",
-          "constructor": "Red Bull",
-          "constructorStrength": 0.545,
-          "finishProb": 0.927,
-          "uncertainty": 0.537,
+          "driverId": "hamilton",
+          "name": "Lewis Hamilton",
+          "weight": 59.297,
+          "seasonPodiums": 6,
+          "recentPodiums": 2,
+          "constructorId": "ferrari",
+          "constructor": "Ferrari",
+          "constructorStrength": 0.745,
+          "finishProb": 0.944,
+          "uncertainty": 0.367,
           "gridPosition": null
         },
         {
-          "driverId": "russell",
-          "name": "George Russell",
-          "weight": 95.197,
-          "seasonPodiums": 8,
-          "recentPodiums": 6,
-          "constructorId": "mercedes",
-          "constructor": "Mercedes",
-          "constructorStrength": 1.0,
-          "finishProb": 0.933,
-          "uncertainty": 0.33,
+          "driverId": "leclerc",
+          "name": "Charles Leclerc",
+          "weight": 75.583,
+          "seasonPodiums": 5,
+          "recentPodiums": 3,
+          "constructorId": "ferrari",
+          "constructor": "Ferrari",
+          "constructorStrength": 0.745,
+          "finishProb": 0.941,
+          "uncertainty": 0.359,
           "gridPosition": null
         }
       ]
@@ -102,207 +102,45 @@
         "Charles Leclerc",
         "Lando Norris"
       ],
-      "prob": 2.137,
+      "prob": 2.346,
       "perDriver": [
         {
           "driverId": "antonelli",
           "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
           "constructorId": "mercedes",
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
           "gridPosition": null
         },
         {
           "driverId": "leclerc",
           "name": "Charles Leclerc",
-          "weight": 64.02,
-          "seasonPodiums": 4,
-          "recentPodiums": 2,
+          "weight": 75.583,
+          "seasonPodiums": 5,
+          "recentPodiums": 3,
           "constructorId": "ferrari",
           "constructor": "Ferrari",
           "constructorStrength": 0.745,
-          "finishProb": 0.926,
+          "finishProb": 0.941,
           "uncertainty": 0.359,
           "gridPosition": null
         },
         {
           "driverId": "norris",
           "name": "Lando Norris",
-          "weight": 52.656,
+          "weight": 50.008,
           "seasonPodiums": 5,
-          "recentPodiums": 4,
-          "constructorId": "mclaren",
-          "constructor": "McLaren",
-          "constructorStrength": 0.565,
-          "finishProb": 0.938,
-          "uncertainty": 0.368,
-          "gridPosition": null
-        }
-      ]
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "piastri",
-        "russell"
-      ],
-      "names": [
-        "Andrea Kimi Antonelli",
-        "Oscar Piastri",
-        "George Russell"
-      ],
-      "prob": 2.046,
-      "perDriver": [
-        {
-          "driverId": "antonelli",
-          "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
-          "constructorId": "mercedes",
-          "constructor": "Mercedes",
-          "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
-          "gridPosition": null
-        },
-        {
-          "driverId": "piastri",
-          "name": "Oscar Piastri",
-          "weight": 30.983,
-          "seasonPodiums": 2,
-          "recentPodiums": 0,
-          "constructorId": "mclaren",
-          "constructor": "McLaren",
-          "constructorStrength": 0.565,
-          "finishProb": 0.94,
-          "uncertainty": 0.371,
-          "gridPosition": null
-        },
-        {
-          "driverId": "russell",
-          "name": "George Russell",
-          "weight": 95.197,
-          "seasonPodiums": 8,
-          "recentPodiums": 6,
-          "constructorId": "mercedes",
-          "constructor": "Mercedes",
-          "constructorStrength": 1.0,
-          "finishProb": 0.933,
-          "uncertainty": 0.33,
-          "gridPosition": null
-        }
-      ]
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "hamilton",
-        "leclerc"
-      ],
-      "names": [
-        "Andrea Kimi Antonelli",
-        "Lewis Hamilton",
-        "Charles Leclerc"
-      ],
-      "prob": 2.032,
-      "perDriver": [
-        {
-          "driverId": "antonelli",
-          "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
-          "constructorId": "mercedes",
-          "constructor": "Mercedes",
-          "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
-          "gridPosition": null
-        },
-        {
-          "driverId": "hamilton",
-          "name": "Lewis Hamilton",
-          "weight": 52.88,
-          "seasonPodiums": 6,
           "recentPodiums": 3,
-          "constructorId": "ferrari",
-          "constructor": "Ferrari",
-          "constructorStrength": 0.745,
-          "finishProb": 0.93,
-          "uncertainty": 0.368,
-          "gridPosition": null
-        },
-        {
-          "driverId": "leclerc",
-          "name": "Charles Leclerc",
-          "weight": 64.02,
-          "seasonPodiums": 4,
-          "recentPodiums": 2,
-          "constructorId": "ferrari",
-          "constructor": "Ferrari",
-          "constructorStrength": 0.745,
-          "finishProb": 0.926,
-          "uncertainty": 0.359,
-          "gridPosition": null
-        }
-      ]
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "max_verstappen",
-        "piastri"
-      ],
-      "names": [
-        "Andrea Kimi Antonelli",
-        "Max Verstappen",
-        "Oscar Piastri"
-      ],
-      "prob": 1.994,
-      "perDriver": [
-        {
-          "driverId": "antonelli",
-          "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
-          "constructorId": "mercedes",
-          "constructor": "Mercedes",
-          "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
-          "gridPosition": null
-        },
-        {
-          "driverId": "max_verstappen",
-          "name": "Max Verstappen",
-          "weight": 95.989,
-          "seasonPodiums": 8,
-          "recentPodiums": 7,
-          "constructorId": "red_bull",
-          "constructor": "Red Bull",
-          "constructorStrength": 0.545,
-          "finishProb": 0.924,
-          "uncertainty": 0.397,
-          "gridPosition": null
-        },
-        {
-          "driverId": "piastri",
-          "name": "Oscar Piastri",
-          "weight": 30.983,
-          "seasonPodiums": 2,
-          "recentPodiums": 0,
           "constructorId": "mclaren",
           "constructor": "McLaren",
           "constructorStrength": 0.565,
-          "finishProb": 0.94,
-          "uncertainty": 0.371,
+          "finishProb": 0.95,
+          "uncertainty": 0.363,
           "gridPosition": null
         }
       ]
@@ -318,45 +156,99 @@
         "Isack Hadjar",
         "Max Verstappen"
       ],
-      "prob": 1.967,
+      "prob": 2.109,
       "perDriver": [
         {
           "driverId": "antonelli",
           "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
           "constructorId": "mercedes",
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
           "gridPosition": null
         },
         {
           "driverId": "hadjar",
           "name": "Isack Hadjar",
-          "weight": 30.572,
+          "weight": 30.677,
           "seasonPodiums": 2,
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
           "constructorStrength": 0.545,
-          "finishProb": 0.927,
-          "uncertainty": 0.537,
+          "finishProb": 0.942,
+          "uncertainty": 0.522,
           "gridPosition": null
         },
         {
           "driverId": "max_verstappen",
           "name": "Max Verstappen",
-          "weight": 95.989,
-          "seasonPodiums": 8,
-          "recentPodiums": 7,
+          "weight": 112.486,
+          "seasonPodiums": 9,
+          "recentPodiums": 8,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
           "constructorStrength": 0.545,
-          "finishProb": 0.924,
-          "uncertainty": 0.397,
+          "finishProb": 0.939,
+          "uncertainty": 0.394,
+          "gridPosition": null
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "max_verstappen",
+        "piastri"
+      ],
+      "names": [
+        "Andrea Kimi Antonelli",
+        "Max Verstappen",
+        "Oscar Piastri"
+      ],
+      "prob": 1.823,
+      "perDriver": [
+        {
+          "driverId": "antonelli",
+          "name": "Andrea Kimi Antonelli",
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
+          "constructorId": "mercedes",
+          "constructor": "Mercedes",
+          "constructorStrength": 1.0,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
+          "gridPosition": null
+        },
+        {
+          "driverId": "max_verstappen",
+          "name": "Max Verstappen",
+          "weight": 112.486,
+          "seasonPodiums": 9,
+          "recentPodiums": 8,
+          "constructorId": "red_bull",
+          "constructor": "Red Bull",
+          "constructorStrength": 0.545,
+          "finishProb": 0.939,
+          "uncertainty": 0.394,
+          "gridPosition": null
+        },
+        {
+          "driverId": "piastri",
+          "name": "Oscar Piastri",
+          "weight": 28.902,
+          "seasonPodiums": 2,
+          "recentPodiums": 0,
+          "constructorId": "mclaren",
+          "constructor": "McLaren",
+          "constructorStrength": 0.565,
+          "finishProb": 0.952,
+          "uncertainty": 0.366,
           "gridPosition": null
         }
       ]
@@ -372,45 +264,45 @@
         "Lando Norris",
         "George Russell"
       ],
-      "prob": 1.912,
+      "prob": 1.766,
       "perDriver": [
         {
           "driverId": "leclerc",
           "name": "Charles Leclerc",
-          "weight": 64.02,
-          "seasonPodiums": 4,
-          "recentPodiums": 2,
+          "weight": 75.583,
+          "seasonPodiums": 5,
+          "recentPodiums": 3,
           "constructorId": "ferrari",
           "constructor": "Ferrari",
           "constructorStrength": 0.745,
-          "finishProb": 0.926,
+          "finishProb": 0.941,
           "uncertainty": 0.359,
           "gridPosition": null
         },
         {
           "driverId": "norris",
           "name": "Lando Norris",
-          "weight": 52.656,
+          "weight": 50.008,
           "seasonPodiums": 5,
-          "recentPodiums": 4,
+          "recentPodiums": 3,
           "constructorId": "mclaren",
           "constructor": "McLaren",
           "constructorStrength": 0.565,
-          "finishProb": 0.938,
-          "uncertainty": 0.368,
+          "finishProb": 0.95,
+          "uncertainty": 0.363,
           "gridPosition": null
         },
         {
           "driverId": "russell",
           "name": "George Russell",
-          "weight": 95.197,
+          "weight": 88.036,
           "seasonPodiums": 8,
-          "recentPodiums": 6,
+          "recentPodiums": 5,
           "constructorId": "mercedes",
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
-          "finishProb": 0.933,
-          "uncertainty": 0.33,
+          "finishProb": 0.946,
+          "uncertainty": 0.323,
           "gridPosition": null
         }
       ]
@@ -426,45 +318,153 @@
         "Lewis Hamilton",
         "Lando Norris"
       ],
-      "prob": 1.885,
+      "prob": 1.655,
       "perDriver": [
         {
           "driverId": "antonelli",
           "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
           "constructorId": "mercedes",
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
           "gridPosition": null
         },
         {
           "driverId": "hamilton",
           "name": "Lewis Hamilton",
-          "weight": 52.88,
+          "weight": 59.297,
           "seasonPodiums": 6,
-          "recentPodiums": 3,
+          "recentPodiums": 2,
           "constructorId": "ferrari",
           "constructor": "Ferrari",
           "constructorStrength": 0.745,
-          "finishProb": 0.93,
-          "uncertainty": 0.368,
+          "finishProb": 0.944,
+          "uncertainty": 0.367,
           "gridPosition": null
         },
         {
           "driverId": "norris",
           "name": "Lando Norris",
-          "weight": 52.656,
+          "weight": 50.008,
           "seasonPodiums": 5,
-          "recentPodiums": 4,
+          "recentPodiums": 3,
           "constructorId": "mclaren",
           "constructor": "McLaren",
           "constructorStrength": 0.565,
-          "finishProb": 0.938,
-          "uncertainty": 0.368,
+          "finishProb": 0.95,
+          "uncertainty": 0.363,
+          "gridPosition": null
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "hadjar",
+        "russell"
+      ],
+      "names": [
+        "Andrea Kimi Antonelli",
+        "Isack Hadjar",
+        "George Russell"
+      ],
+      "prob": 1.563,
+      "perDriver": [
+        {
+          "driverId": "antonelli",
+          "name": "Andrea Kimi Antonelli",
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
+          "constructorId": "mercedes",
+          "constructor": "Mercedes",
+          "constructorStrength": 1.0,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
+          "gridPosition": null
+        },
+        {
+          "driverId": "hadjar",
+          "name": "Isack Hadjar",
+          "weight": 30.677,
+          "seasonPodiums": 2,
+          "recentPodiums": 1,
+          "constructorId": "red_bull",
+          "constructor": "Red Bull",
+          "constructorStrength": 0.545,
+          "finishProb": 0.942,
+          "uncertainty": 0.522,
+          "gridPosition": null
+        },
+        {
+          "driverId": "russell",
+          "name": "George Russell",
+          "weight": 88.036,
+          "seasonPodiums": 8,
+          "recentPodiums": 5,
+          "constructorId": "mercedes",
+          "constructor": "Mercedes",
+          "constructorStrength": 1.0,
+          "finishProb": 0.946,
+          "uncertainty": 0.323,
+          "gridPosition": null
+        }
+      ]
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "piastri",
+        "russell"
+      ],
+      "names": [
+        "Andrea Kimi Antonelli",
+        "Oscar Piastri",
+        "George Russell"
+      ],
+      "prob": 1.476,
+      "perDriver": [
+        {
+          "driverId": "antonelli",
+          "name": "Andrea Kimi Antonelli",
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
+          "constructorId": "mercedes",
+          "constructor": "Mercedes",
+          "constructorStrength": 1.0,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
+          "gridPosition": null
+        },
+        {
+          "driverId": "piastri",
+          "name": "Oscar Piastri",
+          "weight": 28.902,
+          "seasonPodiums": 2,
+          "recentPodiums": 0,
+          "constructorId": "mclaren",
+          "constructor": "McLaren",
+          "constructorStrength": 0.565,
+          "finishProb": 0.952,
+          "uncertainty": 0.366,
+          "gridPosition": null
+        },
+        {
+          "driverId": "russell",
+          "name": "George Russell",
+          "weight": 88.036,
+          "seasonPodiums": 8,
+          "recentPodiums": 5,
+          "constructorId": "mercedes",
+          "constructor": "Mercedes",
+          "constructorStrength": 1.0,
+          "finishProb": 0.946,
+          "uncertainty": 0.323,
           "gridPosition": null
         }
       ]
@@ -480,45 +480,45 @@
         "Oscar Piastri",
         "George Russell"
       ],
-      "prob": 1.769,
+      "prob": 1.398,
       "perDriver": [
         {
           "driverId": "max_verstappen",
           "name": "Max Verstappen",
-          "weight": 95.989,
-          "seasonPodiums": 8,
-          "recentPodiums": 7,
+          "weight": 112.486,
+          "seasonPodiums": 9,
+          "recentPodiums": 8,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
           "constructorStrength": 0.545,
-          "finishProb": 0.924,
-          "uncertainty": 0.397,
+          "finishProb": 0.939,
+          "uncertainty": 0.394,
           "gridPosition": null
         },
         {
           "driverId": "piastri",
           "name": "Oscar Piastri",
-          "weight": 30.983,
+          "weight": 28.902,
           "seasonPodiums": 2,
           "recentPodiums": 0,
           "constructorId": "mclaren",
           "constructor": "McLaren",
           "constructorStrength": 0.565,
-          "finishProb": 0.94,
-          "uncertainty": 0.371,
+          "finishProb": 0.952,
+          "uncertainty": 0.366,
           "gridPosition": null
         },
         {
           "driverId": "russell",
           "name": "George Russell",
-          "weight": 95.197,
+          "weight": 88.036,
           "seasonPodiums": 8,
-          "recentPodiums": 6,
+          "recentPodiums": 5,
           "constructorId": "mercedes",
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
-          "finishProb": 0.933,
-          "uncertainty": 0.33,
+          "finishProb": 0.946,
+          "uncertainty": 0.323,
           "gridPosition": null
         }
       ]
@@ -534,44 +534,44 @@
         "Isack Hadjar",
         "Charles Leclerc"
       ],
-      "prob": 1.164,
+      "prob": 1.34,
       "perDriver": [
         {
           "driverId": "antonelli",
           "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
+          "weight": 103.224,
+          "seasonPodiums": 14,
+          "recentPodiums": 8,
           "constructorId": "mercedes",
           "constructor": "Mercedes",
           "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
+          "finishProb": 0.949,
+          "uncertainty": 0.352,
           "gridPosition": null
         },
         {
           "driverId": "hadjar",
           "name": "Isack Hadjar",
-          "weight": 30.572,
+          "weight": 30.677,
           "seasonPodiums": 2,
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
           "constructorStrength": 0.545,
-          "finishProb": 0.927,
-          "uncertainty": 0.537,
+          "finishProb": 0.942,
+          "uncertainty": 0.522,
           "gridPosition": null
         },
         {
           "driverId": "leclerc",
           "name": "Charles Leclerc",
-          "weight": 64.02,
-          "seasonPodiums": 4,
-          "recentPodiums": 2,
+          "weight": 75.583,
+          "seasonPodiums": 5,
+          "recentPodiums": 3,
           "constructorId": "ferrari",
           "constructor": "Ferrari",
           "constructorStrength": 0.745,
-          "finishProb": 0.926,
+          "finishProb": 0.941,
           "uncertainty": 0.359,
           "gridPosition": null
         }
@@ -581,106 +581,106 @@
       "driverIds": [
         "hadjar",
         "leclerc",
-        "russell"
+        "max_verstappen"
       ],
       "names": [
         "Isack Hadjar",
         "Charles Leclerc",
-        "George Russell"
+        "Max Verstappen"
       ],
-      "prob": 1.093,
+      "prob": 1.325,
       "perDriver": [
         {
           "driverId": "hadjar",
           "name": "Isack Hadjar",
-          "weight": 30.572,
+          "weight": 30.677,
           "seasonPodiums": 2,
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
           "constructorStrength": 0.545,
-          "finishProb": 0.927,
-          "uncertainty": 0.537,
+          "finishProb": 0.942,
+          "uncertainty": 0.522,
           "gridPosition": null
         },
         {
           "driverId": "leclerc",
           "name": "Charles Leclerc",
-          "weight": 64.02,
-          "seasonPodiums": 4,
-          "recentPodiums": 2,
+          "weight": 75.583,
+          "seasonPodiums": 5,
+          "recentPodiums": 3,
           "constructorId": "ferrari",
           "constructor": "Ferrari",
           "constructorStrength": 0.745,
-          "finishProb": 0.926,
+          "finishProb": 0.941,
           "uncertainty": 0.359,
           "gridPosition": null
         },
         {
-          "driverId": "russell",
-          "name": "George Russell",
-          "weight": 95.197,
-          "seasonPodiums": 8,
-          "recentPodiums": 6,
-          "constructorId": "mercedes",
-          "constructor": "Mercedes",
-          "constructorStrength": 1.0,
-          "finishProb": 0.933,
-          "uncertainty": 0.33,
+          "driverId": "max_verstappen",
+          "name": "Max Verstappen",
+          "weight": 112.486,
+          "seasonPodiums": 9,
+          "recentPodiums": 8,
+          "constructorId": "red_bull",
+          "constructor": "Red Bull",
+          "constructorStrength": 0.545,
+          "finishProb": 0.939,
+          "uncertainty": 0.394,
           "gridPosition": null
         }
       ]
     },
     {
       "driverIds": [
-        "antonelli",
-        "hadjar",
+        "hamilton",
+        "leclerc",
         "norris"
       ],
       "names": [
-        "Andrea Kimi Antonelli",
-        "Isack Hadjar",
+        "Lewis Hamilton",
+        "Charles Leclerc",
         "Lando Norris"
       ],
-      "prob": 1.078,
+      "prob": 1.14,
       "perDriver": [
         {
-          "driverId": "antonelli",
-          "name": "Andrea Kimi Antonelli",
-          "weight": 104.944,
-          "seasonPodiums": 13,
-          "recentPodiums": 7,
-          "constructorId": "mercedes",
-          "constructor": "Mercedes",
-          "constructorStrength": 1.0,
-          "finishProb": 0.937,
-          "uncertainty": 0.36,
+          "driverId": "hamilton",
+          "name": "Lewis Hamilton",
+          "weight": 59.297,
+          "seasonPodiums": 6,
+          "recentPodiums": 2,
+          "constructorId": "ferrari",
+          "constructor": "Ferrari",
+          "constructorStrength": 0.745,
+          "finishProb": 0.944,
+          "uncertainty": 0.367,
           "gridPosition": null
         },
         {
-          "driverId": "hadjar",
-          "name": "Isack Hadjar",
-          "weight": 30.572,
-          "seasonPodiums": 2,
-          "recentPodiums": 1,
-          "constructorId": "red_bull",
-          "constructor": "Red Bull",
-          "constructorStrength": 0.545,
-          "finishProb": 0.927,
-          "uncertainty": 0.537,
+          "driverId": "leclerc",
+          "name": "Charles Leclerc",
+          "weight": 75.583,
+          "seasonPodiums": 5,
+          "recentPodiums": 3,
+          "constructorId": "ferrari",
+          "constructor": "Ferrari",
+          "constructorStrength": 0.745,
+          "finishProb": 0.941,
+          "uncertainty": 0.359,
           "gridPosition": null
         },
         {
           "driverId": "norris",
           "name": "Lando Norris",
-          "weight": 52.656,
+          "weight": 50.008,
           "seasonPodiums": 5,
-          "recentPodiums": 4,
+          "recentPodiums": 3,
           "constructorId": "mclaren",
           "constructor": "McLaren",
           "constructorStrength": 0.565,
-          "finishProb": 0.938,
-          "uncertainty": 0.368,
+          "finishProb": 0.95,
+          "uncertainty": 0.363,
           "gridPosition": null
         }
       ]
@@ -693,16 +693,7 @@
         "max_verstappen",
         "russell"
       ],
-      "prob": 7.82,
-      "happened": true
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "leclerc",
-        "russell"
-      ],
-      "prob": 4.649,
+      "prob": 7.485,
       "happened": true
     },
     {
@@ -711,7 +702,16 @@
         "leclerc",
         "max_verstappen"
       ],
-      "prob": 4.24,
+      "prob": 6.117,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "leclerc",
+        "russell"
+      ],
+      "prob": 4.739,
       "happened": true
     },
     {
@@ -720,25 +720,7 @@
         "max_verstappen",
         "russell"
       ],
-      "prob": 3.944,
-      "happened": true
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "norris",
-        "russell"
-      ],
-      "prob": 3.813,
-      "happened": true
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "hamilton",
-        "russell"
-      ],
-      "prob": 3.651,
+      "prob": 4.644,
       "happened": true
     },
     {
@@ -747,7 +729,7 @@
         "hamilton",
         "max_verstappen"
       ],
-      "prob": 3.635,
+      "prob": 4.419,
       "happened": true
     },
     {
@@ -756,16 +738,16 @@
         "max_verstappen",
         "norris"
       ],
-      "prob": 3.596,
+      "prob": 3.526,
       "happened": true
     },
     {
       "driverIds": [
-        "max_verstappen",
-        "norris",
+        "antonelli",
+        "hamilton",
         "russell"
       ],
-      "prob": 3.355,
+      "prob": 3.499,
       "happened": true
     },
     {
@@ -774,35 +756,8 @@
         "max_verstappen",
         "russell"
       ],
-      "prob": 3.088,
+      "prob": 3.336,
       "happened": true
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "hadjar",
-        "russell"
-      ],
-      "prob": 2.173,
-      "happened": false
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "leclerc",
-        "norris"
-      ],
-      "prob": 2.137,
-      "happened": false
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "piastri",
-        "russell"
-      ],
-      "prob": 2.046,
-      "happened": false
     },
     {
       "driverIds": [
@@ -810,7 +765,70 @@
         "hamilton",
         "leclerc"
       ],
-      "prob": 2.032,
+      "prob": 2.845,
+      "happened": false
+    },
+    {
+      "driverIds": [
+        "hamilton",
+        "leclerc",
+        "max_verstappen"
+      ],
+      "prob": 2.817,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "max_verstappen",
+        "norris",
+        "russell"
+      ],
+      "prob": 2.706,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "norris",
+        "russell"
+      ],
+      "prob": 2.653,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "leclerc",
+        "max_verstappen",
+        "norris"
+      ],
+      "prob": 2.366,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "leclerc",
+        "norris"
+      ],
+      "prob": 2.346,
+      "happened": false
+    },
+    {
+      "driverIds": [
+        "hamilton",
+        "leclerc",
+        "russell"
+      ],
+      "prob": 2.148,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "hadjar",
+        "max_verstappen"
+      ],
+      "prob": 2.109,
       "happened": false
     },
     {
@@ -819,16 +837,7 @@
         "max_verstappen",
         "piastri"
       ],
-      "prob": 1.994,
-      "happened": false
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "hadjar",
-        "max_verstappen"
-      ],
-      "prob": 1.967,
+      "prob": 1.823,
       "happened": false
     },
     {
@@ -837,17 +846,8 @@
         "norris",
         "russell"
       ],
-      "prob": 1.912,
+      "prob": 1.766,
       "happened": false
-    },
-    {
-      "driverIds": [
-        "leclerc",
-        "max_verstappen",
-        "norris"
-      ],
-      "prob": 1.903,
-      "happened": true
     },
     {
       "driverIds": [
@@ -855,7 +855,25 @@
         "hamilton",
         "norris"
       ],
-      "prob": 1.885,
+      "prob": 1.655,
+      "happened": false
+    },
+    {
+      "driverIds": [
+        "hamilton",
+        "max_verstappen",
+        "norris"
+      ],
+      "prob": 1.653,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "hadjar",
+        "russell"
+      ],
+      "prob": 1.563,
       "happened": false
     },
     {
@@ -864,17 +882,17 @@
         "max_verstappen",
         "russell"
       ],
-      "prob": 1.832,
+      "prob": 1.559,
       "happened": true
     },
     {
       "driverIds": [
-        "hamilton",
-        "leclerc",
+        "antonelli",
+        "piastri",
         "russell"
       ],
-      "prob": 1.78,
-      "happened": true
+      "prob": 1.476,
+      "happened": false
     },
     {
       "driverIds": [
@@ -882,44 +900,8 @@
         "piastri",
         "russell"
       ],
-      "prob": 1.769,
+      "prob": 1.398,
       "happened": false
-    },
-    {
-      "driverIds": [
-        "hamilton",
-        "leclerc",
-        "max_verstappen"
-      ],
-      "prob": 1.76,
-      "happened": true
-    },
-    {
-      "driverIds": [
-        "hamilton",
-        "max_verstappen",
-        "norris"
-      ],
-      "prob": 1.597,
-      "happened": true
-    },
-    {
-      "driverIds": [
-        "hamilton",
-        "norris",
-        "russell"
-      ],
-      "prob": 1.508,
-      "happened": true
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "leclerc",
-        "piastri"
-      ],
-      "prob": 1.203,
-      "happened": true
     },
     {
       "driverIds": [
@@ -927,44 +909,8 @@
         "hadjar",
         "leclerc"
       ],
-      "prob": 1.164,
+      "prob": 1.34,
       "happened": false
-    },
-    {
-      "driverIds": [
-        "hadjar",
-        "leclerc",
-        "russell"
-      ],
-      "prob": 1.093,
-      "happened": false
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "hadjar",
-        "norris"
-      ],
-      "prob": 1.078,
-      "happened": false
-    },
-    {
-      "driverIds": [
-        "leclerc",
-        "piastri",
-        "russell"
-      ],
-      "prob": 1.068,
-      "happened": true
-    },
-    {
-      "driverIds": [
-        "antonelli",
-        "norris",
-        "piastri"
-      ],
-      "prob": 1.035,
-      "happened": true
     },
     {
       "driverIds": [
@@ -972,8 +918,26 @@
         "leclerc",
         "max_verstappen"
       ],
-      "prob": 1.015,
+      "prob": 1.325,
       "happened": false
+    },
+    {
+      "driverIds": [
+        "antonelli",
+        "leclerc",
+        "piastri"
+      ],
+      "prob": 1.281,
+      "happened": true
+    },
+    {
+      "driverIds": [
+        "hamilton",
+        "norris",
+        "russell"
+      ],
+      "prob": 1.266,
+      "happened": true
     },
     {
       "driverIds": [
@@ -981,217 +945,213 @@
         "max_verstappen",
         "piastri"
       ],
-      "prob": 1.008,
+      "prob": 1.244,
       "happened": true
+    },
+    {
+      "driverIds": [
+        "hamilton",
+        "leclerc",
+        "norris"
+      ],
+      "prob": 1.14,
+      "happened": false
     }
   ],
   "driverForm": [
     {
-      "driverId": "antonelli",
-      "name": "Andrea Kimi Antonelli",
-      "weight": 104.944,
-      "seasonPodiums": 13,
-      "recentPodiums": 7,
-      "constructorId": "mercedes",
-      "constructor": "Mercedes",
-      "constructorStrength": 1.0,
-      "finishProb": 0.937,
-      "uncertainty": 0.36,
-      "gridPosition": null
-    },
-    {
       "driverId": "max_verstappen",
       "name": "Max Verstappen",
-      "weight": 95.989,
-      "seasonPodiums": 8,
-      "recentPodiums": 7,
+      "weight": 112.486,
+      "seasonPodiums": 9,
+      "recentPodiums": 8,
       "constructorId": "red_bull",
       "constructor": "Red Bull",
       "constructorStrength": 0.545,
-      "finishProb": 0.924,
-      "uncertainty": 0.397,
+      "finishProb": 0.939,
+      "uncertainty": 0.394,
+      "gridPosition": null
+    },
+    {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli",
+      "weight": 103.224,
+      "seasonPodiums": 14,
+      "recentPodiums": 8,
+      "constructorId": "mercedes",
+      "constructor": "Mercedes",
+      "constructorStrength": 1.0,
+      "finishProb": 0.949,
+      "uncertainty": 0.352,
       "gridPosition": null
     },
     {
       "driverId": "russell",
       "name": "George Russell",
-      "weight": 95.197,
+      "weight": 88.036,
       "seasonPodiums": 8,
-      "recentPodiums": 6,
+      "recentPodiums": 5,
       "constructorId": "mercedes",
       "constructor": "Mercedes",
       "constructorStrength": 1.0,
-      "finishProb": 0.933,
-      "uncertainty": 0.33,
+      "finishProb": 0.946,
+      "uncertainty": 0.323,
       "gridPosition": null
     },
     {
       "driverId": "leclerc",
       "name": "Charles Leclerc",
-      "weight": 64.02,
-      "seasonPodiums": 4,
-      "recentPodiums": 2,
+      "weight": 75.583,
+      "seasonPodiums": 5,
+      "recentPodiums": 3,
       "constructorId": "ferrari",
       "constructor": "Ferrari",
       "constructorStrength": 0.745,
-      "finishProb": 0.926,
+      "finishProb": 0.941,
       "uncertainty": 0.359,
       "gridPosition": null
     },
     {
       "driverId": "hamilton",
       "name": "Lewis Hamilton",
-      "weight": 52.88,
+      "weight": 59.297,
       "seasonPodiums": 6,
-      "recentPodiums": 3,
+      "recentPodiums": 2,
       "constructorId": "ferrari",
       "constructor": "Ferrari",
       "constructorStrength": 0.745,
-      "finishProb": 0.93,
-      "uncertainty": 0.368,
+      "finishProb": 0.944,
+      "uncertainty": 0.367,
       "gridPosition": null
     },
     {
       "driverId": "norris",
       "name": "Lando Norris",
-      "weight": 52.656,
+      "weight": 50.008,
       "seasonPodiums": 5,
-      "recentPodiums": 4,
+      "recentPodiums": 3,
       "constructorId": "mclaren",
       "constructor": "McLaren",
       "constructorStrength": 0.565,
-      "finishProb": 0.938,
-      "uncertainty": 0.368,
-      "gridPosition": null
-    },
-    {
-      "driverId": "piastri",
-      "name": "Oscar Piastri",
-      "weight": 30.983,
-      "seasonPodiums": 2,
-      "recentPodiums": 0,
-      "constructorId": "mclaren",
-      "constructor": "McLaren",
-      "constructorStrength": 0.565,
-      "finishProb": 0.94,
-      "uncertainty": 0.371,
+      "finishProb": 0.95,
+      "uncertainty": 0.363,
       "gridPosition": null
     },
     {
       "driverId": "hadjar",
       "name": "Isack Hadjar",
-      "weight": 30.572,
+      "weight": 30.677,
       "seasonPodiums": 2,
       "recentPodiums": 1,
       "constructorId": "red_bull",
       "constructor": "Red Bull",
       "constructorStrength": 0.545,
-      "finishProb": 0.927,
-      "uncertainty": 0.537,
+      "finishProb": 0.942,
+      "uncertainty": 0.522,
+      "gridPosition": null
+    },
+    {
+      "driverId": "piastri",
+      "name": "Oscar Piastri",
+      "weight": 28.902,
+      "seasonPodiums": 2,
+      "recentPodiums": 0,
+      "constructorId": "mclaren",
+      "constructor": "McLaren",
+      "constructorStrength": 0.565,
+      "finishProb": 0.952,
+      "uncertainty": 0.366,
       "gridPosition": null
     },
     {
       "driverId": "sainz",
       "name": "Carlos Sainz",
-      "weight": 1.972,
+      "weight": 1.963,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "williams",
       "constructor": "Williams",
       "constructorStrength": 0.021,
-      "finishProb": 0.872,
-      "uncertainty": 0.773,
+      "finishProb": 0.893,
+      "uncertainty": 0.769,
       "gridPosition": null
     },
     {
       "driverId": "alonso",
       "name": "Fernando Alonso",
-      "weight": 1.631,
+      "weight": 1.628,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "aston_martin",
       "constructor": "Aston Martin",
       "constructorStrength": 0.012,
-      "finishProb": 0.872,
-      "uncertainty": 0.855,
+      "finishProb": 0.893,
+      "uncertainty": 0.851,
       "gridPosition": null
     },
     {
       "driverId": "gasly",
       "name": "Pierre Gasly",
-      "weight": 1.489,
+      "weight": 1.482,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "alpine",
       "constructor": "Alpine F1 Team",
       "constructorStrength": 0.121,
-      "finishProb": 0.918,
-      "uncertainty": 0.942,
+      "finishProb": 0.931,
+      "uncertainty": 0.937,
       "gridPosition": null
     },
     {
       "driverId": "lawson",
       "name": "Liam Lawson",
-      "weight": 1.005,
+      "weight": 1.003,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "rb",
       "constructor": "RB F1 Team",
       "constructorStrength": 0.168,
-      "finishProb": 0.925,
-      "uncertainty": 0.947,
+      "finishProb": 0.94,
+      "uncertainty": 0.944,
       "gridPosition": null
     },
     {
       "driverId": "arvid_lindblad",
       "name": "Arvid Lindblad",
-      "weight": 0.693,
+      "weight": 0.69,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "rb",
       "constructor": "RB F1 Team",
       "constructorStrength": 0.168,
-      "finishProb": 0.923,
-      "uncertainty": 1.152,
+      "finishProb": 0.938,
+      "uncertainty": 1.147,
       "gridPosition": null
     },
     {
       "driverId": "albon",
       "name": "Alexander Albon",
-      "weight": 0.652,
+      "weight": 0.649,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "williams",
       "constructor": "Williams",
       "constructorStrength": 0.021,
-      "finishProb": 0.876,
-      "uncertainty": 0.854,
+      "finishProb": 0.896,
+      "uncertainty": 0.851,
       "gridPosition": null
     },
     {
       "driverId": "ocon",
       "name": "Esteban Ocon",
-      "weight": 0.514,
+      "weight": 0.519,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "haas",
       "constructor": "Haas F1 Team",
       "constructorStrength": 0.053,
-      "finishProb": 0.923,
-      "uncertainty": 1.078,
-      "gridPosition": null
-    },
-    {
-      "driverId": "tsunoda",
-      "name": "Yuki Tsunoda",
-      "weight": 0.428,
-      "seasonPodiums": 0,
-      "recentPodiums": 0,
-      "constructorId": "rb",
-      "constructor": "RB F1 Team",
-      "constructorStrength": 0.168,
-      "finishProb": 0.92,
-      "uncertainty": 0.928,
+      "finishProb": 0.938,
+      "uncertainty": 1.076,
       "gridPosition": null
     },
     {
@@ -1203,1251 +1163,90 @@
       "constructorId": "aston_martin",
       "constructor": "Aston Martin",
       "constructorStrength": 0.012,
-      "finishProb": 0.866,
-      "uncertainty": 0.907,
+      "finishProb": 0.887,
+      "uncertainty": 0.903,
       "gridPosition": null
     },
     {
       "driverId": "hulkenberg",
       "name": "Nico Hülkenberg",
-      "weight": 0.324,
+      "weight": 0.328,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "audi",
       "constructor": "Audi",
       "constructorStrength": 0.034,
-      "finishProb": 0.92,
-      "uncertainty": 1.27,
+      "finishProb": 0.932,
+      "uncertainty": 1.267,
       "gridPosition": null
     },
     {
       "driverId": "bottas",
       "name": "Valtteri Bottas",
-      "weight": 0.313,
+      "weight": 0.315,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "cadillac",
       "constructor": "Cadillac F1 Team",
       "constructorStrength": 0.0,
-      "finishProb": 0.811,
-      "uncertainty": 1.413,
+      "finishProb": 0.849,
+      "uncertainty": 1.404,
       "gridPosition": null
     },
     {
       "driverId": "colapinto",
       "name": "Franco Colapinto",
-      "weight": 0.298,
+      "weight": 0.297,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "alpine",
       "constructor": "Alpine F1 Team",
       "constructorStrength": 0.121,
-      "finishProb": 0.92,
-      "uncertainty": 1.21,
+      "finishProb": 0.932,
+      "uncertainty": 1.205,
       "gridPosition": null
     },
     {
       "driverId": "perez",
       "name": "Sergio Pérez",
-      "weight": 0.193,
+      "weight": 0.194,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "cadillac",
       "constructor": "Cadillac F1 Team",
       "constructorStrength": 0.0,
-      "finishProb": 0.811,
-      "uncertainty": 1.379,
+      "finishProb": 0.849,
+      "uncertainty": 1.371,
       "gridPosition": null
     },
     {
       "driverId": "bearman",
       "name": "Oliver Bearman",
-      "weight": 0.112,
+      "weight": 0.113,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "haas",
       "constructor": "Haas F1 Team",
       "constructorStrength": 0.053,
-      "finishProb": 0.924,
-      "uncertainty": 1.292,
+      "finishProb": 0.939,
+      "uncertainty": 1.29,
       "gridPosition": null
     },
     {
       "driverId": "bortoleto",
       "name": "Gabriel Bortoleto",
-      "weight": 0.11,
+      "weight": 0.111,
       "seasonPodiums": 0,
       "recentPodiums": 0,
       "constructorId": "audi",
       "constructor": "Audi",
       "constructorStrength": 0.034,
-      "finishProb": 0.922,
-      "uncertainty": 1.485,
+      "finishProb": 0.934,
+      "uncertainty": 1.483,
       "gridPosition": null
     }
   ],
-  "postQuali": {
-    "season": "2026",
-    "round": "17",
-    "raceName": "Singapore Grand Prix",
-    "chanceNextRaceNew": 27.0,
-    "candidates": [
-      {
-        "driverIds": [
-          "antonelli",
-          "hamilton",
-          "leclerc"
-        ],
-        "names": [
-          "Andrea Kimi Antonelli",
-          "Lewis Hamilton",
-          "Charles Leclerc"
-        ],
-        "prob": 3.811,
-        "perDriver": [
-          {
-            "driverId": "antonelli",
-            "name": "Andrea Kimi Antonelli",
-            "weight": 149.735,
-            "seasonPodiums": 13,
-            "recentPodiums": 7,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.937,
-            "uncertainty": 0.35,
-            "gridPosition": 4
-          },
-          {
-            "driverId": "hamilton",
-            "name": "Lewis Hamilton",
-            "weight": 98.289,
-            "seasonPodiums": 6,
-            "recentPodiums": 3,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.93,
-            "uncertainty": 0.364,
-            "gridPosition": 3
-          },
-          {
-            "driverId": "leclerc",
-            "name": "Charles Leclerc",
-            "weight": 144.725,
-            "seasonPodiums": 4,
-            "recentPodiums": 2,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.926,
-            "uncertainty": 0.355,
-            "gridPosition": 2
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "max_verstappen",
-          "piastri"
-        ],
-        "names": [
-          "Andrea Kimi Antonelli",
-          "Max Verstappen",
-          "Oscar Piastri"
-        ],
-        "prob": 2.67,
-        "perDriver": [
-          {
-            "driverId": "antonelli",
-            "name": "Andrea Kimi Antonelli",
-            "weight": 149.735,
-            "seasonPodiums": 13,
-            "recentPodiums": 7,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.937,
-            "uncertainty": 0.35,
-            "gridPosition": 4
-          },
-          {
-            "driverId": "max_verstappen",
-            "name": "Max Verstappen",
-            "weight": 287.869,
-            "seasonPodiums": 8,
-            "recentPodiums": 7,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.924,
-            "uncertainty": 0.39,
-            "gridPosition": 1
-          },
-          {
-            "driverId": "piastri",
-            "name": "Oscar Piastri",
-            "weight": 36.389,
-            "seasonPodiums": 2,
-            "recentPodiums": 0,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.94,
-            "uncertainty": 0.362,
-            "gridPosition": 6
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "leclerc",
-          "norris"
-        ],
-        "names": [
-          "Andrea Kimi Antonelli",
-          "Charles Leclerc",
-          "Lando Norris"
-        ],
-        "prob": 2.56,
-        "perDriver": [
-          {
-            "driverId": "antonelli",
-            "name": "Andrea Kimi Antonelli",
-            "weight": 149.735,
-            "seasonPodiums": 13,
-            "recentPodiums": 7,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.937,
-            "uncertainty": 0.35,
-            "gridPosition": 4
-          },
-          {
-            "driverId": "leclerc",
-            "name": "Charles Leclerc",
-            "weight": 144.725,
-            "seasonPodiums": 4,
-            "recentPodiums": 2,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.926,
-            "uncertainty": 0.355,
-            "gridPosition": 2
-          },
-          {
-            "driverId": "norris",
-            "name": "Lando Norris",
-            "weight": 69.187,
-            "seasonPodiums": 5,
-            "recentPodiums": 4,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.938,
-            "uncertainty": 0.36,
-            "gridPosition": 5
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hamilton",
-          "norris"
-        ],
-        "names": [
-          "Andrea Kimi Antonelli",
-          "Lewis Hamilton",
-          "Lando Norris"
-        ],
-        "prob": 1.686,
-        "perDriver": [
-          {
-            "driverId": "antonelli",
-            "name": "Andrea Kimi Antonelli",
-            "weight": 149.735,
-            "seasonPodiums": 13,
-            "recentPodiums": 7,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.937,
-            "uncertainty": 0.35,
-            "gridPosition": 4
-          },
-          {
-            "driverId": "hamilton",
-            "name": "Lewis Hamilton",
-            "weight": 98.289,
-            "seasonPodiums": 6,
-            "recentPodiums": 3,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.93,
-            "uncertainty": 0.364,
-            "gridPosition": 3
-          },
-          {
-            "driverId": "norris",
-            "name": "Lando Norris",
-            "weight": 69.187,
-            "seasonPodiums": 5,
-            "recentPodiums": 4,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.938,
-            "uncertainty": 0.36,
-            "gridPosition": 5
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "max_verstappen",
-          "piastri"
-        ],
-        "names": [
-          "Lewis Hamilton",
-          "Max Verstappen",
-          "Oscar Piastri"
-        ],
-        "prob": 1.519,
-        "perDriver": [
-          {
-            "driverId": "hamilton",
-            "name": "Lewis Hamilton",
-            "weight": 98.289,
-            "seasonPodiums": 6,
-            "recentPodiums": 3,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.93,
-            "uncertainty": 0.364,
-            "gridPosition": 3
-          },
-          {
-            "driverId": "max_verstappen",
-            "name": "Max Verstappen",
-            "weight": 287.869,
-            "seasonPodiums": 8,
-            "recentPodiums": 7,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.924,
-            "uncertainty": 0.39,
-            "gridPosition": 1
-          },
-          {
-            "driverId": "piastri",
-            "name": "Oscar Piastri",
-            "weight": 36.389,
-            "seasonPodiums": 2,
-            "recentPodiums": 0,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.94,
-            "uncertainty": 0.362,
-            "gridPosition": 6
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hadjar",
-          "max_verstappen"
-        ],
-        "names": [
-          "Andrea Kimi Antonelli",
-          "Isack Hadjar",
-          "Max Verstappen"
-        ],
-        "prob": 1.437,
-        "perDriver": [
-          {
-            "driverId": "antonelli",
-            "name": "Andrea Kimi Antonelli",
-            "weight": 149.735,
-            "seasonPodiums": 13,
-            "recentPodiums": 7,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.937,
-            "uncertainty": 0.35,
-            "gridPosition": 4
-          },
-          {
-            "driverId": "hadjar",
-            "name": "Isack Hadjar",
-            "weight": 18.94,
-            "seasonPodiums": 2,
-            "recentPodiums": 1,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.927,
-            "uncertainty": 0.523,
-            "gridPosition": 22
-          },
-          {
-            "driverId": "max_verstappen",
-            "name": "Max Verstappen",
-            "weight": 287.869,
-            "seasonPodiums": 8,
-            "recentPodiums": 7,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.924,
-            "uncertainty": 0.39,
-            "gridPosition": 1
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "leclerc",
-          "norris"
-        ],
-        "names": [
-          "Lewis Hamilton",
-          "Charles Leclerc",
-          "Lando Norris"
-        ],
-        "prob": 1.341,
-        "perDriver": [
-          {
-            "driverId": "hamilton",
-            "name": "Lewis Hamilton",
-            "weight": 98.289,
-            "seasonPodiums": 6,
-            "recentPodiums": 3,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.93,
-            "uncertainty": 0.364,
-            "gridPosition": 3
-          },
-          {
-            "driverId": "leclerc",
-            "name": "Charles Leclerc",
-            "weight": 144.725,
-            "seasonPodiums": 4,
-            "recentPodiums": 2,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.926,
-            "uncertainty": 0.355,
-            "gridPosition": 2
-          },
-          {
-            "driverId": "norris",
-            "name": "Lando Norris",
-            "weight": 69.187,
-            "seasonPodiums": 5,
-            "recentPodiums": 4,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.938,
-            "uncertainty": 0.36,
-            "gridPosition": 5
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "hadjar",
-          "leclerc",
-          "max_verstappen"
-        ],
-        "names": [
-          "Isack Hadjar",
-          "Charles Leclerc",
-          "Max Verstappen"
-        ],
-        "prob": 1.275,
-        "perDriver": [
-          {
-            "driverId": "hadjar",
-            "name": "Isack Hadjar",
-            "weight": 18.94,
-            "seasonPodiums": 2,
-            "recentPodiums": 1,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.927,
-            "uncertainty": 0.523,
-            "gridPosition": 22
-          },
-          {
-            "driverId": "leclerc",
-            "name": "Charles Leclerc",
-            "weight": 144.725,
-            "seasonPodiums": 4,
-            "recentPodiums": 2,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.926,
-            "uncertainty": 0.355,
-            "gridPosition": 2
-          },
-          {
-            "driverId": "max_verstappen",
-            "name": "Max Verstappen",
-            "weight": 287.869,
-            "seasonPodiums": 8,
-            "recentPodiums": 7,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.924,
-            "uncertainty": 0.39,
-            "gridPosition": 1
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "max_verstappen",
-          "piastri",
-          "russell"
-        ],
-        "names": [
-          "Max Verstappen",
-          "Oscar Piastri",
-          "George Russell"
-        ],
-        "prob": 0.937,
-        "perDriver": [
-          {
-            "driverId": "max_verstappen",
-            "name": "Max Verstappen",
-            "weight": 287.869,
-            "seasonPodiums": 8,
-            "recentPodiums": 7,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.924,
-            "uncertainty": 0.39,
-            "gridPosition": 1
-          },
-          {
-            "driverId": "piastri",
-            "name": "Oscar Piastri",
-            "weight": 36.389,
-            "seasonPodiums": 2,
-            "recentPodiums": 0,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.94,
-            "uncertainty": 0.362,
-            "gridPosition": 6
-          },
-          {
-            "driverId": "russell",
-            "name": "George Russell",
-            "weight": 59.77,
-            "seasonPodiums": 8,
-            "recentPodiums": 6,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.933,
-            "uncertainty": 0.32,
-            "gridPosition": 21
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "leclerc",
-          "norris",
-          "russell"
-        ],
-        "names": [
-          "Charles Leclerc",
-          "Lando Norris",
-          "George Russell"
-        ],
-        "prob": 0.839,
-        "perDriver": [
-          {
-            "driverId": "leclerc",
-            "name": "Charles Leclerc",
-            "weight": 144.725,
-            "seasonPodiums": 4,
-            "recentPodiums": 2,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.926,
-            "uncertainty": 0.355,
-            "gridPosition": 2
-          },
-          {
-            "driverId": "norris",
-            "name": "Lando Norris",
-            "weight": 69.187,
-            "seasonPodiums": 5,
-            "recentPodiums": 4,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.938,
-            "uncertainty": 0.36,
-            "gridPosition": 5
-          },
-          {
-            "driverId": "russell",
-            "name": "George Russell",
-            "weight": 59.77,
-            "seasonPodiums": 8,
-            "recentPodiums": 6,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.933,
-            "uncertainty": 0.32,
-            "gridPosition": 21
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hamilton",
-          "piastri"
-        ],
-        "names": [
-          "Andrea Kimi Antonelli",
-          "Lewis Hamilton",
-          "Oscar Piastri"
-        ],
-        "prob": 0.837,
-        "perDriver": [
-          {
-            "driverId": "antonelli",
-            "name": "Andrea Kimi Antonelli",
-            "weight": 149.735,
-            "seasonPodiums": 13,
-            "recentPodiums": 7,
-            "constructorId": "mercedes",
-            "constructor": "Mercedes",
-            "constructorStrength": 1.0,
-            "finishProb": 0.937,
-            "uncertainty": 0.35,
-            "gridPosition": 4
-          },
-          {
-            "driverId": "hamilton",
-            "name": "Lewis Hamilton",
-            "weight": 98.289,
-            "seasonPodiums": 6,
-            "recentPodiums": 3,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.93,
-            "uncertainty": 0.364,
-            "gridPosition": 3
-          },
-          {
-            "driverId": "piastri",
-            "name": "Oscar Piastri",
-            "weight": 36.389,
-            "seasonPodiums": 2,
-            "recentPodiums": 0,
-            "constructorId": "mclaren",
-            "constructor": "McLaren",
-            "constructorStrength": 0.565,
-            "finishProb": 0.94,
-            "uncertainty": 0.362,
-            "gridPosition": 6
-          }
-        ]
-      },
-      {
-        "driverIds": [
-          "hadjar",
-          "hamilton",
-          "max_verstappen"
-        ],
-        "names": [
-          "Isack Hadjar",
-          "Lewis Hamilton",
-          "Max Verstappen"
-        ],
-        "prob": 0.826,
-        "perDriver": [
-          {
-            "driverId": "hadjar",
-            "name": "Isack Hadjar",
-            "weight": 18.94,
-            "seasonPodiums": 2,
-            "recentPodiums": 1,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.927,
-            "uncertainty": 0.523,
-            "gridPosition": 22
-          },
-          {
-            "driverId": "hamilton",
-            "name": "Lewis Hamilton",
-            "weight": 98.289,
-            "seasonPodiums": 6,
-            "recentPodiums": 3,
-            "constructorId": "ferrari",
-            "constructor": "Ferrari",
-            "constructorStrength": 0.745,
-            "finishProb": 0.93,
-            "uncertainty": 0.364,
-            "gridPosition": 3
-          },
-          {
-            "driverId": "max_verstappen",
-            "name": "Max Verstappen",
-            "weight": 287.869,
-            "seasonPodiums": 8,
-            "recentPodiums": 7,
-            "constructorId": "red_bull",
-            "constructor": "Red Bull",
-            "constructorStrength": 0.545,
-            "finishProb": 0.924,
-            "uncertainty": 0.39,
-            "gridPosition": 1
-          }
-        ]
-      }
-    ],
-    "trioBoard": [
-      {
-        "driverIds": [
-          "antonelli",
-          "leclerc",
-          "max_verstappen"
-        ],
-        "prob": 13.475,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hamilton",
-          "max_verstappen"
-        ],
-        "prob": 7.98,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "leclerc",
-          "max_verstappen"
-        ],
-        "prob": 7.621,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "max_verstappen",
-          "norris"
-        ],
-        "prob": 5.491,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "leclerc",
-          "max_verstappen",
-          "norris"
-        ],
-        "prob": 5.308,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "max_verstappen",
-          "russell"
-        ],
-        "prob": 4.87,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "leclerc",
-          "max_verstappen",
-          "russell"
-        ],
-        "prob": 4.653,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hamilton",
-          "leclerc"
-        ],
-        "prob": 3.811,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "max_verstappen",
-          "norris"
-        ],
-        "prob": 3.08,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "max_verstappen",
-          "russell"
-        ],
-        "prob": 2.898,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "max_verstappen",
-          "piastri"
-        ],
-        "prob": 2.67,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "leclerc",
-          "max_verstappen",
-          "piastri"
-        ],
-        "prob": 2.569,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "leclerc",
-          "norris"
-        ],
-        "prob": 2.56,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "leclerc",
-          "russell"
-        ],
-        "prob": 2.11,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "max_verstappen",
-          "norris",
-          "russell"
-        ],
-        "prob": 1.939,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hamilton",
-          "norris"
-        ],
-        "prob": 1.686,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "max_verstappen",
-          "piastri"
-        ],
-        "prob": 1.519,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hamilton",
-          "russell"
-        ],
-        "prob": 1.447,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "hadjar",
-          "max_verstappen"
-        ],
-        "prob": 1.437,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "leclerc",
-          "norris"
-        ],
-        "prob": 1.341,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "hamilton",
-          "leclerc",
-          "russell"
-        ],
-        "prob": 1.331,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "antonelli",
-          "leclerc",
-          "piastri"
-        ],
-        "prob": 1.313,
-        "happened": true
-      },
-      {
-        "driverIds": [
-          "hadjar",
-          "leclerc",
-          "max_verstappen"
-        ],
-        "prob": 1.275,
-        "happened": false
-      },
-      {
-        "driverIds": [
-          "max_verstappen",
-          "norris",
-          "piastri"
-        ],
-        "prob": 1.074,
-        "happened": true
-      }
-    ],
-    "driverForm": [
-      {
-        "driverId": "max_verstappen",
-        "name": "Max Verstappen",
-        "weight": 287.869,
-        "seasonPodiums": 8,
-        "recentPodiums": 7,
-        "constructorId": "red_bull",
-        "constructor": "Red Bull",
-        "constructorStrength": 0.545,
-        "finishProb": 0.924,
-        "uncertainty": 0.39,
-        "gridPosition": 1
-      },
-      {
-        "driverId": "antonelli",
-        "name": "Andrea Kimi Antonelli",
-        "weight": 149.735,
-        "seasonPodiums": 13,
-        "recentPodiums": 7,
-        "constructorId": "mercedes",
-        "constructor": "Mercedes",
-        "constructorStrength": 1.0,
-        "finishProb": 0.937,
-        "uncertainty": 0.35,
-        "gridPosition": 4
-      },
-      {
-        "driverId": "leclerc",
-        "name": "Charles Leclerc",
-        "weight": 144.725,
-        "seasonPodiums": 4,
-        "recentPodiums": 2,
-        "constructorId": "ferrari",
-        "constructor": "Ferrari",
-        "constructorStrength": 0.745,
-        "finishProb": 0.926,
-        "uncertainty": 0.355,
-        "gridPosition": 2
-      },
-      {
-        "driverId": "hamilton",
-        "name": "Lewis Hamilton",
-        "weight": 98.289,
-        "seasonPodiums": 6,
-        "recentPodiums": 3,
-        "constructorId": "ferrari",
-        "constructor": "Ferrari",
-        "constructorStrength": 0.745,
-        "finishProb": 0.93,
-        "uncertainty": 0.364,
-        "gridPosition": 3
-      },
-      {
-        "driverId": "norris",
-        "name": "Lando Norris",
-        "weight": 69.187,
-        "seasonPodiums": 5,
-        "recentPodiums": 4,
-        "constructorId": "mclaren",
-        "constructor": "McLaren",
-        "constructorStrength": 0.565,
-        "finishProb": 0.938,
-        "uncertainty": 0.36,
-        "gridPosition": 5
-      },
-      {
-        "driverId": "russell",
-        "name": "George Russell",
-        "weight": 59.77,
-        "seasonPodiums": 8,
-        "recentPodiums": 6,
-        "constructorId": "mercedes",
-        "constructor": "Mercedes",
-        "constructorStrength": 1.0,
-        "finishProb": 0.933,
-        "uncertainty": 0.32,
-        "gridPosition": 21
-      },
-      {
-        "driverId": "piastri",
-        "name": "Oscar Piastri",
-        "weight": 36.389,
-        "seasonPodiums": 2,
-        "recentPodiums": 0,
-        "constructorId": "mclaren",
-        "constructor": "McLaren",
-        "constructorStrength": 0.565,
-        "finishProb": 0.94,
-        "uncertainty": 0.362,
-        "gridPosition": 6
-      },
-      {
-        "driverId": "hadjar",
-        "name": "Isack Hadjar",
-        "weight": 18.94,
-        "seasonPodiums": 2,
-        "recentPodiums": 1,
-        "constructorId": "red_bull",
-        "constructor": "Red Bull",
-        "constructorStrength": 0.545,
-        "finishProb": 0.927,
-        "uncertainty": 0.523,
-        "gridPosition": 22
-      },
-      {
-        "driverId": "gasly",
-        "name": "Pierre Gasly",
-        "weight": 1.654,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "alpine",
-        "constructor": "Alpine F1 Team",
-        "constructorStrength": 0.121,
-        "finishProb": 0.918,
-        "uncertainty": 0.936,
-        "gridPosition": 7
-      },
-      {
-        "driverId": "sainz",
-        "name": "Carlos Sainz",
-        "weight": 1.627,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "williams",
-        "constructor": "Williams",
-        "constructorStrength": 0.021,
-        "finishProb": 0.872,
-        "uncertainty": 0.767,
-        "gridPosition": 13
-      },
-      {
-        "driverId": "alonso",
-        "name": "Fernando Alonso",
-        "weight": 1.218,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "aston_martin",
-        "constructor": "Aston Martin",
-        "constructorStrength": 0.012,
-        "finishProb": 0.872,
-        "uncertainty": 0.85,
-        "gridPosition": 16
-      },
-      {
-        "driverId": "lawson",
-        "name": "Liam Lawson",
-        "weight": 1.05,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "rb",
-        "constructor": "RB F1 Team",
-        "constructorStrength": 0.168,
-        "finishProb": 0.925,
-        "uncertainty": 0.943,
-        "gridPosition": 8
-      },
-      {
-        "driverId": "arvid_lindblad",
-        "name": "Arvid Lindblad",
-        "weight": 0.683,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "rb",
-        "constructor": "RB F1 Team",
-        "constructorStrength": 0.168,
-        "finishProb": 0.923,
-        "uncertainty": 1.147,
-        "gridPosition": 9
-      },
-      {
-        "driverId": "albon",
-        "name": "Alexander Albon",
-        "weight": 0.473,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "williams",
-        "constructor": "Williams",
-        "constructorStrength": 0.021,
-        "finishProb": 0.876,
-        "uncertainty": 0.849,
-        "gridPosition": 17
-      },
-      {
-        "driverId": "ocon",
-        "name": "Esteban Ocon",
-        "weight": 0.445,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "haas",
-        "constructor": "Haas F1 Team",
-        "constructorStrength": 0.053,
-        "finishProb": 0.923,
-        "uncertainty": 1.074,
-        "gridPosition": 12
-      },
-      {
-        "driverId": "hulkenberg",
-        "name": "Nico Hülkenberg",
-        "weight": 0.306,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "audi",
-        "constructor": "Audi",
-        "constructorStrength": 0.034,
-        "finishProb": 0.92,
-        "uncertainty": 1.266,
-        "gridPosition": 10
-      },
-      {
-        "driverId": "stroll",
-        "name": "Lance Stroll",
-        "weight": 0.251,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "aston_martin",
-        "constructor": "Aston Martin",
-        "constructorStrength": 0.012,
-        "finishProb": 0.866,
-        "uncertainty": 0.902,
-        "gridPosition": 18
-      },
-      {
-        "driverId": "colapinto",
-        "name": "Franco Colapinto",
-        "weight": 0.229,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "alpine",
-        "constructor": "Alpine F1 Team",
-        "constructorStrength": 0.121,
-        "finishProb": 0.92,
-        "uncertainty": 1.205,
-        "gridPosition": 15
-      },
-      {
-        "driverId": "bottas",
-        "name": "Valtteri Bottas",
-        "weight": 0.211,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "cadillac",
-        "constructor": "Cadillac F1 Team",
-        "constructorStrength": 0.0,
-        "finishProb": 0.811,
-        "uncertainty": 1.406,
-        "gridPosition": 20
-      },
-      {
-        "driverId": "perez",
-        "name": "Sergio Pérez",
-        "weight": 0.133,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "cadillac",
-        "constructor": "Cadillac F1 Team",
-        "constructorStrength": 0.0,
-        "finishProb": 0.811,
-        "uncertainty": 1.372,
-        "gridPosition": 19
-      },
-      {
-        "driverId": "bearman",
-        "name": "Oliver Bearman",
-        "weight": 0.101,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "haas",
-        "constructor": "Haas F1 Team",
-        "constructorStrength": 0.053,
-        "finishProb": 0.924,
-        "uncertainty": 1.289,
-        "gridPosition": 11
-      },
-      {
-        "driverId": "bortoleto",
-        "name": "Gabriel Bortoleto",
-        "weight": 0.088,
-        "seasonPodiums": 0,
-        "recentPodiums": 0,
-        "constructorId": "audi",
-        "constructor": "Audi",
-        "constructorStrength": 0.034,
-        "finishProb": 0.922,
-        "uncertainty": 1.482,
-        "gridPosition": 14
-      }
-    ]
-  },
+  "postQuali": null,
   "bySeason": {
     "2018": [
       {
