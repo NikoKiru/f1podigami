@@ -375,6 +375,7 @@ def test_evaluate_appends_post_quali_rungs_and_gate():
     names = [name for name, _ in res["ladder"]]
     assert names[-2:] == ["v2 post-quali (ratings)", "v2 post-quali +grid"]
     assert isinstance(res["postQuali"]["gridAccepted"], bool)
+    assert res["postQuali"]["circuitGridAccepted"] is False
     # the pre-quali chosen selection is untouched by the new rungs
     assert res["chosenName"] in ("PL + tuned (chosen)", "v2 full")
 
@@ -406,3 +407,107 @@ def test_main_tune_v2_grid_flag_prints_winner(monkeypatch, capsys):
     rc = backtest.main(["--tune-v2-grid"])
     assert rc == 0
     assert "Best grid knobs" in capsys.readouterr().out
+
+
+# --- run-in circuit grid correction ---------------------------------------------
+
+_RUNIN = "americas"
+
+
+def _runin_history():
+    """Finish == grid with a rotating grid, so long-run ratings equalise and the
+    grid is the only stable signal. Odd rounds run at a run-in circuit, even
+    rounds at an unlisted one."""
+    drivers = [("a", "t1"), ("b", "t1"), ("c", "t2"), ("d", "t2")]
+    rresults, quali_map, trio_keys = [], {}, {}
+    for season in (2010, 2011):
+        for rnd in range(1, 16):
+            order = drivers[rnd % 4 :] + drivers[: rnd % 4]
+            rows = [_rrow_v2(d, c, i + 1, i + 1) for i, (d, c) in enumerate(order)]
+            rresults.append(
+                {
+                    "season": str(season),
+                    "round": str(rnd),
+                    "raceName": "GP",
+                    "date": "",
+                    "circuitId": _RUNIN if rnd % 2 else "ring",
+                    "results": rows,
+                }
+            )
+            quali_map[(str(season), str(rnd))] = _q_for(season, rnd, order)
+            trio_keys[(str(season), str(rnd))] = tuple(sorted(d for d, _ in order[:3]))
+    return rresults, quali_map, trio_keys
+
+
+def test_score_window_v2_circuit_filter_scores_only_listed_races():
+    rresults, quali_map, trio_keys = _runin_history()
+    params = dict(backtest.model_v2.DEFAULT_PARAMS_V2)
+    every = backtest.score_window_v2(
+        rresults, quali_map, trio_keys, (2011, 2011), params, post_quali=True
+    )
+    sub = backtest.score_window_v2(
+        rresults,
+        quali_map,
+        trio_keys,
+        (2011, 2011),
+        params,
+        post_quali=True,
+        circuits=frozenset({_RUNIN}),
+    )
+    assert len(every) == 15
+    assert len(sub) == 8  # the odd rounds
+
+
+def test_circuit_grid_learning_sharpens_on_grid_holding_history():
+    rresults, quali_map, trio_keys = _runin_history()
+    off = dict(backtest.model_v2.DEFAULT_PARAMS_V2, cgrid_sigma0=0.0)
+    on = dict(backtest.model_v2.DEFAULT_PARAMS_V2, cgrid_sigma0=0.4, cgrid_tau=0.0)
+    kw = {"post_quali": True, "circuits": frozenset({_RUNIN})}
+    r_off = backtest.score_window_v2(rresults, quali_map, trio_keys, (2011, 2011), off, **kw)
+    r_on = backtest.score_window_v2(rresults, quali_map, trio_keys, (2011, 2011), on, **kw)
+    assert sum(r["p_true"] for r in r_on) > sum(r["p_true"] for r in r_off)
+
+
+def test_rungs_v2_cgrid_shape():
+    names = [name for name, _ in backtest.RUNGS_V2_CGRID]
+    assert names == [
+        "v2 post-quali +grid [run-in circuits]",
+        "v2 post-quali +circuit grid [run-in circuits]",
+    ]
+    assert backtest.RUNGS_V2_CGRID[0][1] == {"cgrid_sigma0": 0.0}
+    assert backtest.RUNGS_V2_CGRID[1][1] is backtest.CIRCUIT_GRID
+    assert backtest.CIRCUIT_GRID["cgrid_sigma0"] > 0.0
+
+
+def test_evaluate_appends_cgrid_rows_and_gate():
+    rresults, quali_map, trio_keys = _runin_history()
+    races = _races_for(trio_keys)
+    active = _active_all(races, ["a", "b", "c", "d"])
+    res = backtest.evaluate(races, active, (2011, 2011), v2_data=(rresults, quali_map))
+    names = [name for name, _ in res["ladder"]]
+    assert names[-2:] == [name for name, _ in backtest.RUNGS_V2_CGRID]
+    assert all(m["n"] == 8 for _, m in res["ladder"][-2:])
+    assert isinstance(res["postQuali"]["circuitGridAccepted"], bool)
+
+
+def test_tune_v2_cgrid_touches_only_the_cgrid_knobs():
+    rresults, quali_map, trio_keys = _runin_history()
+    winner = backtest.tune_v2_cgrid(
+        rresults, quali_map, trio_keys, (2010, 2010), sweeps=1, verbose=False
+    )
+    for knob in ("cgrid_sigma0", "cgrid_tau"):
+        assert winner[knob] in backtest.V2_CGRID_TUNE_GRID[knob]
+    for k, v in backtest.model_v2.DEFAULT_PARAMS_V2.items():
+        if k not in ("cgrid_sigma0", "cgrid_tau"):
+            assert winner[k] == v
+
+
+def test_main_tune_v2_cgrid_flag_prints_winner(monkeypatch, capsys):
+    rresults, quali_map, trio_keys = _runin_history()
+    races = _races_for(trio_keys)
+    active = _active_all(races, ["a", "b", "c", "d"])
+    monkeypatch.setattr(backtest, "load", lambda: (races, active))
+    monkeypatch.setattr(backtest, "load_v2", lambda: (rresults, quali_map))
+    rc = backtest.main(["--tune-v2-cgrid"])
+    assert rc == 0
+    assert "Best circuit-grid knobs" in capsys.readouterr().out

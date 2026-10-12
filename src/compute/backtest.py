@@ -255,6 +255,25 @@ V2_GRID_TUNE_GRID: dict[str, list] = {
     "grid_circuit_beta": [0.0, 0.5, 1.0],
 }
 
+# Learned per-circuit grid correction (model_v2.CircuitGridLearner). Tuned by
+# --tune-v2-cgrid on the validation window; copied into DEFAULT_PARAMS_V2 only
+# if the run-in-circuit gate in evaluate() accepts it.
+CIRCUIT_GRID = {"cgrid_sigma0": 0.2, "cgrid_tau": 0.05}
+
+# Per-knob grids for --tune-v2-cgrid (every other knob stays frozen).
+V2_CGRID_TUNE_GRID: dict[str, list] = {
+    "cgrid_sigma0": [0.0, 0.1, 0.2, 0.4],
+    "cgrid_tau": [0.0, 0.02, 0.05, 0.1],
+}
+
+# Both rows score ONLY races at model_v2.CGRID_CIRCUITS (post-quali protocol):
+# the correction changes nothing anywhere else, so the full window would only
+# dilute the comparison. The first row is the gate's baseline.
+RUNGS_V2_CGRID = [
+    ("v2 post-quali +grid [run-in circuits]", {"cgrid_sigma0": 0.0}),
+    ("v2 post-quali +circuit grid [run-in circuits]", CIRCUIT_GRID),
+]
+
 
 def load_v2():
     """Load (race_results, quali_map) for the v2 rungs, or None if not fetched."""
@@ -290,6 +309,7 @@ def score_window_v2(
     rank_draws=16,
     with_rank=False,
     post_quali=False,
+    circuits: frozenset[str] | None = None,
 ):
     """One HistoryFilter pass over the whole history; score races in the window.
 
@@ -301,6 +321,9 @@ def score_window_v2(
     When ``post_quali`` is set the qualifying order is observed BEFORE the
     snapshot (legitimate conditioning — qualifying precedes the race) and the
     causal grid offsets are folded into the driver means.
+
+    ``circuits`` restricts *scoring* to races at those circuitIds (the filter
+    still sees every race).
     """
     hf = model_v2.HistoryFilter(params)
     seen: set = set()
@@ -313,6 +336,7 @@ def score_window_v2(
             key is not None
             and window[0] <= int(race["season"]) <= window[1]
             and len(snap["drivers"]) >= 3
+            and (circuits is None or race.get("circuitId") in circuits)
         ):
             entrants = sorted(snap["drivers"])
             mu_var = {d: (v[0], v[1]) for d, v in snap["drivers"].items()}
@@ -323,7 +347,7 @@ def score_window_v2(
                     for q in sorted(quali["results"], key=lambda q: q["position"]):
                         qpos.setdefault(q["driverId"], q["position"])
                     qpos = {d: g for d, g in qpos.items() if d in mu_var}
-                    offs = model_v2.grid_offsets(qpos, snap["disp_ratio"], params)
+                    offs = model_v2.grid_offsets(qpos, snap["disp_ratio"], params, snap["grid_adj"])
                     mu_var = {d: (mv[0] + offs.get(d, 0.0), mv[1]) for d, mv in mu_var.items()}
             p_fin = {d: v[2] for d, v in snap["drivers"].items()}
             seed = 20260704 + int(race["season"]) * 100 + int(race["round"])
@@ -404,29 +428,58 @@ def tune_v2(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> d
     return best
 
 
-def tune_v2_grid(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> dict:
-    """Coordinate descent over ONLY the two grid knobs (post-quali protocol),
-    with the 18 locked v2 knobs frozen."""
+def _tune_post_quali(
+    rresults, quali_map, trio_keys, val, knob_grid, *, circuits=None, sweeps=2, verbose=True
+) -> dict:
+    """Coordinate descent over ``knob_grid`` only (post-quali protocol), every
+    other DEFAULT_PARAMS_V2 knob frozen; ``circuits`` restricts the scored races."""
+
+    def j_of(params: dict) -> float:
+        recs = score_window_v2(
+            rresults, quali_map, trio_keys, val, params, post_quali=True, circuits=circuits
+        )
+        return v2_objective(recs)
+
     best = dict(model_v2.DEFAULT_PARAMS_V2)
-    best_j = v2_objective(
-        score_window_v2(rresults, quali_map, trio_keys, val, best, post_quali=True)
-    )
+    best_j = j_of(best)
     if verbose:
         print(f"start J={best_j:.4f}")
     for sweep in range(sweeps):
-        for knob, grid in V2_GRID_TUNE_GRID.items():
+        for knob, grid in knob_grid.items():
             for value in grid:
                 if value == best[knob]:
                     continue
                 trial = dict(best, **{knob: value})
-                j = v2_objective(
-                    score_window_v2(rresults, quali_map, trio_keys, val, trial, post_quali=True)
-                )
+                j = j_of(trial)
                 if j < best_j:
                     best_j, best = j, trial
             if verbose:
                 print(f"  sweep {sweep + 1} {knob} -> {best[knob]}  (J={best_j:.4f})")
     return best
+
+
+def tune_v2_grid(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> dict:
+    """Coordinate descent over ONLY the two grid knobs (post-quali protocol),
+    with the locked v2 knobs frozen."""
+    return _tune_post_quali(
+        rresults, quali_map, trio_keys, val, V2_GRID_TUNE_GRID, sweeps=sweeps, verbose=verbose
+    )
+
+
+def tune_v2_cgrid(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> dict:
+    """Coordinate descent over ONLY the two circuit-grid knobs (post-quali
+    protocol), scored on races at model_v2.CGRID_CIRCUITS - the only races the
+    correction can change."""
+    return _tune_post_quali(
+        rresults,
+        quali_map,
+        trio_keys,
+        val,
+        V2_CGRID_TUNE_GRID,
+        circuits=frozenset(model_v2.CGRID_CIRCUITS),
+        sweeps=sweeps,
+        verbose=verbose,
+    )
 
 
 def evaluate(races, active, test, v2_data=None) -> dict:
@@ -498,6 +551,34 @@ def evaluate(races, active, test, v2_data=None) -> dict:
                 grid["logLoss"] <= ratings["logLoss"] and grid["brierNew"] <= ratings["brierNew"]
             )
         }
+        # Run-in circuit gate: the learned per-circuit grid correction ships only
+        # if it beats the plain grid term on BOTH headline scores, on the races
+        # at model_v2.CGRID_CIRCUITS (the only races it can change).
+        runin = frozenset(model_v2.CGRID_CIRCUITS)
+        cgrid_rows: dict[str, dict] = {}
+        for name, overrides in RUNGS_V2_CGRID:
+            params = dict(model_v2.DEFAULT_PARAMS_V2, **overrides)
+            recs = score_window_v2(
+                rresults,
+                quali_map,
+                keys,
+                test,
+                params,
+                with_rank=True,
+                post_quali=True,
+                circuits=runin,
+            )
+            if recs:
+                ladder.append((name, summarize(recs)))
+                cgrid_rows[name] = ladder[-1][1]
+        base_c = cgrid_rows.get(RUNGS_V2_CGRID[0][0])
+        cand_c = cgrid_rows.get(RUNGS_V2_CGRID[1][0])
+        post_quali_info["circuitGridAccepted"] = bool(
+            base_c is not None
+            and cand_c is not None
+            and cand_c["logLoss"] < base_c["logLoss"]
+            and cand_c["brierNew"] < base_c["brierNew"]
+        )
 
     base_rate = sum(r["is_new"] for r in rf) / max(len(rf), 1)
     brier_new_base = metrics.brier_binary(
@@ -549,6 +630,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="coordinate-descent the two grid knobs (post-quali protocol) on the validation window",
     )
+    ap.add_argument(
+        "--tune-v2-cgrid",
+        action="store_true",
+        help="coordinate-descent the two circuit-grid knobs on the run-in circuits (validation window)",
+    )
     args = ap.parse_args(argv)
 
     races, active = load()
@@ -584,6 +670,15 @@ def main(argv: list[str] | None = None) -> int:
         winner = tune_v2_grid(v2_data[0], v2_data[1], trio_keys_from(races), val)
         print("Best grid knobs (lock these into model_v2.DEFAULT_PARAMS_V2):")
         print({k: winner[k] for k in ("w_grid", "grid_circuit_beta")})
+        return 0
+
+    if args.tune_v2_cgrid:
+        if v2_data is None:
+            print("race_results.json missing - run src/fetch/fetch_race_results.py first")
+            return 1
+        winner = tune_v2_cgrid(v2_data[0], v2_data[1], trio_keys_from(races), val)
+        print("Best circuit-grid knobs (candidate for backtest.CIRCUIT_GRID):")
+        print({k: winner[k] for k in ("cgrid_sigma0", "cgrid_tau")})
         return 0
 
     res = evaluate(races, active, test, v2_data)
@@ -629,6 +724,15 @@ def main(argv: list[str] | None = None) -> int:
             f" | post-vs-pre logLoss {post['logLoss']:.3f} vs {pre['logLoss']:.3f}"
             f"{' OK' if sane else '  WARNING: post-quali scored worse than pre-quali'}"
         )
+        b_name, c_name = (name for name, _ in RUNGS_V2_CGRID)
+        if b_name in by and c_name in by:
+            b, c = by[b_name], by[c_name]
+            print(
+                f"run-in circuit gate: circuitGridAccepted="
+                f"{res['postQuali']['circuitGridAccepted']} ({c['n']} races)"
+                f" | logLoss {c['logLoss']:.4f} vs {b['logLoss']:.4f}"
+                f" | brierNew {c['brierNew']:.4f} vs {b['brierNew']:.4f}"
+            )
     print(
         f"\nP(new) base-rate {res['baseRate']:.3f} | brierNew base {res['brierNewBase']:.3f} "
         f"vs model {chosen['brierNew']:.3f} | ECE {res['ece']:.3f}"
