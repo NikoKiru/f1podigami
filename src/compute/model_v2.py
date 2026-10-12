@@ -33,6 +33,8 @@ __all__ = [
     "REG_RESET_SEASONS",
     "CONSTRUCTOR_LINEAGE",
     "CircuitStats",
+    "CGRID_CIRCUITS",
+    "CircuitGridLearner",
     "ADAPT_CEIL",
     "Gauss",
     "HistoryFilter",
@@ -558,6 +560,76 @@ class CircuitStats:
 
         w = rec[0] / (rec[0] + _CIRCUIT_SHRINK_N)
         return w * (logit(rec[1] / rec[2]) - logit(self._g[1] / self._g[2]))
+
+
+# The circuits still to race in 2026 when the learned grid correction was added
+# (2026-10-12). Every other circuit keeps the plain disp_ratio grid term.
+CGRID_CIRCUITS: tuple[str, ...] = (
+    "americas",
+    "rodriguez",
+    "interlagos",
+    "vegas",
+    "losail",
+    "yas_marina",
+)
+
+
+class CircuitGridLearner:
+    """Learned per-circuit correction to the post-quali grid scale.
+
+    Each listed circuit carries ``d_c ~ N(mean, var)``, born at
+    ``N(0, sigma0**2)``, which is added to the circuit-modulated base scale
+    (``base_grid_scale``). A race there is read as a truncated PL order over
+    race-day strengths ``mu_i + (base + d_c) * x_i`` (``x`` = centred log
+    grid), and one closed-form gradient/Hessian step moves ``d_c``. The
+    ratings already carry pace, so only grid-vs-finish movement they did not
+    expect counts as evidence about the track. Each visit first adds
+    ``tau**2`` drift so old eras fade. ``sigma0 <= 0`` disables it entirely.
+    """
+
+    def __init__(self, sigma0: float, tau: float, circuits: tuple[str, ...] = CGRID_CIRCUITS):
+        self.sigma0 = sigma0
+        self.tau = tau
+        self.circuits = frozenset(circuits)
+        self._d: dict[str, Gauss] = {}
+
+    def adj(self, circuit_id: str) -> float:
+        """Current mean correction (0.0 for an unlisted or unvisited circuit)."""
+        st = self._d.get(circuit_id)
+        return st.mu if st is not None else 0.0
+
+    def observe(
+        self,
+        circuit_id: str,
+        finishers: list[tuple[str, float, int]],
+        base_scale: float,
+        depth: int,
+    ) -> None:
+        """One update from a race. ``finishers`` lists (driverId, rating mean,
+        grid slot >= 1) in finishing order; ``depth`` truncates the order to the
+        first N picks, exactly as the pace channel does."""
+        if self.sigma0 <= 0.0 or circuit_id not in self.circuits or len(finishers) < 3:
+            return
+        st = self._d.setdefault(circuit_id, Gauss(0.0, self.sigma0**2))
+        st.var = _clamp_var(st.var + self.tau**2)
+
+        xmap = centred_log_grid({d: g for d, _, g in finishers})
+        x = [xmap[d] for d, _, _ in finishers]
+        k = base_scale + st.mu
+        w = [
+            math.exp(max(-30.0, min(30.0, mu + k * xi)))
+            for (_, mu, _), xi in zip(finishers, x, strict=True)
+        ]
+        m = len(finishers)
+        r = max(1, min(depth, m - 1))
+        g = h = 0.0
+        for j in range(r):
+            z = sum(w[j:])
+            ex = sum(wi * xi for wi, xi in zip(w[j:], x[j:], strict=True)) / z
+            ex2 = sum(wi * xi * xi for wi, xi in zip(w[j:], x[j:], strict=True)) / z
+            g += x[j] - ex
+            h += max(ex2 - ex * ex, 0.0)
+        RatingEngine._nudge(st, g, h, 1.0)
 
 
 class HistoryFilter:

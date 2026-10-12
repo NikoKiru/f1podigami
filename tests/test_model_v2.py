@@ -445,6 +445,94 @@ def test_temp_equals_disp_ratio_to_eta():
     assert cs.disp_ratio("wild") > 1.0
 
 
+# --- CircuitGridLearner -----------------------------------------------------------
+
+
+def _fin(order_grid, mu=None):
+    """(driverId, rating mean, grid slot) in finishing order; equal ratings by default."""
+    return [(d, 0.0 if mu is None else mu[d], g) for d, g in order_grid]
+
+
+_BACK_WINS = [("a", 10), ("b", 9), ("c", 8)] + [(f"x{g}", g) for g in range(1, 8)]
+_GRID_HOLDS = [(f"x{g}", g) for g in range(1, 11)]
+
+
+def test_cgrid_circuits_are_the_2026_run_in():
+    assert model_v2.CGRID_CIRCUITS == (
+        "americas",
+        "rodriguez",
+        "interlagos",
+        "vegas",
+        "losail",
+        "yas_marina",
+    )
+
+
+def test_cgrid_disabled_when_sigma0_zero():
+    lr = model_v2.CircuitGridLearner(0.0, 0.05)
+    lr.observe("americas", _fin(_BACK_WINS), 0.4, 3)
+    assert lr.adj("americas") == 0.0
+    assert lr._d == {}
+
+
+def test_cgrid_ignores_unlisted_circuits():
+    lr = model_v2.CircuitGridLearner(0.3, 0.05)
+    lr.observe("monaco", _fin(_BACK_WINS), 0.4, 3)
+    assert lr.adj("monaco") == 0.0
+    assert lr._d == {}
+
+
+def test_cgrid_skips_fields_under_three():
+    lr = model_v2.CircuitGridLearner(0.3, 0.05)
+    lr.observe("americas", _fin([("a", 2), ("b", 1)]), 0.4, 3)
+    assert lr._d == {}
+
+
+def test_cgrid_podium_from_the_back_moves_negative():
+    lr = model_v2.CircuitGridLearner(0.3, 0.0)
+    lr.observe("americas", _fin(_BACK_WINS), 0.4, 3)
+    assert lr.adj("americas") < 0.0
+
+
+def test_cgrid_grid_holding_against_expectation_moves_positive():
+    lr = model_v2.CircuitGridLearner(0.3, 0.0)
+    # base scale 0: the model expected no grid effect, yet finish == grid
+    lr.observe("americas", _fin(_GRID_HOLDS), 0.0, 3)
+    assert lr.adj("americas") > 0.0
+
+
+def test_cgrid_ratings_explain_a_fast_cars_recovery():
+    order = [("fast", 10)] + [(f"x{g}", g) for g in range(1, 10)]
+    neutral = model_v2.CircuitGridLearner(0.3, 0.0)
+    neutral.observe("americas", _fin(order), 0.4, 3)
+    rated = model_v2.CircuitGridLearner(0.3, 0.0)
+    mu = {d: 0.0 for d, _ in order} | {"fast": 4.0}
+    rated.observe("americas", _fin(order, mu), 0.4, 3)
+    # a win from P10 by a car the ratings already expected to win says less
+    # about overtaking than the same win by an equal-rated car
+    assert neutral.adj("americas") < rated.adj("americas")
+
+
+def test_cgrid_drift_lets_a_late_visit_move_further():
+    def last_move(tau):
+        lr = model_v2.CircuitGridLearner(0.3, tau)
+        for _ in range(5):
+            lr.observe("americas", _fin(_GRID_HOLDS), 0.4, 3)
+        before = lr.adj("americas")
+        lr.observe("americas", _fin(_BACK_WINS), 0.4, 3)
+        return before - lr.adj("americas")
+
+    assert last_move(0.2) > last_move(0.0) > 0.0
+
+
+def test_cgrid_is_deterministic():
+    a, b = (model_v2.CircuitGridLearner(0.3, 0.05) for _ in range(2))
+    for lr in (a, b):
+        lr.observe("americas", _fin(_BACK_WINS), 0.4, 3)
+        lr.observe("americas", _fin(_GRID_HOLDS), 0.4, 3)
+    assert a.adj("americas") == b.adj("americas")
+
+
 # --- grid_offsets ---------------------------------------------------------------
 
 
