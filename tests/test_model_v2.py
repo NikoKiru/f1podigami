@@ -480,6 +480,41 @@ def test_grid_offsets_zero_weight_and_empty():
     assert model_v2.grid_offsets({}, 1.0, _gparams()) == {}
 
 
+def test_grid_offsets_scale_adj_zero_is_todays_term():
+    qpos = {"a": 1, "b": 2, "c": 5}
+    p = _gparams(w=0.4, beta=1.0)
+    assert model_v2.grid_offsets(qpos, 0.8, p, 0.0) == model_v2.grid_offsets(qpos, 0.8, p)
+    base = model_v2.base_grid_scale(0.8, p)
+    assert base == pytest.approx(0.4 / 0.8)
+    x = model_v2.centred_log_grid(qpos)
+    assert model_v2.grid_offsets(qpos, 0.8, p) == {d: base * v for d, v in x.items()}
+
+
+def test_centred_log_grid_is_zero_sum_and_pole_highest():
+    x = model_v2.centred_log_grid({"a": 1, "b": 2, "c": 3})
+    assert sum(x.values()) == pytest.approx(0.0, abs=1e-12)
+    assert x["a"] > x["b"] > x["c"]
+    assert model_v2.centred_log_grid({}) == {}
+
+
+def test_grid_offsets_scale_adj_shifts_and_floors_at_zero():
+    qpos = {"a": 1, "b": 2, "c": 3}
+    p = _gparams(w=0.4, beta=0.0)  # base scale is exactly 0.4
+    x = model_v2.centred_log_grid(qpos)
+    up = model_v2.grid_offsets(qpos, 1.0, p, 0.2)
+    down = model_v2.grid_offsets(qpos, 1.0, p, -0.2)
+    assert up["a"] == pytest.approx(0.6 * x["a"])
+    assert down["a"] == pytest.approx(0.2 * x["a"])
+    # a correction can switch the grid term off, never invert it
+    assert model_v2.grid_offsets(qpos, 1.0, p, -1.0) == {"a": 0.0, "b": 0.0, "c": 0.0}
+
+
+def test_grid_offsets_zero_weight_ignores_scale_adj():
+    qpos = {"a": 1, "b": 2, "c": 3}
+    zeros = {"a": 0.0, "b": 0.0, "c": 0.0}
+    assert model_v2.grid_offsets(qpos, 1.0, _gparams(w=0.0), 0.5) == zeros
+
+
 # --- HistoryFilter ----------------------------------------------------------------
 
 

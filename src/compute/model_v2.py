@@ -38,7 +38,9 @@ __all__ = [
     "HistoryFilter",
     "RatingEngine",
     "ReliabilityTracker",
+    "base_grid_scale",
     "classify_status",
+    "centred_log_grid",
     "grid_offsets",
     "lineage_root",
     "model",
@@ -214,21 +216,37 @@ def classify_status(status: str) -> str:
     return "mech"
 
 
-def grid_offsets(quali_pos: dict[str, int], disp_ratio: float, params: dict) -> dict[str, float]:
+def centred_log_grid(grid: dict[str, int]) -> dict[str, float]:
+    """``x(g) = mean ln g - ln g``: the centred power-law grid term (pole highest)."""
+    if not grid:
+        return {}
+    logs = {d: math.log(g) for d, g in grid.items()}
+    mean_log = sum(logs.values()) / len(logs)
+    return {d: mean_log - lg for d, lg in logs.items()}
+
+
+def base_grid_scale(disp_ratio: float, params: dict) -> float:
+    """The circuit-modulated grid weight ``w_grid * disp_ratio ** (-grid_circuit_beta)``."""
+    return params["w_grid"] * (max(disp_ratio, 1e-6) ** (-params["grid_circuit_beta"]))
+
+
+def grid_offsets(
+    quali_pos: dict[str, int], disp_ratio: float, params: dict, scale_adj: float = 0.0
+) -> dict[str, float]:
     """Causal track-position term: additive log-worth offsets from grid slots.
 
     ``x(g) = -(ln g - mean ln g)`` -- a centered power-law decay in grid
     position -- scaled by ``w_grid`` and amplified at processional circuits
     (low displacement ratio) via ``disp_ratio ** (-grid_circuit_beta)``.
-    Zero-sum across the field, so it shifts relative order, not overall level.
+    ``scale_adj`` is the learned per-circuit correction (CircuitGridLearner);
+    the total scale is floored at 0, so a correction can switch the term off
+    but never invert it. Zero-sum across the field, so it shifts relative
+    order, not overall level.
     """
-    w = params["w_grid"]
-    if w <= 0.0 or not quali_pos:
+    if params["w_grid"] <= 0.0 or not quali_pos:
         return dict.fromkeys(quali_pos, 0.0)
-    logs = {d: math.log(g) for d, g in quali_pos.items()}
-    mean_log = sum(logs.values()) / len(logs)
-    scale = w * (max(disp_ratio, 1e-6) ** (-params["grid_circuit_beta"]))
-    return {d: scale * (mean_log - lg) for d, lg in logs.items()}
+    scale = max(0.0, base_grid_scale(disp_ratio, params) + scale_adj)
+    return {d: scale * x for d, x in centred_log_grid(quali_pos).items()}
 
 
 @dataclass
