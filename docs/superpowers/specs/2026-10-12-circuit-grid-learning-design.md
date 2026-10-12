@@ -98,7 +98,8 @@ Races with fewer than 3 classified finishers are skipped (no update). The update
   correction's mean, 0.0 for unlisted/unseen circuits). The snapshot dict
   carries `"grid_adj"` for the race being snapshotted.
 - `grid_offsets(quali_pos, disp_ratio, params, scale_adj=0.0)`: the scale
-  becomes `w · disp_ratio^-β + scale_adj`. With `w_grid <= 0` it still returns
+  becomes `max(0, w · disp_ratio^-β + scale_adj)` — a correction can switch
+  the grid term off but never invert it (pole never becomes a handicap). With `w_grid <= 0` it still returns
   zeros (the "ratings" baseline rung stays a pure ratings model).
 - `compute_podigami._post_quali_block` passes
   `hf.grid_scale_adj(circuit)`; `backtest.score_window_v2` passes
