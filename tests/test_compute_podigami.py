@@ -818,6 +818,26 @@ def test_post_quali_pole_shock_lifts_underdog(scenario_post_quali):
     assert post["eli"] > pre["eli"]
 
 
+def test_post_quali_applies_the_learned_circuit_grid_correction(scenario_post_quali, monkeypatch):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    kw = {"constructor_data": con, "race_results": rres, "qualifying": quali, "schedule": SCHED_R6}
+    base = cp.compute(podiums, combos, grid, **kw)["postQuali"]
+
+    asked = []
+
+    def no_grid(self, circuit_id):
+        asked.append(circuit_id)
+        return -10.0  # floors the grid scale at zero: no grid term at all
+
+    monkeypatch.setattr(cp.model_v2.HistoryFilter, "grid_scale_adj", no_grid)
+    flat = cp.compute(podiums, combos, grid, **kw)["postQuali"]
+
+    assert asked == ["monaco"]
+    w_base = {d["driverId"]: d["weight"] for d in base["driverForm"]}
+    w_flat = {d["driverId"]: d["weight"] for d in flat["driverForm"]}
+    assert w_flat["eli"] < w_base["eli"]  # the pole-sitter loses the grid boost
+
+
 def test_post_quali_substitute_driver_gets_title_cased_name(scenario_v2):
     podiums, combos, grid, con, rres = scenario_v2
     cid = dict(con["driverConstructor"], zed_zephyr="teamC")

@@ -406,7 +406,8 @@ def _post_quali_block(
         return None
 
     # Causal track-position effect: grid offsets folded into the means.
-    offsets = model_v2.grid_offsets(gpos, disp, params)
+    adj = hf.grid_scale_adj(circuit) if circuit else 0.0
+    offsets = model_v2.grid_offsets(gpos, disp, params, adj)
     mu_var: dict[str, tuple[float, float]] = {}
     p_fin: dict[str, float] = {}
     for d in running:
