@@ -145,6 +145,26 @@
       "logLoss": 3.4353,
       "brierSet": 0.9028,
       "brierNew": 0.2213
+    },
+    {
+      "model": "v2 post-quali +grid [run-in circuits]",
+      "n": 32,
+      "top1": 0.125,
+      "top3": 0.2812,
+      "top5": 0.4688,
+      "logLoss": 3.6105,
+      "brierSet": 0.9222,
+      "brierNew": 0.1964
+    },
+    {
+      "model": "v2 post-quali +circuit grid [run-in circuits]",
+      "n": 32,
+      "top1": 0.125,
+      "top3": 0.2812,
+      "top5": 0.4688,
+      "logLoss": 3.6412,
+      "brierSet": 0.9202,
+      "brierNew": 0.1949
     }
   ],
   "chosen": {

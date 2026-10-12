@@ -258,11 +258,12 @@ V2_GRID_TUNE_GRID: dict[str, list] = {
 # Learned per-circuit grid correction (model_v2.CircuitGridLearner). Tuned by
 # --tune-v2-cgrid on the validation window; copied into DEFAULT_PARAMS_V2 only
 # if the run-in-circuit gate in evaluate() accepts it.
-CIRCUIT_GRID = {"cgrid_sigma0": 0.2, "cgrid_tau": 0.05}
+# --tune-v2-cgrid 2026-10-12: J 3.1694 -> 3.1076 on the run-in circuits, 2010-2018.
+CIRCUIT_GRID = {"cgrid_sigma0": 0.4, "cgrid_tau": 0.0}
 
 # Per-knob grids for --tune-v2-cgrid (every other knob stays frozen).
 V2_CGRID_TUNE_GRID: dict[str, list] = {
-    "cgrid_sigma0": [0.0, 0.1, 0.2, 0.4],
+    "cgrid_sigma0": [0.0, 0.1, 0.2, 0.4, 0.8],
     "cgrid_tau": [0.0, 0.02, 0.05, 0.1],
 }
 

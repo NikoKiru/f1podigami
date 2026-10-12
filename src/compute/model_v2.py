@@ -109,9 +109,15 @@ DEFAULT_PARAMS_V2: dict = {
     "con_adapt_gain": 0.0,  # weight of the squared standardised drift
     "con_adapt_hl": 1.0,  # half-life (races) of the signed drift EWMA
     # Learned per-circuit grid correction (CircuitGridLearner, CGRID_CIRCUITS),
-    # added 2026-10-12. sigma0 0 == off: the post-quali grid term is exactly
-    # w_grid * disp_ratio ** -beta. Candidate values live in backtest.CIRCUIT_GRID
-    # and move here only if the run-in-circuit gate accepts them.
+    # added 2026-10-12. Tuned to sigma0 0.4 / tau 0.0 on the 2010-2018 validation
+    # window (J 3.1694 -> 3.1076, on the run-in circuits) but REJECTED by the
+    # run-in-circuit gate on the frozen 2019+ test window (32 races: logLoss
+    # 3.6412 vs 3.6105, brierNew 0.1949 vs 0.1964 -- worse logLoss, marginally
+    # better brierNew). Shipped dormant at sigma0 0, exactly as the attrition
+    # channel and adaptive car are: the mechanism and its ablation rung stay in
+    # the ladder (candidate in backtest.CIRCUIT_GRID) so a future re-tune can
+    # revisit it. sigma0 0 == off: the post-quali grid term is exactly
+    # w_grid * disp_ratio ** -beta.
     "cgrid_sigma0": 0.0,  # prior std of a circuit's grid-scale correction
     "cgrid_tau": 0.0,  # per-visit drift std of that correction
 }
