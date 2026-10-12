@@ -31,7 +31,9 @@
     "w_grid": 0.4,
     "grid_circuit_beta": 1.0,
     "con_adapt_gain": 0.0,
-    "con_adapt_hl": 1.0
+    "con_adapt_hl": 1.0,
+    "cgrid_sigma0": 0.0,
+    "cgrid_tau": 0.0
   },
   "ladder": [
     {

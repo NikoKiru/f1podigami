@@ -50,6 +50,8 @@ def test_default_params_have_exactly_the_locked_knobs():
         "grid_circuit_beta",
         "con_adapt_gain",
         "con_adapt_hl",
+        "cgrid_sigma0",
+        "cgrid_tau",
     }
 
 
@@ -925,3 +927,58 @@ def test_locked_priors_carry_their_derivation():
     # DEFAULT_PARAMS_V2 comments for the evidence behind each.
     assert DEFAULT_PARAMS_V2["sigma0_drv"] == 1.0
     assert DEFAULT_PARAMS_V2["newteam_mu"] == -2.0
+
+
+def _grid_field_race(season, rnd, circuit, finish_grid):
+    """Drivers d<g>/cars t<g>; ``finish_grid`` lists grid slots in finishing order."""
+    rows = [_rrow(f"d{g}", f"t{g}", g, i + 1, 50, "Finished") for i, g in enumerate(finish_grid)]
+    return _rrace(season, rnd, circuit, rows)
+
+
+_BACK_PODIUM = [8, 9, 10, 1, 2, 3, 4, 5, 6, 7]
+
+
+def _cgrid_filter(sigma0=0.3, tau=0.05):
+    return model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2, cgrid_sigma0=sigma0, cgrid_tau=tau))
+
+
+def test_cgrid_never_touches_ratings_and_off_means_zero():
+    off, on = _cgrid_filter(sigma0=0.0), _cgrid_filter()
+    for rnd in range(1, 6):
+        race = _grid_field_race(2020, rnd, "americas", _BACK_PODIUM)
+        s_off, s_on = off.step(race, None), on.step(race, None)
+        assert s_off["drivers"] == s_on["drivers"]
+        assert s_off["grid_adj"] == 0.0
+    assert off.grid_scale_adj("americas") == 0.0
+    assert on.grid_scale_adj("americas") < 0.0
+
+
+def test_cgrid_unlisted_circuit_has_no_correction():
+    hf = _cgrid_filter()
+    for rnd in range(1, 4):
+        snap = hf.step(_grid_field_race(2020, rnd, "monaco", _BACK_PODIUM), None)
+        assert snap["grid_adj"] == 0.0
+    assert hf.grid_scale_adj("monaco") == 0.0
+
+
+def test_cgrid_snapshot_carries_the_pre_race_correction():
+    hf = _cgrid_filter()
+    first = hf.step(_grid_field_race(2020, 1, "americas", _BACK_PODIUM), None)
+    assert first["grid_adj"] == 0.0
+    after_first = hf.grid_scale_adj("americas")
+    assert after_first != 0.0
+    second = hf.step(_grid_field_race(2020, 2, "americas", list(range(1, 11))), None)
+    assert second["grid_adj"] == after_first
+    assert hf.grid_scale_adj("americas") != after_first
+
+
+def test_cgrid_pit_lane_starter_counts_as_last():
+    def race(winner_grid):
+        rows = [_rrow("d0", "t0", winner_grid, 1, 50, "Finished")]
+        rows += [_rrow(f"d{g}", f"t{g}", g, g + 1, 50, "Finished") for g in range(1, 11)]
+        return _rrace(2020, 1, "americas", rows)
+
+    pit, back = _cgrid_filter(), _cgrid_filter()
+    pit.step(race(0), None)  # pit-lane start
+    back.step(race(11), None)  # the slot after the last numbered one
+    assert pit.grid_scale_adj("americas") == back.grid_scale_adj("americas")

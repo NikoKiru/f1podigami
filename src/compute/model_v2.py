@@ -108,6 +108,12 @@ DEFAULT_PARAMS_V2: dict = {
     # can revisit it, but it contributes nothing to the live prediction.
     "con_adapt_gain": 0.0,  # weight of the squared standardised drift
     "con_adapt_hl": 1.0,  # half-life (races) of the signed drift EWMA
+    # Learned per-circuit grid correction (CircuitGridLearner, CGRID_CIRCUITS),
+    # added 2026-10-12. sigma0 0 == off: the post-quali grid term is exactly
+    # w_grid * disp_ratio ** -beta. Candidate values live in backtest.CIRCUIT_GRID
+    # and move here only if the run-in-circuit gate accepts them.
+    "cgrid_sigma0": 0.0,  # prior std of a circuit's grid-scale correction
+    "cgrid_tau": 0.0,  # per-visit drift std of that correction
 }
 
 # Ceiling on the adaptive variance step, as a multiple of the flat tau_con**2.
@@ -654,7 +660,12 @@ class HistoryFilter:
         self.engine = RatingEngine(params)
         self.reliability = ReliabilityTracker(params["rel_half_life"])
         self.circuits = CircuitStats()
+        self.cgrid = CircuitGridLearner(params["cgrid_sigma0"], params["cgrid_tau"])
         self.season: int | None = None
+
+    def grid_scale_adj(self, circuit_id: str) -> float:
+        """Learned correction to the post-quali grid scale here (0.0 if none)."""
+        return self.cgrid.adj(circuit_id)
 
     def _observe_quali(self, quali: dict | None) -> None:
         p = self.params
@@ -708,6 +719,7 @@ class HistoryFilter:
             "drivers": drivers,
             "temp": self.circuits.temp(circuit, p["chaos_eta"]),
             "disp_ratio": self.circuits.disp_ratio(circuit),
+            "grid_adj": self.cgrid.adj(circuit),
             "season": season,
         }
 
@@ -719,6 +731,26 @@ class HistoryFilter:
         classified = sorted(
             (r for r in rows if r["position"] is not None), key=lambda r: r["position"]
         )
+
+        # ---- circuit grid correction (listed circuits only): after the snapshot,
+        # before the race order moves the ratings it is measured against ----
+        if self.cgrid.sigma0 > 0.0 and circuit in self.cgrid.circuits:
+            back = max((r["grid"] for r in rows), default=0) + 1  # pit lane -> last
+            finishers = [
+                (
+                    r["driverId"],
+                    self.engine.combined(r["driverId"], r["constructorId"])[0],
+                    r["grid"] if r["grid"] > 0 else back,
+                )
+                for r in classified
+            ]
+            self.cgrid.observe(
+                circuit,
+                finishers,
+                base_grid_scale(snapshot["disp_ratio"], p),
+                int(p["depth_race"]),
+            )
+
         self.engine.observe_order(
             [(r["driverId"], r["constructorId"]) for r in classified],
             depth=int(p["depth_race"]),

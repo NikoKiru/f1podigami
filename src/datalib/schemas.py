@@ -275,6 +275,10 @@ class PodigamiParamsV2(_Base):
     # develop->main promotion merge keeps main's newer data, which predates them.
     con_adapt_gain: float = 0.0
     con_adapt_hl: float = 4.0
+    # Learned per-circuit grid correction (added 2026-10-12); optional with
+    # defaults for the same reason as the adaptive knobs above.
+    cgrid_sigma0: float = 0.0
+    cgrid_tau: float = 0.0
     usingQualifying: bool
     circuitId: str | None = None
     nDraws: int
@@ -419,6 +423,10 @@ class ModelParamsV2(_Base):
     # model_eval.json written under the previous params still validates.
     con_adapt_gain: float = 0.0
     con_adapt_hl: float = 4.0
+    # Learned per-circuit grid correction (added 2026-10-12); optional with
+    # defaults for the same reason as the adaptive knobs above.
+    cgrid_sigma0: float = 0.0
+    cgrid_tau: float = 0.0
 
 
 class LadderRow(_Base):
