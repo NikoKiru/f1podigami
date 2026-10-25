@@ -19984,5 +19984,22 @@
       "driverId": "antonelli",
       "name": "Andrea Kimi Antonelli"
     }
+  },
+  {
+    "season": "2026",
+    "round": "18",
+    "raceName": "United States Grand Prix",
+    "p1": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p2": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc"
+    },
+    "p3": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    }
   }
 ]
