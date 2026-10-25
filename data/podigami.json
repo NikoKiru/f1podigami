@@ -1263,7 +1263,7 @@
           "Isack Hadjar",
           "Max Verstappen"
         ],
-        "prob": 7.028,
+        "prob": 7.027,
         "perDriver": [
           {
             "driverId": "antonelli",
@@ -1371,7 +1371,7 @@
           "Max Verstappen",
           "Oscar Piastri"
         ],
-        "prob": 2.93,
+        "prob": 2.929,
         "perDriver": [
           {
             "driverId": "antonelli",
@@ -1425,7 +1425,7 @@
           "Isack Hadjar",
           "Charles Leclerc"
         ],
-        "prob": 2.411,
+        "prob": 2.41,
         "perDriver": [
           {
             "driverId": "antonelli",
@@ -1908,7 +1908,7 @@
           "leclerc",
           "max_verstappen"
         ],
-        "prob": 13.82,
+        "prob": 13.818,
         "happened": true
       },
       {
@@ -1917,7 +1917,7 @@
           "max_verstappen",
           "russell"
         ],
-        "prob": 11.676,
+        "prob": 11.674,
         "happened": true
       },
       {
@@ -1926,7 +1926,7 @@
           "hamilton",
           "max_verstappen"
         ],
-        "prob": 8.659,
+        "prob": 8.658,
         "happened": true
       },
       {
@@ -1935,7 +1935,7 @@
           "hadjar",
           "max_verstappen"
         ],
-        "prob": 7.028,
+        "prob": 7.027,
         "happened": false
       },
       {
@@ -1944,7 +1944,7 @@
           "max_verstappen",
           "norris"
         ],
-        "prob": 4.935,
+        "prob": 4.934,
         "happened": true
       },
       {
@@ -1953,7 +1953,7 @@
           "leclerc",
           "russell"
         ],
-        "prob": 4.244,
+        "prob": 4.243,
         "happened": true
       },
       {
@@ -1980,7 +1980,7 @@
           "max_verstappen",
           "piastri"
         ],
-        "prob": 2.93,
+        "prob": 2.929,
         "happened": false
       },
       {
@@ -1989,7 +1989,7 @@
           "hamilton",
           "russell"
         ],
-        "prob": 2.565,
+        "prob": 2.564,
         "happened": true
       },
       {
@@ -2007,7 +2007,7 @@
           "hadjar",
           "leclerc"
         ],
-        "prob": 2.411,
+        "prob": 2.41,
         "happened": false
       },
       {
@@ -2070,7 +2070,7 @@
           "hadjar",
           "hamilton"
         ],
-        "prob": 1.435,
+        "prob": 1.434,
         "happened": true
       },
       {
@@ -2097,7 +2097,7 @@
           "norris",
           "russell"
         ],
-        "prob": 1.152,
+        "prob": 1.151,
         "happened": true
       },
       {
@@ -2218,7 +2218,7 @@
       {
         "driverId": "sainz",
         "name": "Carlos Sainz",
-        "weight": 1.416,
+        "weight": 1.459,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "williams",
@@ -2226,7 +2226,7 @@
         "constructorStrength": 0.021,
         "finishProb": 0.893,
         "uncertainty": 0.764,
-        "gridPosition": 17
+        "gridPosition": 16
       },
       {
         "driverId": "alonso",
@@ -2283,7 +2283,7 @@
       {
         "driverId": "albon",
         "name": "Alexander Albon",
-        "weight": 0.456,
+        "weight": 0.469,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "williams",
@@ -2291,7 +2291,7 @@
         "constructorStrength": 0.021,
         "finishProb": 0.896,
         "uncertainty": 0.846,
-        "gridPosition": 18
+        "gridPosition": 17
       },
       {
         "driverId": "ocon",
@@ -2322,7 +2322,7 @@
       {
         "driverId": "stroll",
         "name": "Lance Stroll",
-        "weight": 0.265,
+        "weight": 0.226,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "aston_martin",
@@ -2330,12 +2330,12 @@
         "constructorStrength": 0.012,
         "finishProb": 0.887,
         "uncertainty": 0.898,
-        "gridPosition": 16
+        "gridPosition": 22
       },
       {
         "driverId": "bottas",
         "name": "Valtteri Bottas",
-        "weight": 0.211,
+        "weight": 0.216,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "cadillac",
@@ -2343,12 +2343,12 @@
         "constructorStrength": 0.0,
         "finishProb": 0.849,
         "uncertainty": 1.397,
-        "gridPosition": 20
+        "gridPosition": 19
       },
       {
         "driverId": "colapinto",
         "name": "Franco Colapinto",
-        "weight": 0.193,
+        "weight": 0.198,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "alpine",
@@ -2356,12 +2356,12 @@
         "constructorStrength": 0.118,
         "finishProb": 0.932,
         "uncertainty": 1.2,
-        "gridPosition": 21
+        "gridPosition": 20
       },
       {
         "driverId": "perez",
         "name": "Sergio Pérez",
-        "weight": 0.133,
+        "weight": 0.137,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "cadillac",
@@ -2369,7 +2369,7 @@
         "constructorStrength": 0.0,
         "finishProb": 0.849,
         "uncertainty": 1.364,
-        "gridPosition": 19
+        "gridPosition": 18
       },
       {
         "driverId": "bearman",
@@ -2387,7 +2387,7 @@
       {
         "driverId": "bortoleto",
         "name": "Gabriel Bortoleto",
-        "weight": 0.071,
+        "weight": 0.073,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "audi",
@@ -2395,7 +2395,7 @@
         "constructorStrength": 0.04,
         "finishProb": 0.934,
         "uncertainty": 1.479,
-        "gridPosition": 22
+        "gridPosition": 21
       }
     ]
   },
