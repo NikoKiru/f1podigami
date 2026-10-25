@@ -5,42 +5,42 @@
     {
       "constructorId": "mercedes",
       "name": "Mercedes",
-      "points": 578.0,
+      "points": 607.0,
       "position": 1,
-      "wins": 11
+      "wins": 12
     },
     {
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 444.0,
+      "points": 474.0,
       "position": 2,
-      "wins": 2
-    },
-    {
-      "constructorId": "mclaren",
-      "name": "McLaren",
-      "points": 339.0,
-      "position": 3,
       "wins": 2
     },
     {
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 332.0,
+      "points": 355.0,
+      "position": 3,
+      "wins": 2
+    },
+    {
+      "constructorId": "mclaren",
+      "name": "McLaren",
+      "points": 355.0,
       "position": 4,
       "wins": 2
     },
     {
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 100.0,
+      "points": 102.0,
       "position": 5,
       "wins": 0
     },
     {
       "constructorId": "alpine",
       "name": "Alpine F1 Team",
-      "points": 68.0,
+      "points": 69.0,
       "position": 6,
       "wins": 0
     },
@@ -81,27 +81,27 @@
     }
   ],
   "driverConstructor": {
-    "max_verstappen": "red_bull",
-    "leclerc": "ferrari",
     "antonelli": "mercedes",
-    "norris": "mclaren",
-    "piastri": "mclaren",
+    "leclerc": "ferrari",
+    "max_verstappen": "red_bull",
     "hamilton": "ferrari",
-    "lawson": "rb",
-    "hulkenberg": "audi",
-    "russell": "mercedes",
+    "norris": "mclaren",
     "hadjar": "red_bull",
+    "piastri": "mclaren",
+    "russell": "mercedes",
+    "lawson": "rb",
     "gasly": "alpine",
-    "bearman": "haas",
-    "ocon": "haas",
-    "sainz": "williams",
+    "hulkenberg": "audi",
     "arvid_lindblad": "rb",
-    "alonso": "aston_martin",
-    "perez": "cadillac",
-    "albon": "williams",
-    "bottas": "cadillac",
+    "bortoleto": "audi",
+    "ocon": "haas",
     "stroll": "aston_martin",
+    "alonso": "aston_martin",
+    "albon": "williams",
+    "sainz": "williams",
+    "perez": "cadillac",
+    "bottas": "cadillac",
     "colapinto": "alpine",
-    "bortoleto": "audi"
+    "bearman": "haas"
   }
 }
