@@ -19950,5 +19950,56 @@
       "driverId": "hadjar",
       "name": "Isack Hadjar"
     }
+  },
+  {
+    "season": "2026",
+    "round": "16",
+    "raceName": "Bahrain Grand Prix in Malaysia",
+    "p1": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p2": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p3": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton"
+    }
+  },
+  {
+    "season": "2026",
+    "round": "17",
+    "raceName": "Singapore Grand Prix",
+    "p1": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p2": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc"
+    },
+    "p3": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    }
+  },
+  {
+    "season": "2026",
+    "round": "18",
+    "raceName": "United States Grand Prix",
+    "p1": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli"
+    },
+    "p2": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc"
+    },
+    "p3": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    }
   }
 ]
