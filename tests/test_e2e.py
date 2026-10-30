@@ -763,6 +763,34 @@ def test_theme_persists_across_reload(dist):
         browser.close()
 
 
+# ── Trio board scrollbar (podigami.css) ────────────────────────────────────
+
+
+def test_trio_board_scrollbar_clears_the_percentages(dist):
+    """The percentages sit flush right, and the native bar beside them touched
+    the digits. Scrollbars have to be switched on for this: headless hides them
+    by default, which would leave no bar to measure."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(ignore_default_args=["--hide-scrollbars"])
+        page = browser.new_page(viewport={"width": 1280, "height": 900})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".cand-prob")
+
+        bar, gap = page.evaluate(
+            """() => {
+                const board = document.querySelector('.cand-scroll');
+                const bar = board.offsetWidth - board.clientWidth;
+                const text = document.createRange();
+                text.selectNodeContents(document.querySelector('.cand-prob'));
+                const barLeft = board.getBoundingClientRect().right - bar;
+                return [bar, barLeft - text.getBoundingClientRect().right];
+            }"""
+        )
+        browser.close()
+    assert 0 < bar <= 6, f"expected the slim bar, got a {bar}px one"
+    assert gap >= 8, f"the percentages sit {gap:.1f}px from the scrollbar"
+
+
 # ── Trio board history bubbles (podigami.js) ───────────────────────────────
 # A hover-dismissed popover containing a link is fragile: the pointer has to
 # travel to reach the link, and whatever hides the bubble races the click.

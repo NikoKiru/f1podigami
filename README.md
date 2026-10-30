@@ -171,7 +171,7 @@ src/
 assets/         source CSS + JS (copied into dist/ at build time)
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (1052 tests, run in CI)
+tests/          pytest suite (1053 tests, run in CI)
 ```
 
 </details>
@@ -212,7 +212,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 1052 tests + coverage gate (≥70%)
+pytest --cov                          # 1053 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
