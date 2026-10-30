@@ -3,7 +3,7 @@
 ## 2026-10-31
 
 ### Fixes
-- The "Most likely trios" scrollbar no longer touches the percentages. With a mouse it's now a slim pill with room beside the rows instead of the native bar and arrows, and the bottom fade no longer paints over it
+- The "Most likely trios" scrollbar no longer touches the percentages. With a mouse it's now a slim pill with room beside the rows instead of the native bar and arrows, and the bottom fade no longer paints over it (#377)
 
 ## 2026-10-05
 
