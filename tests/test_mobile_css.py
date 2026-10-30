@@ -344,3 +344,34 @@ def test_trio_board_fade_is_an_overlay_not_a_mask():
     s = css("podigami.css")
     assert "mask-image" not in s, "a mask on the board would clip the fixed bubbles"
     assert ".cand-board.has-more::after" in s
+
+
+def test_trio_board_scrollbar_clears_the_percentages():
+    """The percentages sit flush right, so a scrollbar beside them touches the
+    digits unless the board leaves room, and a full-width fade washes it out."""
+    import re
+
+    s = css("podigami.css")
+    start = s.index("@media (hover: hover) and (pointer: fine)")
+    mouse = s[start : s.index("@supports not selector(::-webkit-scrollbar)")]
+
+    room = re.search(r"\.cand-scroll \{[^}]*padding-right:\s*(\d+)px", mouse)
+    assert room and int(room.group(1)) >= 8, "the rows must stop short of the scrollbar"
+    bar = re.search(r"\.cand-scroll::-webkit-scrollbar \{[^}]*width:\s*(\d+)px", mouse)
+    assert bar, "the scrollbar must be styled, not the native bar with arrows"
+    fade = re.search(r"\.cand-board::after \{[^}]*right:\s*(\d+)px", mouse)
+    assert fade and int(fade.group(1)) >= int(room.group(1)) + int(bar.group(1))
+
+
+def test_trio_board_scrollbar_keeps_webkit_styling_alive():
+    """Chromium drops every ::-webkit-scrollbar rule once scrollbar-width or
+    scrollbar-color is set, so those two must only reach Firefox."""
+    import re
+
+    s = css("podigami.css")
+    guarded = re.search(r"@supports not selector\(::-webkit-scrollbar\) \{.*?\n\}", s, re.S)
+    assert guarded, "Firefox has no ::-webkit-scrollbar and needs its own rule"
+    assert "scrollbar-color" in guarded.group(0)
+    rest = s.replace(guarded.group(0), "")
+    assert "scrollbar-width" not in rest
+    assert "scrollbar-color" not in rest

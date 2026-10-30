@@ -16,9 +16,8 @@ Deployed to GitHub Pages: https://nikokiru.github.io/f1podigami
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     ```
 - Primary shell is PowerShell 7+ on Windows; a Bash tool is also available.
-- **Local MCP servers are available — reach for them when they bring more value than the CLI/scripts:**
-  - **`playwright`** — drive a real browser to verify browser-only behaviour (JS-rendered timeline, asset cache-busting, mobile layout) against the live site or a locally-served `dist/`. Preferred over hand-rolled checks when a change is only observable in a rendered page.
-  - **`github`** — structured GitHub access (PRs, issues, reviews, code search) when its typed results are clearer than parsing `gh` output. For routine git/PR/merge operations, `gh` remains the default (see above); use the MCP when it genuinely simplifies the task.
+- **Playwright is in `.venv`, not on an MCP server** (Python package, with Chromium and Firefox; deliberately not in `requirements-dev.txt`, so CI and repo tests can't use it) — drive a real browser to verify browser-only behaviour (JS-rendered timeline, asset cache-busting, mobile layout) against the live site or a built `dist/`. Preferred over hand-rolled checks when a change is only observable in a rendered page. Headless browsers hide scrollbars, so launch headed for those: `p.chromium.launch(channel="msedge", headless=False)`.
+- **The `github` MCP server is available** — structured GitHub access (PRs, issues, reviews, code search) when its typed results are clearer than parsing `gh` output. For routine git/PR/merge operations, `gh` remains the default (see above); use the MCP when it genuinely simplifies the task.
 
 ## Commands
 
@@ -114,6 +113,7 @@ The repo uses a two-stage **`develop` → `main`** flow. `develop` is the **defa
 - **Feature work**: branch off `develop`, open a PR back into `develop` (`gh pr create` targets it by default). CI (`ci.yml`) and security (`security.yml`) run on every PR — 7 required checks gate the merge into `develop` (Lint & format, Test py3.11/3.12/3.13, Build & link-check, Dependency audit, Secret scan). CodeQL does **not** run here (it only triggers on `main`).
 - **Verify before shipping**: there is no staging deploy — the live site only builds from `main`. "Confirmed working" = green CI + local preview (`python src/build_site.py`, then serve `dist/`).
 - **Ship a release**: open a promotion PR `develop → main` (`gh pr create --base main --head develop`). Targeting `main` triggers the **full 9 required checks** (the 7 above + CodeQL's two `Analyze` checks). Merging it runs `deploy.yml` → Pages. Batch multiple features into one promotion PR, or promote one at a time.
+- **Finished work always ships.** Once a change is verified and `RELEASE_NOTES.md` is updated (plus `README.md` and this file where affected), take it from idea to deploy without asking: branch, PR into `develop`, squash-merge on green CI, promotion PR to `main`, merge commit on green checks, then confirm the `deploy.yml` run and the live site. An uncommitted change or an open PR is unfinished work.
 - **Data-update automation is unaffected**: `update.yml` operates entirely on `main` — both jobs check out `ref: main` (the guard must read `main`'s `asOf`, which is the only one data PRs advance, and the data branch must be cut from `main`) and the PR pins `--base main` — so `auto/update-data` PRs go straight to `main` and auto-merge/deploy without waiting in `develop`. Committed `data/` on `develop` therefore drifts behind `main` between promotions; that's expected (tests are data-agnostic, and a promotion's three-way merge keeps `main`'s newer data).
 - **RELEASE_NOTES.md**: each feature PR into `develop` carries its own entry (per the Release Notes rules below); the promotion PR just bundles them — no separate entry needed for the promotion itself.
 

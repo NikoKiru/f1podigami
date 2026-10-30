@@ -726,7 +726,6 @@ main {
        strands the reader inside it. Chaining hands the gesture back to the page
        at both ends, the way the top of the list already does. */
     overscroll-behavior: auto;
-    scrollbar-width: thin;
 }
 
 /* Fade the last rows so a cut-off row reads as "more below". Applied only while
@@ -758,6 +757,42 @@ main {
 
 .cand-board.has-more::after {
     opacity: 1;
+}
+
+/* With a mouse the scrollbar sits beside the rows for good, so it gets a slim
+   pill instead of the native bar and arrows, and room to stay clear of the
+   right-aligned percentages. Touch keeps its own bar, shown only mid-swipe. */
+@media (hover: hover) and (pointer: fine) {
+    .cand-scroll {
+        padding-right: 12px;
+    }
+
+    .cand-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .cand-scroll::-webkit-scrollbar-thumb {
+        background: var(--border-strong);
+        border-radius: 99px;
+    }
+
+    .cand-scroll::-webkit-scrollbar-thumb:hover {
+        background: var(--muted-dim);
+    }
+
+    /* Ends at the rows (padding + bar), so it doesn't wash out the thumb. */
+    .cand-board::after {
+        right: 18px;
+    }
+}
+
+/* Firefox only: Chromium drops every ::-webkit-scrollbar rule above as soon as
+   it sees either of these, so they can't sit on .cand-scroll itself. */
+@supports not selector(::-webkit-scrollbar) {
+    .cand-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+    }
 }
 
 .cand-list {
