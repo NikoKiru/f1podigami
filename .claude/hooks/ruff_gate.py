@@ -12,7 +12,10 @@ import re
 import subprocess
 import sys
 
-GIT_COMMIT = re.compile(r"\bgit\s+(?:-\S+\s+(?:\S+\s+)?)*commit\b")
+# Within one simple command, so `git status && echo commit` doesn't count. The odd
+# false match (`git log --grep commit`) only costs a ruff run. No nested repeats:
+# this reads every shell command, so it can't be allowed to backtrack.
+GIT_COMMIT = re.compile(r"\bgit\b[^\n;&|]*\bcommit\b")
 CHECKS = (["check", "."], ["format", "--check", "."])
 
 
