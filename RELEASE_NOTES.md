@@ -11,6 +11,7 @@
 - Claude Code setup: `CLAUDE.md` is 59% smaller because the race-data pipeline notes moved, unchanged, into `.claude/rules/` files that load only when matching files are opened. A hook blocks a `git commit` that CI's lint check would fail, and `wait_for_pr.sh` waits for a PR's merge, every check and the deploy (#387)
 
 ### Fixes
+- Deploys work again. The commit hook's tests needed ruff, which the deploy's test step doesn't install, so they blocked the deploy of #387 even though every PR check had passed. The hook's pattern also no longer backtracks exponentially on a crafted command (CodeQL alert 23) (#389)
 - The FAQ now gets the name right: podigami blends "podium" and "origami", the same way scorigami blends "score" and "origami" (#385)
 - The landing page no longer shifts as it loads. The season list eased open from nothing on every visit, moving everything below it by up to 920px on phones just after the browser had jumped to any link further down the page (#385)
 - The theme toggle no longer runs off the right edge of the nav on tablet-width screens (#380)
