@@ -7,6 +7,7 @@
 
 ### Fixes
 - The theme toggle no longer runs off the right edge of the nav on tablet-width screens (#380)
+- Long trios in the new-podiums list now wrap between names instead of overrunning their row (#381)
 - The "Most likely trios" scrollbar no longer touches the percentages. With a mouse it's now a slim pill with room beside the rows instead of the native bar and arrows, and the bottom fade no longer paints over it (#377)
 
 ## 2026-10-10
