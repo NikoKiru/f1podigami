@@ -9,6 +9,7 @@
 - **The whole site is more compact, so there's less scrolling.** The landing page is 46% shorter on desktop and 35% on phones, the other pages about 30%, and twice as many combinations fit on a laptop screen. Rows, panels, headers and the footer are tighter, the next-race card is a single band, the trio bars sit beside the names, and the discovery cards, season list, FAQ and soulmate facts sit side by side on wide screens. Nothing was removed (#380)
 - The next-race card no longer has a ticking countdown. It shows the race and qualifying times in your local time, and still says when a race is underway or awaiting results (#383)
 - Claude Code setup: `CLAUDE.md` is 59% smaller because the race-data pipeline notes moved, unchanged, into `.claude/rules/` files that load only when matching files are opened. A hook blocks a `git commit` that CI's lint check would fail, and `wait_for_pr.sh` waits for a PR's merge, every check and the deploy (#387)
+- Grid penalties for the 2026 Mexico City GP (round 19): Verstappen and Lawson each drop one place, so the post-qualifying prediction uses them until F1's official grid is published (#PR)
 
 ### Fixes
 - Deploys work again. The commit hook's tests needed ruff, which the deploy's test step doesn't install, so they blocked the deploy of #387 even though every PR check had passed. The hook's pattern also no longer backtracks exponentially on a crafted command (CodeQL alert 23) (#389)
