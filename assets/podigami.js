@@ -65,11 +65,14 @@
 
         listEl.innerHTML = entries.map(e => {
             // Each name carries the "/" after it: inline, the trio wraps only
-            // after a separator; on a phone, CSS stacks one name per line.
+            // after a separator; on a phone, CSS stacks one name per line. The
+            // space is that break: two touching nowrap spans offer none, and a
+            // trio that can't wrap overflows any row too narrow for it. Keep it
+            // a space: an element here would come between `.pdriver + .pdriver`.
             const names = e.names
                 .map((n, i, all) => `<span class="pdriver">${esc(displayName(n))}` +
                     (i < all.length - 1 ? '<span class="sep">/</span>' : '') + '</span>')
-                .join('');
+                .join(' ');
             const fr = e.firstRace;
             // Official F1 result URL embedded at build time; wiki as fallback.
             const url = fr.url || wikiUrl(year, fr.raceName);
