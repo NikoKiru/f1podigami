@@ -32,3 +32,8 @@ Thumbs.db
 
 # superpowers brainstorming sessions (visual companion mockups)
 /.superpowers/
+
+# Claude Code: personal settings and session worktrees
+.claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md
