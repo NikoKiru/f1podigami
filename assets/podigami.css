@@ -16,9 +16,10 @@ main {
     white-space: nowrap;
 }
 
+/* The space between names supplies the rest of the gap after the slash. */
 .trio .sep {
     color: var(--muted-dim);
-    margin: 0 6px;
+    margin: 0 2px 0 6px;
     font-weight: 400;
 }
 
@@ -1504,14 +1505,10 @@ a.tl-where:hover {
    are grids, not CSS columns: podigami.js pins the season list's height while it
    animates, and a pinned multi-column box spills sideways. */
 @media (min-width: 1000px) {
-    .tl-list,
     .faq-section {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         column-gap: 32px;
-    }
-
-    .faq-section {
         align-items: start;
     }
 
@@ -1519,10 +1516,24 @@ a.tl-where:hover {
         grid-column: 1 / -1;
     }
 
-    /* The bottom row has a left cell too. <h2> is child 1, so the FAQ's left
-       column is the even children and the season list's is the odd ones. */
-    .tl-item:nth-last-child(2):nth-child(odd),
+    /* The bottom row has a left cell too. <h2> is child 1, so the left column is
+       the even children. */
     .faq-item:nth-last-child(2):nth-child(even) {
+        border-bottom: none;
+    }
+}
+
+/* The season list waits for the full-width container: a long trio and its race
+   need all of a 539px column, and one that still doesn't fit wraps between names
+   rather than overrunning it. */
+@media (min-width: 1200px) {
+    .tl-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 32px;
+    }
+
+    .tl-item:nth-last-child(2):nth-child(odd) {
         border-bottom: none;
     }
 }

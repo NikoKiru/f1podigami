@@ -98,7 +98,7 @@ All access to `data/*.json` goes through **`src/datalib/`** (Pydantic v2 schemas
 - **Each script is standalone**: can be run individually (e.g. `python src/fetch/fetch_podiums.py`).
 - **API rate limiting**: 1-second sleep between requests; exponential backoff on 429/5xx.
 - **Lint/format**: `ruff` (config in `pyproject.toml`). CI fails on `ruff check` or `ruff format --check` violations — run both before pushing.
-- **CSS**: global tokens in `assets/style.css`; page-specific styles in `assets/podigami.css` etc. Primary mobile breakpoint at `max-width: 600px`. Spacing density lives in three `:root` tokens (`--gap-section`, `--pad-panel`, `--pad-row`), so tighten or loosen the site there rather than per component; the combinations and ranked tables share `--pad-row` to stay cell-for-cell.
+- **CSS**: global tokens in `assets/style.css`; page-specific styles in `assets/podigami.css` etc. Primary mobile breakpoint at `max-width: 600px`. Spacing density lives in three `:root` tokens (`--gap-section`, `--pad-panel`, `--pad-row`), so tighten or loosen the site there rather than per component; the combinations and ranked tables share `--pad-row` to stay cell-for-cell. Local Chromium renders Segoe UI, which is narrower than CI's Liberation Sans and most visitors' fonts, so a row that only just fits here can overflow elsewhere: check layout changes with `WIDER_FONT` from `tests/test_e2e.py`.
 
 ## Testing
 

@@ -953,26 +953,42 @@ ALL_PAGES = [
 ]
 
 
+# Visitors get whichever font their OS has, and Segoe UI (Windows) is narrower than
+# what Mac, Android and Linux render, so layouts that only just fit on one machine
+# overflow on another. Letter-spacing widens text the same way on any platform.
+WIDER_FONT = "* { letter-spacing: 0.05em !important; }"
+
+
+@pytest.mark.parametrize("wider_font", [False, True], ids=["site-font", "wider-font"])
 @pytest.mark.parametrize("width", [320, 390, 721, 768, 1024, 1280])
 @pytest.mark.parametrize("page_name", ALL_PAGES)
-def test_nothing_runs_off_the_side_of_the_page(dist, page_name, width):
+def test_nothing_leaves_its_card_or_the_page(dist, page_name, width, wider_font):
     """Compact rows put more side by side, and ``overflow-x: hidden`` on the
     page would silently cut off whatever no longer fits, so check the elements
-    rather than the scroll width. Off-canvas drawers and popovers are meant to
-    sit outside the viewport; the board and table scroll inside themselves."""
+    rather than the scroll width. The viewport alone isn't enough: a row can run
+    past its card and over its neighbour while still ending on screen. Off-canvas
+    drawers and popovers are meant to sit outside; tables scroll inside themselves."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": width, "height": 800})
         page.goto(_url(dist, page_name))
         page.wait_for_load_state("load")
+        if wider_font:
+            page.add_style_tag(content=WIDER_FONT)
         cut_off = page.evaluate(
             """() => {
-                const skip = '.nav-drawer, .filter-panel, .fp-scrim, .nav-scrim, .info-bubble';
+                const skip = '.nav-drawer, .filter-panel, .fp-scrim, .nav-scrim, '
+                    + '.info-bubble, .table-wrap';
+                const cards = '.panel, .hero, .next-race, .last-race, .hook-card, '
+                    + '.rank-wrap, .fact-card';
                 const bad = [];
                 for (const el of document.querySelectorAll('body *')) {
                     if (el.closest(skip)) continue;
                     const r = el.getBoundingClientRect();
-                    if (r.width && r.right > innerWidth + 0.5) {
+                    if (!r.width) continue;
+                    const card = el.parentElement.closest(cards);
+                    const edge = card ? card.getBoundingClientRect().right : innerWidth;
+                    if (r.right > Math.min(edge, innerWidth) + 0.5) {
                         bad.push(el.tagName + '.' + el.className + ' right=' + r.right);
                     }
                 }
@@ -981,6 +997,56 @@ def test_nothing_runs_off_the_side_of_the_page(dist, page_name, width):
         )
         browser.close()
     assert cut_off == []
+
+
+@pytest.mark.parametrize("width", [390, 1000, 1200, 1280])
+def test_every_season_row_stays_inside_its_list(dist, width):
+    """Each season has its own longest trio and race name, so one year fitting
+    says nothing about the next. A row that outgrows its width must wrap between
+    names rather than run over the column beside it."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 900}, reduced_motion="reduce")
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".tl-item")
+        page.add_style_tag(content=WIDER_FONT)
+        result = page.evaluate(
+            """async () => {
+                const data = JSON.parse(document.getElementById('podigami-data').textContent);
+                // The site's own control, whichever one this width shows.
+                const select = document.getElementById('tl-select');
+                const slider = document.getElementById('tl-slider');
+                const pick = year => {
+                    const el = select.offsetParent ? select : slider;
+                    el.value = year;
+                    el.dispatchEvent(new Event(el === select ? 'change' : 'input', {bubbles: true}));
+                };
+                // Renders are coalesced to one per animation frame.
+                const frame = () => new Promise(
+                    done => requestAnimationFrame(() => requestAnimationFrame(done))
+                );
+                let seen = 0;
+                const bad = [];
+                for (const year of Object.keys(data.bySeason)) {
+                    pick(year);
+                    await frame();
+                    for (const item of document.querySelectorAll('.tl-item')) {
+                        seen += 1;
+                        const edge = item.getBoundingClientRect().right;
+                        for (const cell of item.children) {
+                            if (cell.getBoundingClientRect().right > edge + 0.5) {
+                                bad.push(year + ': ' + item.textContent.trim().slice(0, 60));
+                            }
+                        }
+                    }
+                }
+                const total = Object.values(data.bySeason).flat().length;
+                return {seen, total, bad: bad.slice(0, 5), count: bad.length};
+            }"""
+        )
+        browser.close()
+    assert result["seen"] == result["total"], "the loop didn't reach every season's rows"
+    assert result["count"] == 0, result["bad"]
 
 
 @pytest.mark.parametrize(
@@ -995,6 +1061,8 @@ def test_nothing_runs_off_the_side_of_the_page(dist, page_name, width):
         ("combos.html", "tbody tr.combo", 390, 60, 84),
         ("overdue.html", ".rr-face", 390, 60, 84),
         ("soulmates.html", ".rr-face", 390, 34, 44),
+        # Same stack, and nothing between the names: a line box there adds 35px.
+        ("index.html", ".tl-item", 390, 60, 84),
     ],
 )
 def test_table_rows_are_compact_but_not_squished(dist, page_name, row, width, low, high):
@@ -1006,6 +1074,26 @@ def test_table_rows_are_compact_but_not_squished(dist, page_name, row, width, lo
         height = page.locator(row).first.bounding_box()["height"]
         browser.close()
     assert low <= height <= high, f"{page_name} {row} is {height}px at {width}px wide"
+
+
+def test_stacked_season_names_keep_their_hairlines(dist):
+    """The hairline between stacked names hangs off ``.pdriver + .pdriver``, so
+    anything rendered between two names silently removes it, hidden or not."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".tl-item .pdriver")
+        rows, lines = page.evaluate(
+            """() => [
+                document.querySelectorAll('.tl-item').length,
+                [...document.querySelectorAll('.tl-item .pdriver + .pdriver')].filter(
+                    name => parseFloat(getComputedStyle(name).borderTopWidth) > 0
+                ).length,
+            ]"""
+        )
+        browser.close()
+    assert lines == rows * 2, f"{lines} hairlines across {rows} trios"
 
 
 def test_next_race_card_is_a_single_band_on_desktop(dist):
