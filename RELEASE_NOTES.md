@@ -3,15 +3,15 @@
 ## 2026-10-31
 
 ### Features
-- **New visitors get a welcome card pointing them to the FAQ.** It appears once, in the corner of whichever page they land on, and doesn't block the page. The FAQ also has a link in every page's footer, now opens with "What does podigami mean?", and has that answer open when you arrive by a link (#PR)
+- **New visitors get a welcome card pointing them to the FAQ.** It appears once, in the corner of whichever page they land on, and doesn't block the page. The FAQ also has a link in every page's footer, now opens with "What does podigami mean?", and has that answer open when you arrive by a link (#385)
 
 ### Improvements
 - **The whole site is more compact, so there's less scrolling.** The landing page is 46% shorter on desktop and 35% on phones, the other pages about 30%, and twice as many combinations fit on a laptop screen. Rows, panels, headers and the footer are tighter, the next-race card is a single band, the trio bars sit beside the names, and the discovery cards, season list, FAQ and soulmate facts sit side by side on wide screens. Nothing was removed (#380)
 - The next-race card no longer has a ticking countdown. It shows the race and qualifying times in your local time, and still says when a race is underway or awaiting results (#383)
 
 ### Fixes
-- The FAQ now gets the name right: podigami blends "podium" and "origami", the same way scorigami blends "score" and "origami" (#PR)
-- The landing page no longer shifts as it loads. The season list eased open from nothing on every visit, moving everything below it by up to 920px on phones just after the browser had jumped to any link further down the page (#PR)
+- The FAQ now gets the name right: podigami blends "podium" and "origami", the same way scorigami blends "score" and "origami" (#385)
+- The landing page no longer shifts as it loads. The season list eased open from nothing on every visit, moving everything below it by up to 920px on phones just after the browser had jumped to any link further down the page (#385)
 - The theme toggle no longer runs off the right edge of the nav on tablet-width screens (#380)
 - Long trios in the new-podiums list now wrap between names instead of overrunning their row (#381)
 - The "Most likely trios" scrollbar no longer touches the percentages. With a mouse it's now a slim pill with room beside the rows instead of the native bar and arrows, and the bottom fade no longer paints over it (#377)
