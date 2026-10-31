@@ -970,9 +970,11 @@ def main() -> int:
     overdue_data = load_overdue() if (DATA_DIR / "overdue.json").exists() else None
     unlikeliest_data = load_unlikeliest() if (DATA_DIR / "unlikeliest.json").exists() else None
 
-    hook_combos = combos_hook(total_combos, lo)
-    hook_soulmates = soulmates_hook(soulmates_data)
-    hook_row = (
+    hook_row_board = (
+        f'<div class="hook-row">{combos_hook(total_combos, lo)}'
+        f"{soulmates_hook(soulmates_data)}</div>"
+    )
+    hook_row_timeline = (
         f'<div class="hook-row">{overdue_hook(overdue_data)}'
         f"{unlikeliest_hook(unlikeliest_data)}</div>"
     )
@@ -1055,10 +1057,9 @@ def main() -> int:
         {last_race}
         {hero}
         {candidates}
-        {hook_combos}
-        {hook_soulmates}
+        {hook_row_board}
         {timeline}
-        {hook_row}
+        {hook_row_timeline}
         {faq}
         {explore}
     </div>
