@@ -10,16 +10,18 @@
 set -u
 
 pr=${1:?usage: wait_for_pr.sh <pr-number>}
-interval=30
+interval=${WAIT_INTERVAL:-30}
 
-count() { # count <jq bucket filter>: checks in those buckets; unknown counts as pending
-    gh pr checks "$pr" --json bucket --jq "[.[] | select($1)] | length" 2>/dev/null || echo 1
+# count <jq bucket filter> <answer while GitHub has no checks to report>. Right
+# after a push `gh pr checks` errors, which means "not yet", never "failed".
+count() {
+    gh pr checks "$pr" --json bucket --jq "[.[] | select($1)] | length" 2>/dev/null || echo "$2"
 }
 
 while :; do
     state=$(gh pr view "$pr" --json state --jq .state)
-    failed=$(count '.bucket == "fail" or .bucket == "cancel"')
-    pending=$(count '.bucket == "pending"')
+    failed=$(count '.bucket == "fail" or .bucket == "cancel"' 0)
+    pending=$(count '.bucket == "pending"' 1)
     [ "$failed" != 0 ] && break
     [ "$state" = CLOSED ] && break
     [ "$state" = MERGED ] && [ "$pending" = 0 ] && break
