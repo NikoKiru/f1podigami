@@ -220,8 +220,9 @@
     });
 })();
 
-// Next-race box: show the race time in the visitor's local timezone and tick a
-// live countdown. Reads the ISO datetime baked into the box at build time.
+// Next-race box: show the session times in the visitor's local timezone, and say
+// so once the race has started. Reads the ISO datetime baked into the box at build
+// time.
 (function () {
     const box = document.querySelector('.next-race[data-datetime]');
     if (!box) return;
@@ -229,8 +230,7 @@
     if (isNaN(when.getTime())) return;
 
     const dateEl = box.querySelector('.nr-date');
-    const cdEl = box.querySelector('.nr-countdown');
-    const labelEl = box.querySelector('.nr-cd-label');
+    const statusEl = box.querySelector('.nr-status');
 
     const localWhen = d => d.toLocaleString(undefined, {
         weekday: 'short', day: 'numeric', month: 'short',
@@ -251,39 +251,21 @@
         } catch (e) { /* keep the server-rendered UTC fallback */ }
     }
 
-    // A race runs well under 3h; after that it is clearly over even if the
-    // result hasn't been published (and folded into the next-race box) yet.
-    const RACE_WINDOW = 3 * 3600;
+    // The box only rolls over when results land, which can take hours, so after
+    // lights out the date alone would describe a race already run as still to
+    // come. A race runs well under 3h; after that it is clearly over even if the
+    // result hasn't been published yet.
+    const RACE_WINDOW = 3 * 3600 * 1000;
 
-    function tick() {
-        let diff = Math.floor((when.getTime() - Date.now()) / 1000);
-        if (diff <= 0) {
-            const sinceStart = Math.floor((Date.now() - when.getTime()) / 1000);
-            if (cdEl) {
-                cdEl.textContent =
-                    sinceStart < RACE_WINDOW ? 'Lights out — race underway' : 'Awaiting results';
-                // The slot now holds a sentence, so it drops to text size — and
-                // "Lights out in" above a race already underway would be a lie.
-                cdEl.classList.add('nr-cd-msg');
-            }
-            if (labelEl) labelEl.hidden = true;
-            return false;
-        }
-        const d = Math.floor(diff / 86400); diff -= d * 86400;
-        const h = Math.floor(diff / 3600); diff -= h * 3600;
-        const m = Math.floor(diff / 60);
-        const s = diff - m * 60;
-        const pad = n => String(n).padStart(2, '0');
-        if (cdEl) {
-            cdEl.textContent =
-                (d > 0 ? d + 'd ' : '') + pad(h) + 'h ' + pad(m) + 'm ' + pad(s) + 's';
-        }
-        return true;
+    function showStatus() {
+        const sinceStart = Date.now() - when.getTime();
+        if (sinceStart < 0 || !statusEl) return;
+        statusEl.textContent =
+            sinceStart < RACE_WINDOW ? 'Lights out — race underway' : 'Awaiting results';
     }
 
-    if (tick()) {
-        const id = setInterval(() => { if (!tick()) clearInterval(id); }, 1000);
-    }
+    showStatus();
+    setInterval(showStatus, 60000);
 })();
 
 // Timeline quick-picks: chips that jump the year slider to notable seasons

@@ -4,6 +4,7 @@
 
 ### Improvements
 - **The whole site is more compact, so there's less scrolling.** The landing page is 46% shorter on desktop and 35% on phones, the other pages about 30%, and twice as many combinations fit on a laptop screen. Rows, panels, headers and the footer are tighter, the next-race card is a single band, the trio bars sit beside the names, and the discovery cards, season list, FAQ and soulmate facts sit side by side on wide screens. Nothing was removed (#380)
+- The next-race card no longer has a ticking countdown. It shows the race and qualifying times in your local time, and still says when a race is underway or awaiting results (#383)
 
 ### Fixes
 - The theme toggle no longer runs off the right edge of the nav on tablet-width screens (#380)

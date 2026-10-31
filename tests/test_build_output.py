@@ -213,7 +213,7 @@ def test_landing_page_has_info_tooltips(dist):
 def test_landing_page_has_next_race_box(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert 'class="next-race"' in html
-    assert "data-datetime=" in html  # countdown/local-time hook
+    assert "data-datetime=" in html  # local-time + race-status hook
     assert 'class="nr-track"' in html  # circuit outline SVG
 
 

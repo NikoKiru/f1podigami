@@ -206,8 +206,7 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         f'    <h2 class="nr-name">{name_html}</h2>'
         f'    <div class="nr-circuit">{circuit_line}</div>'
         f'    <div class="nr-when">'
-        f'      <span class="nr-cd-label">Lights out in</span>'
-        f'      <span class="nr-countdown" data-countdown></span>'
+        f'      <span class="nr-status"></span>'
         f'      <span class="nr-date">{_when_line(nxt)}</span>'
         f"    </div>"
         f"  </div>"

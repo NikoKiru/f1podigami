@@ -56,8 +56,7 @@ main {
 }
 
 /* next-race box: one band, so the prediction it introduces starts near the top
-   of the page. The race reads on the left, its countdown beside it, the circuit
-   plate at the end. */
+   of the page. The race reads on the left, the circuit plate at the end. */
 .next-race {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 280px;
@@ -77,19 +76,16 @@ main {
     grid-template-columns: 1fr;
 }
 
+/* Tag and round on one line, the name on its own, then the place and session
+   times, which wrap onto a second line where they won't fit side by side. */
 .nr-main {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-        "tag     head    when"
-        "name    name    when"
-        "circuit circuit when";
-    column-gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    column-gap: 14px;
 }
 
 .nr-head {
-    grid-area: head;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -113,7 +109,6 @@ main {
 }
 
 .nr-tag {
-    grid-area: tag;
     display: block;
     font-size: 12px;
     font-weight: 700;
@@ -123,7 +118,7 @@ main {
 }
 
 .nr-name {
-    grid-area: name;
+    flex: 0 0 100%;
     margin: 0;
     font-size: 22px;
     line-height: 1.25;
@@ -140,58 +135,32 @@ main {
 }
 
 .nr-circuit {
-    grid-area: circuit;
     font-size: 13px;
     color: var(--muted);
 }
 
-/* The countdown is the only thing on this card that moves, so it leads — but in
-   text colour. The accent is spent on its label instead, leaving the hero's
-   chance figure just below as the one big red number on the page. */
 .nr-when {
-    grid-area: when;
-    display: block;
-    margin-left: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 10px;
 }
 
-.nr-cd-label[hidden] {
+/* Empty until lights out, when podigami.js fills it. */
+.nr-status {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-bright);
+}
+
+.nr-status:empty {
     display: none;
 }
 
-.nr-cd-label {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--accent-bright);
-    text-transform: uppercase;
-    letter-spacing: 1.4px;
-    margin-bottom: 1px;
-}
-
-.nr-countdown {
-    display: block;
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.4px;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-}
-
-/* Once the race starts the slot carries a sentence, not a figure. */
-.nr-countdown.nr-cd-msg {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0;
-    color: var(--accent-bright);
-}
-
 .nr-date {
-    display: block;
-    margin-top: 2px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    color: var(--muted);
+    color: var(--text-dim);
 }
 
 /* The track outline framed as a circuit plate, captioned with the circuit's
@@ -1538,41 +1507,7 @@ a.tl-where:hover {
     }
 }
 
-/* Too narrow for the countdown beside the race name: it takes its own line,
-   with its label inline so that line stays short. */
 @media (max-width: 1080px) {
-    .nr-main {
-        grid-template-columns: auto minmax(0, 1fr);
-        grid-template-areas:
-            "tag     head"
-            "name    name"
-            "circuit circuit"
-            "when    when";
-    }
-
-    .nr-when {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 0 8px;
-        margin: 4px 0 0;
-    }
-
-    .nr-cd-label {
-        margin-bottom: 0;
-    }
-
-    .nr-date {
-        flex: 0 0 100%;
-        margin-top: 0;
-    }
-
-    /* The card is taller here, so the outline can fill its plate. */
-    .nr-track {
-        width: 104px;
-        height: 80px;
-    }
-
     .sm-facts {
         grid-template-columns: 1fr 1fr;
     }
@@ -1758,8 +1693,8 @@ a.tl-where:hover {
         height: 32px;
     }
 
-    .nr-countdown {
-        font-size: 18px;
+    .nr-date {
+        font-size: 12px;
     }
 
     .nr-plate-cap {
