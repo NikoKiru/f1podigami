@@ -169,7 +169,6 @@ def test_render_next_race_box_contents():
     assert "<svg" in html  # flag + track outline
     assert "nr-track" in html
     assert 'href="https://en.wikipedia.org/wiki/2026_B_GP"' in html  # race_url wiki fallback
-    assert "data-countdown" in html
 
 
 def test_render_next_race_season_complete_fallback():
@@ -199,12 +198,13 @@ def test_render_next_race_without_a_track_drops_the_plate_entirely():
     assert "Z" in circuit_line and "M" in circuit_line
 
 
-def test_render_next_race_labels_the_countdown():
-    # The bare countdown never said what it was counting to; the label carries
-    # the accent so the figure itself can stay in text colour.
+def test_render_next_race_has_no_countdown():
+    # The date line says when the race is. The status slot ships empty and
+    # podigami.js fills it once the race has started.
     html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
-    assert 'class="nr-cd-label"' in html
-    assert "Lights out in" in html
+    assert "Lights out in" not in html
+    assert "nr-countdown" not in html
+    assert '<span class="nr-status"></span>' in html
 
 
 def test_render_next_race_merges_race_and_qualifying_into_one_line():

@@ -4,6 +4,9 @@ Requires Playwright + Chromium. In CI this runs in the dedicated e2e job.
 On a dev machine without Playwright installed the tests are skipped gracefully.
 """
 
+import re
+from datetime import datetime, timedelta
+
 import pytest
 
 pytest.importorskip("playwright")
@@ -158,7 +161,7 @@ def test_info_tip_escape_dismisses(dist):
         browser.close()
 
 
-# ── Next-race countdown (podigami.js) ──────────────────────────────────────
+# ── Next-race box (podigami.js) ────────────────────────────────────────────
 
 
 def test_next_race_shows_local_time(dist):
@@ -198,25 +201,61 @@ def test_next_race_localises_qualifying_too(dist):
         browser.close()
 
 
-def test_next_race_countdown_ticks(dist):
-    """The countdown value changes after ~1 s when the race is upcoming."""
+def _race_start(page):
+    """The next race's start as baked into the page, or skip when there is none."""
+    box = page.locator(".next-race[data-datetime]")
+    if not box.count():
+        pytest.skip("no next-race box in this build")
+    return datetime.fromisoformat(box.get_attribute("data-datetime").replace("Z", "+00:00"))
+
+
+def test_next_race_shows_no_countdown(dist):
+    """Before the race the card says when it is, and nothing ticks."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1000, "height": 800})
         page.goto(_url(dist, "index.html"))
+        page.clock.set_fixed_time(_race_start(page) - timedelta(days=1, hours=8))
+        page.reload()
 
-        if not page.locator(".nr-countdown").count():
-            pytest.skip("no .nr-countdown element")
+        assert page.locator(".nr-status").is_hidden()
+        card = page.locator(".next-race").inner_text()
+        assert "Lights out" not in card
+        assert not re.search(r"\d+h \d+m", card), card
+        browser.close()
 
-        first = page.locator(".nr-countdown").text_content() or ""
-        # The ticking format always contains 'h ' and 'm ' (e.g. "6d 12h 34m 56s").
-        # Static messages ("Lights out — race underway", "Awaiting results") do not.
-        if "h " not in first or "m " not in first:
-            pytest.skip("race not upcoming — countdown shows a static message")
 
-        page.wait_for_timeout(1200)
-        second = page.locator(".nr-countdown").text_content() or ""
-        assert first != second
+@pytest.mark.parametrize(
+    "hours_in, message",
+    [(1, "Lights out — race underway"), (5, "Awaiting results")],
+)
+def test_next_race_says_so_once_the_race_has_started(dist, hours_in, message):
+    """The box only rolls over when results land, which can take hours, so the
+    date alone would describe a race already run as still to come."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1000, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.clock.set_fixed_time(_race_start(page) + timedelta(hours=hours_in))
+        page.reload()
+
+        assert page.locator(".nr-status").inner_text() == message
+        browser.close()
+
+
+def test_next_race_status_appears_on_a_page_left_open(dist):
+    """Nobody reloads to find out the race has started."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1000, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.clock.install(time=_race_start(page) - timedelta(seconds=30))
+        page.reload()
+        assert page.locator(".nr-status").is_hidden()
+
+        page.clock.run_for(2 * 60 * 1000)
+
+        assert page.locator(".nr-status").inner_text() == "Lights out — race underway"
         browser.close()
 
 
@@ -1097,7 +1136,7 @@ def test_stacked_season_names_keep_their_hairlines(dist):
 
 
 def test_next_race_card_is_a_single_band_on_desktop(dist):
-    """Race, countdown and circuit plate share one band, so the prediction it
+    """Race, session times and circuit plate share one band, so the prediction it
     introduces starts near the top of the page instead of a screen down."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -1105,11 +1144,11 @@ def test_next_race_card_is_a_single_band_on_desktop(dist):
         page.goto(_url(dist, "index.html"))
         page.wait_for_selector(".next-race")
         card = page.locator(".next-race").bounding_box()
-        name = page.locator(".nr-name").bounding_box()
+        circuit = page.locator(".nr-circuit").bounding_box()
         when = page.locator(".nr-when").bounding_box()
         browser.close()
     assert card["height"] <= 110, f"next-race card is {card['height']}px tall"
-    assert when["x"] > name["x"] + name["width"] - 1, "the countdown should sit beside the name"
+    assert abs(when["y"] - circuit["y"]) < 4, "the session times should sit beside the place"
 
 
 def test_trio_board_window_matches_its_rows(dist):
