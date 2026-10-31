@@ -28,6 +28,7 @@ from _hooks import (  # noqa: E402
 from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
     SITE_URL,
+    WELCOME,
     asset,
     driver_name,
     head,
@@ -721,6 +722,17 @@ def faq_items(
             f"ranks the never-before-seen ones from most to least likely."
         )
     items = [
+        (
+            "What does &ldquo;podigami&rdquo; mean?",
+            f"Podigami blends &ldquo;podium&rdquo; and &ldquo;origami&rdquo;, the same way "
+            f'<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>'
+            f" blends &ldquo;score&rdquo; and &ldquo;origami&rdquo;. It&rsquo;s the practice of "
+            f"tracking F1 podium trios that have never happened before. "
+            f'Since {lo}, <a href="combos.html"><strong>{total_combos:,}</strong></a> unique trios have '
+            f"appeared across <strong>{total_races:,}</strong> races. Today&rsquo;s {grid_size}-driver "
+            f"grid can produce <strong>{possible_trios:,}</strong> different trios per race, so most "
+            f"combinations simply haven&rsquo;t come up yet.",
+        ),
         ("How does the prediction model work?", how_it_works),
         (
             "What does the headline percentage mean?",
@@ -746,16 +758,6 @@ def faq_items(
             else "Each driver&rsquo;s podium weight uses a recency decay &mdash; recent podiums "
             "count more than older ones. The weight also includes a boost for the current "
             "season and can factor in constructor strength.",
-        ),
-        (
-            "What does &ldquo;podigami&rdquo; mean?",
-            f"Podigami blends &ldquo;podium&rdquo; and &ldquo;"
-            f'<a href="https://en.wikipedia.org/wiki/Scorigami" target="_blank" rel="noopener">scorigami</a>'
-            f"&rdquo; &mdash; it&rsquo;s the practice of tracking F1 podium trios that have never "
-            f'happened before. Since {lo}, <a href="combos.html"><strong>{total_combos:,}</strong></a> unique trios have '
-            f"appeared across <strong>{total_races:,}</strong> races. Today&rsquo;s {grid_size}-driver "
-            f"grid can produce <strong>{possible_trios:,}</strong> different trios per race, so most "
-            f"combinations simply haven&rsquo;t come up yet.",
         ),
         (
             "Why do some 1950s podiums list four drivers?",
@@ -786,7 +788,7 @@ def faq_items(
             else ""
         )
         items.insert(
-            2,
+            3,
             (
                 "Why does the prediction update after qualifying?",
                 "Qualifying is the most informative pre-race session: it reveals current pace "
@@ -819,7 +821,7 @@ def render_faq(
             f"</details>"
         )
     return (
-        f'<section class="panel faq-section">'
+        f'<section class="panel faq-section" id="faq">'
         f"  <h2>Frequently asked questions</h2>"
         f"  {''.join(entries)}"
         f"</section>"
@@ -1043,6 +1045,7 @@ def main() -> int:
     }
 <body>
 {nav("index.html")}
+{WELCOME}
 <header>
     <div class="container">
         <h1><span class="accent">F1</span> Podigami</h1>

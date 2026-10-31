@@ -152,7 +152,10 @@
         });
     }
 
-    render(slider.value);
+    // The first season goes straight in: there's no previous one to ease from,
+    // and growing the page mid-load would push #faq off the screen after the
+    // browser has already jumped to it.
+    applyContent(slider.value);
 })();
 
 // Info tooltips: desktop reveals on hover (CSS), but touch has no hover, so a
@@ -493,4 +496,16 @@
     sync();
     scroller.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('resize', sync);
+})();
+
+// A link to the FAQ lands on an open answer, not a wall of closed questions.
+(function () {
+    function openFirstAnswer() {
+        if (location.hash !== '#faq') return;
+        const first = document.querySelector('#faq .faq-item');
+        if (first) first.open = true;
+    }
+
+    openFirstAnswer();
+    window.addEventListener('hashchange', openFirstAnswer);
 })();

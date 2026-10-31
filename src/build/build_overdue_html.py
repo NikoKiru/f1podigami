@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
 from _layout import (  # noqa: E402
     FOOTER,
+    WELCOME,
     abbr_name,
     asset,
     breadcrumb_schema,
@@ -141,6 +142,7 @@ def main() -> int:
     }
 <body>
 {nav("overdue.html")}
+{WELCOME}
 <header>
     <div class="container">
         <h1><span class="accent">F1</span> Overdue Podiums</h1>
