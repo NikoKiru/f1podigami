@@ -176,3 +176,13 @@ def test_info_tooltips_are_not_clipped_by_an_ancestor(dist):
     assert not offenders, "these ancestors of an .info-tip clip its tooltip: " + ", ".join(
         sorted(offenders)
     )
+
+
+def test_both_table_systems_share_the_row_padding_token():
+    """The ranked tables mirror the combinations table cell for cell, so their
+    rows take the same padding from one token instead of two matching numbers."""
+    assert "--pad-row" in DARK, "the density tokens live in :root"
+    index = (ASSETS / "index.css").read_text(encoding="utf-8")
+    podigami = (ASSETS / "podigami.css").read_text(encoding="utf-8")
+    assert re.search(r"tbody tr\.combo>td\s*\{[^}]*padding:\s*var\(--pad-row\)", index)
+    assert re.search(r"\.rr-face\s*\{[^}]*padding:\s*var\(--pad-row\)", podigami)

@@ -23,6 +23,11 @@
     --stripe: rgba(255, 255, 255, 0.012);
     --radius: 10px;
     --radius-sm: 6px;
+    /* Density: the page rhythm. Sections, panels and table rows all read these,
+       so the whole site tightens or loosens from here. */
+    --gap-section: 14px;
+    --pad-panel: 16px 20px;
+    --pad-row: 8px;
     --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
         sans-serif;
 }
@@ -65,7 +70,7 @@ body {
 body {
     background: var(--bg);
     color: var(--text);
-    font: 16px/1.6 var(--font);
+    font: 15px/1.5 var(--font);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     display: flex;
@@ -76,7 +81,7 @@ body {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 32px;
+    padding: 0 24px;
 }
 
 /* nav / sticky site header bar */
@@ -100,8 +105,8 @@ body {
 .nav-inner {
     display: flex;
     align-items: stretch;
-    gap: 20px;
-    min-height: 54px;
+    gap: 16px;
+    min-height: 46px;
 }
 
 /* brand: podium mark + wordmark, links home */
@@ -115,13 +120,13 @@ body {
 }
 
 .brand-mark {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     display: block;
 }
 
 .brand-name {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.3px;
     color: var(--text);
@@ -138,7 +143,7 @@ body {
     display: flex;
     align-items: stretch;
     gap: 2px;
-    margin-left: 8px;
+    margin-left: 4px;
 }
 
 .nav-links a {
@@ -151,7 +156,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    padding: 0 13px;
+    padding: 0 var(--nav-pad, 12px);
     transition: color 0.15s;
 }
 
@@ -166,8 +171,8 @@ body {
 .nav-links a.active::after {
     content: "";
     position: absolute;
-    left: 13px;
-    right: 13px;
+    left: var(--nav-pad, 12px);
+    right: var(--nav-pad, 12px);
     bottom: 0;
     height: 3px;
     background: var(--accent);
@@ -182,8 +187,8 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     padding: 0;
     background: transparent;
     color: var(--muted);
@@ -339,14 +344,15 @@ html.drawer-open {
 header {
     background: var(--bg-2);
     border-bottom: 1px solid var(--border);
-    padding: 24px 0 20px;
+    padding: 14px 0 12px;
 }
 
 header h1 {
-    margin: 0 0 4px;
-    font-size: 26px;
+    margin: 0 0 2px;
+    font-size: 22px;
     font-weight: 700;
-    letter-spacing: -0.5px;
+    line-height: 1.25;
+    letter-spacing: -0.4px;
 }
 
 header h1 .accent {
@@ -358,10 +364,10 @@ header h1 .accent {
 }
 
 header .tagline {
-    margin: 0 0 22px;
+    margin: 0;
     color: var(--muted);
-    font-size: 15px;
-    max-width: 760px;
+    font-size: 14px;
+    max-width: 960px;
 }
 
 header .tagline a {
@@ -436,15 +442,15 @@ footer {
     border-top: 1px solid var(--border);
     background: var(--bg-2);
     color: var(--muted);
-    font-size: 13px;
-    padding: 22px 0;
+    font-size: 12.5px;
+    padding: 12px 0;
 }
 
 .footer-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 4px;
     text-align: center;
 }
 
@@ -452,13 +458,13 @@ footer {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 18px;
+    gap: 2px 16px;
 }
 
 .footer-nav a {
     color: var(--muted);
     text-decoration: none;
-    font-size: 13px;
+    font-size: 12.5px;
     border-bottom: none;
     transition: color 0.15s;
 }
@@ -470,8 +476,8 @@ footer {
 .footer-meta {
     margin: 0;
     color: var(--muted);
-    font-size: 13px;
-    max-width: 720px;
+    font-size: 12px;
+    max-width: 1000px;
 }
 
 footer a {
@@ -485,7 +491,30 @@ footer a:hover {
     border-color: var(--accent);
 }
 
+/* The tabs need ~690px beside the brand and the toggle; without this the toggle
+   ran off the right edge just above the drawer breakpoint. */
+@media (max-width: 860px) {
+    .nav-inner {
+        gap: 8px;
+    }
+
+    .nav-links {
+        --nav-pad: 7px;
+        margin-left: 0;
+    }
+
+    .nav-links a {
+        font-size: 11px;
+        letter-spacing: 0.6px;
+    }
+}
+
 @media (max-width: 720px) {
+    :root {
+        --gap-section: 12px;
+        --pad-panel: 12px 14px;
+    }
+
     .container {
         padding: 0 14px;
     }
@@ -495,7 +524,7 @@ footer a:hover {
     .nav-inner {
         align-items: center;
         min-height: 0;
-        padding: 8px 0;
+        padding: 6px 0;
         gap: 12px;
     }
 
@@ -512,17 +541,19 @@ footer a:hover {
         display: block;
     }
 
+    /* Back to a comfortable tap target: the bar has the height here. */
     .theme-toggle {
         margin-left: auto;
+        width: 34px;
+        height: 34px;
     }
 
     header {
-        padding: 28px 0 24px;
+        padding: 12px 0 10px;
     }
 
     header h1 {
-        font-size: 24px;
-        letter-spacing: -0.4px;
+        font-size: 20px;
     }
 
     header h1 .accent {
@@ -530,8 +561,7 @@ footer a:hover {
     }
 
     header .tagline {
-        font-size: 14px;
-        margin-bottom: 18px;
+        font-size: 13.5px;
     }
 
 

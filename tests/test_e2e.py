@@ -939,3 +939,166 @@ def test_trio_bubble_stays_tooltip_sized_on_a_phone(dist):
         )
         assert rect["left"] >= 0 and rect["right"] <= 390
         browser.close()
+
+
+# ── Compact layout ─────────────────────────────────────────────────────────
+
+ALL_PAGES = [
+    "index.html",
+    "combos.html",
+    "overdue.html",
+    "unlikeliest.html",
+    "soulmates.html",
+    "404.html",
+]
+
+
+@pytest.mark.parametrize("width", [320, 390, 721, 768, 1024, 1280])
+@pytest.mark.parametrize("page_name", ALL_PAGES)
+def test_nothing_runs_off_the_side_of_the_page(dist, page_name, width):
+    """Compact rows put more side by side, and ``overflow-x: hidden`` on the
+    page would silently cut off whatever no longer fits, so check the elements
+    rather than the scroll width. Off-canvas drawers and popovers are meant to
+    sit outside the viewport; the board and table scroll inside themselves."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 800})
+        page.goto(_url(dist, page_name))
+        page.wait_for_load_state("load")
+        cut_off = page.evaluate(
+            """() => {
+                const skip = '.nav-drawer, .filter-panel, .fp-scrim, .nav-scrim, .info-bubble';
+                const bad = [];
+                for (const el of document.querySelectorAll('body *')) {
+                    if (el.closest(skip)) continue;
+                    const r = el.getBoundingClientRect();
+                    if (r.width && r.right > innerWidth + 0.5) {
+                        bad.push(el.tagName + '.' + el.className + ' right=' + r.right);
+                    }
+                }
+                return bad.slice(0, 5);
+            }"""
+        )
+        browser.close()
+    assert cut_off == []
+
+
+@pytest.mark.parametrize(
+    "page_name, row, width, low, high",
+    [
+        # Desktop: compact, but one line of text still has room around it.
+        ("combos.html", "tbody tr.combo", 1280, 34, 40),
+        ("overdue.html", ".rr-face", 1280, 34, 40),
+        ("unlikeliest.html", ".rr-face", 1280, 34, 40),
+        ("soulmates.html", ".rr-face", 1280, 34, 40),
+        # Phone: three stacked names, and still a comfortable tap target.
+        ("combos.html", "tbody tr.combo", 390, 60, 84),
+        ("overdue.html", ".rr-face", 390, 60, 84),
+        ("soulmates.html", ".rr-face", 390, 34, 44),
+    ],
+)
+def test_table_rows_are_compact_but_not_squished(dist, page_name, row, width, low, high):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 800})
+        page.goto(_url(dist, page_name))
+        page.wait_for_selector(row)
+        height = page.locator(row).first.bounding_box()["height"]
+        browser.close()
+    assert low <= height <= high, f"{page_name} {row} is {height}px at {width}px wide"
+
+
+def test_next_race_card_is_a_single_band_on_desktop(dist):
+    """Race, countdown and circuit plate share one band, so the prediction it
+    introduces starts near the top of the page instead of a screen down."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".next-race")
+        card = page.locator(".next-race").bounding_box()
+        name = page.locator(".nr-name").bounding_box()
+        when = page.locator(".nr-when").bounding_box()
+        browser.close()
+    assert card["height"] <= 110, f"next-race card is {card['height']}px tall"
+    assert when["x"] > name["x"] + name["width"] - 1, "the countdown should sit beside the name"
+
+
+def test_trio_board_window_matches_its_rows(dist):
+    """--board-row-h is a hand-kept number: it has to track the real row height,
+    or the window stops showing twelve rows and a sliver of the next."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 900})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".cand")
+        window, row = page.evaluate(
+            """() => [
+                document.querySelector('.cand-scroll').clientHeight,
+                document.querySelector('.cand').getBoundingClientRect().height,
+            ]"""
+        )
+        browser.close()
+    assert row <= 36, f"a board row is {row}px tall with its bar inline"
+    assert 12 < window / row < 12.8, f"the window shows {window / row:.2f} rows"
+
+
+def test_faq_and_season_list_use_the_width_on_desktop(dist):
+    """A short question and a one-line trio leave half a row empty; two columns
+    halve both sections on a wide screen."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".tl-item")
+        columns = page.evaluate(
+            """() => ['.faq-item', '.tl-item'].map(sel => new Set(
+                [...document.querySelectorAll(sel)].map(el => el.getBoundingClientRect().left)
+            ).size)"""
+        )
+        browser.close()
+    assert columns == [2, 2]
+
+
+def test_hero_tooltip_stays_on_screen_on_a_phone(dist):
+    """The number sits beside its sentence on phones now, which moves the info
+    icon: its bubble must still open fully inside the viewport."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 360, "height": 800}, has_touch=True)
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".hero .info-tip")
+        tip = page.locator(".hero .info-tip")
+        tip.tap()
+        rect = tip.evaluate(
+            "el => { const r = el.querySelector('.info-bubble').getBoundingClientRect();"
+            " return {left: r.left, right: r.right}; }"
+        )
+        browser.close()
+    assert rect["left"] >= 0 and rect["right"] <= 360, rect
+
+
+def test_board_rows_stay_on_one_line_with_grid_chips(dist):
+    """After qualifying every driver carries a grid chip, the widest state a row
+    has. Committed data rarely shows it, so add the chips here: a row that wraps
+    pushes its NEW pill under the names and breaks --board-row-h."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 900})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".cand")
+        tallest = page.evaluate(
+            """() => {
+                document.querySelectorAll('.cd').forEach(driver => {
+                    const chip = document.createElement('span');
+                    chip.className = 'cd-grid';
+                    chip.textContent = 'P22';
+                    driver.appendChild(chip);
+                });
+                return Math.max(...[...document.querySelectorAll('.cand')].map(
+                    row => row.getBoundingClientRect().height
+                ));
+            }"""
+        )
+        browser.close()
+    assert tallest <= 36, f"a board row wrapped to {tallest}px with grid chips"
