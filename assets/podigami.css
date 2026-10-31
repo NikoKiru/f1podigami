@@ -1,7 +1,7 @@
 /* Podigami landing page */
 
 main {
-    padding: 28px 0 48px;
+    padding: 16px 0 24px;
     flex: 1;
 }
 
@@ -16,14 +16,15 @@ main {
     white-space: nowrap;
 }
 
+/* The space between names supplies the rest of the gap after the slash. */
 .trio .sep {
     color: var(--muted-dim);
-    margin: 0 8px;
+    margin: 0 2px 0 6px;
     font-weight: 400;
 }
 
 .trio-sm .pdriver {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 500;
 }
 
@@ -54,18 +55,20 @@ main {
     outline-offset: 2px;
 }
 
-/* next-race box */
+/* next-race box: one band, so the prediction it introduces starts near the top
+   of the page. The race reads on the left, its countdown beside it, the circuit
+   plate at the end. */
 .next-race {
     display: grid;
-    grid-template-columns: 1fr 210px;
-    gap: 26px;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 18px;
+    align-items: center;
     background: linear-gradient(135deg, var(--surface) 0%, var(--bg-2) 100%);
     border: 1px solid var(--border-strong);
     border-left: 4px solid var(--accent);
     border-radius: var(--radius);
-    padding: 20px 22px;
-    margin-bottom: 22px;
+    padding: 10px 12px 10px 18px;
+    margin-bottom: var(--gap-section);
     overflow: hidden;
 }
 
@@ -74,15 +77,26 @@ main {
     grid-template-columns: 1fr;
 }
 
+.nr-main {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "tag     head    when"
+        "name    name    when"
+        "circuit circuit when";
+    column-gap: 10px;
+    align-items: center;
+}
+
 .nr-head {
+    grid-area: head;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
+    gap: 8px;
 }
 
 .nr-flag {
-    width: 34px;
+    width: 24px;
     height: auto;
     border-radius: 3px;
     display: block;
@@ -99,18 +113,20 @@ main {
 }
 
 .nr-tag {
+    grid-area: tag;
     display: block;
     font-size: 12px;
     font-weight: 700;
     color: var(--accent-bright);
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    margin-bottom: 8px;
 }
 
 .nr-name {
-    margin: 0 0 2px;
-    font-size: 26px;
+    grid-area: name;
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.25;
     letter-spacing: -0.4px;
 }
 
@@ -124,6 +140,7 @@ main {
 }
 
 .nr-circuit {
+    grid-area: circuit;
     font-size: 13px;
     color: var(--muted);
 }
@@ -132,8 +149,9 @@ main {
    text colour. The accent is spent on its label instead, leaving the hero's
    chance figure just below as the one big red number on the page. */
 .nr-when {
+    grid-area: when;
     display: block;
-    margin-top: 14px;
+    margin-left: 14px;
 }
 
 .nr-cd-label[hidden] {
@@ -147,12 +165,12 @@ main {
     color: var(--accent-bright);
     text-transform: uppercase;
     letter-spacing: 1.4px;
-    margin-bottom: 3px;
+    margin-bottom: 1px;
 }
 
 .nr-countdown {
     display: block;
-    font-size: 23px;
+    font-size: 20px;
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.4px;
@@ -170,8 +188,8 @@ main {
 
 .nr-date {
     display: block;
-    margin-top: 4px;
-    font-size: 12.5px;
+    margin-top: 2px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--muted);
 }
@@ -180,20 +198,20 @@ main {
    own name and length. */
 .nr-art {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
     align-self: stretch;
     background: var(--bg-2);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 12px 12px 9px;
+    padding: 6px 10px;
 }
 
 .nr-track {
-    width: 100%;
-    height: auto;
-    max-height: 106px;
+    width: 76px;
+    height: 54px;
+    flex: 0 0 auto;
 }
 
 .nr-track path {
@@ -206,10 +224,10 @@ main {
 
 .nr-plate-cap {
     font-size: 10px;
-    letter-spacing: 1.1px;
+    line-height: 1.35;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
     color: var(--muted);
-    text-align: center;
 }
 
 .next-race:has(+ .last-race) {
@@ -234,8 +252,8 @@ main {
     border: 1px solid var(--border-strong);
     border-left: 4px solid var(--muted);
     border-radius: var(--radius);
-    padding: 8px 18px;
-    margin-bottom: 22px;
+    padding: 5px 18px;
+    margin-bottom: var(--gap-section);
     flex-wrap: wrap;
 }
 
@@ -339,7 +357,7 @@ main {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 30px 32px 26px;
+    padding: 16px 20px 14px;
 }
 
 /* The figure and its sentence are one row, centred against each other: aligning
@@ -348,12 +366,12 @@ main {
 .hero-head {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
 }
 
 .hc-num {
     flex: none;
-    font-size: 52px;
+    font-size: 44px;
     font-weight: 700;
     line-height: 1;
     color: var(--accent-bright);
@@ -366,29 +384,31 @@ main {
 
 .hc-label {
     margin: 0;
-    font-size: 18px;
-    line-height: 1.4;
+    font-size: 16px;
+    line-height: 1.35;
     color: var(--text);
     /* Wide enough that the sentence and its info icon hold one line at desktop
-       width — a tighter measure wrapped the icon onto a line of its own. */
+       width — a tighter measure wrapped the icon onto a line of its own. Where
+       it does wrap, balancing keeps the icon from landing alone on a line. */
     max-width: 78ch;
+    text-wrap: balance;
 }
 
 .hc-sub {
-    margin: 5px 0 0;
-    font-size: 13.5px;
+    margin: 2px 0 0;
+    font-size: 13px;
     color: var(--muted);
 }
 
 .hero-pick {
-    margin-top: 26px;
-    padding-top: 22px;
+    margin-top: 12px;
+    padding-top: 10px;
     border-top: 1px solid var(--border);
 }
 
 .hp-label {
-    margin: 0 0 14px;
-    font-size: 13.5px;
+    margin: 0 0 8px;
+    font-size: 13px;
     color: var(--muted);
 }
 
@@ -410,7 +430,7 @@ main {
 
 /* ---------- section heading (the table is the only framed element) ---------- */
 .rank-section {
-    margin-top: 34px;
+    margin-top: 20px;
 }
 
 .rank-section:first-of-type {
@@ -418,17 +438,17 @@ main {
 }
 
 .rank-section > h2 {
-    margin: 0 0 4px;
-    font-size: 18px;
+    margin: 0 0 2px;
+    font-size: 16px;
     letter-spacing: -0.3px;
 }
 
 .rank-section > .rank-sub {
-    margin: 0 0 14px;
+    margin: 0 0 8px;
     color: var(--muted);
     font-size: 13px;
-    line-height: 1.6;
-    max-width: 95ch;
+    line-height: 1.45;
+    max-width: 130ch;
 }
 
 /* ---------- frame + label strip ---------- */
@@ -448,7 +468,7 @@ main {
 }
 
 .rank-head {
-    padding: 13px 18px;
+    padding: 7px 18px;
     background: var(--surface-2);
     border-bottom: 1px solid var(--border);
     color: var(--muted);
@@ -497,7 +517,8 @@ main {
 }
 
 .rr-face {
-    padding: 14px 18px;
+    padding: var(--pad-row) 18px;
+    line-height: 1.4;
     cursor: pointer;
     list-style: none;
 }
@@ -508,7 +529,7 @@ main {
 
 .rr-drivers {
     min-width: 0;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--text);
     line-height: 1.4;
@@ -532,7 +553,7 @@ main {
 }
 
 .rr-num {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--accent-bright);
     font-variant-numeric: tabular-nums;
@@ -542,7 +563,7 @@ main {
 .rr-race {
     min-width: 0;
     color: var(--muted);
-    font-size: 14px;
+    font-size: 13.5px;
     line-height: 1.35;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -579,9 +600,9 @@ main {
 .rr-stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px 40px;
+    gap: 10px 32px;
     margin: 0;
-    padding: 18px 24px 20px;
+    padding: 10px 18px 12px;
     background: var(--bg-2);
     border-top: 1px solid var(--border);
     border-left: 3px solid var(--accent);
@@ -590,7 +611,7 @@ main {
 .rr-stat {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     min-width: 0;
 }
 
@@ -647,26 +668,26 @@ main {
 .hero-drivers {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
+    gap: 16px;
 }
 
 .hero-driver {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    padding-left: 12px;
+    gap: 1px;
+    padding-left: 10px;
     border-left: 2px solid var(--team, var(--accent));
 }
 
 .hd-name {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 600;
     line-height: 1.25;
     color: var(--text);
 }
 
 .hd-team {
-    font-size: 13.5px;
+    font-size: 13px;
     color: var(--muted);
 }
 
@@ -675,9 +696,9 @@ main {
     align-items: center;
     flex-wrap: wrap;
     gap: 4px 0;
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--muted);
-    margin: 22px 0 0;
+    margin: 10px 0 0;
 }
 
 /* panels */
@@ -685,38 +706,39 @@ main {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 22px;
-    margin-top: 22px;
+    padding: var(--pad-panel);
+    margin-top: var(--gap-section);
 }
 
 .panel h2 {
     margin: 0 0 4px;
-    font-size: 18px;
+    font-size: 16px;
     letter-spacing: -0.3px;
 }
 
 .panel-sub {
-    margin: 0 0 18px;
+    margin: 0 0 10px;
     color: var(--muted);
     font-size: 13px;
 }
 
 /* closing methodology footnote (Overdue / Unlikeliest / Soulmates) */
 .as-of {
-    margin: 28px 0 0;
-    padding-top: 16px;
+    margin: 16px 0 0;
+    padding-top: 10px;
     border-top: 1px solid var(--border);
     color: var(--muted);
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 /* candidate list */
 /* The board window: --board-rows is the one number that sets how many rows are
-   visible before it scrolls (row height is padding + names + gap + bar). */
+   visible before it scrolls. --board-row-h has to track the real row: padding +
+   names + border, now that the bar sits beside the names (e2e checks the two). */
 .cand-scroll {
     --board-rows: 12;
-    --board-row-h: 55px;
+    --board-row-h: 33.5px;
     /* The +18px leaves a sliver of the next row showing under the fade, so the
        list reads as continuing rather than ending on a full row. */
     max-height: calc(var(--board-rows) * var(--board-row-h) + 18px);
@@ -805,7 +827,7 @@ main {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 0;
+    padding: 5px 0;
     border-bottom: 1px solid var(--border);
 }
 
@@ -816,10 +838,15 @@ main {
 .cand-body {
     flex: 1;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
+/* A fixed width so every bar starts at the same x. 340px holds the longest row:
+   three drivers with their grid slots, plus the NEW pill. */
 .cand-names {
-    margin-bottom: 6px;
+    flex: 0 0 340px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -864,6 +891,8 @@ main {
 }
 
 .cand-bar-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
     background: var(--surface-3);
     border-radius: 99px;
     height: 6px;
@@ -982,8 +1011,8 @@ main {
 /* fun-fact cards (second panel) */
 .sm-facts {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
 }
 
 .fact-card {
@@ -991,7 +1020,7 @@ main {
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent);
     border-radius: var(--radius-sm);
-    padding: 14px 16px;
+    padding: 10px 12px;
     transition: border-color 0.12s, background 0.12s;
 }
 
@@ -1006,16 +1035,16 @@ main {
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 1.2px;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
 }
 
 .fc-num {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--text);
     letter-spacing: -0.4px;
-    line-height: 1.1;
-    margin-bottom: 4px;
+    line-height: 1.15;
+    margin-bottom: 2px;
 }
 
 .fc-num .fc-unit {
@@ -1029,7 +1058,7 @@ main {
 .fc-detail {
     font-size: 13px;
     color: var(--text-dim);
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .fc-detail b {
@@ -1039,7 +1068,7 @@ main {
 
 /* current form — collapsed <details> inside the candidates panel */
 .form-details {
-    margin-top: 14px;
+    margin-top: 10px;
 }
 
 .form-details > summary {
@@ -1049,7 +1078,7 @@ main {
     margin: 0 auto;
     font-size: 12px;
     font-weight: 600;
-    padding: 6px 16px;
+    padding: 3px 14px;
     border-radius: 999px;
     border: 1px solid var(--border-strong);
     background: var(--surface-2);
@@ -1081,7 +1110,7 @@ main {
 }
 
 .form-caption {
-    margin: 12px 0 10px;
+    margin: 8px 0;
     font-size: 12.5px;
     line-height: 1.5;
     color: var(--muted);
@@ -1091,14 +1120,14 @@ main {
 .form-tower {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
 }
 
 .tower-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 12px;
+    padding: 3px 10px;
     background: var(--surface-2);
     border-left: 3px solid var(--team, var(--accent));
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -1194,10 +1223,10 @@ main {
     display: flex;
     align-items: flex-end;
     gap: var(--tl-gap);
-    height: 70px;
-    padding: 6px 0;
+    height: 52px;
+    padding: 4px 0;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
 .tl-bar {
@@ -1218,7 +1247,7 @@ main {
 }
 
 .tl-controls {
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
 /* The bar centers sit half a bar-width in from each edge; the thumb travels
@@ -1278,12 +1307,12 @@ main {
 
 .tl-select-wrap {
     display: none;
-    margin-bottom: 16px;
+    margin-bottom: 6px;
 }
 
 #tl-select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 7px 10px;
     font-size: 15px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -1298,7 +1327,7 @@ main {
 }
 
 #tl-year {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--text);
 }
@@ -1320,7 +1349,7 @@ main {
     justify-content: space-between;
     gap: 12px;
     align-items: baseline;
-    padding: 7px 0;
+    padding: 4px 0;
     border-bottom: 1px solid var(--border);
 }
 
@@ -1329,7 +1358,7 @@ main {
 }
 
 .tl-where {
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--muted);
     white-space: nowrap;
     text-decoration: none;
@@ -1416,10 +1445,6 @@ a.tl-where:hover {
 }
 
 /* FAQ section */
-.faq-section {
-    margin-top: 22px;
-}
-
 .faq-item {
     border-bottom: 1px solid var(--border);
 }
@@ -1429,8 +1454,8 @@ a.tl-where:hover {
 }
 
 .faq-q {
-    padding: 14px 0;
-    font-size: 15px;
+    padding: 7px 0;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
@@ -1447,7 +1472,8 @@ a.tl-where:hover {
 
 .faq-q::after {
     content: "+";
-    font-size: 18px;
+    font-size: 16px;
+    line-height: 1;
     font-weight: 400;
     color: var(--muted);
     flex: 0 0 auto;
@@ -1459,13 +1485,13 @@ a.tl-where:hover {
 }
 
 .faq-a {
-    padding: 0 0 14px;
+    padding: 0 0 10px;
 }
 
 .faq-a p {
     margin: 0;
-    font-size: 14px;
-    line-height: 1.65;
+    font-size: 13.5px;
+    line-height: 1.55;
     color: var(--muted);
 }
 
@@ -1474,12 +1500,94 @@ a.tl-where:hover {
     font-weight: 600;
 }
 
+/* Wide enough to spend the width instead of the height: a short question or a
+   one-line trio leaves half a row empty, so both lists take two columns. Both
+   are grids, not CSS columns: podigami.js pins the season list's height while it
+   animates, and a pinned multi-column box spills sideways. */
+@media (min-width: 1000px) {
+    .faq-section {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 32px;
+        align-items: start;
+    }
+
+    .faq-section > h2 {
+        grid-column: 1 / -1;
+    }
+
+    /* The bottom row has a left cell too. <h2> is child 1, so the left column is
+       the even children. */
+    .faq-item:nth-last-child(2):nth-child(even) {
+        border-bottom: none;
+    }
+}
+
+/* The season list waits for the full-width container: a long trio and its race
+   need all of a 539px column, and one that still doesn't fit wraps between names
+   rather than overrunning it. */
+@media (min-width: 1200px) {
+    .tl-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 32px;
+    }
+
+    .tl-item:nth-last-child(2):nth-child(odd) {
+        border-bottom: none;
+    }
+}
+
+/* Too narrow for the countdown beside the race name: it takes its own line,
+   with its label inline so that line stays short. */
+@media (max-width: 1080px) {
+    .nr-main {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+            "tag     head"
+            "name    name"
+            "circuit circuit"
+            "when    when";
+    }
+
+    .nr-when {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0 8px;
+        margin: 4px 0 0;
+    }
+
+    .nr-cd-label {
+        margin-bottom: 0;
+    }
+
+    .nr-date {
+        flex: 0 0 100%;
+        margin-top: 0;
+    }
+
+    /* The card is taller here, so the outline can fill its plate. */
+    .nr-track {
+        width: 104px;
+        height: 80px;
+    }
+
+    .sm-facts {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 @media (max-width: 720px) {
     /* The container padding narrows to 14px at 720px (style.css). The hero is a
        single column now, so only its own padding needs to come in — the three
        driver columns still fit here and stack at 600px instead (#116). */
     .hero {
-        padding: 24px 20px 20px;
+        padding: 14px 16px 12px;
+    }
+
+    main {
+        padding: 12px 0 20px;
     }
 }
 
@@ -1490,12 +1598,21 @@ a.tl-where:hover {
         display: none;
     }
 
-    /* Twelve rows is a desktop-sized window; on a phone the chips wrap onto a
-       second line (75px a row, not 55px), so twelve would run past the viewport
-       and the panel would swallow the page. Six keeps the card thumb-sized. */
+    /* Twelve rows is a desktop-sized window; on a phone the bar drops under the
+       names and post-qualifying grid chips can wrap them to a second line, so
+       twelve would run past the viewport and the panel would swallow the page.
+       Six keeps the card thumb-sized. */
     .cand-scroll {
         --board-rows: 6;
-        --board-row-h: 75px;
+        --board-row-h: 56px;
+    }
+
+    .cand-body {
+        display: block;
+    }
+
+    .cand-names {
+        margin-bottom: 4px;
     }
 
     /* Capped well inside the viewport: allowed to fill the screen it stopped
@@ -1522,7 +1639,7 @@ a.tl-where:hover {
     .rr-face {
         grid-template-columns: minmax(0, 1fr) auto 26px;
         column-gap: 10px;
-        padding: 14px;
+        padding: var(--pad-row) 14px;
     }
 
     /* A stacked trio is three lines tall, so the rule between rows takes the
@@ -1533,6 +1650,7 @@ a.tl-where:hover {
 
     .rr-drivers {
         font-size: 14px;
+        line-height: 1.3;
     }
 
     .rr-drivers .sep {
@@ -1549,8 +1667,8 @@ a.tl-where:hover {
     .rr-drivers .oddriver + .oddriver,
     .rr-drivers .undriver + .undriver {
         border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-        margin-top: 5px;
-        padding-top: 5px;
+        margin-top: 2px;
+        padding-top: 2px;
     }
 
     .rr-drivers .oddriver .sep,
@@ -1567,8 +1685,8 @@ a.tl-where:hover {
     }
 
     .rr-stats {
-        padding: 14px 16px 16px;
-        gap: 12px 26px;
+        padding: 10px 14px 12px;
+        gap: 8px 22px;
     }
 
     .rr-stats .rr-stat-race {
@@ -1583,78 +1701,74 @@ a.tl-where:hover {
         max-width: 260px;
     }
 
-    .hero {
-        padding: 22px 18px 18px;
-    }
-
-    /* The number moves above its sentence — centring the pair would centre them
-       horizontally once they stack, so pin both to the left edge. */
+    /* The number stays beside its sentence: three lines of text next to it cost
+       less than the number on a line of its own above them. */
     .hero-head {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        gap: 12px;
     }
 
     .hc-num {
-        font-size: 46px;
+        font-size: 40px;
     }
 
     .hc-label {
-        font-size: 16.5px;
+        font-size: 15px;
     }
 
     /* Three columns leave ~158px each here — no room to spare once the
        post-qualifying "Aston Martin · starts 12th" line is in — so the trio
-       stacks and each driver gets the full width. */
+       stacks and each driver gets the full width: name and team on one line,
+       with the team dropping below when a long pair won't fit. */
     .hero-drivers {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 6px;
+    }
+
+    .hero-driver {
+        flex-flow: row wrap;
+        align-items: baseline;
+        gap: 0 8px;
     }
 
     .hd-team {
+        max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .panel {
-        padding: 16px;
-    }
-
     .next-race {
         grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 16px;
+        gap: 8px;
+        padding: 10px 12px;
     }
 
-    /* The plate flips to a band: a small outline and its caption on one row,
-       instead of an off-centre doodle costing ~90px of scroll. */
+    /* A small outline and its caption on one row, instead of an off-centre
+       doodle costing ~90px of scroll. */
     .nr-art {
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
-        gap: 11px;
-        padding: 7px 12px;
+        gap: 10px;
+        padding: 4px 10px;
     }
 
     .nr-track {
-        width: 54px;
-        height: 38px;
-        max-height: none;
-        flex: 0 0 auto;
-    }
-
-    .nr-plate-cap {
-        text-align: left;
+        width: 48px;
+        height: 32px;
     }
 
     .nr-countdown {
-        font-size: 20px;
+        font-size: 18px;
+    }
+
+    .nr-plate-cap {
+        letter-spacing: 0.4px;
     }
 
     .last-race {
-        gap: 4px 8px;
-        padding: 8px 12px;
+        gap: 2px 8px;
+        padding: 6px 12px;
     }
 
     .lr-tag {
@@ -1732,24 +1846,27 @@ a.tl-where:hover {
     }
 
     /* Stacked trios: the strong border between entries outweighs the faint
-       hairlines inside each trio. */
+       hairlines inside each trio. The race sits beside the names rather than
+       under them, as the count does on the combinations table. */
     .tl-item {
-        flex-direction: column;
-        gap: 2px;
-        padding: 10px 0;
+        align-items: center;
+        padding: 6px 0;
         border-bottom-color: var(--border-strong);
     }
 
     .tl-where {
+        flex: 0 1 auto;
+        min-width: 0;
+        text-align: right;
         white-space: normal;
     }
 
     /* One driver per line, a hairline between them in place of the "/" — as
-       on the combinations table. The link spans the row so the hairlines do
-       too, rather than stopping at the longest name. */
+       on the combinations table. The link takes the free width so the hairlines
+       do too, rather than stopping at the longest name. */
     .tl-item .combo-link {
         display: block;
-        align-self: stretch;
+        flex: 1 0 auto;
     }
 
     .trio,
@@ -1759,8 +1876,8 @@ a.tl-where:hover {
 
     .trio .pdriver + .pdriver {
         border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-        margin-top: 4px;
-        padding-top: 4px;
+        margin-top: 2px;
+        padding-top: 2px;
     }
 
     .trio .sep {
@@ -1769,12 +1886,15 @@ a.tl-where:hover {
 }
 /* ---- Discovery hooks & explore grid ------------------------------------ */
 
+/* Two lines, not three: the link shares the top line with the kicker and the
+   stat takes the full width beneath. If the pair won't fit, the link wraps. */
 .hook-card {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 14px;
-    padding: 14px 18px;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 2px 12px;
+    padding: 9px 14px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -1797,9 +1917,11 @@ a.tl-where:hover {
 }
 
 .hook-stat {
+    order: 1;
+    flex: 0 0 100%;
     color: var(--text-dim);
-    font-size: 14px;
-    line-height: 1.45;
+    font-size: 13.5px;
+    line-height: 1.4;
 }
 
 .hook-stat b {
@@ -1807,7 +1929,7 @@ a.tl-where:hover {
 }
 
 .hook-cta {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--muted);
 }
@@ -1828,24 +1950,22 @@ a.tl-where:hover {
 .hook-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: var(--gap-section);
+    margin-top: var(--gap-section);
 }
 
 .explore-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-top: 12px;
-}
-
-.explore-grid .hook-card {
-    margin-top: 0;
+    gap: 10px;
+    margin-top: 8px;
 }
 
 @media (max-width: 600px) {
     .hook-row,
     .explore-grid {
         grid-template-columns: 1fr;
+        gap: 8px;
     }
 }
 
@@ -1854,15 +1974,15 @@ a.tl-where:hover {
 .tl-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin: 10px 0 2px;
+    gap: 6px;
+    margin: 6px 0 2px;
 }
 
 .tl-chip {
     font: inherit;
     font-size: 12px;
     font-weight: 600;
-    padding: 5px 12px;
+    padding: 3px 10px;
     border-radius: 999px;
     border: 1px solid var(--border-strong);
     background: var(--surface-2);

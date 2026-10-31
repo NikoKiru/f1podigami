@@ -190,7 +190,7 @@ def test_next_race_plate_becomes_a_band_on_mobile():
     """The circuit plate must lay out as a row on phones.
 
     Stacked, the outline renders as a small off-centre doodle costing ~90px of
-    scroll before the prediction hero. As a row it is a 54px outline beside its
+    scroll before the prediction hero. As a row it is a small outline beside its
     caption — one band, roughly half the height, and it reads as a caption.
     """
     import re
