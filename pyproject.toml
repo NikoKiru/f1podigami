@@ -32,6 +32,9 @@ ignore = [
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+markers = [
+    "new_visitor: open browser pages without the seen-the-welcome-card state",
+]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]

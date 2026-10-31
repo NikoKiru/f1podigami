@@ -294,6 +294,7 @@ FOOTER = f"""<footer>
             <a href="overdue.html">Overdue</a>
             <a href="unlikeliest.html">Unlikeliest</a>
             <a href="soulmates.html">Soulmates</a>
+            <a href="index.html#faq">FAQ</a>
         </nav>
         <p class="footer-meta">
             Data from <a href="{DATA_URL}" target="_blank" rel="noopener">Jolpica F1 API</a> (Ergast)
@@ -305,3 +306,14 @@ FOOTER = f"""<footer>
         </p>
     </div>
 </footer>"""
+
+# First-visit card, right after the nav so a keyboard reaches it before the page.
+# welcome.js reveals it once; the 404 page leaves it out, since a lost visitor has
+# better things to do than read an FAQ.
+WELCOME = f"""<div class="welcome" id="welcome" role="status" hidden>
+    <p class="welcome-title">New here?</p>
+    <p class="welcome-text">Podigami tracks the F1 podium trios that have never happened.</p>
+    <a class="welcome-link" href="index.html#faq">Check out the FAQ <span aria-hidden="true">&rarr;</span></a>
+    <button type="button" class="welcome-close" aria-label="Dismiss">&times;</button>
+</div>
+<script src="{asset("welcome.js")}" defer></script>"""

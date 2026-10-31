@@ -340,6 +340,99 @@ html.drawer-open {
     }
 }
 
+/* First-visit card (welcome.js). Stays under the nav and its drawer (z-index 50+)
+   and blocks nothing else: the page behind it stays usable. */
+.welcome {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 40;
+    width: 300px;
+    padding: 12px 40px 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    animation: welcome-in 0.25s ease-out;
+}
+
+@keyframes welcome-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+
+.welcome-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.welcome-text {
+    margin: 2px 0 6px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: var(--muted);
+}
+
+.welcome-link {
+    display: inline-block;
+    padding: 4px 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--accent-link);
+    text-decoration: none;
+}
+
+.welcome-link:hover {
+    text-decoration: underline;
+}
+
+.welcome-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    font: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.welcome-close:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.welcome-link:focus-visible,
+.welcome-close:focus-visible {
+    outline: 2px solid var(--accent-link);
+    outline-offset: 1px;
+}
+
+@media (max-width: 600px) {
+    .welcome {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        width: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .welcome {
+        animation: none;
+    }
+}
+
 /* page-title strip (slim, integrated with the bar above) */
 header {
     background: var(--bg-2);

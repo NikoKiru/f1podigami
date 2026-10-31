@@ -10,10 +10,11 @@ SITE_URL = "https://nikokiru.github.io/f1podigami"
 
 # page -> assets it must reference (and which must end up in dist/)
 PAGES = {
-    "index.html": ["podigami.css", "podigami.js", "theme.js"],
-    "combos.html": ["index.css", "index.js", "theme.js"],
-    "overdue.html": ["podigami.css", "theme.js"],
-    "soulmates.html": ["podigami.css", "theme.js"],
+    "index.html": ["podigami.css", "podigami.js", "theme.js", "welcome.js"],
+    "combos.html": ["index.css", "index.js", "theme.js", "welcome.js"],
+    "overdue.html": ["podigami.css", "theme.js", "welcome.js"],
+    "unlikeliest.html": ["podigami.css", "theme.js", "welcome.js"],
+    "soulmates.html": ["podigami.css", "theme.js", "welcome.js"],
 }
 
 ALL_ASSETS = [
@@ -23,6 +24,7 @@ ALL_ASSETS = [
     "index.js",
     "podigami.js",
     "theme.js",
+    "welcome.js",
     "favicon.svg",
 ]
 
@@ -202,6 +204,19 @@ def test_landing_page_has_faq_section(dist):
     assert "Frequently asked questions" in html
     assert 'class="faq-item"' in html  # expandable items
     assert "top three" in html  # backtest hit rate, stated in the hero's footing line
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_page_offers_the_faq_and_the_anchor_exists(dist, page):
+    """The first-visit card and the footer both promise the FAQ, from every page.
+    A link to a missing anchor still resolves as a file, so lychee and the link
+    tests pass it, and the visitor just lands at the top of the landing page."""
+    html = (dist / page).read_text(encoding="utf-8")
+    anchors = re.findall(r'href="index\.html#([^"]+)"', html)
+    assert len(anchors) >= 2, f"{page} should link the FAQ from its card and its footer"
+    landing = (dist / "index.html").read_text(encoding="utf-8")
+    for anchor in anchors:
+        assert f'id="{anchor}"' in landing, f"{page} links to missing #{anchor}"
 
 
 def test_landing_page_has_info_tooltips(dist):
