@@ -2,7 +2,11 @@
 
 ## 2026-10-31
 
+### Improvements
+- **The whole site is more compact, so there's less scrolling.** The landing page is 46% shorter on desktop and 35% on phones, the other pages about 30%, and twice as many combinations fit on a laptop screen. Rows, panels, headers and the footer are tighter, the next-race card is a single band, the trio bars sit beside the names, and the discovery cards, season list, FAQ and soulmate facts sit side by side on wide screens. Nothing was removed (#380)
+
 ### Fixes
+- The theme toggle no longer runs off the right edge of the nav on tablet-width screens (#380)
 - The "Most likely trios" scrollbar no longer touches the percentages. With a mouse it's now a slim pill with room beside the rows instead of the native bar and arrows, and the bottom fade no longer paints over it (#377)
 
 ## 2026-10-10
