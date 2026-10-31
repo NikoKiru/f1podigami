@@ -1,6 +1,22 @@
 [
   {
     "season": "2026",
+    "round": "19",
+    "penalties": [
+      {
+        "driverId": "max_verstappen",
+        "penaltyPlaces": 1,
+        "backOfGrid": null
+      },
+      {
+        "driverId": "lawson",
+        "penaltyPlaces": 1,
+        "backOfGrid": null
+      }
+    ]
+  },
+  {
+    "season": "2026",
     "round": "16",
     "penalties": [
       {
