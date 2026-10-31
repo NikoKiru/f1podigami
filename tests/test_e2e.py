@@ -5,6 +5,7 @@ On a dev machine without Playwright installed the tests are skipped gracefully.
 """
 
 import re
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 import pytest
@@ -1229,3 +1230,194 @@ def test_board_rows_stay_on_one_line_with_grid_chips(dist):
         )
         browser.close()
     assert tallest <= 36, f"a board row wrapped to {tallest}px with grid chips"
+
+
+# ── First-visit card (welcome.js) ──────────────────────────────────────────
+
+CONTENT_PAGES = [name for name in ALL_PAGES if name != "404.html"]
+# Long past any reasonable reveal delay, so a later reveal can't pass as "stayed away".
+WELL_AFTER_LOAD_MS = 60_000
+
+
+@contextmanager
+def _new_visitor(dist, page_name, *, width=1000, height=800, fragment="", init_script=None):
+    """A page opened with empty storage, on a clock the test moves by hand."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": height})
+        if init_script:
+            page.add_init_script(init_script)
+        page.clock.install()
+        page.goto(_url(dist, page_name, fragment))
+        yield page
+        browser.close()
+
+
+def _card_on_screen(page):
+    assert page.locator("#welcome").count() == 1
+    return page.locator("#welcome").is_visible()
+
+
+@pytest.mark.new_visitor
+@pytest.mark.parametrize("page_name", CONTENT_PAGES)
+def test_new_visitor_is_pointed_to_the_faq_on_any_page(dist, page_name):
+    """Search sends people straight to the sub-pages, so the card can't rely on
+    them coming through the landing page."""
+    with _new_visitor(dist, page_name) as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        assert _card_on_screen(page)
+        assert "FAQ" in page.locator("#welcome").inner_text()
+
+
+@pytest.mark.new_visitor
+def test_card_waits_for_the_page_to_settle(dist):
+    with _new_visitor(dist, "index.html") as page:
+        assert not _card_on_screen(page)
+
+
+@pytest.mark.new_visitor
+def test_card_only_ever_shows_once(dist):
+    """Even when it's ignored rather than dismissed: a card that returned on each
+    page would nag someone who has already decided not to read it."""
+    with _new_visitor(dist, "overdue.html") as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        assert _card_on_screen(page)
+
+        page.reload()
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        assert not _card_on_screen(page)
+
+
+@pytest.mark.new_visitor
+def test_card_closes_from_its_button(dist):
+    with _new_visitor(dist, "overdue.html") as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        page.locator(".welcome-close").click()
+        assert not _card_on_screen(page)
+
+
+@pytest.mark.new_visitor
+def test_card_closes_on_escape(dist):
+    with _new_visitor(dist, "overdue.html") as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        page.keyboard.press("Escape")
+        assert not _card_on_screen(page)
+
+
+@pytest.mark.parametrize("width", [390, 1366])
+def test_landing_page_is_full_height_once_its_scripts_have_run(dist, width):
+    """The browser jumps to #faq early in the load, so if the timeline above it
+    then eased open, a phone would land with the FAQ pushed about 900px down and
+    off the screen. Whether that shows up depends on load timing, so the test
+    checks the cause: nothing above the FAQ may still be growing."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 800})
+        page.add_init_script(
+            """document.addEventListener('DOMContentLoaded', () => {
+                window.heightOnceScriptsRan = document.documentElement.scrollHeight;
+            });"""
+        )
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_timeout(600)
+        grew_by = page.evaluate(
+            "document.documentElement.scrollHeight - window.heightOnceScriptsRan"
+        )
+        browser.close()
+    assert grew_by == 0
+
+
+# A laptop can't scroll the FAQ to the very top, since it's near the end of the page.
+LANDING_SCREENS = [(390, 844), (1366, 768)]
+
+
+def _assert_landed_on_the_faq(page):
+    """The FAQ heading ends up in the top half of the screen, with the first answer
+    open. It's read after a pause, because the browser jumps to the anchor early
+    and anything growing above it afterwards pushes the FAQ back off the screen."""
+    page.wait_for_timeout(600)
+    first = page.locator("#faq .faq-item").first
+    assert first.get_attribute("open") is not None
+    assert "podigami" in first.locator("summary").inner_text()
+    heading_top = page.locator("#faq h2").evaluate("h => h.getBoundingClientRect().top")
+    assert 0 <= heading_top < page.viewport_size["height"] / 2
+
+
+@pytest.mark.new_visitor
+@pytest.mark.parametrize(("width", "height"), LANDING_SCREENS)
+def test_faq_link_from_a_sub_page_lands_on_an_open_answer(dist, width, height):
+    with _new_visitor(dist, "overdue.html", width=width, height=height) as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        page.locator(".welcome-link").click()
+        page.wait_for_url("**/index.html#faq")
+        _assert_landed_on_the_faq(page)
+
+
+@pytest.mark.new_visitor
+@pytest.mark.parametrize(("width", "height"), LANDING_SCREENS)
+def test_faq_link_on_the_landing_page_lands_on_an_open_answer(dist, width, height):
+    """No page load happens here, only a hash change, so the card has to close
+    itself and the answer has to open without a fresh script run."""
+    with _new_visitor(dist, "index.html", width=width, height=height) as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        page.locator(".welcome-link").click()
+        assert not _card_on_screen(page)
+        _assert_landed_on_the_faq(page)
+
+
+@pytest.mark.new_visitor
+@pytest.mark.parametrize(("width", "height"), LANDING_SCREENS)
+def test_new_visitor_arriving_at_the_faq_gets_no_card(dist, width, height):
+    with _new_visitor(dist, "index.html", width=width, height=height, fragment="#faq") as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        assert not _card_on_screen(page)
+        _assert_landed_on_the_faq(page)
+
+
+@pytest.mark.new_visitor
+@pytest.mark.parametrize(
+    "block",
+    [
+        "Object.defineProperty(window, 'localStorage', {get() { throw new Error('denied'); }});",
+        "Storage.prototype.setItem = function () { throw new Error('quota'); };",
+    ],
+    ids=["no-storage", "read-only-storage"],
+)
+def test_card_stays_away_when_it_could_not_be_remembered(dist, block):
+    """Without storage every page load is a "first" visit: better no card than
+    the same card on every page."""
+    with _new_visitor(dist, "overdue.html", init_script=block) as page:
+        errors = []
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        assert not _card_on_screen(page)
+    assert errors == []
+
+
+@pytest.mark.new_visitor
+def test_card_fits_a_narrow_phone_in_a_wider_font(dist):
+    with _new_visitor(dist, "index.html", width=320, height=640) as page:
+        page.add_style_tag(content=WIDER_FONT)
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        card = page.locator("#welcome").bounding_box()
+        close = page.locator(".welcome-close").bounding_box()
+        text = page.locator(".welcome-text").bounding_box()
+    assert card["x"] >= 0 and card["x"] + card["width"] <= 320
+    assert card["y"] + card["height"] <= 640
+    assert text["x"] + text["width"] <= close["x"], "the close button sits on the text"
+
+
+@pytest.mark.new_visitor
+def test_open_nav_drawer_covers_the_card(dist):
+    with _new_visitor(dist, "index.html", width=390, height=800) as page:
+        page.clock.run_for(WELL_AFTER_LOAD_MS)
+        page.locator(".nav-burger").click()
+        on_top = page.locator("#welcome").evaluate(
+            """card => {
+                const r = card.getBoundingClientRect();
+                return card.contains(
+                    document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+                );
+            }"""
+        )
+    assert on_top is False

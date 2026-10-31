@@ -258,6 +258,20 @@ def test_faq_section_works_without_eval():
     assert out.count('class="faq-item"') >= 4
 
 
+def test_faq_opens_with_what_a_new_visitor_asks_first():
+    """Whichever model is live, the word on every page gets explained first: the
+    first-visit card sends people here and opens the top answer."""
+    for data in ({}, V2_DATA):
+        first_question = bp.faq_items(data, EVAL, 123, 456, 789, 20, 1950)[0][0]
+        assert first_question == "What does &ldquo;podigami&rdquo; mean?"
+
+
+def test_faq_post_quali_question_still_follows_the_headline_one():
+    questions = [q for q, _ in bp.faq_items(V2_DATA, EVAL, 123, 456, 789, 20, 1950)]
+    after_headline = questions[questions.index("What does the headline percentage mean?") + 1]
+    assert after_headline == "Why does the prediction update after qualifying?"
+
+
 def test_render_form_builds_timing_tower():
     form = [
         {**pd("antonelli", "Andrea Kimi Antonelli", "mercedes"), "weight": 12.2},

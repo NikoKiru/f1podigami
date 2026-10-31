@@ -17,6 +17,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     FOOTER,
     REPO_URL,
     SITE_URL,
+    WELCOME,
     abbr_name,
     asset,
     breadcrumb_schema,
@@ -264,6 +265,7 @@ def main() -> int:
     }
 <body>
 {nav("combos.html")}
+{WELCOME}
 <header>
     <div class="container">
         <h1><span class="accent">F1</span> Podium Combinations</h1>

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-F1 Podigami is a Python static site generator that transforms Formula 1 race data (1950–present) into five interactive HTML pages (plus a 404 page). No backend server or framework — just Python, `requests`, and committed JSON datasets. The "podigami" concept is podium scorigami: spotting 3-driver podium trios that have never happened before, and predicting which brand-new trio is most likely next.
+F1 Podigami is a Python static site generator that transforms Formula 1 race data (1950–present) into five interactive HTML pages (plus a 404 page). No backend server or framework — just Python, `requests`, and committed JSON datasets. The "podigami" concept is podium scorigami: spotting 3-driver podium trios that have never happened before, and predicting which brand-new trio is most likely next. The name is podium + origami, the way scorigami is score + origami.
 
 Deployed to GitHub Pages: https://nikokiru.github.io/f1podigami
 
@@ -75,7 +75,7 @@ Orchestrators:
 | `unlikeliest.html` | `build/build_unlikeliest.py` | Trios that happened despite the odds, ranked by improbability |
 | `soulmates.html` | `build/build_soulmates_html.py` | Driver shared-podium relationships |
 
-Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTER`), `build/_hooks.py` (cross-page discovery hook cards), `build/flags.py` (country flag SVGs), `build/team_colors.py` (`team_color()`, `text_on()`).
+Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTER`, `WELCOME`), `build/_hooks.py` (cross-page discovery hook cards), `build/flags.py` (country flag SVGs), `build/team_colors.py` (`team_color()`, `text_on()`).
 
 ### Prediction model
 
@@ -105,6 +105,8 @@ All access to `data/*.json` goes through **`src/datalib/`** (Pydantic v2 schemas
 Tests live in `tests/` (pytest). Notable files: `test_build_output.py` (generated HTML structure), `test_build_podigami.py` (landing-page render helpers), `test_compute_podigami.py` / `test_model.py` / `test_backtest.py` (modelling), `test_datalib.py` (schema fidelity + byte-identical load/save round-trips), `test_data_integrity.py` (semantic dataset invariants), `test_mobile_css.py` (mobile CSS regressions).
 
 The `conftest.py` `dist` fixture builds `dist/` once per session via `build_site.py`; tests then assert against the real generated output. When you change rendered HTML, update the corresponding assertions.
+
+Browser tests open as returning visitors: the autouse `returning_visitor` fixture marks the first-visit card (`assets/welcome.js`) as seen, so it can't sit on top of what a test clicks. Tests of the card itself use `@pytest.mark.new_visitor`. Local e2e runs load `dist/` over `file://`, whose load timing can hide races that a real HTTP load shows: the short FAQ jump on phones only reproduced over HTTP, so test the cause rather than the timing.
 
 ## Branching workflow
 

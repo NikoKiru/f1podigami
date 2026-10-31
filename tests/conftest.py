@@ -7,12 +7,43 @@ from pathlib import Path
 
 import pytest
 
+try:
+    from playwright.sync_api import Browser
+except ImportError:  # CI's unit-test jobs don't install it
+    Browser = None
+
 REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "data"
 
 # Make src/ importable so tests can exercise pure helpers
 # (e.g. `from compute import compute_podigami`, `from build import ...`).
 sys.path.insert(0, str(REPO / "src"))
+
+# What welcome.js leaves behind once it has shown the first-visit card.
+_SEEN_WELCOME = "try { localStorage.setItem('welcomed', '1'); } catch (e) {}"
+
+
+@pytest.fixture(autouse=True)
+def returning_visitor(request, monkeypatch):
+    """Browser tests open pages as a returning visitor, because every test starts
+    with empty storage and the first-visit card could otherwise sit on top of
+    whatever it clicks. The card's own tests opt out with ``new_visitor``."""
+    if Browser is None or request.node.get_closest_marker("new_visitor"):
+        return
+    new_context, new_page = Browser.new_context, Browser.new_page
+
+    def context_seen_welcome(self, *args, **kwargs):
+        context = new_context(self, *args, **kwargs)
+        context.add_init_script(_SEEN_WELCOME)
+        return context
+
+    def page_seen_welcome(self, *args, **kwargs):
+        page = new_page(self, *args, **kwargs)
+        page.add_init_script(_SEEN_WELCOME)
+        return page
+
+    monkeypatch.setattr(Browser, "new_context", context_seen_welcome)
+    monkeypatch.setattr(Browser, "new_page", page_seen_welcome)
 
 
 def load_data(name: str):
