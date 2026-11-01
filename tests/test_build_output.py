@@ -15,6 +15,7 @@ PAGES = {
     "overdue.html": ["podigami.css", "theme.js", "welcome.js"],
     "unlikeliest.html": ["podigami.css", "theme.js", "welcome.js"],
     "soulmates.html": ["podigami.css", "theme.js", "welcome.js"],
+    "scorecard.html": ["podigami.css", "theme.js", "welcome.js"],
 }
 
 ALL_ASSETS = [
@@ -60,6 +61,7 @@ TITLE_KEYWORDS = {
     "overdue.html": "F1 Overdue Podiums",
     "unlikeliest.html": "F1 Unlikeliest Podiums",
     "soulmates.html": "F1 Podium Partnerships",
+    "scorecard.html": "F1 Prediction Scorecard",
 }
 
 
@@ -311,8 +313,15 @@ def test_footer_has_universal_details(dist, page):
         assert link in footer, f"footer should link to {link}"
 
 
-# All five generated pages must carry identical chrome with all five links.
-ALL_PAGES = ["index.html", "combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"]
+# Every generated page must carry identical chrome with a link to every page.
+ALL_PAGES = [
+    "index.html",
+    "combos.html",
+    "overdue.html",
+    "unlikeliest.html",
+    "soulmates.html",
+    "scorecard.html",
+]
 
 
 @pytest.mark.parametrize("page", ALL_PAGES)
@@ -384,7 +393,7 @@ def test_landing_page_explore_grid_is_last_section(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert "Keep exploring" in html
     grid = html[html.index('class="explore-grid"') :]
-    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+    for href in ALL_PAGES[1:]:
         assert f'href="{href}"' in grid, f"explore grid missing {href}"
     # explore grid comes after the FAQ
     assert html.index("faq-section") < html.index('class="explore-grid"')
@@ -394,7 +403,7 @@ def test_landing_faq_deep_links_all_pages(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     faq = html[html.index("faq-section") : html.index('class="explore-grid"')]
     assert "What else is on this site?" in faq
-    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+    for href in ALL_PAGES[1:]:
         assert f'href="{href}"' in faq, f"FAQ should deep-link {href}"
 
 
@@ -578,6 +587,7 @@ SUBPAGE_BREADCRUMB = {
     "overdue.html": "Overdue Podiums",
     "unlikeliest.html": "Unlikeliest Podiums",
     "soulmates.html": "Podium Partnerships",
+    "scorecard.html": "Prediction Scorecard",
 }
 
 

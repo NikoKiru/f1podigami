@@ -1,6 +1,6 @@
 """Build the deployable static site into dist/.
 
-Runs the four page builders (which read data/ and write dist/*.html), then
+Runs the page builders (which read data/ and write dist/*.html), then
 copies the source assets (CSS/JS) from assets/ into dist/ so dist/ is a
 self-contained, deployable folder.
 
@@ -30,10 +30,18 @@ PAGE_BUILDERS = [
     "build_overdue_html.py",
     "build_unlikeliest.py",
     "build_soulmates_html.py",
+    "build_scorecard_html.py",
     "build_404_html.py",
 ]
 
-PAGES = ["index.html", "combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"]
+PAGES = [
+    "index.html",
+    "combos.html",
+    "overdue.html",
+    "unlikeliest.html",
+    "soulmates.html",
+    "scorecard.html",
+]
 
 
 def _write_robots_txt() -> None:

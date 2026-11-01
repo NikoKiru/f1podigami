@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-F1 Podigami is a Python static site generator that transforms Formula 1 race data (1950–present) into five interactive HTML pages (plus a 404 page). No backend server or framework — just Python, `requests`, and committed JSON datasets. The "podigami" concept is podium scorigami: spotting 3-driver podium trios that have never happened before, and predicting which brand-new trio is most likely next. The name is podium + origami, the way scorigami is score + origami.
+F1 Podigami is a Python static site generator that transforms Formula 1 race data (1950–present) into six interactive HTML pages (plus a 404 page). No backend server or framework — just Python, `requests`, and committed JSON datasets. The "podigami" concept is podium scorigami: spotting 3-driver podium trios that have never happened before, and predicting which brand-new trio is most likely next. The name is podium + origami, the way scorigami is score + origami.
 
 Deployed to GitHub Pages: https://nikokiru.github.io/f1podigami
 
@@ -63,7 +63,7 @@ Orchestrators:
 - `src/build_site.py` — runs only the build stage, copies `assets/` into `dist/`, and writes `robots.txt` + `sitemap.xml`.
 - `src/check_update_due.py` — cheap, no-network CI guard (`is_update_due`) for the automated refresh (polls every 15 min): decides from committed `schedule.json` + `podigami.json` `asOf` whether a finished race is newer than the data. See **Deployment → Automated data updates**.
 
-### Five output pages
+### Six output pages
 
 `src/build_site.py` is the source of truth for the page → builder mapping (it also builds `404.html` via `build/build_404_html.py`):
 
@@ -74,6 +74,7 @@ Orchestrators:
 | `overdue.html` | `build/build_overdue_html.py` | Trios "overdue" to appear |
 | `unlikeliest.html` | `build/build_unlikeliest.py` | Trios that happened despite the odds, ranked by improbability |
 | `soulmates.html` | `build/build_soulmates_html.py` | Driver shared-podium relationships |
+| `scorecard.html` | `build/build_scorecard_html.py` | Each race's published prediction against its real podium, with the totals |
 
 Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTER`, `WELCOME`), `build/_hooks.py` (cross-page discovery hook cards), `build/flags.py` (country flag SVGs), `build/team_colors.py` (`team_color()`, `text_on()`).
 
@@ -84,6 +85,10 @@ The live predictor is **model v2** (`src/compute/model_v2.py`, params tag `dbpl-
 `src/compute/backtest.py` is the integrity core: a walk-forward ladder (v1 rungs + v2 ablation rungs) tuned on 2010–2018 and scored on a frozen 2019+ test window → `data/model_eval.json`, surfaced on the landing page as a badge and in the FAQ. An acceptance gate in `evaluate()` keeps v2 "chosen" only while it beats v1 on test logLoss AND brierNew. Tuning knobs are locked in `model_v2.DEFAULT_PARAMS_V2` (`--tune-v2` re-derives them; notable verdicts: qualifying weight 0.6, attrition channel 0).
 
 `compute_podigami.py` still folds in `data/constructor_standings.json` (team labels + each driver's `constructorId`/`constructorStrength`), so a refresh that picks up updated standings can rewrite most numeric values in `podigami.json` even when `asOf` is unchanged — that churn is expected, not a bug. The two raw v2 datasets are stored **compact** (single-line JSON; `datalib.repository.COMPACT`) to keep the repo lean.
+
+### Prediction log
+
+`data/prediction_log.json` is the one dataset that **can't be regenerated**: every data update rewrites `podigami.json`, so it's the only record of what the site said before a race. `src/compute/compute_scorecard.py` (the last compute step) keeps the upcoming race's record up to date and stops at lights out (`update_log`), so a mid-race update that drops retired cars can't rewrite what was published. Never hand-edit a finished race's record, and don't regenerate the file. It was seeded from the git history of `podigami.json` on `main`, back to the 2026 Austrian GP. Records match races by name, not round, because upstream renumbers rounds mid-season. `data/scorecard.json` is derived from it and the podiums, so a revised podium rescores itself.
 
 ### Data flow
 

@@ -3,6 +3,7 @@
 ## 2026-11-01
 
 ### Features
+- **New Scorecard page: how the predictions actually held up.** Every race shows the podium that happened against the prediction the site published before it, frozen at lights out and never rewritten, with the totals on top. It starts with 11 races recovered from the site's history, and every race from now on is saved automatically. Linked from the nav, the footer, the landing page and the FAQ (#400)
 - **Search a trio that has never happened and the Combinations page says so.** Where it used to read "No matches", it now names the drivers and says they have never shared a podium, and points out when all of them are on the grid and it could still be a podigami. Pairs work too (#398)
 
 ### Improvements

@@ -30,6 +30,7 @@ NAV_LINKS = [
     ("overdue.html", "Overdue"),
     ("unlikeliest.html", "Unlikeliest"),
     ("soulmates.html", "Soulmates"),
+    ("scorecard.html", "Scorecard"),
 ]
 
 # Applied before first paint so the stored/OS theme never flashes. Kept as a
@@ -304,6 +305,7 @@ FOOTER = f"""<footer>
             <a href="overdue.html">Overdue</a>
             <a href="unlikeliest.html">Unlikeliest</a>
             <a href="soulmates.html">Soulmates</a>
+            <a href="scorecard.html">Scorecard</a>
             <a href="index.html#faq">FAQ</a>
         </nav>
         <p class="footer-meta">

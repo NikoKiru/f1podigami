@@ -15,8 +15,10 @@ from datalib import (
     REGISTRY,
     load_combos,
     load_podiums,
+    load_prediction_log,
     load_race_results,
     load_schedule,
+    load_scorecard,
 )
 
 
@@ -28,6 +30,21 @@ def test_dataset_loads_and_validates(name):
         pytest.skip(f"{name} not yet backfilled (run its fetcher)")
     raw = json.loads(path.read_text(encoding="utf-8"))
     REGISTRY[name].validate_python(raw)
+
+
+def test_each_race_is_logged_once():
+    keys = [(r.season, r.raceName) for r in load_prediction_log()]
+    assert len(keys) == len(set(keys))
+
+
+def test_every_logged_prediction_names_a_top_pick():
+    assert all(r.candidates for r in load_prediction_log())
+
+
+def test_every_scored_race_comes_from_the_log():
+    """The page may only ever show what was published, never something derived."""
+    logged = {(r.season, r.raceName) for r in load_prediction_log()}
+    assert {(r.season, r.raceName) for r in load_scorecard().races} <= logged
 
 
 def test_combos_are_three_distinct_drivers():

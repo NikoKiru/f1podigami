@@ -623,3 +623,98 @@ class UnconfirmedRound(_Base):
     kind: Literal["race", "qualifying"]
     pending: list[Literal["podiums", "race_results", "qualifying"]]
     since: str
+
+
+# --- prediction_log.json ------------------------------------------------------
+
+
+class LoggedPick(_Base):
+    driverIds: list[str]
+    names: list[str]
+    prob: float
+
+
+class LoggedBoardRow(_Base):
+    driverIds: list[str]
+    prob: float
+
+
+class PredictionRecord(_Base):
+    """What the site said about one race, frozen at lights out.
+
+    Written by ``compute/compute_scorecard.py`` until the race starts and never
+    after, and it can't be regenerated: it's the only record of what was published.
+    ``board`` is empty for races before the trio board existed. Upstream can
+    renumber rounds, so a record matches its race by name.
+    """
+
+    season: str
+    round: str
+    raceName: str
+    stage: Literal["pre-quali", "post-quali"]
+    model: str
+    chanceNew: float
+    candidates: list[LoggedPick]
+    board: list[LoggedBoardRow]
+
+
+# --- scorecard.json -----------------------------------------------------------
+
+
+class ScoredRace(_Base):
+    """One finished race against its logged prediction.
+
+    ``podiumProb`` is what the site gave the trio that happened, when it published
+    that: from the board, or from the new-trio list before the board existed.
+    ``boardFloor`` is the board's lowest row, so a trio off the board can be
+    described as under it.
+    """
+
+    season: str
+    round: str
+    raceName: str
+    stage: Literal["pre-quali", "post-quali"]
+    model: str
+    podium: list[str]
+    isNew: bool
+    chanceNew: float
+    topPick: list[str]
+    topPickProb: float
+    topPickHit: bool
+    driversRight: int
+    podiumProb: float | None = None
+    boardSize: int
+    boardRank: int | None = None
+    boardFloor: float | None = None
+
+
+class ScorecardTotals(_Base):
+    races: int
+    newTrios: int
+    meanChanceNew: float
+    brierNew: float
+    # Always guessing the long-run share of new trios: the score to beat.
+    baselineBrierNew: float | None = None
+    baseRateNew: float | None = None
+    topPickHits: int
+    topPickExpected: float
+    meanDriversRight: float
+    boardRaces: int
+    onBoard: int
+    boardTopThree: int
+
+
+class ScorecardNext(_Base):
+    season: str
+    round: str
+    raceName: str
+    stage: Literal["pre-quali", "post-quali"]
+    chanceNew: float
+    topPick: list[str]
+    topPickProb: float
+
+
+class Scorecard(_Base):
+    totals: ScorecardTotals
+    races: list[ScoredRace]
+    next: ScorecardNext | None = None

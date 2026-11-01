@@ -39,6 +39,7 @@ from _layout import (  # noqa: E402
 )
 from _rows import (  # noqa: E402
     render_link,
+    render_race_link,
     render_row,
     render_section,
     render_stat,
@@ -104,18 +105,9 @@ def _rates_cells(e: UnlikeliestTrio) -> str:
 
 
 def _race_link(e: UnlikeliestTrio, links: dict | None = None) -> str:
-    """The race, split into year + name so it picks up the combinations table's
-    "Last seen" treatment (bold year, dimmed name). The same fragment is reused
-    in the expanded drawer on phones."""
     h = e.happened
-    url = race_url(links or {}, h.season, h.round, h.raceName)
-    label = f"{esc(h.season)} {esc(h.raceName)}"
-    return (
-        f'<a class="race-link" href="{html.escape(url, quote=True)}" target="_blank" '
-        f'rel="noopener" title="{label} &mdash; race report">'
-        f'<span class="year">{esc(h.season)}</span>'
-        f'<span class="race-name">{esc(h.raceName)}</span>'
-        f"</a>"
+    return render_race_link(
+        race_url(links or {}, h.season, h.round, h.raceName), h.season, h.raceName
     )
 
 
