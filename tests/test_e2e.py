@@ -1039,6 +1039,52 @@ def test_nothing_leaves_its_card_or_the_page(dist, page_name, width, wider_font)
     assert cut_off == []
 
 
+@pytest.mark.parametrize("wider_font", [False, True], ids=["site-font", "wider-font"])
+@pytest.mark.parametrize("width", [1024, 1280])
+def test_combos_rows_stay_on_one_line_on_desktop(dist, width, wider_font):
+    """A season range can make any race a trio ran the "Last seen" one, so every
+    name has to fit, not only the lifetime ones. The trios are checked too: they
+    give up the width the race column takes, which is why it only widens at 1024px."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 800})
+        page.goto(_url(dist, "combos.html"))
+        page.wait_for_load_state("load")
+        if wider_font:
+            page.add_style_tag(content=WIDER_FONT)
+        result = page.evaluate(
+            """() => {
+                const rows = [...document.querySelectorAll('tr.combo')];
+                const cell = rows[0].querySelector('td.last');
+                const name = cell.querySelector('.race-name');
+                const range = document.createRange();
+                range.selectNodeContents(cell);
+                const height = () => range.getBoundingClientRect().height;
+                name.textContent = 'Monaco';
+                const oneLine = height();
+                const races = new Set(rows.flatMap(
+                    r => r.dataset.races.split(';').map(race => race.split('|')[2])
+                ));
+                return {
+                    races: races.size,
+                    wrappedRaces: [...races].filter(race => {
+                        name.textContent = race;
+                        return height() > oneLine;
+                    }),
+                    wrappedTrios: rows.filter(r => new Set(
+                        [...r.querySelectorAll('.driver')].map(
+                            d => Math.round(d.getBoundingClientRect().top)
+                        )
+                    ).size > 1).map(r => r.dataset.drivers),
+                };
+            }"""
+        )
+        browser.close()
+    assert result["races"] > 50
+    assert result["wrappedRaces"] == []
+    assert result["wrappedTrios"] == []
+
+
 @pytest.mark.parametrize("width", [390, 1000, 1200, 1280])
 def test_every_season_row_stays_inside_its_list(dist, width):
     """Each season has its own longest trio and race name, so one year fitting
