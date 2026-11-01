@@ -2,7 +2,11 @@
 
 ## 2026-11-01
 
+### Features
+- **Search a trio that has never happened and the Combinations page says so.** Where it used to read "No matches", it now names the drivers and says they have never shared a podium, and points out when all of them are on the grid and it could still be a podigami. Pairs work too (#398)
+
 ### Improvements
+- Searching Combinations now ignores accents, so "raikkonen", "perez" and "hakkinen" find the same trios as their accented spellings (#398)
 - Links on phones are easier to tap. The season list, race pills, last-race card, footer and other standalone links went from 15–26px tall to at least 32px (#397)
 
 ### Fixes
