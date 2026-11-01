@@ -110,6 +110,16 @@ def driver_name(name: str) -> str:
     return DISPLAY_NAMES.get(name, name)
 
 
+def combos_link(names: list[str]) -> str:
+    """Combinations-page URL filtered to these drivers (a trio, or a pair).
+
+    The page reads these ``d`` params into its driver filters. They carry the
+    names the table shows (``driver_name``), which is what the filters match.
+    """
+    query = urllib.parse.urlencode([("d", driver_name(n)) for n in names])
+    return f"combos.html?{query}"
+
+
 def abbr_name(name: str) -> str:
     """ "Esteban Ocon" -> "E. Ocon": first initial + surname, for narrow screens."""
     parts = driver_name(name).strip().split()

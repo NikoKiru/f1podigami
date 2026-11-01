@@ -12,7 +12,6 @@ import html
 import json
 import re
 import sys
-import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,6 +29,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     SITE_URL,
     WELCOME,
     asset,
+    combos_link,
     driver_name,
     head,
     nav,
@@ -214,17 +214,6 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         f"  {plate}"
         f"</section>"
     )
-
-
-def combos_link(names: list[str]) -> str:
-    """Combos-page URL pre-filtered to a specific trio (driver full names).
-
-    The combos page reads these ``d`` params into its three driver filters, so
-    the table lands filtered down to exactly this trio. They carry the names the
-    table shows (``driver_name``), which is what its filters match against.
-    """
-    query = urllib.parse.urlencode([("d", driver_name(n)) for n in names])
-    return f"combos.html?{query}"
 
 
 def _combo_key(driver_ids: list[str]) -> tuple[str, ...]:

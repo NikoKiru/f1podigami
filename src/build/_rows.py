@@ -24,6 +24,8 @@ this module only assembles structure.
 
 from __future__ import annotations
 
+import html
+
 
 def render_row(
     drivers_html: str,
@@ -63,6 +65,15 @@ def render_stat(label: str, value: str, extra_class: str = "") -> str:
         f'<span class="rr-stat-label">{label}</span>'
         f'<span class="rr-stat-val">{value}</span>'
         f"</div>"
+    )
+
+
+def render_link(href: str, label: str) -> str:
+    """The way on from a row, closing its drawer. ``href`` is a plain URL, escaped
+    here because a filtered Combinations link carries an ``&``."""
+    return (
+        f'<a class="rr-link" href="{html.escape(href, quote=True)}">{label}'
+        ' <span aria-hidden="true">&rarr;</span></a>'
     )
 
 

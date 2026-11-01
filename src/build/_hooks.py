@@ -87,34 +87,43 @@ def unlikeliest_hook(unlikeliest) -> str:
     return hook_card("Unlikeliest podiums", stat, "unlikeliest.html", "See the longest shots")
 
 
-def explore_grid() -> str:
+# The end-of-page hub's cards: (kicker, line, href, call to action).
+_EXPLORE = [
+    (
+        "Combinations",
+        "Every unique podium trio in F1 history &mdash; sortable, searchable.",
+        "combos.html",
+        "Browse them all",
+    ),
+    (
+        "Overdue",
+        "Trios that keep almost happening &mdash; who&rsquo;s been waiting longest.",
+        "overdue.html",
+        "Who's due next",
+    ),
+    (
+        "Unlikeliest",
+        "The podiums that defied the odds the hardest.",
+        "unlikeliest.html",
+        "See the longest shots",
+    ),
+    (
+        "Soulmates",
+        "Which drivers keep meeting on the podium.",
+        "soulmates.html",
+        "See every partnership",
+    ),
+]
+
+
+def explore_grid(current: str = "") -> str:
     """End-of-page hub: every other page, one line each (no stats — the in-flow
-    hooks carry those; repeating them here would read as a glitch)."""
+    hooks carry those; repeating them here would read as a glitch). ``current``
+    is the page it sits on, which it leaves out."""
     cards = [
-        hook_card(
-            "Combinations",
-            "Every unique podium trio in F1 history &mdash; sortable, searchable.",
-            "combos.html",
-            "Browse them all",
-        ),
-        hook_card(
-            "Overdue",
-            "Trios that keep almost happening &mdash; who&rsquo;s been waiting longest.",
-            "overdue.html",
-            "Who's due next",
-        ),
-        hook_card(
-            "Unlikeliest",
-            "The podiums that defied the odds the hardest.",
-            "unlikeliest.html",
-            "See the longest shots",
-        ),
-        hook_card(
-            "Soulmates",
-            "Which drivers keep meeting on the podium.",
-            "soulmates.html",
-            "See every partnership",
-        ),
+        hook_card(kicker, line, href, cta)
+        for kicker, line, href, cta in _EXPLORE
+        if href != current
     ]
     return (
         '<section class="panel explore"><h2>Keep exploring</h2>'

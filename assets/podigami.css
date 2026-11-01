@@ -600,6 +600,20 @@ main {
     white-space: nowrap;
 }
 
+/* The way on from a row: to the same drivers on the Combinations page. */
+.rr-link {
+    align-self: center;
+    margin-left: auto;
+    color: var(--accent-link);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.rr-link:hover {
+    text-decoration: underline;
+}
+
 /* The race stat cell serves phones only; desktop shows the race on the row
    face. */
 .rr-stats .rr-stat-race {
@@ -1896,6 +1910,11 @@ a.tl-where:hover {
     margin-top: 8px;
 }
 
+/* An odd card out takes the whole row rather than leaving a hole beside it. */
+.explore-grid .hook-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+
 @media (max-width: 600px) {
     .hook-row,
     .explore-grid {
@@ -2006,6 +2025,14 @@ a.tl-where:hover {
 
     a.tl-where {
         justify-content: flex-end;
+    }
+
+    .rr-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        min-height: 32px;
+        margin-left: 0;
     }
 
     .form-details > summary {
