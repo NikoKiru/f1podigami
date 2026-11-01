@@ -1,8 +1,8 @@
-"""Decide whether an update is due — a cheap, no-network CI guard.
+"""Decide whether an update is due — a cheap CI guard.
 
 The scheduled poll runs this first: it reads the committed schedule and the latest
 race already reflected in the data, and reports whether an update should run. Only
-then does the workflow run the full (network) update. Four independent triggers
+then does the workflow run the full (network) update. Five independent triggers
 feed a single ``due`` output:
 
 - :func:`is_update_due` — the newest race whose watch window is open (it opens
@@ -15,6 +15,10 @@ feed a single ``due`` output:
   that race's own window opens; the race watch re-checks the grid from then on.
 - :func:`is_confirmation_due` — a round OpenF1 filled (``data/unconfirmed.json``)
   is still waiting on Jolpica to confirm it.
+- :func:`is_calendar_due` — between seasons, the API's calendar differs from the
+  committed one. The only trigger that touches the network, and only then: nothing
+  else can start a run in the off-season, and without next year's calendar no
+  session would ever arm.
 
 The window opens *before* the session on purpose: GitHub starts only a handful of
 scheduled runs a day, so being quick means already waiting when results appear.
@@ -22,7 +26,7 @@ A run that lands in the window holds its runner in ``wait_for_results.py`` and
 acts only once the data is actually published.
 
 All take loaded dicts (no IO) so they are trivially unit-testable; :func:`main`
-loads the data, ORs the four triggers, and writes ``due=true|false`` to
+loads the data, ORs the triggers, and writes ``due=true|false`` to
 ``$GITHUB_OUTPUT``. ``--successor`` instead reports whether a session is still
 pending inside ``SUCCESSOR_WINDOW`` — update.yml's cue to dispatch the next run
 itself rather than wait for the scheduler. ``--fail-on-stale`` reports neither: it
@@ -38,9 +42,13 @@ import argparse
 import json
 import os
 import sys
-from collections.abc import Sequence
+import urllib.parse
+import urllib.request
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+
+from fetch.api_cache import fresh
 
 # How far ahead of a session's scheduled start the guard arms. Since 2026-08-27
 # GitHub has delivered only ~6-7 of our 96 daily cron slots, at unpredictable
@@ -69,6 +77,8 @@ SUCCESSOR_WINDOW = timedelta(hours=12)
 STALE_UNCONFIRMED = timedelta(hours=48)
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+
+CALENDAR_URL = "https://api.jolpi.ca/ergast/f1/{season}.json"
 
 
 def session_start(date: str, time: str) -> datetime | None:
@@ -240,6 +250,91 @@ def next_grid_target(
     return target
 
 
+def calendar_season(schedule: dict, asof: dict, now: datetime) -> int | None:
+    """The season whose calendar could differ from the committed one, or None.
+
+    A running season's pipeline refreshes the schedule on every run. Between seasons
+    nothing starts one: no session is pending, and the Monday ``--full`` is one
+    scheduled slot GitHub usually drops (it landed on 1 of the 10 Mondays to
+    2026-10-26). So that's when to look: next season's once this one is over, and
+    the new season's until its opener, because dates and session times still move.
+
+    Not before the final race day has passed, because fetch_schedule won't move on
+    until then and a run would change nothing. Fail-safe like the session triggers.
+    """
+    try:
+        season = int(schedule["season"])
+        have = (int(asof["season"]), int(asof["round"]))
+    except (KeyError, ValueError, TypeError):
+        return None
+    if season > have[0]:
+        return season
+    if _next_race_entry(schedule, have) is not None:
+        return None
+    dates = [race["date"] for race in schedule.get("races", []) if race.get("date")]
+    return season + 1 if dates and now.date().isoformat() > max(dates) else None
+
+
+def _committed_key(race: dict) -> tuple:
+    return (
+        str(race.get("round")),
+        race.get("raceName"),
+        race.get("date"),
+        race.get("time") or "",
+        race.get("qualifyingDate") or "",
+        race.get("qualifyingTime") or "",
+    )
+
+
+def _upstream_key(race: dict) -> tuple:
+    quali = race.get("Qualifying") or {}
+    return _committed_key(
+        {**race, "qualifyingDate": quali.get("date"), "qualifyingTime": quali.get("time")}
+    )
+
+
+def calendar_changed(schedule: dict, upstream: list[dict], season: int) -> bool:
+    """True when the API's calendar for ``season`` isn't the committed schedule.
+
+    An unpublished calendar is no change: fetch_schedule never writes an empty one.
+    Compares what fetch_schedule keeps and the guard arms on, so a refresh ends it.
+    """
+    if not upstream:
+        return False
+    if str(schedule.get("season")) != str(season):
+        return True
+    committed = sorted(_committed_key(r) for r in schedule.get("races", []))
+    return committed != sorted(_upstream_key(r) for r in upstream)
+
+
+def fetch_calendar(season: int) -> list[dict]:
+    """The API's race list for ``season``; [] on any failure, so an outage just
+    means looking again on the next tick. Standard library only: the guard's job
+    installs nothing."""
+    query = urllib.parse.urlencode(fresh({"limit": 100}))
+    url = f"{CALENDAR_URL.format(season=season)}?{query}"
+    headers = {"Accept": "application/json", "User-Agent": "f1podigami/0.2"}
+    try:
+        request = urllib.request.Request(url, headers=headers)  # noqa: S310 - fixed https URL
+        with urllib.request.urlopen(request, timeout=20) as response:  # noqa: S310
+            return json.load(response)["MRData"]["RaceTable"]["Races"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
+
+
+def is_calendar_due(
+    schedule: dict,
+    asof: dict,
+    now: datetime,
+    fetch: Callable[[int], list[dict]] = fetch_calendar,
+) -> bool:
+    """True when it's between seasons and the API's calendar has moved on from ours."""
+    season = calendar_season(schedule, asof, now)
+    if season is None:
+        return False
+    return calendar_changed(schedule, fetch(season), season)
+
+
 def _read_list(name: str, data_dir: Path) -> list[dict]:
     """A committed list dataset as plain dicts; [] when absent or unreadable."""
     try:
@@ -384,10 +479,13 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI g
         quali_due = is_post_quali_update_due(schedule, asof, post, now)
         grid_due = next_grid_target(schedule, asof, post, grids, now) is not None
         confirm_due = is_confirmation_due(unconfirmed)
-        value = race_due or quali_due or grid_due or confirm_due
+        session_due = race_due or quali_due or grid_due or confirm_due
+        calendar_due = not session_due and is_calendar_due(schedule, asof, now)
+        value = session_due or calendar_due
         print(
             f"update due: {value} (race={race_due} quali={quali_due} grid={grid_due} "
-            f"confirm={confirm_due} asOf season={asof.get('season')} round={asof.get('round')})"
+            f"confirm={confirm_due} calendar={calendar_due} "
+            f"asOf season={asof.get('season')} round={asof.get('round')})"
         )
 
     out = os.environ.get("GITHUB_OUTPUT")

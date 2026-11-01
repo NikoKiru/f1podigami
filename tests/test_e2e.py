@@ -18,6 +18,15 @@ def _url(dist, filename, query=""):
     return (dist / filename).resolve().as_uri() + query
 
 
+def _show_a_season_with_trios(page):
+    """The list opens on the current season, which can have no new trio yet in its
+    first races. The first-season chip always has some."""
+    page.wait_for_selector(".tl-chip")
+    if not page.locator(".tl-item").count():
+        page.locator(".tl-chip").first.click()
+    page.wait_for_selector(".tl-item")
+
+
 # ── Timeline slider + sparkline bars (podigami.js) ─────────────────────────
 
 
@@ -75,6 +84,8 @@ def test_trios_stack_one_whole_name_per_line_on_phones(dist, page_name, group, d
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 360, "height": 800})
         page.goto(_url(dist, page_name))
+        if page_name == "index.html":
+            _show_a_season_with_trios(page)
         page.wait_for_selector(f"{group} {driver}")
         bad = page.evaluate(
             """([group, driver]) => {
@@ -667,7 +678,7 @@ def test_season_range_restores_lifetime_figures(dist):
 
         before = counts()
         _set_range(page, 2001, 2003)
-        _set_range(page, 1950, 2026)
+        _set_range(page, 1950, int(page.get_attribute(".season-range", "data-max")))
 
         assert counts() == before
         assert page.text_content("#season-readout") == "All seasons"
@@ -792,7 +803,8 @@ def test_clear_button_resets_the_season_range(dist):
 
         page.locator("#clear-filters").click()
         assert page.input_value("#season-from") == "1950"
-        assert page.input_value("#season-to") == "2026"
+        latest = page.get_attribute(".season-range", "data-max")
+        assert page.input_value("#season-to") == latest
         assert page.text_content("#season-readout") == "All seasons"
         assert int(page.text_content("#visible-count") or "0") == total
         browser.close()
@@ -1263,7 +1275,7 @@ def test_every_season_row_stays_inside_its_list(dist, width):
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": width, "height": 900}, reduced_motion="reduce")
         page.goto(_url(dist, "index.html"))
-        page.wait_for_selector(".tl-item")
+        _show_a_season_with_trios(page)
         page.add_style_tag(content=WIDER_FONT)
         result = page.evaluate(
             """async () => {
@@ -1328,6 +1340,8 @@ def test_table_rows_are_compact_but_not_squished(dist, page_name, row, width, lo
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": width, "height": 800})
         page.goto(_url(dist, page_name))
+        if page_name == "index.html":
+            _show_a_season_with_trios(page)
         page.wait_for_selector(row)
         height = page.locator(row).first.bounding_box()["height"]
         browser.close()
@@ -1341,7 +1355,7 @@ def test_stacked_season_names_keep_their_hairlines(dist):
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 390, "height": 844})
         page.goto(_url(dist, "index.html"))
-        page.wait_for_selector(".tl-item .pdriver")
+        _show_a_season_with_trios(page)
         rows, lines = page.evaluate(
             """() => [
                 document.querySelectorAll('.tl-item').length,
@@ -1362,6 +1376,9 @@ def test_next_race_card_is_a_single_band_on_desktop(dist):
         page = browser.new_page(viewport={"width": 1280, "height": 800})
         page.goto(_url(dist, "index.html"))
         page.wait_for_selector(".next-race")
+        if page.locator(".nr-empty").count():
+            browser.close()
+            pytest.skip("no next race to show between seasons")
         card = page.locator(".next-race").bounding_box()
         circuit = page.locator(".nr-circuit").bounding_box()
         when = page.locator(".nr-when").bounding_box()
@@ -1396,7 +1413,7 @@ def test_faq_and_season_list_use_the_width_on_desktop(dist):
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1280, "height": 800})
         page.goto(_url(dist, "index.html"))
-        page.wait_for_selector(".tl-item")
+        _show_a_season_with_trios(page)
         columns = page.evaluate(
             """() => ['.faq-item', '.tl-item'].map(sel => new Set(
                 [...document.querySelectorAll(sel)].map(el => el.getBoundingClientRect().left)

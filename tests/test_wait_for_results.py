@@ -12,6 +12,7 @@ Time and network are injected so these tests are instant and offline.
 
 from datetime import UTC, datetime
 
+import wait_for_results as wfr
 from wait_for_results import latest_published_round, wait_for_round, wait_target
 
 
@@ -667,3 +668,32 @@ def test_grid_is_never_ready_for_a_round_outside_the_schedule(tmp_path, monkeypa
     monkeypatch.setattr(fetch_starting_grid, "fresh_grid", lambda *a, **k: asked.append(1))
     assert wfr._grid_ready(SCHEDULE, 2026, 99, []) is False
     assert asked == []
+
+
+# --- Between seasons -------------------------------------------------------
+
+
+def test_a_new_calendar_runs_the_pipeline_with_nothing_else_pending(tmp_path, monkeypatch):
+    """A run the guard started for the calendar has no session to wait for, so
+    without this the watcher reports "none" and the pipeline is skipped."""
+    (tmp_path / "schedule.json").write_text('{"season": "2026", "races": []}', encoding="utf-8")
+    (tmp_path / "podigami.json").write_text('{"asOf": {}}', encoding="utf-8")
+    reported = []
+    monkeypatch.setattr(wfr, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(wfr, "report", reported.append)
+    monkeypatch.setattr(wfr, "is_calendar_due", lambda schedule, asof, now: True)
+    monkeypatch.setattr(wfr.sys, "argv", ["wait_for_results.py"])
+    assert wfr.main() == 0
+    assert reported == ["true"]
+
+
+def test_nothing_pending_and_no_new_calendar_still_reports_none(tmp_path, monkeypatch):
+    (tmp_path / "schedule.json").write_text('{"season": "2026", "races": []}', encoding="utf-8")
+    (tmp_path / "podigami.json").write_text('{"asOf": {}}', encoding="utf-8")
+    reported = []
+    monkeypatch.setattr(wfr, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(wfr, "report", reported.append)
+    monkeypatch.setattr(wfr, "is_calendar_due", lambda schedule, asof, now: False)
+    monkeypatch.setattr(wfr.sys, "argv", ["wait_for_results.py"])
+    assert wfr.main() == 0
+    assert reported == ["none"]

@@ -176,6 +176,23 @@ def test_render_next_race_season_complete_fallback():
     assert "Season complete" in html
 
 
+def test_last_race_keeps_its_flag_once_next_seasons_calendar_is_in():
+    """The race is only on the new calendar under its name, and its round there
+    is a different race's."""
+    pod = {
+        "season": "2026",
+        "round": "23",
+        "raceName": "B GP",
+        "p1": {"driverId": "a", "name": "A A"},
+        "p2": {"driverId": "b", "name": "B B"},
+        "p3": {"driverId": "c", "name": "C C"},
+    }
+    nxt = {**SCHED, "season": "2027"}
+    html = bp.render_last_race(nxt, [pod], [], {}, [], {})
+    assert "nr-flag" in html
+    assert "R23" in html
+
+
 def test_render_next_race_circuit_identity_lives_in_the_plate_caption():
     # The track outline is framed as a circuit plate, so the circuit's name and
     # length caption it there rather than padding the locality line.

@@ -212,6 +212,16 @@ main {
     gap: 12px;
 }
 
+.nr-empty .nr-tag {
+    flex: 0 0 auto;
+}
+
+/* Beside the tag here, not on a row of its own as it is on a full card. */
+.nr-empty .nr-name {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 /* last race */
 .last-race {
     display: flex;

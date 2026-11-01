@@ -443,3 +443,113 @@ def test_main_quiet_once_the_official_grid_is_in(tmp_path, monkeypatch):
     cud.main(["--now", "2026-07-18T18:00:00+00:00"])
 
     assert out.read_text(encoding="utf-8").splitlines() == ["due=false"]
+
+
+# --- Between seasons: nothing else would ever fetch next year's calendar ------
+
+
+def _calendar(season="2026", dates=("2026-11-29", "2026-12-06")):
+    return {
+        "season": season,
+        "races": [
+            {
+                "round": str(i),
+                "raceName": f"GP {i}",
+                "date": d,
+                "time": "13:00:00Z",
+                "qualifyingDate": None,
+                "qualifyingTime": None,
+            }
+            for i, d in enumerate(dates, 1)
+        ],
+    }
+
+
+def _upstream(season="2026", dates=("2026-11-29", "2026-12-06"), time="13:00:00Z"):
+    return [
+        {"round": str(i), "raceName": f"GP {i}", "date": d, "time": time}
+        for i, d in enumerate(dates, 1)
+    ]
+
+
+FINAL = {"season": "2026", "round": "2"}
+EARLIER = {"season": "2026", "round": "1"}
+
+
+def test_no_calendar_lookup_while_a_season_is_running():
+    assert cud.calendar_season(_calendar(), EARLIER, at("2026-12-01 12:00")) is None
+
+
+def test_no_calendar_lookup_before_the_final_race_day_is_over():
+    """fetch_schedule only moves on once every race date has passed, so a lookup
+    any sooner would run the pipeline again and change nothing."""
+    assert cud.calendar_season(_calendar(), FINAL, at("2026-12-06 18:00")) is None
+
+
+def test_a_finished_season_looks_for_the_next_calendar():
+    assert cud.calendar_season(_calendar(), FINAL, at("2026-12-07 06:00")) == 2027
+
+
+def test_before_the_opener_the_new_calendar_can_still_move():
+    pre = _calendar("2027", ("2027-03-14", "2027-03-21"))
+    assert cud.calendar_season(pre, FINAL, at("2027-02-01 06:00")) == 2027
+
+
+def test_an_unreadable_schedule_stays_quiet():
+    assert cud.calendar_season({}, FINAL, at("2027-02-01 06:00")) is None
+
+
+def test_an_unpublished_calendar_is_not_a_change():
+    assert cud.calendar_changed(_calendar(), [], 2027) is False
+
+
+def test_a_new_seasons_calendar_is_a_change():
+    upstream = _upstream(dates=("2027-03-14", "2027-03-21"))
+    assert cud.calendar_changed(_calendar(), upstream, 2027) is True
+
+
+def test_the_same_calendar_is_no_change():
+    """Or the guard would run the pipeline on every tick all winter."""
+    assert cud.calendar_changed(_calendar(), _upstream(), 2026) is False
+
+
+def test_a_moved_race_or_a_new_start_time_is_a_change():
+    """A session time arms the guard, so a stale one means a late run."""
+    moved = _upstream(dates=("2026-11-28", "2026-12-06"))
+    assert cud.calendar_changed(_calendar(), moved, 2026) is True
+    assert cud.calendar_changed(_calendar(), _upstream(time=""), 2026) is True
+
+
+def test_a_qualifying_session_is_read_from_the_apis_shape():
+    committed = _calendar()
+    committed["races"][0]["qualifyingDate"] = "2026-11-28"
+    committed["races"][0]["qualifyingTime"] = "14:00:00Z"
+    upstream = _upstream()
+    upstream[0]["Qualifying"] = {"date": "2026-11-28", "time": "14:00:00Z"}
+    assert cud.calendar_changed(committed, upstream, 2026) is False
+
+
+def test_the_calendar_trigger_looks_up_the_right_season():
+    asked = []
+
+    def fetch(season):
+        asked.append(season)
+        return _upstream(dates=("2027-03-14", "2027-03-21"))
+
+    assert cud.is_calendar_due(_calendar(), FINAL, at("2026-12-20 06:00"), fetch) is True
+    assert asked == [2027]
+
+
+def test_a_running_season_never_touches_the_network():
+    def fetch(season):
+        raise AssertionError("no lookup while a season is running")
+
+    assert cud.is_calendar_due(_calendar(), EARLIER, at("2026-12-01 06:00"), fetch) is False
+
+
+def test_an_api_outage_stays_quiet(monkeypatch):
+    def boom(*args, **kwargs):
+        raise OSError("down")
+
+    monkeypatch.setattr(cud.urllib.request, "urlopen", boom)
+    assert cud.fetch_calendar(2027) == []

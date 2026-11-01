@@ -229,6 +229,9 @@ def test_landing_page_has_info_tooltips(dist):
 
 def test_landing_page_has_next_race_box(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
+    if "nr-empty" in html:  # the season is over and no new calendar is out yet
+        assert "Season complete" in html
+        return
     assert 'class="next-race"' in html
     assert "data-datetime=" in html  # local-time + race-status hook
     assert 'class="nr-track"' in html  # circuit outline SVG
@@ -482,7 +485,8 @@ def test_sitemap_lastmod_is_last_race_date(dist, data):
 
     today = date.today().isoformat()
     past_dates = [r["date"] for r in data["schedule"]["races"] if r["date"] <= today]
-    expected = max(past_dates)
+    # Between a new calendar landing and its first race, no date has passed yet.
+    expected = max(past_dates, default=today)
     sitemap = (dist / "sitemap.xml").read_text(encoding="utf-8")
     assert f"<lastmod>{expected}</lastmod>" in sitemap
 

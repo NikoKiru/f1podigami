@@ -123,32 +123,33 @@ def _build_constructor_strength(
     misses a race drops out of it and would be predicted in an unknown — i.e.
     brand-new — car. Seats are therefore layered: the season's race_results give
     each driver his last seen car, and the fetched map overrides it wherever it is
-    at least as fresh (the two feeds publish out of step, either way round).
+    at least as fresh (the two feeds publish out of step, either way round). A
+    driver with no start this season yet keeps last season's car.
 
-    Returns empty dicts when data is missing or not for the current season.
+    Seats don't depend on the standings: with none yet, the strengths come back
+    empty, but every driver still has a car. Losing those takes all car information
+    out of the model.
     """
-    if not constructor_data:
-        return {}, {}, {}
-    if int(constructor_data.get("season", 0)) != current_season:
-        return {}, {}, {}
-    constructors = constructor_data.get("constructors", [])
-    if not constructors:
-        return {}, {}, {}
+    seats = {did: seat[1] for did, seat in _latest_seats(race_results, current_season - 1).items()}
+    this_season = _latest_seats(race_results, current_season)
+    fresh = {did: seat[1] for did, seat in this_season.items()}
 
     points_by_cid: dict[str, float] = {}
-    for c in constructors:
-        points_by_cid[c["constructorId"]] = c["points"]
+    usable = constructor_data and int(constructor_data.get("season", 0)) == current_season
+    if usable:
+        for c in constructor_data.get("constructors", []):
+            points_by_cid[c["constructorId"]] = c["points"]
 
     max_pts = max(points_by_cid.values()) if points_by_cid else 0
     if max_pts <= 0:
-        return {}, {}, {}
+        return {}, {**seats, **fresh}, {}
 
     cid_strength = {cid: pts / max_pts for cid, pts in points_by_cid.items()}
 
     fetched_round = int(constructor_data.get("round", 0) or 0)
-    driver_cid: dict[str, str] = dict(constructor_data.get("driverConstructor", {}))
-    for did, (rnd, cid) in _latest_seats(race_results, current_season).items():
-        if did not in driver_cid or rnd > fetched_round:
+    driver_cid: dict[str, str] = {**seats, **constructor_data.get("driverConstructor", {})}
+    for did, (rnd, cid) in this_season.items():
+        if did not in constructor_data.get("driverConstructor", {}) or rnd > fetched_round:
             driver_cid[did] = cid
 
     strength = {did: cid_strength.get(cid, 0.0) for did, cid in driver_cid.items()}

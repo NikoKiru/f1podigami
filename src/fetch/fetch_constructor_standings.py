@@ -10,9 +10,10 @@ then fetches:
 
 Writes data/constructor_standings.json.
 
-Graceful no-op: if fewer than 2 rounds have been completed (too early in the
-season for meaningful standings), the file is written with an empty
-constructors list so downstream code can detect and skip.
+Graceful no-op: with no completed rounds at all, the file is written with an empty
+constructors list so downstream code can detect and skip. One round is enough: a
+single race's points are thin, but its driver-to-car map is the only one the new
+season has.
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ API_ROOT = "https://api.jolpi.ca/ergast/f1"
 SLEEP_BETWEEN = 1.0
 MAX_BACKOFF_RETRIES = 6
 USER_AGENT = "f1podigami/0.2 (https://github.com/local/f1podigami)"
-MIN_ROUNDS = 2
+MIN_ROUNDS = 1
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
