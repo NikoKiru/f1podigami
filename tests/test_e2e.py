@@ -334,6 +334,132 @@ def test_combos_deep_link_prefills_filters(dist):
         browser.close()
 
 
+def _combos_state(dist, query):
+    """What a visitor sees after arriving at the combinations page with ``query``."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1200, "height": 900})
+        page.goto(_url(dist, "combos.html", query))
+        page.wait_for_selector("tr.combo", state="attached")
+        state = {
+            "visible": int(page.text_content("#visible-count") or "0"),
+            "empty_shown": page.locator("#empty-state").is_visible(),
+            "title": page.text_content("#empty-title"),
+            "text": page.text_content("#empty-text"),
+            "never": "never" in (page.get_attribute("#empty-state", "class") or ""),
+            "injected": page.locator("#empty-state img").count(),
+            "grid": page.get_attribute("#empty-state", "data-grid"),
+        }
+        browser.close()
+    return state
+
+
+@pytest.mark.parametrize(
+    ("plain", "accented"),
+    [
+        ("raikkonen", "R%C3%A4ikk%C3%B6nen"),
+        ("perez", "P%C3%A9rez"),
+        ("hakkinen", "H%C3%A4kkinen"),
+        ("hulkenberg", "H%C3%BClkenberg"),
+    ],
+)
+def test_search_ignores_accents(dist, plain, accented):
+    """Nobody has an ä on their keyboard by accident, so typing the plain letters
+    has to find the same drivers, and the accented spelling has to keep working."""
+    found = _combos_state(dist, f"?d={plain}")["visible"]
+    assert found > 0
+    assert found == _combos_state(dist, f"?d={accented}")["visible"]
+
+
+def test_a_trio_that_never_happened_is_named_as_such(dist):
+    state = _combos_state(dist, "?d=Fangio&d=Senna&d=Hamilton")
+    assert state["visible"] == 0
+    assert state["empty_shown"] and state["never"]
+    assert state["title"] == "Never happened"
+    assert state["text"].startswith(
+        "Juan Fangio, Ayrton Senna and Lewis Hamilton have never shared a podium."
+    )
+
+
+def test_a_pair_that_never_happened_is_named_as_such(dist):
+    state = _combos_state(dist, "?d=Fangio&d=Hamilton")
+    assert state["never"]
+    assert state["text"].startswith("Juan Fangio and Lewis Hamilton have never")
+
+
+def test_an_ambiguous_name_is_quoted_as_typed(dist):
+    """ "schumacher" could be three drivers, and the sentence holds for all of them,
+    but it can't pick one to name."""
+    state = _combos_state(dist, "?d=schumacher&d=Fangio&d=Senna")
+    assert state["never"]
+    assert state["text"].startswith("“schumacher”, Juan Fangio and Ayrton Senna have never")
+
+
+def test_a_shared_surname_means_the_driver_still_racing(dist):
+    state = _combos_state(dist, "?d=Verstappen&d=Fangio")
+    if "Max Verstappen" not in state["grid"]:
+        pytest.skip("this season's grid has no Verstappen to prefer")
+    assert state["text"].startswith("Max Verstappen and Juan Fangio have never")
+
+
+def test_the_same_driver_twice_is_not_a_trio_that_never_happened(dist):
+    state = _combos_state(dist, "?d=Hamilton&d=Hamilton")
+    assert state["visible"] == 0
+    assert not state["never"]
+    assert state["title"] == "No matches"
+
+
+def test_a_name_nobody_has_is_still_a_plain_no_match(dist):
+    state = _combos_state(dist, "?d=Hamilton&d=Nobodyatall")
+    assert not state["never"]
+    assert state["title"] == "No matches"
+    assert state["text"] == "Try a different driver name."
+
+
+def test_a_trio_outside_the_season_range_is_not_called_never_happened(dist):
+    state = _combos_state(dist, "?d=Hamilton&d=Alonso&from=1950&to=1960")
+    assert state["visible"] == 0
+    assert not state["never"]
+    assert state["title"] == "Not in these seasons"
+
+
+def test_a_typed_name_cannot_inject_markup(dist):
+    state = _combos_state(dist, "?d=Fangio&d=%3Cimg%20src%3Dx%3E&d=Senna")
+    assert state["injected"] == 0
+
+
+def test_a_never_happened_trio_on_the_grid_could_still_be_a_podigami(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1200, "height": 900})
+        page.goto(_url(dist, "combos.html"))
+        page.wait_for_selector("tr.combo")
+        # The first grid trio nobody has seen, whichever season the data is in.
+        names = page.evaluate(
+            """() => {
+                const grid = document.getElementById('empty-state').dataset.grid.split('|');
+                const rows = [...document.querySelectorAll('tr.combo')];
+                const seen = new Set(rows.map(r => r.dataset.drivers.split(' | ').sort().join()));
+                for (let a = 0; a < grid.length; a++) {
+                    for (let b = a + 1; b < grid.length; b++) {
+                        for (let c = b + 1; c < grid.length; c++) {
+                            const trio = [grid[a], grid[b], grid[c]];
+                            const key = trio.map(n => n.toLowerCase()).sort().join();
+                            if (!seen.has(key)) return trio;
+                        }
+                    }
+                }
+                return null;
+            }"""
+        )
+        browser.close()
+    assert names is not None
+    query = "?" + "&".join("d=" + n.replace(" ", "%20") for n in names)
+    state = _combos_state(dist, query)
+    assert state["never"]
+    assert "could still be a podigami" in state["text"]
+
+
 # ── Combos filter panel (index.js) ─────────────────────────────────────────
 
 

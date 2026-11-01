@@ -6,6 +6,7 @@ This is the former landing page; index.html is now the podigami predictor
 
 from __future__ import annotations
 
+import html
 import itertools
 import sys
 from pathlib import Path
@@ -28,7 +29,14 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     race_url,
 )
 
-from datalib import Combo, RaceRef, load_combos, load_podiums, load_race_links  # noqa: E402
+from datalib import (  # noqa: E402
+    Combo,
+    RaceRef,
+    load_combos,
+    load_current_drivers,
+    load_podiums,
+    load_race_links,
+)
 
 
 def dataset_schema(
@@ -86,8 +94,6 @@ def render_race_pills(
     ``shared`` maps (season, round) to the co-driver names for the pre-1961
     races where a podium car was shared, so the pill can say whose drive it was.
     """
-    import html
-
     links = links or {}
     shared = shared or {}
     races_sorted = sorted(races, key=lambda r: (int(r.season), int(r.round)))
@@ -135,8 +141,6 @@ def render_combo(
     links: dict | None = None,
     shared: dict[tuple[str, str], str] | None = None,
 ) -> str:
-    import html
-
     shared = shared or {}
 
     is_shared = any((r.season, r.round) in shared for r in combo.races)
@@ -249,6 +253,10 @@ def main() -> int:
 
     links = load_race_links()
     rows_html = "\n".join(render_combo(c, links, shared) for c in combos)
+    # The search needs the grid to say a trio that never happened still could.
+    grid_names = html.escape(
+        "|".join(driver_name(d.name) for d in load_current_drivers().drivers), quote=True
+    )
 
     page = f"""{
         head(
@@ -346,9 +354,9 @@ def main() -> int:
 {rows_html}
                 </tbody>
             </table>
-            <div id="empty-state" class="empty-state" style="display:none">
-                <strong>No matches</strong>
-                Try a different driver name.
+            <div id="empty-state" class="empty-state" data-grid="{grid_names}" style="display:none">
+                <strong id="empty-title">No matches</strong>
+                <span id="empty-text">Try a different driver name.</span>
             </div>
         </div>
     </div>
