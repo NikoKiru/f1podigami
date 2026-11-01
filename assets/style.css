@@ -60,11 +60,20 @@
     box-sizing: border-box;
 }
 
+/* clip, not hidden: hidden on both elements makes body a scroll container, so the
+   sticky nav sticks to body, which never scrolls, instead of to the screen. hidden
+   stays as the fallback for browsers without clip (Safari before 16). */
 html,
 body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    overflow-x: clip;
+}
+
+/* Room for the sticky nav above anything the browser scrolls to. */
+html {
+    scroll-padding-top: 56px;
 }
 
 body {
@@ -425,6 +434,10 @@ html.drawer-open {
         left: 12px;
         width: auto;
     }
+
+    .welcome-link {
+        padding: 6px 0;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -625,6 +638,10 @@ footer a:hover {
         display: inline-flex;
     }
 
+    .brand {
+        min-height: 32px;
+    }
+
     .nav-links {
         display: none;
     }
@@ -657,6 +674,16 @@ footer a:hover {
         font-size: 13.5px;
     }
 
+    .footer-nav {
+        gap: 0 8px;
+    }
+
+    .footer-nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 0 4px;
+    }
 
     .stats {
         grid-template-columns: 1fr;

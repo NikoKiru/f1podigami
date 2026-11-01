@@ -1991,6 +1991,36 @@ a.tl-where:hover {
     }
 }
 
+/* 32px tap targets on phones. The link inside a sentence gets inline padding, which
+   grows what a finger can hit without moving the text around it. */
+@media (max-width: 720px) {
+    .nr-name a,
+    .lr-name,
+    a.tl-where,
+    .last-race .combo-link,
+    .race-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+    }
+
+    a.tl-where {
+        justify-content: flex-end;
+    }
+
+    .form-details > summary {
+        min-height: 32px;
+    }
+
+    .lr-link {
+        padding: 8px 0;
+    }
+
+    .tl-chip {
+        padding: 7px 12px;
+    }
+}
+
 /* A podium step held by one car that two drivers shared (pre-1961 only). */
 .lr-step.lr-shared {
     display: inline-flex;

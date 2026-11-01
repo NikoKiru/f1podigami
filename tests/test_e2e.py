@@ -1263,7 +1263,7 @@ def test_board_rows_stay_on_one_line_with_grid_chips(dist):
         page.wait_for_selector(".cand")
         tallest = page.evaluate(
             """() => {
-                document.querySelectorAll('.cd').forEach(driver => {
+                document.querySelectorAll('.cd:not(:has(.cd-grid))').forEach(driver => {
                     const chip = document.createElement('span');
                     chip.className = 'cd-grid';
                     chip.textContent = 'P22';
@@ -1387,6 +1387,71 @@ def _assert_landed_on_the_faq(page):
     assert "podigami" in first.locator("summary").inner_text()
     heading_top = page.locator("#faq h2").evaluate("h => h.getBoundingClientRect().top")
     assert 0 <= heading_top < page.viewport_size["height"] / 2
+    nav_bottom = page.locator("nav.nav").bounding_box()
+    assert heading_top >= nav_bottom["y"] + nav_bottom["height"], "the nav covers the heading"
+
+
+@pytest.mark.parametrize("page_name", CONTENT_PAGES)
+@pytest.mark.parametrize("width", [390, 1280])
+def test_nav_stays_at_the_top_of_a_scrolled_page(dist, page_name, width):
+    """``overflow-x: hidden`` on both html and body makes body a scroll container,
+    and a sticky element sticks to that (never scrolling) box, not the screen."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 600})
+        page.goto(_url(dist, page_name))
+        page.wait_for_load_state("load")
+        page.evaluate("window.scrollTo(0, 500)")
+        page.wait_for_function("window.scrollY >= 400")
+        top = page.locator("nav.nav").evaluate("n => n.getBoundingClientRect().top")
+        browser.close()
+    assert top == 0
+
+
+def test_page_still_cannot_scroll_sideways(dist):
+    """What the old ``overflow-x: hidden`` was there for."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        page.add_style_tag(content="body::after {content: ''; display: block; width: 900px}")
+        page.evaluate("window.scrollTo(300, 0)")
+        scrolled = page.evaluate("window.scrollX")
+        browser.close()
+    assert scrolled == 0
+
+
+@pytest.mark.parametrize("page_name", CONTENT_PAGES)
+def test_phone_links_are_big_enough_to_tap(dist, page_name):
+    """Anything that stands on its own needs a 32px target. A link inside running
+    text is exempt: it takes the line height of the sentence it sits in."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, page_name))
+        page.wait_for_load_state("load")
+        small = page.evaluate(
+            """() => {
+                // Links in drawers and FAQ answers are tapped like any other.
+                document.querySelectorAll('details').forEach(d => { d.open = true; });
+                document.querySelectorAll('tr.detail').forEach(d => d.classList.add('open'));
+                const bad = [];
+                for (const el of document.querySelectorAll('a, summary, button')) {
+                    const r = el.getBoundingClientRect();
+                    if (!r.height || r.height >= 31.5 || el.closest('.nav-drawer')) continue;
+                    const inSentence = getComputedStyle(el).display === 'inline'
+                        && [...el.parentElement.childNodes].some(
+                            n => n.nodeType === 3 && n.textContent.trim().length > 2
+                        );
+                    if (!inSentence) bad.push(el.className + ' ' + r.height + ': '
+                        + el.textContent.trim().slice(0, 30));
+                }
+                return [...new Set(bad)].slice(0, 12);
+            }"""
+        )
+        browser.close()
+    assert small == []
 
 
 @pytest.mark.new_visitor

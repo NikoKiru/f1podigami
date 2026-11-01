@@ -923,6 +923,11 @@ a.race-pill:hover {
     .season-row {
         grid-template-columns: 56px 1fr;
     }
+
+    .race-pill {
+        align-items: center;
+        min-height: 32px;
+    }
 }
 
 /* <=600px: each combo row becomes a self-contained card (no sideways scroll) */
