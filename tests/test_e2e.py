@@ -334,6 +334,174 @@ def test_combos_deep_link_prefills_filters(dist):
         browser.close()
 
 
+def _combos_state(dist, query):
+    """What a visitor sees after arriving at the combinations page with ``query``."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1200, "height": 900})
+        page.goto(_url(dist, "combos.html", query))
+        page.wait_for_selector("tr.combo", state="attached")
+        state = {
+            "visible": int(page.text_content("#visible-count") or "0"),
+            "empty_shown": page.locator("#empty-state").is_visible(),
+            "title": page.text_content("#empty-title"),
+            "text": page.text_content("#empty-text"),
+            "never": "never" in (page.get_attribute("#empty-state", "class") or ""),
+            "injected": page.locator("#empty-state img").count(),
+            "grid": page.get_attribute("#empty-state", "data-grid"),
+        }
+        browser.close()
+    return state
+
+
+@pytest.mark.parametrize(
+    ("plain", "accented"),
+    [
+        ("raikkonen", "R%C3%A4ikk%C3%B6nen"),
+        ("perez", "P%C3%A9rez"),
+        ("hakkinen", "H%C3%A4kkinen"),
+        ("hulkenberg", "H%C3%BClkenberg"),
+    ],
+)
+def test_search_ignores_accents(dist, plain, accented):
+    """Nobody has an ä on their keyboard by accident, so typing the plain letters
+    has to find the same drivers, and the accented spelling has to keep working."""
+    found = _combos_state(dist, f"?d={plain}")["visible"]
+    assert found > 0
+    assert found == _combos_state(dist, f"?d={accented}")["visible"]
+
+
+def test_a_trio_that_never_happened_is_named_as_such(dist):
+    state = _combos_state(dist, "?d=Fangio&d=Senna&d=Hamilton")
+    assert state["visible"] == 0
+    assert state["empty_shown"] and state["never"]
+    assert state["title"] == "Never happened"
+    assert state["text"].startswith(
+        "Juan Fangio, Ayrton Senna and Lewis Hamilton have never shared a podium."
+    )
+
+
+def test_a_pair_that_never_happened_is_named_as_such(dist):
+    state = _combos_state(dist, "?d=Fangio&d=Hamilton")
+    assert state["never"]
+    assert state["text"].startswith("Juan Fangio and Lewis Hamilton have never")
+
+
+def test_an_ambiguous_name_is_quoted_as_typed(dist):
+    """ "schumacher" could be three drivers, and the sentence holds for all of them,
+    but it can't pick one to name."""
+    state = _combos_state(dist, "?d=schumacher&d=Fangio&d=Senna")
+    assert state["never"]
+    assert state["text"].startswith("“schumacher”, Juan Fangio and Ayrton Senna have never")
+
+
+def test_a_shared_surname_means_the_driver_still_racing(dist):
+    state = _combos_state(dist, "?d=Verstappen&d=Fangio")
+    if "Max Verstappen" not in state["grid"]:
+        pytest.skip("this season's grid has no Verstappen to prefer")
+    assert state["text"].startswith("Max Verstappen and Juan Fangio have never")
+
+
+def test_the_same_driver_twice_is_not_a_trio_that_never_happened(dist):
+    state = _combos_state(dist, "?d=Hamilton&d=Hamilton")
+    assert state["visible"] == 0
+    assert not state["never"]
+    assert state["title"] == "No matches"
+
+
+def test_a_name_nobody_has_is_still_a_plain_no_match(dist):
+    state = _combos_state(dist, "?d=Hamilton&d=Nobodyatall")
+    assert not state["never"]
+    assert state["title"] == "No matches"
+    assert state["text"] == "Try a different driver name."
+
+
+def test_a_trio_outside_the_season_range_is_not_called_never_happened(dist):
+    state = _combos_state(dist, "?d=Hamilton&d=Alonso&from=1950&to=1960")
+    assert state["visible"] == 0
+    assert not state["never"]
+    assert state["title"] == "Not in these seasons"
+
+
+def test_a_typed_name_cannot_inject_markup(dist):
+    state = _combos_state(dist, "?d=Fangio&d=%3Cimg%20src%3Dx%3E&d=Senna")
+    assert state["injected"] == 0
+
+
+def test_a_never_happened_trio_on_the_grid_could_still_be_a_podigami(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1200, "height": 900})
+        page.goto(_url(dist, "combos.html"))
+        page.wait_for_selector("tr.combo")
+        # The first grid trio nobody has seen, whichever season the data is in.
+        names = page.evaluate(
+            """() => {
+                const grid = document.getElementById('empty-state').dataset.grid.split('|');
+                const rows = [...document.querySelectorAll('tr.combo')];
+                const seen = new Set(rows.map(r => r.dataset.drivers.split(' | ').sort().join()));
+                for (let a = 0; a < grid.length; a++) {
+                    for (let b = a + 1; b < grid.length; b++) {
+                        for (let c = b + 1; c < grid.length; c++) {
+                            const trio = [grid[a], grid[b], grid[c]];
+                            const key = trio.map(n => n.toLowerCase()).sort().join();
+                            if (!seen.has(key)) return trio;
+                        }
+                    }
+                }
+                return null;
+            }"""
+        )
+        browser.close()
+    assert names is not None
+    query = "?" + "&".join("d=" + n.replace(" ", "%20") for n in names)
+    state = _combos_state(dist, query)
+    assert state["never"]
+    assert "could still be a podigami" in state["text"]
+
+
+@pytest.mark.parametrize(
+    ("page_name", "expected"),
+    [
+        ("overdue.html", "never"),
+        ("soulmates.html", "rows"),
+        ("unlikeliest.html", "rows"),
+        ("scorecard.html", "rows"),
+    ],
+)
+def test_a_row_leads_on_to_its_drivers_on_the_combinations_page(dist, page_name, expected):
+    """The three ranked pages used to be dead ends. An overdue trio has by definition
+    never happened, so its link lands on the page saying exactly that."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1200, "height": 900})
+        page.goto(_url(dist, page_name))
+        page.wait_for_load_state("load")
+        row = page.locator(".rankrow").first
+        row.locator("summary").click()
+        row.locator(".rr-link").click()
+        page.wait_for_url("**/combos.html?*")
+        page.wait_for_selector("tr.combo", state="attached")
+        visible = int(page.text_content("#visible-count") or "0")
+        title = page.text_content("#empty-title")
+        browser.close()
+    if expected == "never":
+        assert (visible, title) == (0, "Never happened")
+    else:
+        assert visible > 0
+
+
+@pytest.mark.parametrize(
+    "page_name", ["overdue.html", "unlikeliest.html", "soulmates.html", "scorecard.html"]
+)
+def test_a_ranked_page_ends_with_the_way_on(dist, page_name):
+    html = (dist / page_name).read_text(encoding="utf-8")
+    explore = html[html.index('class="panel explore"') :]
+    explore = explore[: explore.index("</section>")]
+    assert 'href="combos.html"' in explore
+    assert f'href="{page_name}"' not in explore
+
+
 # ── Combos filter panel (index.js) ─────────────────────────────────────────
 
 
@@ -989,6 +1157,7 @@ ALL_PAGES = [
     "overdue.html",
     "unlikeliest.html",
     "soulmates.html",
+    "scorecard.html",
     "404.html",
 ]
 
@@ -1143,10 +1312,13 @@ def test_every_season_row_stays_inside_its_list(dist, width):
         ("overdue.html", ".rr-face", 1280, 34, 40),
         ("unlikeliest.html", ".rr-face", 1280, 34, 40),
         ("soulmates.html", ".rr-face", 1280, 34, 40),
+        ("scorecard.html", ".rr-face", 1280, 34, 40),
         # Phone: three stacked names, and still a comfortable tap target.
         ("combos.html", "tbody tr.combo", 390, 60, 84),
         ("overdue.html", ".rr-face", 390, 60, 84),
         ("soulmates.html", ".rr-face", 390, 34, 44),
+        # Three names, plus a line of tags on a new trio the model called.
+        ("scorecard.html", ".rr-face", 390, 60, 112),
         # Same stack, and nothing between the names: a line box there adds 35px.
         ("index.html", ".tl-item", 390, 60, 84),
     ],
@@ -1263,7 +1435,7 @@ def test_board_rows_stay_on_one_line_with_grid_chips(dist):
         page.wait_for_selector(".cand")
         tallest = page.evaluate(
             """() => {
-                document.querySelectorAll('.cd').forEach(driver => {
+                document.querySelectorAll('.cd:not(:has(.cd-grid))').forEach(driver => {
                     const chip = document.createElement('span');
                     chip.className = 'cd-grid';
                     chip.textContent = 'P22';
@@ -1387,6 +1559,71 @@ def _assert_landed_on_the_faq(page):
     assert "podigami" in first.locator("summary").inner_text()
     heading_top = page.locator("#faq h2").evaluate("h => h.getBoundingClientRect().top")
     assert 0 <= heading_top < page.viewport_size["height"] / 2
+    nav_bottom = page.locator("nav.nav").bounding_box()
+    assert heading_top >= nav_bottom["y"] + nav_bottom["height"], "the nav covers the heading"
+
+
+@pytest.mark.parametrize("page_name", CONTENT_PAGES)
+@pytest.mark.parametrize("width", [390, 1280])
+def test_nav_stays_at_the_top_of_a_scrolled_page(dist, page_name, width):
+    """``overflow-x: hidden`` on both html and body makes body a scroll container,
+    and a sticky element sticks to that (never scrolling) box, not the screen."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 600})
+        page.goto(_url(dist, page_name))
+        page.wait_for_load_state("load")
+        page.evaluate("window.scrollTo(0, 500)")
+        page.wait_for_function("window.scrollY >= 400")
+        top = page.locator("nav.nav").evaluate("n => n.getBoundingClientRect().top")
+        browser.close()
+    assert top == 0
+
+
+def test_page_still_cannot_scroll_sideways(dist):
+    """What the old ``overflow-x: hidden`` was there for."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        page.add_style_tag(content="body::after {content: ''; display: block; width: 900px}")
+        page.evaluate("window.scrollTo(300, 0)")
+        scrolled = page.evaluate("window.scrollX")
+        browser.close()
+    assert scrolled == 0
+
+
+@pytest.mark.parametrize("page_name", CONTENT_PAGES)
+def test_phone_links_are_big_enough_to_tap(dist, page_name):
+    """Anything that stands on its own needs a 32px target. A link inside running
+    text is exempt: it takes the line height of the sentence it sits in."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, page_name))
+        page.wait_for_load_state("load")
+        small = page.evaluate(
+            """() => {
+                // Links in drawers and FAQ answers are tapped like any other.
+                document.querySelectorAll('details').forEach(d => { d.open = true; });
+                document.querySelectorAll('tr.detail').forEach(d => d.classList.add('open'));
+                const bad = [];
+                for (const el of document.querySelectorAll('a, summary, button')) {
+                    const r = el.getBoundingClientRect();
+                    if (!r.height || r.height >= 31.5 || el.closest('.nav-drawer')) continue;
+                    const inSentence = getComputedStyle(el).display === 'inline'
+                        && [...el.parentElement.childNodes].some(
+                            n => n.nodeType === 3 && n.textContent.trim().length > 2
+                        );
+                    if (!inSentence) bad.push(el.className + ' ' + r.height + ': '
+                        + el.textContent.trim().slice(0, 30));
+                }
+                return [...new Set(bad)].slice(0, 12);
+            }"""
+        )
+        browser.close()
+    assert small == []
 
 
 @pytest.mark.new_visitor

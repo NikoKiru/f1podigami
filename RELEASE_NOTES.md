@@ -2,7 +2,17 @@
 
 ## 2026-11-01
 
+### Features
+- **New Scorecard page: how the predictions actually held up.** Every race shows the podium that happened against the prediction the site published before it, frozen at lights out and never rewritten, with the totals on top. It starts with 11 races recovered from the site's history, and every race from now on is saved automatically. Linked from the nav, the footer, the landing page and the FAQ (#400)
+- **Search a trio that has never happened and the Combinations page says so.** Where it used to read "No matches", it now names the drivers and says they have never shared a podium, and points out when all of them are on the grid and it could still be a podigami. Pairs work too (#398)
+
+### Improvements
+- Overdue, Unlikeliest and Soulmates are no longer dead ends. Every row links to its drivers on the Combinations page, so an overdue trio lands on the page confirming it never happened, and each page ends with the other pages to explore (#399)
+- Searching Combinations now ignores accents, so "raikkonen", "perez" and "hakkinen" find the same trios as their accented spellings (#398)
+- Links on phones are easier to tap. The season list, race pills, last-race card, footer and other standalone links went from 15–26px tall to at least 32px (#397)
+
 ### Fixes
+- The nav now stays at the top of the screen as you scroll, as it was always meant to, and the FAQ link stops below it instead of under it (#397)
 - Long race names such as "United States Grand Prix West" now stay on one line in the combinations table's Last seen column on desktop, and the trios beside them still fit on one line (#395)
 
 ## 2026-10-31

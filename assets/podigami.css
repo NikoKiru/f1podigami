@@ -600,6 +600,20 @@ main {
     white-space: nowrap;
 }
 
+/* The way on from a row: to the same drivers on the Combinations page. */
+.rr-link {
+    align-self: center;
+    margin-left: auto;
+    color: var(--accent-link);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.rr-link:hover {
+    text-decoration: underline;
+}
+
 /* The race stat cell serves phones only; desktop shows the race on the row
    face. */
 .rr-stats .rr-stat-race {
@@ -1896,6 +1910,11 @@ a.tl-where:hover {
     margin-top: 8px;
 }
 
+/* An odd card out takes the whole row rather than leaving a hole beside it. */
+.explore-grid .hook-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+
 @media (max-width: 600px) {
     .hook-row,
     .explore-grid {
@@ -1991,6 +2010,45 @@ a.tl-where:hover {
     }
 }
 
+/* 32px tap targets on phones. The link inside a sentence gets inline padding, which
+   grows what a finger can hit without moving the text around it. */
+@media (max-width: 720px) {
+    .nr-name a,
+    .lr-name,
+    a.tl-where,
+    .last-race .combo-link,
+    .race-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+    }
+
+    a.tl-where {
+        justify-content: flex-end;
+    }
+
+    .rr-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        min-height: 32px;
+        margin-left: 0;
+    }
+
+    .form-details > summary {
+        min-height: 32px;
+    }
+
+    .lr-link,
+    .hp-prob a {
+        padding: 8px 0;
+    }
+
+    .tl-chip {
+        padding: 7px 12px;
+    }
+}
+
 /* A podium step held by one car that two drivers shared (pre-1961 only). */
 .lr-step.lr-shared {
     display: inline-flex;
@@ -1999,4 +2057,68 @@ a.tl-where:hover {
     padding-left: 0.4em;
     border-left: 2px solid var(--muted);
     cursor: help;
+}
+
+/* ---- Scorecard ----------------------------------------------------------- */
+
+.hp-prob a {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+}
+
+.hp-prob a:hover {
+    color: var(--accent-bright);
+    border-color: var(--accent);
+}
+
+.sc-next {
+    margin-bottom: var(--gap-section);
+}
+
+.sc-next .hook-card {
+    display: flex;
+}
+
+.sc-facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sc-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 7px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent-link);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    vertical-align: 1px;
+    white-space: nowrap;
+}
+
+.sc-tag.sc-hit {
+    background: var(--accent);
+    color: #fff;
+}
+
+.rr-stat-wide .rr-stat-val {
+    white-space: normal;
+}
+
+@media (max-width: 1080px) {
+    .sc-facts {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .sc-facts {
+        grid-template-columns: 1fr;
+    }
+
+    .sc-tag {
+        margin: 3px 6px 0 0;
+    }
 }

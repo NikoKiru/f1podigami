@@ -23,19 +23,28 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
+from _hooks import explore_grid  # noqa: E402
 from _layout import (  # noqa: E402
     FOOTER,
     WELCOME,
     abbr_name,
     asset,
     breadcrumb_schema,
+    combos_link,
     driver_name,
     head,
     nav,
     organization_schema,
     race_url,
 )
-from _rows import render_row, render_section, render_stat, render_table  # noqa: E402
+from _rows import (  # noqa: E402
+    render_link,
+    render_race_link,
+    render_row,
+    render_section,
+    render_stat,
+    render_table,
+)
 
 from datalib import UnlikeliestTrio, load_race_links, load_unlikeliest  # noqa: E402
 
@@ -96,18 +105,9 @@ def _rates_cells(e: UnlikeliestTrio) -> str:
 
 
 def _race_link(e: UnlikeliestTrio, links: dict | None = None) -> str:
-    """The race, split into year + name so it picks up the combinations table's
-    "Last seen" treatment (bold year, dimmed name). The same fragment is reused
-    in the expanded drawer on phones."""
     h = e.happened
-    url = race_url(links or {}, h.season, h.round, h.raceName)
-    label = f"{esc(h.season)} {esc(h.raceName)}"
-    return (
-        f'<a class="race-link" href="{html.escape(url, quote=True)}" target="_blank" '
-        f'rel="noopener" title="{label} &mdash; race report">'
-        f'<span class="year">{esc(h.season)}</span>'
-        f'<span class="race-name">{esc(h.raceName)}</span>'
-        f"</a>"
+    return render_race_link(
+        race_url(links or {}, h.season, h.round, h.raceName), h.season, h.raceName
     )
 
 
@@ -119,6 +119,7 @@ def _stats(e: UnlikeliestTrio, race: str) -> str:
         + render_stat("Raced together", f"{e.racesTogether}&times;")
         + render_stat("Times it happened", str(e.count))
         + render_stat("Race", race, extra_class="rr-stat-race")
+        + render_link(combos_link(e.names), "See this trio")
     )
 
 
@@ -187,6 +188,7 @@ def main() -> int:
         <p class="as-of">The odds are the chance a trio would <em>ever</em> share a podium, from each driver's career podium rate and how often the three raced together (more shared races &rarr; better odds). A long-shot that happened anyway is the surprise. Up to date through the {
         esc(as_of.season)
     } {esc(as_of.raceName)} (round {esc(as_of.round)}).</p>
+        {explore_grid("unlikeliest.html")}
     </div>
 </main>
 {FOOTER}

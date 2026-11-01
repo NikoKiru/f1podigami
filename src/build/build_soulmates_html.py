@@ -17,18 +17,26 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
-from _layout import (  # noqa: E402  (needs the sys.path entry above)
+from _hooks import explore_grid  # noqa: E402  (needs the sys.path entry above)
+from _layout import (  # noqa: E402
     FOOTER,
     WELCOME,
     abbr_name,
     asset,
     breadcrumb_schema,
+    combos_link,
     driver_name,
     head,
     nav,
     organization_schema,
 )
-from _rows import render_row, render_section, render_stat, render_table  # noqa: E402
+from _rows import (  # noqa: E402
+    render_link,
+    render_row,
+    render_section,
+    render_stat,
+    render_table,
+)
 
 from datalib import SoulmatePair, Soulmates, load_soulmates  # noqa: E402
 
@@ -76,6 +84,7 @@ def _pair_stats(p: SoulmatePair) -> str:
         render_stat("Years", f"{p.firstYear}&ndash;{p.lastYear}")
         + render_stat("Seasons active", str(seasons))
         + render_stat("Per season", f"{rate:.1f}")
+        + render_link(combos_link([p.a, p.b]), "See their trios")
     )
 
 
@@ -271,6 +280,7 @@ def main() -> int:
         <p class="as-of">Shared podiums count every World Championship race where both drivers finished in the top three, across all F1 rounds since 1950. The field is the all-time top {
         n_drivers
     } drivers by career podiums.</p>
+        {explore_grid("soulmates.html")}
     </div>
 </main>
 {FOOTER}

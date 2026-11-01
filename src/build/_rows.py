@@ -24,6 +24,8 @@ this module only assembles structure.
 
 from __future__ import annotations
 
+import html
+
 
 def render_row(
     drivers_html: str,
@@ -54,6 +56,20 @@ def render_row(
     )
 
 
+def render_race_link(url: str, season: str, race_name: str) -> str:
+    """A race the way the combinations table's "Last seen" shows it (bold year,
+    dimmed name), linking to its report. The same fragment goes on the row face
+    and in the drawer, where CSS moves it on phones."""
+    year, name = html.escape(season), html.escape(race_name)
+    return (
+        f'<a class="race-link" href="{html.escape(url, quote=True)}" target="_blank" '
+        f'rel="noopener" title="{year} {name} &mdash; race report">'
+        f'<span class="year">{year}</span>'
+        f'<span class="race-name">{name}</span>'
+        f"</a>"
+    )
+
+
 def render_stat(label: str, value: str, extra_class: str = "") -> str:
     """One labelled stat cell for a row's expanded drawer. All three pages use
     the same cell so the styling lives in one place."""
@@ -63,6 +79,15 @@ def render_stat(label: str, value: str, extra_class: str = "") -> str:
         f'<span class="rr-stat-label">{label}</span>'
         f'<span class="rr-stat-val">{value}</span>'
         f"</div>"
+    )
+
+
+def render_link(href: str, label: str) -> str:
+    """The way on from a row, closing its drawer. ``href`` is a plain URL, escaped
+    here because a filtered Combinations link carries an ``&``."""
+    return (
+        f'<a class="rr-link" href="{html.escape(href, quote=True)}">{label}'
+        ' <span aria-hidden="true">&rarr;</span></a>'
     )
 
 

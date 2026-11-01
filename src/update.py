@@ -39,6 +39,8 @@ STEPS = [
     ("Computing overdue podiums", "compute/compute_overdue.py"),
     ("Computing unlikeliest podiums", "compute/compute_unlikeliest.py"),
     ("Backtesting predictor accuracy", "compute/backtest.py"),
+    # Last: it logs the prediction computed above and reads the backtest's base rate.
+    ("Scoring published predictions", "compute/compute_scorecard.py"),
 ]
 
 

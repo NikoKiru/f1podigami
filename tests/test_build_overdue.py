@@ -19,6 +19,13 @@ def entry(names, ids, races_together, score, rates):
     )
 
 
+def test_row_leads_on_to_the_trio_on_the_combinations_page():
+    names = ["Max Verstappen", "Lando Norris", "Oscar Piastri"]
+    out = bo.render_row_entry(entry(names, ["a", "b", "c"], 40, 8.0, [0.5] * 3))
+    # A raw & would break the attribute.
+    assert 'href="combos.html?d=Max+Verstappen&amp;d=Lando+Norris&amp;d=Oscar+Piastri"' in out
+
+
 # ── format_score ─────────────────────────────────────────────────────────────
 
 

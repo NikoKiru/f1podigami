@@ -60,11 +60,20 @@
     box-sizing: border-box;
 }
 
+/* clip, not hidden: hidden on both elements makes body a scroll container, so the
+   sticky nav sticks to body, which never scrolls, instead of to the screen. hidden
+   stays as the fallback for browsers without clip (Safari before 16). */
 html,
 body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    overflow-x: clip;
+}
+
+/* Room for the sticky nav above anything the browser scrolls to. */
+html {
+    scroll-padding-top: 56px;
 }
 
 body {
@@ -425,6 +434,10 @@ html.drawer-open {
         left: 12px;
         width: auto;
     }
+
+    .welcome-link {
+        padding: 6px 0;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -584,15 +597,15 @@ footer a:hover {
     border-color: var(--accent);
 }
 
-/* The tabs need ~690px beside the brand and the toggle; without this the toggle
+/* The tabs need ~800px beside the brand and the toggle; without this the toggle
    ran off the right edge just above the drawer breakpoint. */
-@media (max-width: 860px) {
+@media (max-width: 920px) {
     .nav-inner {
         gap: 8px;
     }
 
     .nav-links {
-        --nav-pad: 7px;
+        --nav-pad: 5px;
         margin-left: 0;
     }
 
@@ -623,6 +636,10 @@ footer a:hover {
 
     .nav-burger {
         display: inline-flex;
+    }
+
+    .brand {
+        min-height: 32px;
     }
 
     .nav-links {
@@ -657,6 +674,16 @@ footer a:hover {
         font-size: 13.5px;
     }
 
+    .footer-nav {
+        gap: 0 8px;
+    }
+
+    .footer-nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 0 4px;
+    }
 
     .stats {
         grid-template-columns: 1fr;

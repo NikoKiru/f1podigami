@@ -7,6 +7,8 @@ const mobileSortSel = document.getElementById('mobile-sort');
 const visibleEl = document.getElementById('visible-count');
 const totalEl = document.getElementById('total-count');
 const emptyEl = document.getElementById('empty-state');
+const emptyTitleEl = document.getElementById('empty-title');
+const emptyTextEl = document.getElementById('empty-text');
 const totalRows = comboRows.length;
 totalEl.textContent = totalRows;
 
@@ -157,6 +159,22 @@ comboRows.forEach(row => {
 
 // ── Filtering ──────────────────────────────────────────────────────────────
 
+// "raikkonen" has to find Räikkönen: both sides lose case and accents.
+const fold = text => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+
+const rowDrivers = new Map(comboRows.map(row => [row, fold(row.dataset.drivers).split(' | ')]));
+
+// Everyone a filter can name: folded name -> display name. The grid counts too, so
+// a driver yet to reach a podium is still a real driver.
+const gridNames = (emptyEl.dataset.grid || '').split('|').filter(Boolean);
+const gridDrivers = new Set(gridNames.map(fold));
+const knownDrivers = new Map(gridNames.map(name => [fold(name), name]));
+comboRows.forEach(row => {
+    row.querySelectorAll('.dn-full').forEach(el => {
+        knownDrivers.set(fold(el.textContent), el.textContent);
+    });
+});
+
 // Each non-empty filter must match a DISTINCT driver in the combo (substring, case-insensitive).
 function matchesFilters(driverNames, filters) {
     if (filters.length === 0) return true;
@@ -172,6 +190,57 @@ function matchesFilters(driverNames, filters) {
         return false;
     }
     return dfs(0, 0);
+}
+
+// Can each filter take a driver of its own? ``options`` holds each filter's matches.
+function canBeDistinct(options, taken = new Set()) {
+    if (!options.length) return true;
+    return options[0].some(name => (
+        !taken.has(name) && canBeDistinct(options.slice(1), new Set(taken).add(name))
+    ));
+}
+
+function listNames(names) {
+    if (names.length < 2) return names.join('');
+    return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+}
+
+// An empty table means one of three things: nobody by that name, a window too narrow,
+// or the best answer the page has: these drivers have never shared a podium. Typed
+// text only ever reaches the page through textContent.
+function renderEmptyState(filters, typed, shown) {
+    emptyEl.style.display = shown ? '' : 'none';
+    emptyEl.classList.remove('never');
+    if (!shown) return;
+
+    const options = filters.map(f => [...knownDrivers.keys()].filter(name => name.includes(f)));
+    let title = 'No matches';
+    let text = 'Try a different driver name.';
+    if (comboRows.some(row => matchesFilters(rowDrivers.get(row), filters))) {
+        title = 'Not in these seasons';
+        text = 'Widen the season range to see them.';
+    } else if (filters.length > 1 && options.every(o => o.length) && canBeDistinct(options)) {
+        // One match, or one still racing ("Verstappen" means Max), gets the full
+        // name. Otherwise the sentence holds for each match but can't pick one, so
+        // the visitor's word stands.
+        const picks = options.map(o => {
+            const racing = o.filter(name => gridDrivers.has(name));
+            if (o.length === 1) return o[0];
+            return racing.length === 1 ? racing[0] : null;
+        });
+        const clear = picks.filter(Boolean).length === new Set(picks.filter(Boolean)).size;
+        const names = picks.map((pick, i) => (
+            pick && clear ? knownDrivers.get(pick) : '“' + typed[i] + '”'
+        ));
+        const onGrid = clear && picks.every(pick => gridDrivers.has(pick));
+        const who = names.length === 3 ? 'All three are' : 'Both are';
+        title = 'Never happened';
+        text = listNames(names) + ' have never shared a podium.'
+            + (onGrid ? ' ' + who + ' on the grid this season, so it could still be a podigami.' : '');
+        emptyEl.classList.add('never');
+    }
+    emptyTitleEl.textContent = title;
+    emptyTextEl.textContent = text;
 }
 
 // Count / Last seen are lifetime figures until a range narrows the window, at
@@ -222,15 +291,15 @@ function renderDetailSeasons(row, full) {
 }
 
 function applyFilter() {
-    const filters = filterInputs.map(i => i.value.trim().toLowerCase()).filter(v => v);
+    const typed = filterInputs.map(i => i.value.trim()).filter(v => v);
+    const filters = typed.map(fold);
     const full = fullRange();
     let visible = 0;
     comboRows.forEach(row => {
         const inRange = full
             ? null
             : racesOf(row).filter(r => r.season >= seasonFrom && r.season <= seasonTo);
-        const drivers = row.dataset.drivers.split(' | ');
-        const match = matchesFilters(drivers, filters) && (full || inRange.length > 0);
+        const match = matchesFilters(rowDrivers.get(row), filters) && (full || inRange.length > 0);
 
         renderRowStats(row, inRange);
         renderDetailSeasons(row, full);
@@ -249,7 +318,7 @@ function applyFilter() {
         if (match) visible++;
     });
     visibleEl.textContent = visible;
-    emptyEl.style.display = visible === 0 ? '' : 'none';
+    renderEmptyState(filters, typed, visible === 0);
     clearBtn.disabled = filters.length === 0 && full;
     syncFilterSummary(filters.length + (full ? 0 : 1), visible);
     writeParams();

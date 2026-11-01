@@ -771,6 +771,20 @@ a.race-pill:hover {
     margin-bottom: 4px;
 }
 
+/* A trio that has never happened is the site's whole subject, not a dead end. */
+.empty-state.never strong {
+    color: var(--accent-bright);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+.empty-state.never {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
 /* 600-720px: compact horizontal-scroll table + stacked filters */
 @media (max-width: 720px) {
     main {
@@ -922,6 +936,11 @@ a.race-pill:hover {
 
     .season-row {
         grid-template-columns: 56px 1fr;
+    }
+
+    .race-pill {
+        align-items: center;
+        min-height: 32px;
     }
 }
 

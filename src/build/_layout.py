@@ -30,6 +30,7 @@ NAV_LINKS = [
     ("overdue.html", "Overdue"),
     ("unlikeliest.html", "Unlikeliest"),
     ("soulmates.html", "Soulmates"),
+    ("scorecard.html", "Scorecard"),
 ]
 
 # Applied before first paint so the stored/OS theme never flashes. Kept as a
@@ -108,6 +109,16 @@ DISPLAY_NAMES = {"Andrea Kimi Antonelli": "Kimi Antonelli"}
 def driver_name(name: str) -> str:
     """The name the site shows for a driver (see ``DISPLAY_NAMES``)."""
     return DISPLAY_NAMES.get(name, name)
+
+
+def combos_link(names: list[str]) -> str:
+    """Combinations-page URL filtered to these drivers (a trio, or a pair).
+
+    The page reads these ``d`` params into its driver filters. They carry the
+    names the table shows (``driver_name``), which is what the filters match.
+    """
+    query = urllib.parse.urlencode([("d", driver_name(n)) for n in names])
+    return f"combos.html?{query}"
 
 
 def abbr_name(name: str) -> str:
@@ -294,6 +305,7 @@ FOOTER = f"""<footer>
             <a href="overdue.html">Overdue</a>
             <a href="unlikeliest.html">Unlikeliest</a>
             <a href="soulmates.html">Soulmates</a>
+            <a href="scorecard.html">Scorecard</a>
             <a href="index.html#faq">FAQ</a>
         </nav>
         <p class="footer-meta">
