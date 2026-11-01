@@ -1294,7 +1294,7 @@
           "Lewis Hamilton",
           "Charles Leclerc"
         ],
-        "prob": 5.859,
+        "prob": 5.858,
         "perDriver": [
           {
             "driverId": "antonelli",
@@ -1402,7 +1402,7 @@
           "Lando Norris",
           "George Russell"
         ],
-        "prob": 1.669,
+        "prob": 1.67,
         "perDriver": [
           {
             "driverId": "leclerc",
@@ -1456,7 +1456,7 @@
           "Charles Leclerc",
           "Lando Norris"
         ],
-        "prob": 1.625,
+        "prob": 1.624,
         "perDriver": [
           {
             "driverId": "hamilton",
@@ -1726,7 +1726,7 @@
           "Lewis Hamilton",
           "Charles Leclerc"
         ],
-        "prob": 1.144,
+        "prob": 1.143,
         "perDriver": [
           {
             "driverId": "hadjar",
@@ -1939,7 +1939,7 @@
           "hamilton",
           "russell"
         ],
-        "prob": 7.266,
+        "prob": 7.265,
         "happened": true
       },
       {
@@ -1948,7 +1948,7 @@
           "hamilton",
           "max_verstappen"
         ],
-        "prob": 6.102,
+        "prob": 6.101,
         "happened": true
       },
       {
@@ -1957,7 +1957,7 @@
           "leclerc",
           "russell"
         ],
-        "prob": 5.922,
+        "prob": 5.921,
         "happened": true
       },
       {
@@ -1966,7 +1966,7 @@
           "hamilton",
           "leclerc"
         ],
-        "prob": 5.859,
+        "prob": 5.858,
         "happened": false
       },
       {
@@ -1975,7 +1975,7 @@
           "leclerc",
           "russell"
         ],
-        "prob": 5.847,
+        "prob": 5.846,
         "happened": true
       },
       {
@@ -2002,7 +2002,7 @@
           "max_verstappen",
           "russell"
         ],
-        "prob": 5.033,
+        "prob": 5.032,
         "happened": true
       },
       {
@@ -2011,7 +2011,7 @@
           "leclerc",
           "max_verstappen"
         ],
-        "prob": 4.78,
+        "prob": 4.779,
         "happened": true
       },
       {
@@ -2020,7 +2020,7 @@
           "leclerc",
           "max_verstappen"
         ],
-        "prob": 4.705,
+        "prob": 4.704,
         "happened": true
       },
       {
@@ -2047,7 +2047,7 @@
           "norris",
           "russell"
         ],
-        "prob": 1.869,
+        "prob": 1.868,
         "happened": true
       },
       {
@@ -2056,7 +2056,7 @@
           "max_verstappen",
           "norris"
         ],
-        "prob": 1.781,
+        "prob": 1.78,
         "happened": true
       },
       {
@@ -2065,7 +2065,7 @@
           "max_verstappen",
           "norris"
         ],
-        "prob": 1.705,
+        "prob": 1.704,
         "happened": true
       },
       {
@@ -2074,7 +2074,7 @@
           "norris",
           "russell"
         ],
-        "prob": 1.669,
+        "prob": 1.67,
         "happened": false
       },
       {
@@ -2092,7 +2092,7 @@
           "leclerc",
           "norris"
         ],
-        "prob": 1.625,
+        "prob": 1.624,
         "happened": false
       },
       {
@@ -2155,7 +2155,7 @@
           "hamilton",
           "leclerc"
         ],
-        "prob": 1.144,
+        "prob": 1.143,
         "happened": false
       },
       {
@@ -2316,7 +2316,7 @@
       {
         "driverId": "gasly",
         "name": "Pierre Gasly",
-        "weight": 1.389,
+        "weight": 1.452,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "alpine",
@@ -2324,7 +2324,7 @@
         "constructorStrength": 0.114,
         "finishProb": 0.87,
         "uncertainty": 0.925,
-        "gridPosition": 10
+        "gridPosition": 9
       },
       {
         "driverId": "alonso",
@@ -2342,7 +2342,7 @@
       {
         "driverId": "lawson",
         "name": "Liam Lawson",
-        "weight": 0.987,
+        "weight": 0.944,
         "seasonPodiums": 0,
         "recentPodiums": 0,
         "constructorId": "rb",
@@ -2350,7 +2350,7 @@
         "constructorStrength": 0.168,
         "finishProb": 0.892,
         "uncertainty": 0.937,
-        "gridPosition": 9
+        "gridPosition": 10
       },
       {
         "driverId": "arvid_lindblad",
