@@ -483,8 +483,17 @@ col.col-count {
     width: 92px;
 }
 
+/* Wide enough for the longest race on one line, in a wider font than Segoe UI.
+   Every pixel comes out of the trios, so narrower screens stay at 240px: there
+   the race name wrapping on a few rows beats most trios gaining a line. */
 col.col-last {
-    width: 240px;
+    width: 284px;
+}
+
+@media (max-width: 1023px) {
+    col.col-last {
+        width: 240px;
+    }
 }
 
 col.col-expand {

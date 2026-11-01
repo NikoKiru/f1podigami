@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-11-01
+
+### Fixes
+- Long race names such as "United States Grand Prix West" now stay on one line in the combinations table's Last seen column on desktop, and the trios beside them still fit on one line (#395)
+
 ## 2026-10-31
 
 ### Features
