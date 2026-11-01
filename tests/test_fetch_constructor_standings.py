@@ -97,3 +97,23 @@ def test_standings_requests_bypass_the_response_cache(monkeypatch):
     monkeypatch.setattr(fcs, "get", fake_get)
     fcs.fetch_standings(2026)
     assert calls and all(CACHE_BUSTER in p for p in calls)
+
+
+def test_real_standings_are_written_after_a_single_round(monkeypatch):
+    """Skipping round 1 left an empty file, which took every car out of the model
+    for the whole week before round 2."""
+    saved = {}
+    row = {
+        "points": "25",
+        "position": "1",
+        "wins": "1",
+        "Constructor": {"constructorId": "ferrari", "name": "Ferrari"},
+    }
+    monkeypatch.setattr(fcs, "season_and_rounds", lambda: (2027, [1]))
+    monkeypatch.setattr(fcs, "fetch_standings", lambda season: [row])
+    monkeypatch.setattr(fcs, "fetch_driver_constructors", lambda season, rounds: {"a": "ferrari"})
+    monkeypatch.setattr(fcs, "save_constructor_standings", saved.update)
+    monkeypatch.setattr(fcs.time, "sleep", lambda _: None)
+    assert fcs.main() == 0
+    assert [c["constructorId"] for c in saved["constructors"]] == ["ferrari"]
+    assert saved["driverConstructor"] == {"a": "ferrari"}

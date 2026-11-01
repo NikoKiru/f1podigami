@@ -279,15 +279,23 @@ def render_last_race(
     pod = max(podiums, key=lambda p: (int(p["season"]), int(p["round"])))
     rnd = pod["round"]
     # Enrich with the schedule entry (flag/country) when the race is on this
-    # season's calendar; otherwise fall back to the podium's own race name.
-    last = next(
+    # season's calendar. Once next season's calendar is in, the race can only be
+    # found there by name, and only its country still applies: the round is that
+    # year's. Otherwise fall back to the podium's own race name.
+    same_season = schedule.get("season") == pod["season"]
+    match = next(
         (
             r
             for r in schedule.get("races", [])
-            if r["round"] == rnd and schedule.get("season") == pod["season"]
+            if (r["round"] == rnd if same_season else r["raceName"] == pod["raceName"])
         ),
-        {"country": "", "raceName": pod["raceName"], "round": rnd},
+        None,
     )
+    if match and same_season:
+        last = match
+    else:
+        country = match["country"] if match else ""
+        last = {"country": country, "raceName": pod["raceName"], "round": rnd}
 
     fl = flag_svg(last["country"])
     name = esc(last["raceName"])

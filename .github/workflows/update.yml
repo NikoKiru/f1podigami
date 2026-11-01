@@ -33,7 +33,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Cheap, no-network gate. Most runs stop here in ~15s.
+  # Cheap gate. Most runs stop here in ~15s.
   check:
     runs-on: ubuntu-latest
     outputs:
@@ -75,7 +75,8 @@ jobs:
             exit 0
           fi
           # Scheduled cron (or an unforced auto dispatch): consult the cheap local
-          # guard, which appends due=true|false to $GITHUB_OUTPUT (no network).
+          # guard, which appends due=true|false to $GITHUB_OUTPUT. No network, except
+          # one calendar lookup between seasons, when nothing else can start a run.
           python src/check_update_due.py
 
   # Full refresh: only runs when the guard (or an unconditional trigger) says so.

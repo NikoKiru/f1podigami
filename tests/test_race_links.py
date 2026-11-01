@@ -159,10 +159,24 @@ def test_season_round_names_uses_schedule_for_current_and_podiums_for_history():
     assert names[2026] == {"1": "Australian Grand Prix"}
 
 
+def test_incremental_still_finishes_last_season_after_the_rollover():
+    """The calendar can flip to the new year before F1 lists the final race, and
+    the backfill that used to catch it only runs with a --full."""
+    counts = {2026: 23, 2027: 24}
+    done = {str(r): {} for r in range(1, 24)}
+    partial = {str(r): {} for r in range(1, 23)}
+    assert frl.compute_targets("incremental", {"2026": done}, counts, 2027) == [(2027, 24)]
+    assert frl.compute_targets("incremental", {"2026": partial}, counts, 2027) == [
+        (2027, 24),
+        (2026, 23),
+    ]
+
+
 def test_compute_targets_modes():
     counts = {1950: 7, 2025: 22, 2026: 24}
     existing = {"1950": {str(i): {} for i in range(1, 8)}}  # 1950 complete
-    assert frl.compute_targets("incremental", existing, counts, 2026) == [(2026, 24)]
+    finished = {**existing, "2025": {str(i): {} for i in range(1, 23)}}
+    assert frl.compute_targets("incremental", finished, counts, 2026) == [(2026, 24)]
     # backfill: current + seasons missing/incomplete (1950 complete -> skipped)
     assert frl.compute_targets("backfill", existing, counts, 2026) == [(2026, 24), (2025, 22)]
     assert frl.compute_targets("refetch-all", existing, counts, 2026) == [

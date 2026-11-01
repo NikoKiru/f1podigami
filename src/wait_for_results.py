@@ -81,6 +81,7 @@ import requests
 
 from check_update_due import (
     ARM_BEFORE,
+    is_calendar_due,
     is_update_due,
     latest_armed_round,
     next_grid_target,
@@ -422,6 +423,12 @@ def main() -> int:  # pragma: no cover - thin CLI glue exercised in CI, not unit
 
     target = wait_target(schedule, podigami, datetime.now(UTC), unconfirmed, grids, jolpica_only)
     if target is None:
+        # A calendar has no session to wait for, but "none" would skip the pipeline
+        # the guard started this run for.
+        if is_calendar_due(schedule, podigami.get("asOf") or {}, datetime.now(UTC)):
+            print("The API's calendar differs from the committed one; running the pipeline.")
+            report("true")
+            return 0
         print("Nothing pending upstream; nothing to wait for.")
         report("none")
         return 0
