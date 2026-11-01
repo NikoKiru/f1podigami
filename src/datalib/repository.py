@@ -29,11 +29,13 @@ from .schemas import (
     Overdue,
     Podigami,
     Podium,
+    PredictionRecord,
     QualifyingEntry,
     RaceLink,
     RaceResult,
     RetirementRace,
     Schedule,
+    Scorecard,
     Soulmates,
     StartingGridRace,
     UnconfirmedRound,
@@ -62,10 +64,12 @@ REGISTRY: dict[str, TypeAdapter] = {
     "retirements.json": TypeAdapter(list[RetirementRace]),
     "starting_grids.json": TypeAdapter(list[StartingGridRace]),
     "unconfirmed.json": TypeAdapter(list[UnconfirmedRound]),
+    "prediction_log.json": TypeAdapter(list[PredictionRecord]),
+    "scorecard.json": TypeAdapter(Scorecard),
 }
 
 # Bulky raw datasets written single-line to keep the repo (and git deltas) lean.
-COMPACT = {"race_results.json", "qualifying.json"}
+COMPACT = {"race_results.json", "qualifying.json", "prediction_log.json"}
 
 
 def _load(name: str) -> Any:
@@ -227,6 +231,22 @@ def load_unconfirmed() -> list[UnconfirmedRound]:
 
 def save_unconfirmed(data: Any) -> None:
     _save("unconfirmed.json", data)
+
+
+def load_prediction_log() -> list[PredictionRecord]:
+    return _load("prediction_log.json")
+
+
+def save_prediction_log(data: Any) -> None:
+    _save("prediction_log.json", data)
+
+
+def load_scorecard() -> Scorecard:
+    return _load("scorecard.json")
+
+
+def save_scorecard(data: Any) -> None:
+    _save("scorecard.json", data)
 
 
 def load_starting_grids() -> list[StartingGridRace]:

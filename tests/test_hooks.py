@@ -99,9 +99,15 @@ def test_explore_grid_leaves_out_the_page_it_sits_on():
     assert 'href="unlikeliest.html"' in out
 
 
-def test_explore_grid_links_all_four_pages():
+def test_explore_grid_links_every_other_page():
     out = _hooks.explore_grid()
-    for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
+    for href in (
+        "combos.html",
+        "overdue.html",
+        "unlikeliest.html",
+        "soulmates.html",
+        "scorecard.html",
+    ):
         assert f'href="{href}"' in out
     assert "Keep exploring" in out
     assert out.count("hook-card") >= 4

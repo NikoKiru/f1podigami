@@ -113,6 +113,12 @@ _EXPLORE = [
         "soulmates.html",
         "See every partnership",
     ),
+    (
+        "Scorecard",
+        "Every prediction as published, against what actually happened.",
+        "scorecard.html",
+        "See how it did",
+    ),
 ]
 
 

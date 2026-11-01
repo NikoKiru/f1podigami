@@ -1,0 +1,317 @@
+{
+  "totals": {
+    "races": 11,
+    "newTrios": 4,
+    "meanChanceNew": 40.5,
+    "brierNew": 0.2171,
+    "baselineBrierNew": 0.2332,
+    "baseRateNew": 40.6,
+    "topPickHits": 2,
+    "topPickExpected": 0.65,
+    "meanDriversRight": 1.82,
+    "boardRaces": 5,
+    "onBoard": 5,
+    "boardTopThree": 3
+  },
+  "races": [
+    {
+      "season": "2026",
+      "round": "18",
+      "raceName": "United States Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Andrea Kimi Antonelli",
+        "Charles Leclerc",
+        "Max Verstappen"
+      ],
+      "isNew": false,
+      "chanceNew": 33.4,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Isack Hadjar",
+        "Max Verstappen"
+      ],
+      "topPickProb": 7.027,
+      "topPickHit": false,
+      "driversRight": 2,
+      "podiumProb": 13.818,
+      "boardSize": 23,
+      "boardRank": 1,
+      "boardFloor": 1.066
+    },
+    {
+      "season": "2026",
+      "round": "17",
+      "raceName": "Singapore Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Max Verstappen",
+        "Charles Leclerc",
+        "Andrea Kimi Antonelli"
+      ],
+      "isNew": false,
+      "chanceNew": 27.0,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Lewis Hamilton",
+        "Charles Leclerc"
+      ],
+      "topPickProb": 3.811,
+      "topPickHit": false,
+      "driversRight": 2,
+      "podiumProb": 13.475,
+      "boardSize": 24,
+      "boardRank": 1,
+      "boardFloor": 1.074
+    },
+    {
+      "season": "2026",
+      "round": "16",
+      "raceName": "Bahrain Grand Prix in Malaysia",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Max Verstappen",
+        "Andrea Kimi Antonelli",
+        "Lewis Hamilton"
+      ],
+      "isNew": false,
+      "chanceNew": 31.1,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Lewis Hamilton",
+        "Charles Leclerc"
+      ],
+      "topPickProb": 2.59,
+      "topPickHit": false,
+      "driversRight": 2,
+      "podiumProb": 7.336,
+      "boardSize": 29,
+      "boardRank": 2,
+      "boardFloor": 1.062
+    },
+    {
+      "season": "2026",
+      "round": "15",
+      "raceName": "Azerbaijan Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "George Russell",
+        "Max Verstappen",
+        "Isack Hadjar"
+      ],
+      "isNew": true,
+      "chanceNew": 37.9,
+      "topPick": [
+        "Charles Leclerc",
+        "Lando Norris",
+        "George Russell"
+      ],
+      "topPickProb": 7.425,
+      "topPickHit": false,
+      "driversRight": 1,
+      "podiumProb": 1.046,
+      "boardSize": 27,
+      "boardRank": 27,
+      "boardFloor": 1.046
+    },
+    {
+      "season": "2026",
+      "round": "14",
+      "raceName": "Spanish Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Andrea Kimi Antonelli",
+        "Max Verstappen",
+        "Lando Norris"
+      ],
+      "isNew": false,
+      "chanceNew": 34.0,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Charles Leclerc",
+        "Lando Norris"
+      ],
+      "topPickProb": 5.584,
+      "topPickHit": false,
+      "driversRight": 2,
+      "podiumProb": 6.038,
+      "boardSize": 25,
+      "boardRank": 4,
+      "boardFloor": 1.319
+    },
+    {
+      "season": "2026",
+      "round": "13",
+      "raceName": "Italian Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Andrea Kimi Antonelli",
+        "George Russell",
+        "Max Verstappen"
+      ],
+      "isNew": false,
+      "chanceNew": 38.2,
+      "topPick": [
+        "Charles Leclerc",
+        "Lando Norris",
+        "George Russell"
+      ],
+      "topPickProb": 4.507,
+      "topPickHit": false,
+      "driversRight": 1,
+      "podiumProb": null,
+      "boardSize": 0,
+      "boardRank": null,
+      "boardFloor": null
+    },
+    {
+      "season": "2026",
+      "round": "12",
+      "raceName": "Dutch Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Lando Norris",
+        "Andrea Kimi Antonelli",
+        "George Russell"
+      ],
+      "isNew": true,
+      "chanceNew": 47.4,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Lando Norris",
+        "George Russell"
+      ],
+      "topPickProb": 11.88,
+      "topPickHit": true,
+      "driversRight": 3,
+      "podiumProb": 11.88,
+      "boardSize": 0,
+      "boardRank": null,
+      "boardFloor": null
+    },
+    {
+      "season": "2026",
+      "round": "11",
+      "raceName": "Hungarian Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Lando Norris",
+        "Max Verstappen",
+        "Andrea Kimi Antonelli"
+      ],
+      "isNew": false,
+      "chanceNew": 43.5,
+      "topPick": [
+        "Charles Leclerc",
+        "Lando Norris",
+        "George Russell"
+      ],
+      "topPickProb": 6.413,
+      "topPickHit": false,
+      "driversRight": 1,
+      "podiumProb": null,
+      "boardSize": 0,
+      "boardRank": null,
+      "boardFloor": null
+    },
+    {
+      "season": "2026",
+      "round": "10",
+      "raceName": "Belgian Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Andrea Kimi Antonelli",
+        "Charles Leclerc",
+        "Max Verstappen"
+      ],
+      "isNew": true,
+      "chanceNew": 38.8,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Charles Leclerc",
+        "Max Verstappen"
+      ],
+      "topPickProb": 4.739,
+      "topPickHit": true,
+      "driversRight": 3,
+      "podiumProb": 4.739,
+      "boardSize": 0,
+      "boardRank": null,
+      "boardFloor": null
+    },
+    {
+      "season": "2026",
+      "round": "9",
+      "raceName": "British Grand Prix",
+      "stage": "pre-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Charles Leclerc",
+        "George Russell",
+        "Lewis Hamilton"
+      ],
+      "isNew": true,
+      "chanceNew": 51.9,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Lando Norris",
+        "George Russell"
+      ],
+      "topPickProb": 6.84,
+      "topPickHit": false,
+      "driversRight": 1,
+      "podiumProb": 2.686,
+      "boardSize": 0,
+      "boardRank": null,
+      "boardFloor": null
+    },
+    {
+      "season": "2026",
+      "round": "8",
+      "raceName": "Austrian Grand Prix",
+      "stage": "pre-quali",
+      "model": "plackett-luce",
+      "podium": [
+        "George Russell",
+        "Max Verstappen",
+        "Andrea Kimi Antonelli"
+      ],
+      "isNew": false,
+      "chanceNew": 62.3,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Lando Norris",
+        "George Russell"
+      ],
+      "topPickProb": 4.519,
+      "topPickHit": false,
+      "driversRight": 2,
+      "podiumProb": null,
+      "boardSize": 0,
+      "boardRank": null,
+      "boardFloor": null
+    }
+  ],
+  "next": {
+    "season": "2026",
+    "round": "19",
+    "raceName": "Mexico City Grand Prix",
+    "stage": "post-quali",
+    "chanceNew": 32.3,
+    "topPick": [
+      "Andrea Kimi Antonelli",
+      "Lewis Hamilton",
+      "Charles Leclerc"
+    ],
+    "topPickProb": 5.859
+  }
+}

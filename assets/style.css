@@ -597,15 +597,15 @@ footer a:hover {
     border-color: var(--accent);
 }
 
-/* The tabs need ~690px beside the brand and the toggle; without this the toggle
+/* The tabs need ~800px beside the brand and the toggle; without this the toggle
    ran off the right edge just above the drawer breakpoint. */
-@media (max-width: 860px) {
+@media (max-width: 920px) {
     .nav-inner {
         gap: 8px;
     }
 
     .nav-links {
-        --nav-pad: 7px;
+        --nav-pad: 5px;
         margin-left: 0;
     }
 

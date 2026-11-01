@@ -56,6 +56,20 @@ def render_row(
     )
 
 
+def render_race_link(url: str, season: str, race_name: str) -> str:
+    """A race the way the combinations table's "Last seen" shows it (bold year,
+    dimmed name), linking to its report. The same fragment goes on the row face
+    and in the drawer, where CSS moves it on phones."""
+    year, name = html.escape(season), html.escape(race_name)
+    return (
+        f'<a class="race-link" href="{html.escape(url, quote=True)}" target="_blank" '
+        f'rel="noopener" title="{year} {name} &mdash; race report">'
+        f'<span class="year">{year}</span>'
+        f'<span class="race-name">{name}</span>'
+        f"</a>"
+    )
+
+
 def render_stat(label: str, value: str, extra_class: str = "") -> str:
     """One labelled stat cell for a row's expanded drawer. All three pages use
     the same cell so the styling lives in one place."""

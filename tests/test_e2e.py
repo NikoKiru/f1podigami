@@ -462,7 +462,12 @@ def test_a_never_happened_trio_on_the_grid_could_still_be_a_podigami(dist):
 
 @pytest.mark.parametrize(
     ("page_name", "expected"),
-    [("overdue.html", "never"), ("soulmates.html", "rows"), ("unlikeliest.html", "rows")],
+    [
+        ("overdue.html", "never"),
+        ("soulmates.html", "rows"),
+        ("unlikeliest.html", "rows"),
+        ("scorecard.html", "rows"),
+    ],
 )
 def test_a_row_leads_on_to_its_drivers_on_the_combinations_page(dist, page_name, expected):
     """The three ranked pages used to be dead ends. An overdue trio has by definition
@@ -486,7 +491,9 @@ def test_a_row_leads_on_to_its_drivers_on_the_combinations_page(dist, page_name,
         assert visible > 0
 
 
-@pytest.mark.parametrize("page_name", ["overdue.html", "unlikeliest.html", "soulmates.html"])
+@pytest.mark.parametrize(
+    "page_name", ["overdue.html", "unlikeliest.html", "soulmates.html", "scorecard.html"]
+)
 def test_a_ranked_page_ends_with_the_way_on(dist, page_name):
     html = (dist / page_name).read_text(encoding="utf-8")
     explore = html[html.index('class="panel explore"') :]
@@ -1150,6 +1157,7 @@ ALL_PAGES = [
     "overdue.html",
     "unlikeliest.html",
     "soulmates.html",
+    "scorecard.html",
     "404.html",
 ]
 
@@ -1304,10 +1312,13 @@ def test_every_season_row_stays_inside_its_list(dist, width):
         ("overdue.html", ".rr-face", 1280, 34, 40),
         ("unlikeliest.html", ".rr-face", 1280, 34, 40),
         ("soulmates.html", ".rr-face", 1280, 34, 40),
+        ("scorecard.html", ".rr-face", 1280, 34, 40),
         # Phone: three stacked names, and still a comfortable tap target.
         ("combos.html", "tbody tr.combo", 390, 60, 84),
         ("overdue.html", ".rr-face", 390, 60, 84),
         ("soulmates.html", ".rr-face", 390, 34, 44),
+        # Three names, plus a line of tags on a new trio the model called.
+        ("scorecard.html", ".rr-face", 390, 60, 112),
         # Same stack, and nothing between the names: a line box there adds 35px.
         ("index.html", ".tl-item", 390, 60, 84),
     ],

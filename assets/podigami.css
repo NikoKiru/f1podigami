@@ -2039,7 +2039,8 @@ a.tl-where:hover {
         min-height: 32px;
     }
 
-    .lr-link {
+    .lr-link,
+    .hp-prob a {
         padding: 8px 0;
     }
 
@@ -2056,4 +2057,68 @@ a.tl-where:hover {
     padding-left: 0.4em;
     border-left: 2px solid var(--muted);
     cursor: help;
+}
+
+/* ---- Scorecard ----------------------------------------------------------- */
+
+.hp-prob a {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+}
+
+.hp-prob a:hover {
+    color: var(--accent-bright);
+    border-color: var(--accent);
+}
+
+.sc-next {
+    margin-bottom: var(--gap-section);
+}
+
+.sc-next .hook-card {
+    display: flex;
+}
+
+.sc-facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sc-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 7px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent-link);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    vertical-align: 1px;
+    white-space: nowrap;
+}
+
+.sc-tag.sc-hit {
+    background: var(--accent);
+    color: #fff;
+}
+
+.rr-stat-wide .rr-stat-val {
+    white-space: normal;
+}
+
+@media (max-width: 1080px) {
+    .sc-facts {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .sc-facts {
+        grid-template-columns: 1fr;
+    }
+
+    .sc-tag {
+        margin: 3px 6px 0 0;
+    }
 }

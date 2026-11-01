@@ -664,6 +664,9 @@ def render_timeline(data: dict) -> str:
     )
 
 
+SCORECARD_LINK = '<a href="scorecard.html">Scorecard</a>'
+
+
 def render_accuracy_note(ev: dict) -> str:
     """The backtest result as a sentence for the hero's footing line.
 
@@ -676,7 +679,8 @@ def render_accuracy_note(ev: dict) -> str:
     return (
         f'<span title="Backtested model accuracy">Across every race since '
         f"{ev['evalWindow']['test'][0]} the model put the real trio in its "
-        f"top three {top3}% of the time.</span>"
+        f"top three {top3}% of the time.</span> "
+        '<a href="scorecard.html">See the scorecard</a>'
     )
 
 
@@ -733,10 +737,12 @@ def faq_items(
             "How accurate is the model?",
             f"Backtested on seasons it never saw during tuning, the model places the actual podium "
             f"trio in its top&nbsp;3 predictions {round(100 * ev['chosen']['top3'])}% of the time. "
-            f"F1 podiums are inherently high-variance, so exact-trio hits are rare by nature."
+            f"F1 podiums are inherently high-variance, so exact-trio hits are rare by nature. "
+            f"The {SCORECARD_LINK} grades every prediction as it was published."
             if ev and ev.get("chosen")
             else "The model is backtested on historical seasons it never saw during tuning. "
-            "F1 podiums are inherently high-variance, so exact-trio hits are rare by nature.",
+            "F1 podiums are inherently high-variance, so exact-trio hits are rare by nature. "
+            f"The {SCORECARD_LINK} grades every prediction as it was published.",
         ),
         (
             "What is &ldquo;current form&rdquo; based on?",
@@ -758,11 +764,12 @@ def faq_items(
         ),
         (
             "What else is on this site?",
-            'Four deeper dives: <a href="combos.html">Combinations</a> lists every unique '
+            'Five deeper dives: <a href="combos.html">Combinations</a> lists every unique '
             'podium trio in history; <a href="overdue.html">Overdue</a> ranks the trios that '
             'keep almost happening; <a href="unlikeliest.html">Unlikeliest</a> celebrates the '
-            'podiums that defied the odds; and <a href="soulmates.html">Soulmates</a> maps '
-            "which drivers keep meeting on the podium.",
+            'podiums that defied the odds; <a href="soulmates.html">Soulmates</a> maps '
+            f"which drivers keep meeting on the podium; and the {SCORECARD_LINK} shows how the "
+            "predictions held up.",
         ),
     ]
     if is_v2:
