@@ -156,6 +156,7 @@ GitHub Actions (`.github/workflows/`) runs CI (lint, format, tests across py3.11
 | `.claude/rules/data-updates.md` | The guard, the watcher and hand-over chain, the watchdog, podium revision alerts, and why the cron can't be trusted |
 | `.claude/rules/openf1-and-grid.md` | The OpenF1 fast lane and the official starting grid |
 | `.claude/rules/update-failures.md` | Every known way a data update has stalled, and the guardrails against them |
+| `.claude/rules/season-rollover.md` | What happens between seasons, and what needs a person before a new one |
 
 Rules only load for files you open, so read the matching one yourself when the task starts from a symptom rather than a file.
 

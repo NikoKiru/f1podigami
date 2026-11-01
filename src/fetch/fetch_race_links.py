@@ -97,6 +97,11 @@ def compute_targets(
         years = list(dict.fromkeys(years))  # dedupe, preserve order
     else:  # incremental
         years = [current_year]
+        # The calendar can flip to the new year before F1 lists the final race, and
+        # a backfill only comes with a --full.
+        last_year = current_year - 1
+        if last_year in counts and len(existing.get(str(last_year), {})) != counts[last_year]:
+            years.append(last_year)
     return [(y, counts[y]) for y in years if y in counts]
 
 

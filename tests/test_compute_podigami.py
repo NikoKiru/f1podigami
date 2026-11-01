@@ -1276,3 +1276,57 @@ def test_grid_smaller_than_three_yields_no_board(scenario):
     podiums, combos, _ = scenario
     res = cp.compute(podiums, combos, [{"driverId": "alf", "name": "Alf"}])
     assert res["trioBoard"] == []
+
+
+# --- The season boundary: cars come from the results, not the standings -------
+
+
+def _race_result(season, rnd, *seats):
+    return {
+        "season": season,
+        "round": rnd,
+        "results": [{"driverId": d, "constructorId": c} for d, c in seats],
+    }
+
+
+def test_cars_survive_a_season_with_no_standings_yet():
+    """After one round the standings file is empty. Without the cars every driver
+    was predicted in an unknown one: a rehearsal of 2027 R1 showed a brand-new trio
+    at 83% and a form table with every team gone."""
+    results = [_race_result("2027", "1", ("a", "ferrari"), ("b", "mclaren"))]
+    strength, seats, _ = cp._build_constructor_strength(None, 2027, results)
+    assert strength == {}
+    assert seats == {"a": "ferrari", "b": "mclaren"}
+
+
+def test_an_empty_or_old_standings_file_still_leaves_the_cars():
+    results = [_race_result("2027", "1", ("a", "ferrari"))]
+    empty = {"season": "2027", "round": "1", "constructors": [], "driverConstructor": {}}
+    old = {
+        "season": "2026",
+        "round": "23",
+        "constructors": [{"constructorId": "ferrari", "name": "Ferrari", "points": 1.0}],
+        "driverConstructor": {},
+    }
+    for standings in (empty, old):
+        assert cp._build_constructor_strength(standings, 2027, results)[1] == {"a": "ferrari"}
+
+
+def test_a_driver_who_missed_the_opener_keeps_last_seasons_car():
+    results = [
+        _race_result("2026", "23", ("a", "ferrari"), ("b", "mclaren")),
+        _race_result("2027", "1", ("a", "williams")),
+    ]
+    _, seats, _ = cp._build_constructor_strength(None, 2027, results)
+    assert seats == {"a": "williams", "b": "mclaren"}
+
+
+def test_the_standings_map_still_beats_last_seasons_car():
+    results = [_race_result("2026", "23", ("a", "ferrari"))]
+    standings = {
+        "season": "2027",
+        "round": "1",
+        "constructors": [{"constructorId": "williams", "name": "Williams", "points": 10.0}],
+        "driverConstructor": {"a": "williams"},
+    }
+    assert cp._build_constructor_strength(standings, 2027, results)[1] == {"a": "williams"}
