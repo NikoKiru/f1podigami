@@ -2,7 +2,11 @@
 
 ## 2026-11-01
 
+### Improvements
+- Links on phones are easier to tap. The season list, race pills, last-race card, footer and other standalone links went from 15–26px tall to at least 32px (#397)
+
 ### Fixes
+- The nav now stays at the top of the screen as you scroll, as it was always meant to, and the FAQ link stops below it instead of under it (#397)
 - Long race names such as "United States Grand Prix West" now stay on one line in the combinations table's Last seen column on desktop, and the trios beside them still fit on one line (#395)
 
 ## 2026-10-31
