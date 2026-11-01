@@ -16,10 +16,13 @@ Deployed to GitHub Pages: https://nikokiru.github.io/f1podigami
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     ```
 - Primary shell is PowerShell 7+ on Windows; a Bash tool is also available.
-- **Playwright is a Python package here, not an MCP server.** It's in `.venv` with Chromium and Firefox, and isn't in `requirements-dev.txt`: CI's `E2E (browser)` job (not a required check) installs it itself to run `tests/test_e2e.py` and `tests/test_slider_alignment.py`, which skip without it. Drive a real browser to verify browser-only behaviour (JS-rendered timeline, asset cache-busting, mobile layout) against the live site or a built `dist/`. Preferred over hand-rolled checks when a change is only observable in a rendered page. Headless browsers hide scrollbars: pass `ignore_default_args=["--hide-scrollbars"]`, or launch headed (`channel="msedge", headless=False`).
+- **Run Python through `.venv`.** A bare `python` is the system install, and `ruff` and `pytest` aren't on PATH at all, so use `.venv/Scripts/python.exe -m <tool>`. That's the copy the `ruff_gate` hook uses, and the system one can lag the versions the project requires. The project moves between PCs, so after a pull that changes the requirements files, refresh it with `.venv/Scripts/python.exe -m pip install -r requirements-dev.txt`.
+- **Playwright is a Python package here, not an MCP server.** It's in `.venv` with Chromium and Firefox (`.venv/Scripts/python.exe -m pip install playwright`, then `.venv/Scripts/python.exe -m playwright install chromium firefox`), and isn't in `requirements-dev.txt`: CI's `E2E (browser)` job (not a required check) installs it itself to run `tests/test_e2e.py` and `tests/test_slider_alignment.py`, which skip without it. Drive a real browser to verify browser-only behaviour (JS-rendered timeline, asset cache-busting, mobile layout) against the live site or a built `dist/`. Preferred over hand-rolled checks when a change is only observable in a rendered page. Headless browsers hide scrollbars: pass `ignore_default_args=["--hide-scrollbars"]`, or launch headed (`channel="msedge", headless=False`).
 - **The `github` MCP server is available** — structured GitHub access (PRs, issues, reviews, code search) when its typed results are clearer than parsing `gh` output. For routine git/PR/merge operations, `gh` remains the default (see above); use the MCP when it genuinely simplifies the task.
 
 ## Commands
+
+In these commands `python` means `.venv/Scripts/python.exe` (see **Environment notes**).
 
 ```bash
 # Install dependencies (runtime + dev/test)

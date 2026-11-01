@@ -12,6 +12,7 @@
 - Links on phones are easier to tap. The season list, race pills, last-race card, footer and other standalone links went from 15–26px tall to at least 32px (#397)
 
 ### Fixes
+- The `wait_for_pr.sh` tests now pass on a Windows PC where `bash` means WSL's launcher, by using the bash that comes with Git, and they skip rather than fail where there is none. `CLAUDE.md` now says to run Python through `.venv` and how to set Playwright up there (#PRNUM)
 - Ready for 2027, found by rehearsing the season change on a copy of the data. The final race's result would have stalled, because two tests assumed there's always a next race or a past one. The site now picks up next year's calendar by itself, because the only thing that used to fetch it is a weekly run GitHub usually skips. The model keeps every driver's car after the first race of a season, instead of predicting a brand-new trio at 83% with every team gone. The last race keeps its flag once the new calendar is in, "Season complete" fits its card on a phone, and last season's final race link still gets fetched (#402)
 - The nav now stays at the top of the screen as you scroll, as it was always meant to, and the FAQ link stops below it instead of under it (#397)
 - Long race names such as "United States Grand Prix West" now stay on one line in the combinations table's Last seen column on desktop, and the trios beside them still fit on one line (#395)
