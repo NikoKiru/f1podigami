@@ -460,6 +460,41 @@ def test_a_never_happened_trio_on_the_grid_could_still_be_a_podigami(dist):
     assert "could still be a podigami" in state["text"]
 
 
+@pytest.mark.parametrize(
+    ("page_name", "expected"),
+    [("overdue.html", "never"), ("soulmates.html", "rows"), ("unlikeliest.html", "rows")],
+)
+def test_a_row_leads_on_to_its_drivers_on_the_combinations_page(dist, page_name, expected):
+    """The three ranked pages used to be dead ends. An overdue trio has by definition
+    never happened, so its link lands on the page saying exactly that."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1200, "height": 900})
+        page.goto(_url(dist, page_name))
+        page.wait_for_load_state("load")
+        row = page.locator(".rankrow").first
+        row.locator("summary").click()
+        row.locator(".rr-link").click()
+        page.wait_for_url("**/combos.html?*")
+        page.wait_for_selector("tr.combo", state="attached")
+        visible = int(page.text_content("#visible-count") or "0")
+        title = page.text_content("#empty-title")
+        browser.close()
+    if expected == "never":
+        assert (visible, title) == (0, "Never happened")
+    else:
+        assert visible > 0
+
+
+@pytest.mark.parametrize("page_name", ["overdue.html", "unlikeliest.html", "soulmates.html"])
+def test_a_ranked_page_ends_with_the_way_on(dist, page_name):
+    html = (dist / page_name).read_text(encoding="utf-8")
+    explore = html[html.index('class="panel explore"') :]
+    explore = explore[: explore.index("</section>")]
+    assert 'href="combos.html"' in explore
+    assert f'href="{page_name}"' not in explore
+
+
 # ── Combos filter panel (index.js) ─────────────────────────────────────────
 
 

@@ -23,18 +23,26 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src"))
+from _hooks import explore_grid  # noqa: E402
 from _layout import (  # noqa: E402
     FOOTER,
     WELCOME,
     abbr_name,
     asset,
     breadcrumb_schema,
+    combos_link,
     driver_name,
     head,
     nav,
     organization_schema,
 )
-from _rows import render_row, render_section, render_stat, render_table  # noqa: E402
+from _rows import (  # noqa: E402
+    render_link,
+    render_row,
+    render_section,
+    render_stat,
+    render_table,
+)
 
 from datalib import OverdueTrio, load_overdue  # noqa: E402
 
@@ -90,6 +98,7 @@ def _stats(e: OverdueTrio) -> str:
         render_stat("Podium rates", _rates_cells(e))
         + render_stat("Raced together", f"{e.racesTogether}&times;")
         + render_stat("Chance by now", format_probability(e.score))
+        + render_link(combos_link(e.names), "Check the record")
     )
 
 
@@ -156,6 +165,7 @@ def main() -> int:
         <p class="as-of">Expected co-podiums = races together &times; each driver&rsquo;s career podium rate; chance by now is the Poisson tail P(&ge;1) = 1&minus;e<sup>&minus;score</sup>. Up to date through the {
         esc(as_of.season)
     } {esc(as_of.raceName)} (round {esc(as_of.round)}).</p>
+        {explore_grid("overdue.html")}
     </div>
 </main>
 {FOOTER}

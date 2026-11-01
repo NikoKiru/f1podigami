@@ -93,6 +93,12 @@ def test_unlikeliest_hook_missing_data():
     assert "hook-stat" not in _hooks.unlikeliest_hook(NS(trios=[]))
 
 
+def test_explore_grid_leaves_out_the_page_it_sits_on():
+    out = _hooks.explore_grid("overdue.html")
+    assert 'href="overdue.html"' not in out
+    assert 'href="unlikeliest.html"' in out
+
+
 def test_explore_grid_links_all_four_pages():
     out = _hooks.explore_grid()
     for href in ("combos.html", "overdue.html", "unlikeliest.html", "soulmates.html"):
