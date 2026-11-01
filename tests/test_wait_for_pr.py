@@ -9,7 +9,22 @@ from pathlib import Path
 import pytest
 
 SCRIPT = Path(__file__).resolve().parents[1] / ".claude" / "scripts" / "wait_for_pr.sh"
-BASH = shutil.which("bash")
+
+
+def find_bash():
+    """On Windows, the bash that comes with Git, not the first `bash` on PATH.
+
+    That one is usually WSL's launcher. It can't run a Windows script path, and it
+    fails outright when the only distro has no bash, as Docker Desktop's doesn't.
+    """
+    if os.name != "nt":
+        return shutil.which("bash")
+    git = shutil.which("git")
+    bash = Path(git).resolve().parents[1] / "bin" / "bash.exe" if git else None
+    return str(bash) if bash and bash.exists() else None
+
+
+BASH = find_bash()
 
 pytestmark = pytest.mark.skipif(BASH is None, reason="needs bash")
 
