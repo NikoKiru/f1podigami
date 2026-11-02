@@ -162,7 +162,7 @@
     },
     {
       "name": "Lewis Hamilton",
-      "total": 208,
+      "total": 209,
       "medianYear": 2017
     },
     {
@@ -172,7 +172,7 @@
     },
     {
       "name": "Max Verstappen",
-      "total": 137,
+      "total": 138,
       "medianYear": 2022
     },
     {
@@ -1581,7 +1581,7 @@
       22,
       0,
       53,
-      62,
+      63,
       13,
       9,
       16,
@@ -1663,7 +1663,7 @@
       11,
       4,
       5,
-      62,
+      63,
       25,
       0,
       25,
@@ -1883,12 +1883,12 @@
       0
     ]
   ],
-  "max": 62,
+  "max": 63,
   "topPairs": [
     {
       "a": "Lewis Hamilton",
       "b": "Max Verstappen",
-      "count": 62,
+      "count": 63,
       "firstYear": 2016,
       "lastYear": 2026
     },
