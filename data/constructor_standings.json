@@ -1,46 +1,46 @@
 {
   "season": "2026",
-  "round": "18",
+  "round": "19",
   "constructors": [
     {
       "constructorId": "mercedes",
       "name": "Mercedes",
-      "points": 607.0,
+      "points": 630.0,
       "position": 1,
       "wins": 12
     },
     {
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 474.0,
+      "points": 504.0,
       "position": 2,
       "wins": 2
     },
     {
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 355.0,
+      "points": 380.0,
       "position": 3,
-      "wins": 2
+      "wins": 3
     },
     {
       "constructorId": "mclaren",
       "name": "McLaren",
-      "points": 355.0,
+      "points": 371.0,
       "position": 4,
       "wins": 2
     },
     {
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 102.0,
+      "points": 104.0,
       "position": 5,
       "wins": 0
     },
     {
       "constructorId": "alpine",
       "name": "Alpine F1 Team",
-      "points": 69.0,
+      "points": 74.0,
       "position": 6,
       "wins": 0
     },
@@ -81,27 +81,27 @@
     }
   ],
   "driverConstructor": {
-    "antonelli": "mercedes",
-    "leclerc": "ferrari",
     "max_verstappen": "red_bull",
     "hamilton": "ferrari",
+    "antonelli": "mercedes",
+    "leclerc": "ferrari",
     "norris": "mclaren",
-    "hadjar": "red_bull",
-    "piastri": "mclaren",
     "russell": "mercedes",
+    "piastri": "mclaren",
+    "colapinto": "alpine",
     "lawson": "rb",
     "gasly": "alpine",
-    "hulkenberg": "audi",
-    "arvid_lindblad": "rb",
     "bortoleto": "audi",
-    "ocon": "haas",
-    "stroll": "aston_martin",
-    "alonso": "aston_martin",
+    "hadjar": "red_bull",
+    "ryo_hirakawa": "haas",
     "albon": "williams",
     "sainz": "williams",
+    "hulkenberg": "audi",
     "perez": "cadillac",
+    "arvid_lindblad": "rb",
+    "bearman": "haas",
     "bottas": "cadillac",
-    "colapinto": "alpine",
-    "bearman": "haas"
+    "stroll": "aston_martin",
+    "alonso": "aston_martin"
   }
 }
