@@ -118,7 +118,7 @@ body {
     min-height: 46px;
 }
 
-/* brand: podium mark + wordmark, links home */
+/* brand: plate mark + stacked wordmark, links home */
 .brand {
     display: inline-flex;
     align-items: center;
@@ -129,22 +129,33 @@ body {
 }
 
 .brand-mark {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     display: block;
 }
 
 .brand-name {
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    color: var(--text);
+    display: grid;
+    gap: 2px;
+    line-height: 1;
     white-space: nowrap;
 }
 
-.brand-name .accent {
-    color: var(--accent);
-    margin-right: 3px;
+.brand-kicker {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted-dim);
+}
+
+.brand-word {
+    font-size: 17px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text);
 }
 
 /* nav links: uppercase tabs with a red active underline */
