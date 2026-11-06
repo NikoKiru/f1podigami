@@ -722,7 +722,7 @@ def render_timeline(data: dict) -> str:
         f'    <select id="tl-select" aria-label="Timeline year">{"".join(options)}</select>'
         f"  </div>"
         f'  <ul class="tl-list" id="tl-list"></ul>'
-        f'  <button type="button" class="tl-more" id="tl-more" aria-expanded="false" hidden></button>'
+        f'  <button type="button" class="tl-more" id="tl-more" aria-expanded="false" aria-controls="tl-list" hidden></button>'
         f"</section>"
     )
 

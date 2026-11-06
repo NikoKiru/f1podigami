@@ -1387,8 +1387,12 @@ def test_phone_season_lists_newest_three_then_all(dist):
         more.click()
         assert len(_visible_items(page)) == n
         assert more.get_attribute("aria-expanded") == "true"
+        assert more.text_content().strip() == "Show fewer ▴"
         more.click()
         assert len(_visible_items(page)) == 3
+        assert more.text_content().strip() == f"All {n} this season ▾"
+        assert page.locator(".tl-item .tl-where").first.text_content().strip().endswith(" GP")
+        assert more.get_attribute("aria-controls") == "tl-list"
         browser.close()
 
 

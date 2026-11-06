@@ -13,6 +13,7 @@
     const listEl = document.getElementById('tl-list');
     const moreEl = document.getElementById('tl-more');
     const CLIP = 3;
+    let moreLabel = '';
     const bars = Array.from(document.querySelectorAll('.tl-bar'));
 
     function esc(s) {
@@ -75,9 +76,10 @@
         if (moreEl) {
             moreEl.hidden = !clipped;
             moreEl.setAttribute('aria-expanded', 'false');
-            moreEl.textContent = year === String(data.currentSeason)
+            moreLabel = year === String(data.currentSeason)
                 ? `All ${shown.length} this season ▾`
                 : `All ${shown.length} in ${year} ▾`;
+            moreEl.textContent = moreLabel;
         }
 
         listEl.innerHTML = shown.map(e => {
@@ -95,7 +97,7 @@
                 .join(' ');
             const fr = e.firstRace;
             const where = narrow
-                ? fr.raceName.replace(/ Grand Prix$/, '')
+                ? fr.raceName.replace(/ Grand Prix$/, ' GP')
                 : fr.raceName;
             // Official F1 result URL embedded at build time; wiki as fallback.
             const url = fr.url || wikiUrl(year, fr.raceName);
@@ -155,6 +157,7 @@
         moreEl.addEventListener('click', () => {
             const open = listEl.classList.toggle('is-open');
             moreEl.setAttribute('aria-expanded', String(open));
+            moreEl.textContent = open ? 'Show fewer ▴' : moreLabel;
         });
     }
 
