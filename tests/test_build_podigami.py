@@ -818,3 +818,19 @@ def test_form_toggle_has_a_short_phone_label():
     out = bp.render_form([], False, META)
     assert "fd-short" in out
     assert "Current form" in out
+
+
+def test_embedded_season_entries_carry_short_names(dist):
+    """The phone list reads the season-wide short names from the embed."""
+    import json
+    import re
+
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    blob = re.search(r'<script[^>]*id="podigami-data"[^>]*>(.*?)</script>', html, re.S).group(1)
+    by_season = json.loads(blob)["bySeason"]
+    for season, entries in by_season.items():
+        for e in entries:
+            assert len(e["short"]) == len(e["names"]), season
+    hills = [e for e in by_season["1962"] if any("Hill" in n for n in e["names"])]
+    shorts = {s for e in hills for s in e["short"]}
+    assert {"G. Hill", "P. Hill"} <= shorts

@@ -1948,42 +1948,52 @@ a.tl-where:hover {
         gap: 2px 12px;
     }
 
-    /* Stacked trios: the strong border between entries outweighs the faint
-       hairlines inside each trio. The race sits beside the names rather than
-       under them, as the count does on the combinations table. */
-    .tl-item {
-        align-items: center;
-        padding: 6px 0;
+    /* The season list (landing page only: this file styles five pages): a trio
+       of surnames wraps inline, only at a slash, with its race on a line under
+       it. The strong border between entries separates them. */
+    .landing .tl-item {
+        display: block;
+        padding: 2px 0;
         border-bottom-color: var(--border-strong);
     }
 
-    .tl-where {
-        flex: 0 1 auto;
-        min-width: 0;
-        text-align: right;
+    /* Each link is its own 32px tap target; the text sits at the edge they
+       share, so trio and race still read as one two-line row. */
+    .landing .tl-item .combo-link {
+        display: flex;
+        align-items: flex-end;
+        min-height: 32px;
+    }
+
+    .landing .tl-where {
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-start;
         white-space: normal;
+        font-size: 12px;
     }
 
-    /* One driver per line, a hairline between them in place of the "/" — as
-       on the combinations table. The link takes the free width so the hairlines
-       do too, rather than stopping at the longest name. */
-    .tl-item .combo-link {
-        display: block;
-        flex: 1 0 auto;
+    /* Only a season's newest three until "All N" opens the rest. */
+    .landing .tl-list.is-clipped:not(.is-open) .tl-item:nth-child(n + 4) {
+        display: none;
     }
 
-    .trio,
-    .trio .pdriver {
-        display: block;
+    .landing .tl-more {
+        display: flex;
+        align-items: center;
+        min-height: 36px;
+        margin: 4px 0 0;
+        padding: 0 4px;
+        background: none;
+        border: 0;
+        color: var(--accent-bright);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
     }
 
-    .trio .pdriver + .pdriver {
-        border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-        margin-top: 2px;
-        padding-top: 2px;
-    }
-
-    .trio .sep {
+    .landing .tl-more[hidden] {
         display: none;
     }
 }

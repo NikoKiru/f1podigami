@@ -36,6 +36,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     organization_schema,
     race_url,
 )
+from _names import short_names_by_season, surname  # noqa: E402
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
@@ -721,6 +722,7 @@ def render_timeline(data: dict) -> str:
         f'    <select id="tl-select" aria-label="Timeline year">{"".join(options)}</select>'
         f"  </div>"
         f'  <ul class="tl-list" id="tl-list"></ul>'
+        f'  <button type="button" class="tl-more" id="tl-more" aria-expanded="false" hidden></button>'
         f"</section>"
     )
 
@@ -1078,6 +1080,13 @@ def main() -> int:
 
     # Embedded data for the slider (only what the client needs).
     # `</script>`-neutralized so an embedded string can never prematurely close the tag.
+    # Phone names: surnames, with initials season-wide only where one is shared.
+    short = short_names_by_season(podiums_dicts)
+    for _season, _trios in data["bySeason"].items():
+        # `names` already hold display names; the lookup is keyed by API names.
+        _by_display = {driver_name(k): v for k, v in short.get(_season, {}).items()}
+        for _trio in _trios:
+            _trio["short"] = [_by_display.get(n) or surname(n) for n in _trio["names"]]
     embed = json.dumps(
         {
             "bySeason": data["bySeason"],

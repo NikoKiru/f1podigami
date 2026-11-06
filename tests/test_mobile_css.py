@@ -76,19 +76,18 @@ def test_combo_driver_names_are_nowrap():
 
 
 def test_leaderboard_and_timeline_trios_stack_on_mobile():
-    """Overdue, Unlikeliest and the landing-page timeline stack a trio one
-    driver per line on phones, hairline between, as the combinations table
-    does. (Soulmates pairs are two short names and stay inline.)"""
+    """Overdue and Unlikeliest stack a trio one driver per line on phones,
+    hairline between, as the combinations table does. (Soulmates pairs are two
+    short names and stay inline; the landing-page season list wraps surnames.)"""
     import re
 
     s = css("podigami.css")
     block = s[s.index("@media (max-width: 600px)") :]
-    for drv in (r"\.rr-drivers \.oddriver", r"\.rr-drivers \.undriver", r"\.trio \.pdriver"):
+    for drv in (r"\.rr-drivers \.oddriver", r"\.rr-drivers \.undriver"):
         assert re.search(drv + r"[^{]*\{[^}]*display:\s*block", block), f"{drv} must stack"
     for pair in (
         r"\.oddriver \+ \.oddriver",
         r"\.undriver \+ \.undriver",
-        r"\.pdriver \+ \.pdriver",
     ):
         assert re.search(pair + r"[^{]*\{[^}]*border-top:\s*1px solid", block), (
             f"{pair} needs a hairline between stacked names"
@@ -112,7 +111,6 @@ def test_trio_boundaries_outweigh_the_lines_inside_them_on_mobile():
     assert re.search(r"\.rankrow \+ \.rankrow > details\s*\{[^}]*var\(--border-strong\)", pod)
     assert re.search(r"\.tl-item\s*\{[^}]*var\(--border-strong\)", pod)
     assert re.search(r"\.undriver \+ \.undriver\s*\{[^}]*" + faint, pod)
-    assert re.search(r"\.pdriver \+ \.pdriver\s*\{[^}]*" + faint, pod)
 
 
 def test_combo_trio_stacks_one_driver_per_line_on_mobile():

@@ -11,6 +11,8 @@
     const yearEl = document.getElementById('tl-year');
     const countEl = document.getElementById('tl-count');
     const listEl = document.getElementById('tl-list');
+    const moreEl = document.getElementById('tl-more');
+    const CLIP = 3;
     const bars = Array.from(document.querySelectorAll('.tl-bar'));
 
     function esc(s) {
@@ -20,7 +22,7 @@
     }
 
     // Broadcast-style full name: "First MIDDLE? LASTNAME" (surname uppercased).
-    // On narrow screens, abbreviate to "F. LASTNAME" so trios fit.
+    // On phones the list shows build-time surnames instead (see applyContent).
     const narrowQ = window.matchMedia('(max-width: 600px)');
     let narrow = narrowQ.matches;
     narrowQ.addEventListener('change', e => {
@@ -32,7 +34,6 @@
         const parts = name.trim().split(/\s+/);
         if (parts.length === 0) return name;
         const surname = parts[parts.length - 1].toUpperCase();
-        if (narrow) return parts[0][0] + '. ' + surname;
         parts[parts.length - 1] = surname;
         return parts.join(' ');
     }
@@ -65,17 +66,37 @@
             ? `${entries.length} new tri${entries.length === 1 ? 'o' : 'os'}`
             : 'no new trios';
 
-        listEl.innerHTML = entries.map(e => {
+        // Phones: the season's newest trios first, surnames only, three shown
+        // until "All N" opens the rest. Desktop keeps chronological full names.
+        const shown = narrow ? entries.slice().reverse() : entries;
+        const clipped = narrow && shown.length > CLIP;
+        listEl.classList.toggle('is-clipped', clipped);
+        listEl.classList.remove('is-open');
+        if (moreEl) {
+            moreEl.hidden = !clipped;
+            moreEl.setAttribute('aria-expanded', 'false');
+            moreEl.textContent = year === String(data.currentSeason)
+                ? `All ${shown.length} this season ▾`
+                : `All ${shown.length} in ${year} ▾`;
+        }
+
+        listEl.innerHTML = shown.map(e => {
             // Each name carries the "/" after it: inline, the trio wraps only
             // after a separator; on a phone, CSS stacks one name per line. The
             // space is that break: two touching nowrap spans offer none, and a
             // trio that can't wrap overflows any row too narrow for it. Keep it
             // a space: an element here would come between `.pdriver + .pdriver`.
-            const names = e.names
-                .map((n, i, all) => `<span class="pdriver">${esc(displayName(n))}` +
+            const labels = narrow
+                ? e.names.map((n, i) => (e.short && e.short[i]) || n)
+                : e.names.map(displayName);
+            const names = labels
+                .map((n, i, all) => `<span class="pdriver">${esc(n)}` +
                     (i < all.length - 1 ? '<span class="sep">/</span>' : '') + '</span>')
                 .join(' ');
             const fr = e.firstRace;
+            const where = narrow
+                ? fr.raceName.replace(/ Grand Prix$/, '')
+                : fr.raceName;
             // Official F1 result URL embedded at build time; wiki as fallback.
             const url = fr.url || wikiUrl(year, fr.raceName);
             // This trio has happened -> link it to its stats on the combos page.
@@ -84,7 +105,7 @@
                 <a class="combo-link" href="${comboUrl}"
                    title="See this trio on the combos page"><span class="trio trio-sm">${names}</span></a>
                 <a class="tl-where" href="${url}" target="_blank" rel="noopener"
-                   title="${esc(year + ' ' + fr.raceName)} &mdash; race report">R${esc(fr.round)} &middot; ${esc(fr.raceName)}</a>
+                   title="${esc(year + ' ' + fr.raceName)} &mdash; race report">R${esc(fr.round)} &middot; ${esc(where)}</a>
             </li>`;
         }).join('');
 
@@ -128,6 +149,13 @@
             listEl.style.height = '';
             listEl.style.overflow = '';
         }, 300);
+    }
+
+    if (moreEl) {
+        moreEl.addEventListener('click', () => {
+            const open = listEl.classList.toggle('is-open');
+            moreEl.setAttribute('aria-expanded', String(open));
+        });
     }
 
     // Coalesce the slider's rapid input events to one render per frame, always

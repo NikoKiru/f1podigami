@@ -74,7 +74,6 @@ def test_slider_input_updates_year_and_count(dist):
         ("combos.html", "tbody tr.combo td.drivers", ".driver"),
         ("overdue.html", ".rr-drivers", ".oddriver"),
         ("unlikeliest.html", ".rr-drivers", ".undriver"),
-        ("index.html", ".tl-item .trio", ".pdriver"),
     ],
 )
 def test_trios_stack_one_whole_name_per_line_on_phones(dist, page_name, group, driver):
@@ -84,8 +83,6 @@ def test_trios_stack_one_whole_name_per_line_on_phones(dist, page_name, group, d
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 360, "height": 800})
         page.goto(_url(dist, page_name))
-        if page_name == "index.html":
-            _show_a_season_with_trios(page)
         page.wait_for_selector(f"{group} {driver}")
         bad = page.evaluate(
             """([group, driver]) => {
@@ -1331,8 +1328,8 @@ def test_every_season_row_stays_inside_its_list(dist, width):
         ("soulmates.html", ".rr-face", 390, 34, 44),
         # Three names, plus a line of tags on a new trio the model called.
         ("scorecard.html", ".rr-face", 390, 60, 112),
-        # Same stack, and nothing between the names: a line box there adds 35px.
-        ("index.html", ".tl-item", 390, 60, 84),
+        # Surnames on one wrapping line, the race under it.
+        ("index.html", ".tl-item", 390, 57, 81),
     ],
 )
 def test_table_rows_are_compact_but_not_squished(dist, page_name, row, width, low, high):
@@ -1348,24 +1345,116 @@ def test_table_rows_are_compact_but_not_squished(dist, page_name, row, width, lo
     assert low <= height <= high, f"{page_name} {row} is {height}px at {width}px wide"
 
 
-def test_stacked_season_names_keep_their_hairlines(dist):
-    """The hairline between stacked names hangs off ``.pdriver + .pdriver``, so
-    anything rendered between two names silently removes it, hidden or not."""
+def _phone_timeline(browser, dist, width=390, height=844, year=None):
+    page = browser.new_page(viewport={"width": width, "height": height})
+    page.add_init_script("localStorage.setItem('welcomed','1')")
+    page.goto(_url(dist, "index.html"))
+    page.wait_for_selector("#tl-select")
+    data = page.evaluate("JSON.parse(document.getElementById('podigami-data').textContent)")
+    if year is not None:
+        page.select_option("#tl-select", str(year))
+        page.wait_for_function(f"document.getElementById('tl-year').textContent === '{year}'")
+    return page, data
+
+
+def _visible_items(page):
+    return page.evaluate(
+        """() => [...document.querySelectorAll('.tl-item')]
+            .filter(i => i.offsetParent !== null).map(i => i.textContent.trim())"""
+    )
+
+
+def test_phone_season_lists_newest_three_then_all(dist):
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": 390, "height": 844})
-        page.goto(_url(dist, "index.html"))
-        _show_a_season_with_trios(page)
-        rows, lines = page.evaluate(
-            """() => [
-                document.querySelectorAll('.tl-item').length,
-                [...document.querySelectorAll('.tl-item .pdriver + .pdriver')].filter(
-                    name => parseFloat(getComputedStyle(name).borderTopWidth) > 0
-                ).length,
-            ]"""
+        page, data = _phone_timeline(browser, dist)
+        season = data["currentSeason"]
+        n = len(data["bySeason"].get(season, []))
+        if n <= 3:
+            browser.close()
+            pytest.skip("current season has 3 or fewer new trios")
+        page.select_option("#tl-select", season)
+        rounds = page.evaluate(
+            """() => [...document.querySelectorAll('.tl-item .tl-where')].map(
+                a => parseInt(a.textContent.trim().slice(1)))"""
+        )
+        assert rounds == sorted(rounds, reverse=True), "newest first"
+        assert len(_visible_items(page)) == 3
+        more = page.locator("#tl-more")
+        assert more.is_visible()
+        assert more.text_content().strip() == f"All {n} this season ▾"
+        assert more.get_attribute("aria-expanded") == "false"
+        more.click()
+        assert len(_visible_items(page)) == n
+        assert more.get_attribute("aria-expanded") == "true"
+        more.click()
+        assert len(_visible_items(page)) == 3
+        browser.close()
+
+
+def test_phone_other_season_label_names_the_year(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page, data = _phone_timeline(browser, dist, year=1962)
+        n = len(data["bySeason"]["1962"])
+        assert n > 3
+        assert page.locator("#tl-more").text_content().strip() == f"All {n} in 1962 ▾"
+        browser.close()
+
+
+def test_phone_small_seasons_have_no_more_button(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page, data = _phone_timeline(browser, dist)
+        small = [y for y, c in data["seasonCounts"].items() if c <= 3]
+        assert small
+        for y in small[:6] + [y for y, c in data["seasonCounts"].items() if c == 0][:1]:
+            page.select_option("#tl-select", str(y))
+            page.wait_for_function(f"document.getElementById('tl-year').textContent === '{y}'")
+            assert page.locator("#tl-more").is_hidden(), y
+            if data["seasonCounts"][y] == 0:
+                assert page.text_content("#tl-count").strip() == "no new trios"
+        browser.close()
+
+
+def test_phone_season_names_are_surnames_on_one_line(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page, data = _phone_timeline(browser, dist, year=1962)
+        first = data["bySeason"]["1962"][-1]
+        # Newest first, so the last-listed entry is the first item's opposite:
+        # check the newest one, which the page shows at the top.
+        newest = data["bySeason"]["1962"][-1]
+        text = " ".join(page.locator(".tl-item .trio").first.text_content().split())
+        assert text == "/ ".join(newest["short"]), (text, first["short"])
+        assert text != text.upper()
+        browser.close()
+
+
+def test_phone_season_list_fits_a_narrow_wide_font_screen(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page, _ = _phone_timeline(browser, dist, width=320, height=800, year=1999)
+        page.add_style_tag(content=WIDER_FONT)
+        page.locator("#tl-more").click()
+        bad = page.evaluate(
+            """() => {
+                const edge = document.querySelector('.timeline').getBoundingClientRect().right;
+                const bad = [];
+                for (const el of document.querySelectorAll('.tl-item, .tl-item .pdriver')) {
+                    if (el.getBoundingClientRect().right > edge + 0.5) bad.push('overflow: ' + el.textContent);
+                }
+                for (const d of document.querySelectorAll('.tl-item .pdriver')) {
+                    const r = document.createRange();
+                    r.selectNodeContents(d);
+                    const tops = new Set([...r.getClientRects()].map(x => Math.round(x.top)));
+                    if (tops.size > 1) bad.push('split: ' + d.textContent);
+                }
+                return bad.slice(0, 5);
+            }"""
         )
         browser.close()
-    assert lines == rows * 2, f"{lines} hairlines across {rows} trios"
+    assert not bad, bad
 
 
 def test_next_race_card_is_a_single_band_on_desktop(dist):
