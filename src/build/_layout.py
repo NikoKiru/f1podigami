@@ -41,6 +41,7 @@ NAV_LINKS = [
 # plain string (not an f-string) so its braces need no escaping by callers.
 _THEME_INIT = (
     "<script>(function(){"
+    'document.documentElement.classList.add("js");'
     'try{var t=localStorage.getItem("theme");'
     'if(t!=="light"&&t!=="dark")'
     't=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";'

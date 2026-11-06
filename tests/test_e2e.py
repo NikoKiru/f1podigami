@@ -2065,3 +2065,81 @@ def test_phone_board_more_button_is_hidden_on_desktop(dist):
         shown = page.locator(".cand-more").is_visible()
         browser.close()
     assert not shown
+
+
+# ── Phone Explore list and folded FAQ ──────────────────────────────────────
+
+
+def test_phone_shows_explore_list_not_hook_cards(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        assert not page.locator(".hook-row").first.is_visible()
+        assert not page.locator(".landing .explore").is_visible()
+        assert page.locator(".explore-list").is_visible()
+        assert page.locator(".explore-list .ex-row:visible").count() == 5
+        browser.close()
+
+
+def test_phone_faq_is_folded_until_the_row_is_tapped(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        assert page.locator(".faq-item:visible").count() == 0
+        fold = page.locator(".faq-fold")
+        assert fold.is_visible()
+        assert fold.get_attribute("aria-expanded") == "false"
+        fold.click()
+        assert page.locator(".faq-item:visible").count() == 8
+        assert fold.get_attribute("aria-expanded") == "true"
+        fold.click()
+        assert page.locator(".faq-item:visible").count() == 0
+        browser.close()
+
+
+def test_desktop_keeps_hook_cards_and_open_faq(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 900})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        assert not page.locator(".explore-list").is_visible()
+        assert not page.locator(".faq-fold").is_visible()
+        assert page.locator(".hook-row").first.is_visible()
+        assert page.locator(".landing .explore").is_visible()
+        assert page.locator(".faq-item:visible").count() == 8
+        browser.close()
+
+
+def test_phone_landing_is_about_two_screens(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        height = page.evaluate("document.documentElement.scrollHeight")
+        browser.close()
+    assert height <= 2.6 * 844, height
+
+
+def test_phone_without_javascript_shows_everything(dist):
+    """CSS that collapses content only JS can reopen would strand these visitors."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        context = browser.new_context(
+            viewport={"width": 390, "height": 844}, java_script_enabled=False
+        )
+        page = context.new_page()
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        rows = page.locator(".cand-list > li")
+        assert rows.count() > 3
+        assert rows.count() == page.locator(".cand-list > li:visible").count()
+        assert not page.locator(".cand-more").is_visible()
+        assert not page.locator(".faq-fold").is_visible()
+        assert page.locator(".faq-item:visible").count() == 8
+        browser.close()

@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from _hooks import (  # noqa: E402
     combos_hook,
     explore_grid,
+    explore_list,
     overdue_hook,
     soulmates_hook,
     unlikeliest_hook,
@@ -882,7 +883,10 @@ def render_faq(
     return (
         f'<section class="panel faq-section" id="faq">'
         f"  <h2>Frequently asked questions</h2>"
-        f"  {''.join(entries)}"
+        f'  <button type="button" class="faq-fold" aria-expanded="false"'
+        f' aria-controls="faq-list">Questions &amp; answers'
+        f' <span class="faq-n">{len(items)}</span></button>'
+        f'  <div class="faq-list" id="faq-list">{"".join(entries)}</div>'
         f"</section>"
     )
 
@@ -1039,6 +1043,7 @@ def main() -> int:
         f"{unlikeliest_hook(unlikeliest_data)}</div>"
     )
     explore = explore_grid()
+    explore_phone = explore_list(total_combos, lo, soulmates_data, overdue_data, unlikeliest_data)
 
     acc_note = render_accuracy_note(model_eval)
     # The hero predicts the race after asOf — the same one the next-race box names.
@@ -1128,6 +1133,7 @@ def main() -> int:
         {hook_row_board}
         {timeline}
         {hook_row_timeline}
+        {explore_phone}
         {faq}
         {explore}
     </div>

@@ -561,8 +561,22 @@
 
 // A link to the FAQ lands on an open answer, not a wall of closed questions.
 (function () {
+    const section = document.querySelector('#faq');
+    const fold = document.querySelector('.faq-fold');
+
+    function setOpen(open) {
+        if (!section) return;
+        section.classList.toggle('is-open', open);
+        if (fold) fold.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    if (fold) fold.addEventListener('click', function () {
+        setOpen(!section.classList.contains('is-open'));
+    });
+
     function openFirstAnswer() {
         if (location.hash !== '#faq') return;
+        setOpen(true);
         const first = document.querySelector('#faq .faq-item');
         if (first) first.open = true;
     }

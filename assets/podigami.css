@@ -1497,9 +1497,9 @@ a.tl-where:hover {
         grid-column: 1 / -1;
     }
 
-    /* The bottom row has a left cell too. <h2> is child 1, so the left column is
-       the even children. */
-    .faq-item:nth-last-child(2):nth-child(even) {
+    /* The bottom row has a left cell too. <h2> sits outside the list, so the left column is
+       the odd children inside the (display: contents) list. */
+    .faq-item:nth-last-child(2):nth-child(odd) {
         border-bottom: none;
     }
 }
@@ -1759,7 +1759,7 @@ a.tl-where:hover {
         overflow-y: visible;
     }
 
-    .landing .cand-board:not(.is-open) .cand-list > li:nth-child(n + 4) {
+    .js .landing .cand-board:not(.is-open) .cand-list > li:nth-child(n + 4) {
         display: none;
     }
 
@@ -1775,7 +1775,7 @@ a.tl-where:hover {
         margin-top: 10px;
     }
 
-    .landing .cand-more,
+    .js .landing .cand-more,
     .landing .cand-actions .form-details {
         flex: 1;
         min-width: 0;
@@ -1792,7 +1792,7 @@ a.tl-where:hover {
         display: none;
     }
 
-    .landing .cand-more {
+    .js .landing .cand-more {
         display: block;
         box-sizing: border-box;
         width: auto;
@@ -1808,7 +1808,7 @@ a.tl-where:hover {
         cursor: pointer;
     }
 
-    .landing .cand-more:hover {
+    .js .landing .cand-more:hover {
         border-color: var(--accent);
         color: var(--text);
     }
@@ -1996,6 +1996,105 @@ a.tl-where:hover {
     .landing .tl-more[hidden] {
         display: none;
     }
+
+    /* One Explore list stands in for the hook cards and the Keep exploring grid. */
+    .landing .hook-row,
+    .landing .explore {
+        display: none;
+    }
+
+    .landing .explore-list {
+        display: block;
+        padding: 10px var(--pad-panel);
+        margin-top: var(--gap-section);
+    }
+
+    .landing .explore-list > h2 {
+        margin: 0 0 4px;
+    }
+
+    .landing .ex-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 40px;
+        padding: 4px 0;
+        border-top: 1px solid var(--border);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .landing .ex-row:first-of-type {
+        border-top: none;
+    }
+
+    .landing .ex-row .plate {
+        flex: 0 0 92px;
+        text-align: center;
+    }
+
+    .landing .ex-stat {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        color: var(--text-dim);
+        line-height: 1.3;
+    }
+
+    .landing .ex-stat b {
+        color: var(--text);
+    }
+
+    .landing .ex-chev {
+        flex: 0 0 auto;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    /* The FAQ folds behind one row, but only where JS can reopen it. */
+    .js .landing .faq-fold {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 40px;
+        padding: 0;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        background: none;
+        border: 0;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .landing .faq-fold::after {
+        content: "\25BE";
+        color: var(--muted);
+        margin-left: 8px;
+    }
+
+    .landing .faq-fold[aria-expanded="true"]::after {
+        content: "\25B4";
+    }
+
+    .landing .faq-fold .faq-n {
+        margin-left: auto;
+        color: var(--muted);
+        font-weight: 500;
+    }
+
+    .js .landing .faq-section:not(.is-open):not(:target) > h2,
+    .js .landing .faq-section:not(.is-open):not(:target) > .faq-list {
+        display: none;
+    }
+
+    .js .landing .faq-section:not(.is-open):not(:target) {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
 }
 /* ---- Discovery hooks & explore grid ------------------------------------ */
 
@@ -2077,6 +2176,16 @@ a.tl-where:hover {
         grid-template-columns: 1fr;
         gap: 8px;
     }
+}
+
+/* Phone-only pieces: the Explore list and the FAQ fold button. */
+.explore-list,
+.faq-fold {
+    display: none;
+}
+
+.faq-list {
+    display: contents;
 }
 
 /* ---- Timeline quick-pick chips ------------------------------------------ */

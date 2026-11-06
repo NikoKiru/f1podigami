@@ -698,3 +698,28 @@ def test_drawer_marks_active_page(dist):
     html = (dist / "combos.html").read_text(encoding="utf-8")
     drawer = html[html.index('<aside class="nav-drawer"') : html.index("</aside>")]
     assert 'href="combos.html" class="active"' in drawer, "drawer should highlight the current page"
+
+
+def test_landing_explore_list_sits_before_the_faq(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert html.index('class="panel explore-list"') < html.index('class="panel faq-section"')
+    assert html.count('class="ex-row"') == 5
+
+
+def test_landing_faq_fold_counts_the_questions(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    items = html.count('class="faq-item"')
+    m = re.search(
+        r'<button type="button" class="faq-fold"[^>]*>.*?<span class="faq-n">(\d+)</span>', html
+    )
+    assert m, "the FAQ fold button is missing"
+    assert int(m.group(1)) == items
+    assert 'aria-controls="faq-list"' in html and 'id="faq-list"' in html
+
+
+def test_theme_init_marks_the_page_as_js_enabled():
+    from build._layout import _THEME_INIT
+
+    assert 'document.documentElement.classList.add("js")' in _THEME_INIT
+    # outside the try/catch, so a storage error cannot skip it
+    assert _THEME_INIT.index('classList.add("js")') < _THEME_INIT.index("try{")

@@ -118,6 +118,43 @@ _EXPLORE = [
 ]
 
 
+def _ex_row(label: str, stat_html: str, href: str) -> str:
+    return (
+        f'<a class="ex-row" href="{esc(href)}">'
+        f'<span class="plate plate-secondary">{esc(label)}</span>'
+        f'<span class="ex-stat">{stat_html}</span>'
+        f'<span class="ex-chev" aria-hidden="true">&rsaquo;</span>'
+        f"</a>"
+    )
+
+
+def explore_list(total_combos: int, since_year, soulmates, overdue, unlikeliest) -> str:
+    """Phone hub: the five pages as one-line rows, each with a live stat. Replaces
+    the hook cards and the Keep exploring grid on phones. A missing dataset
+    leaves its stat empty, never the row."""
+    combos = f"<b>{total_combos:,}</b> trios since {esc(since_year)}" if total_combos else ""
+    due = ""
+    if overdue is not None and overdue.allTime:
+        t = overdue.allTime[0]
+        due = f"<b>{_surnames(t.names)}</b> &middot; {t.racesTogether} races"
+    long_shot = ""
+    if unlikeliest is not None and unlikeliest.trios:
+        t = unlikeliest.trios[0]
+        long_shot = f"<b>{_surnames(t.names)}</b> &middot; {esc(t.happened.season)}"
+    duo = ""
+    if soulmates is not None and soulmates.topPairs:
+        p = soulmates.topPairs[0]
+        duo = f"<b>{esc(surname(p.a))} &amp; {esc(surname(p.b))}</b> &middot; {p.count} together"
+    rows = [
+        _ex_row("Combinations", combos, "combos.html"),
+        _ex_row("Overdue", due, "overdue.html"),
+        _ex_row("Unlikeliest", long_shot, "unlikeliest.html"),
+        _ex_row("Soulmates", duo, "soulmates.html"),
+        _ex_row("Scorecard", "Every prediction, graded", "scorecard.html"),
+    ]
+    return f'<section class="panel explore-list"><h2>Explore</h2>{"".join(rows)}</section>'
+
+
 def explore_grid(current: str = "") -> str:
     """End-of-page hub: every other page, one line each (no stats — the in-flow
     hooks carry those; repeating them here would read as a glitch). ``current``
