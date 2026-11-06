@@ -1076,7 +1076,9 @@ main {
     display: none;
 }
 
-.form-details .fd-open {
+.form-details .fd-open,
+.form-details .fd-short,
+.cand-more {
     display: none;
 }
 
@@ -1748,6 +1750,85 @@ a.tl-where:hover {
     /* Nothing to absorb once the strip wraps — an auto-growing spacer would
        just push the status onto a line of its own. */
     .lr-sp {
+        display: none;
+    }
+
+    /* Trio board: top three, then "All N" and "Current form" side by side. */
+    .landing .cand-scroll {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .landing .cand-board:not(.is-open) .cand-list > li:nth-child(n + 4) {
+        display: none;
+    }
+
+    .landing .cand-board::after {
+        display: none;
+    }
+
+    .landing .cand-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .landing .cand-more,
+    .landing .cand-actions .form-details {
+        flex: 1;
+        min-width: 0;
+        margin-top: 0;
+    }
+
+    .landing .cand-actions .form-details[open] {
+        flex-basis: 100%;
+    }
+
+    /* A closed form is only half the row wide; its hidden tower would still be
+       laid out at that width and run past the card. */
+    .landing .cand-actions .form-details:not([open]) > :not(summary) {
+        display: none;
+    }
+
+    .landing .cand-more {
+        display: block;
+        box-sizing: border-box;
+        width: auto;
+        min-height: 32px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface-2);
+        color: var(--text-dim);
+        cursor: pointer;
+    }
+
+    .landing .cand-more:hover {
+        border-color: var(--accent);
+        color: var(--text);
+    }
+
+    .landing .cand-actions .form-details > summary {
+        width: auto;
+        text-align: center;
+        box-sizing: border-box;
+        margin: 0;
+    }
+
+    .landing .form-details .fd-short {
+        display: inline;
+    }
+
+    .landing .form-details .fd-closed {
+        display: none;
+    }
+
+    .landing .form-details[open] .fd-short {
         display: none;
     }
 

@@ -513,6 +513,21 @@
     window.addEventListener('resize', sync);
 })();
 
+// Phones show the top three trios; the button opens the whole board.
+(function () {
+    const btn = document.querySelector('.cand-more');
+    if (!btn) return;
+    const board = document.querySelector('.cand-board');
+    if (!board) return;
+    const n = btn.getAttribute('data-count');
+
+    btn.addEventListener('click', function () {
+        const open = board.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.textContent = open ? 'Top 3 ▴' : 'All ' + n + ' ▾';
+    });
+})();
+
 // A link to the FAQ lands on an open answer, not a wall of closed questions.
 (function () {
     function openFirstAnswer() {

@@ -585,6 +585,13 @@ def render_candidates(
     else:
         return ""
     badge = '<span class="panel-badge plate plate-status">grid-aware</span>' if grid_aware else ""
+    # Phones show the top three; this opens the rest. Desktop hides the button.
+    more = (
+        f'<button type="button" class="cand-more" aria-expanded="false"'
+        f' data-count="{len(rows)}">All {len(rows)} &#9662;</button>'
+        if len(rows) > 3
+        else ""
+    )
     return (
         f'<section class="panel">'
         f"  <h2>Most likely trios"
@@ -598,7 +605,7 @@ def render_candidates(
         f'      <ol class="cand-list">{"".join(rows)}</ol>'
         f"    </div>"
         f"  </div>"
-        f"  {form_html}"
+        f'  <div class="cand-actions">{more}{form_html}</div>'
         f"</section>"
     )
 
@@ -644,6 +651,7 @@ def render_form(
     return (
         f'<details class="form-details">'
         f"<summary>"
+        f'<span class="fd-short">Current form &#9662;</span>'
         f'<span class="fd-closed">Show current form &#9662;</span>'
         f'<span class="fd-open">Hide current form &#9652;</span>'
         f"</summary>"

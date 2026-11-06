@@ -1937,3 +1937,38 @@ def test_open_nav_drawer_covers_the_card(dist):
             }"""
         )
     assert on_top is False
+
+
+def test_phone_board_shows_three_then_all(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".cand")
+        total = page.locator(".cand-list > li").count()
+        visible = page.locator(".cand-list > li:visible").count()
+        more = page.locator(".cand-more")
+        assert more.count() == 1
+        more_top = more.bounding_box()["y"]
+        form_top = page.locator(".form-details > summary").bounding_box()["y"]
+        more.click()
+        opened = page.locator(".cand-list > li:visible").count()
+        expanded = more.get_attribute("aria-expanded")
+        label = more.inner_text()
+        browser.close()
+    assert visible == 3
+    assert opened == total
+    assert expanded == "true"
+    assert "Top 3" in label
+    assert abs(more_top - form_top) < 1, "the two buttons should sit side by side"
+
+
+def test_phone_board_more_button_is_hidden_on_desktop(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 900})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_selector(".cand")
+        shown = page.locator(".cand-more").is_visible()
+        browser.close()
+    assert not shown

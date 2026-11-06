@@ -765,3 +765,56 @@ def test_render_hero_short_pick_keeps_the_grid_slots_after_qualifying():
     assert short.count('class="cd-grid plate plate-secondary"') == 3
     # front to back, as the full cards read
     assert short.index(">RUS<") < short.index(">NOR<") < short.index(">ANT<")
+
+
+# ── phone board: top three, then All N ───────────────────────────────────────
+
+
+def _rows_board(n):
+    ids = ["antonelli", "norris", "russell", "piastri"]
+    return [
+        {"driverIds": ids[:3], "prob": 9.0 - i * 0.1, "happened": bool(i % 2)} for i in range(n)
+    ]
+
+
+def _n_cands(n):
+    return [_grid_cands()[0] for _ in range(n)]
+
+
+def test_board_of_fifteen_offers_all_fifteen():
+    out = bp.render_candidates(
+        _n_cands(2), META, board=_rows_board(15), driver_form=BOARD_FORM, combos=BOARD_COMBOS
+    )
+    assert 'class="cand-more"' in out
+    assert "All 15" in out
+    assert 'aria-expanded="false"' in out
+
+
+def test_board_of_four_offers_all_four():
+    out = bp.render_candidates(
+        _n_cands(2), META, board=_rows_board(4), driver_form=BOARD_FORM, combos=BOARD_COMBOS
+    )
+    assert "All 4" in out
+
+
+def test_three_row_board_has_no_more_button():
+    out = bp.render_candidates(
+        _n_cands(2), META, board=_rows_board(3), driver_form=BOARD_FORM, combos=BOARD_COMBOS
+    )
+    assert "cand-more" not in out
+    assert 'class="cand-actions"' in out
+
+
+def test_two_candidate_fallback_has_no_more_button():
+    assert "cand-more" not in bp.render_candidates(_n_cands(2), META)
+
+
+def test_seven_candidate_fallback_offers_all_seven():
+    out = bp.render_candidates(_n_cands(7), META)
+    assert "All 7" in out
+
+
+def test_form_toggle_has_a_short_phone_label():
+    out = bp.render_form([], False, META)
+    assert "fd-short" in out
+    assert "Current form" in out
