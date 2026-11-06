@@ -117,7 +117,7 @@ The trio itself stays a link to its filtered Combinations view (`combos_link`), 
 
 At the mobile breakpoint (`max-width: 600px`), top to bottom:
 
-1. **Header:** burger, plate, stacked wordmark, theme toggle. The page's own title and tagline block (`<header><h1>…<p class="tagline">`) is **not shown** on phones.
+1. **Header:** burger, plate, stacked wordmark, theme toggle. The page's own title and tagline block (`<header><h1>…<p class="tagline">`) is **not shown**. After checkpoint 1 the owner extended this to **desktop and phone**: the landing page's banner is visually hidden at every width, and the `<h1>` stays in the DOM. The other five pages keep their banners.
 2. **One race card:**
    - Next race: a `NEXT RACE` plate, flag, `R19 / 23`, the race start in the visitor's local time on the right (e.g. `SUN 21:00`), then the race name.
    - A divider, then the last race: a `LAST RACE` plate, flag, `R18 · United States GP`, and on the next line the trio followed by its verdict (layout I).
