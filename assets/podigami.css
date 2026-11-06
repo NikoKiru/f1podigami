@@ -109,12 +109,8 @@ main {
 }
 
 .nr-tag {
-    display: block;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--accent-bright);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    display: flex;
+    width: fit-content;
 }
 
 .nr-name {
@@ -146,14 +142,8 @@ main {
     gap: 0 10px;
 }
 
-/* Empty until lights out, when podigami.js fills it. */
-.nr-status {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent-bright);
-}
-
-.nr-status:empty {
+/* Hidden until lights out, when podigami.js fills it and sets .has-status. */
+.next-race:not(.has-status) .nr-status {
     display: none;
 }
 
@@ -242,11 +232,7 @@ main {
 }
 
 .lr-tag {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    flex-shrink: 0;
 }
 
 .last-race .nr-flag {
@@ -291,41 +277,17 @@ main {
     font-weight: 400;
 }
 
-.lr-podigami {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--accent-bright);
-    background: color-mix(in srgb, var(--accent) 15%, transparent);
-    padding: 2px 8px;
-    border-radius: 4px;
+.lr-verdict {
     margin-left: 4px;
 }
 
-/* The status describes the trio it follows, so it stays beside it; the spacer
-   below takes the leftover width that used to push it to the far edge. */
-.lr-status {
-    font-size: 12px;
-    color: var(--muted);
-    margin-left: 6px;
-    white-space: nowrap;
+.lr-verdict b {
+    color: var(--text);
+    font-weight: 900;
 }
 
 .lr-sp {
     flex: 1 1 auto;
-}
-
-.lr-link {
-    color: var(--muted);
-    text-decoration: underline;
-    text-decoration-color: var(--border);
-    text-underline-offset: 2px;
-}
-
-.lr-link:hover {
-    color: var(--accent-bright);
-    text-decoration-color: var(--accent-bright);
 }
 
 /* ── hero ────────────────────────────────────────────────────────────────────
@@ -930,15 +892,6 @@ main {
 
 .cand-pill {
     margin-left: 10px;
-    padding: 1px 6px;
-    border-radius: 99px;
-    /* --accent, not --accent-bright: white clears 4.5:1 on it in both themes,
-       where the brighter red only reaches 3.7:1 in dark mode. */
-    background: var(--accent);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
 }
 
 /* A done row's history. The bubble is position:fixed — an absolutely positioned
@@ -1730,10 +1683,6 @@ a.tl-where:hover {
         padding: 6px 12px;
     }
 
-    .lr-tag {
-        font-size: 10px;
-    }
-
     .last-race .nr-flag {
         width: 20px;
     }
@@ -1759,15 +1708,7 @@ a.tl-where:hover {
         margin: 0 2px;
     }
 
-    .lr-podigami {
-        font-size: 10px;
-        padding: 2px 6px;
-        margin-left: 0;
-    }
-
-    .lr-status {
-        font-size: 11px;
-        white-space: normal;
+    .lr-verdict {
         margin-left: 0;
     }
 
@@ -1867,14 +1808,6 @@ a.tl-where:hover {
     transform: translateY(-1px);
 }
 
-.hook-kicker {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: var(--accent-bright);
-}
-
 .hook-stat {
     order: 1;
     flex: 0 0 100%;
@@ -1945,19 +1878,13 @@ a.tl-where:hover {
 .tl-chip {
     font: inherit;
     font-size: 12px;
-    font-weight: 600;
     padding: 3px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface-2);
-    color: var(--text-dim);
     cursor: pointer;
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .tl-chip:hover {
     border-color: var(--accent);
-    color: var(--text);
 }
 
 /* Scroll-reveal (class applied by JS only — raw HTML never hides content). */
@@ -1990,34 +1917,12 @@ a.tl-where:hover {
 }
 
 .panel-badge {
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--accent-bright);
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    padding: 0.12rem 0.5rem;
     margin-left: 0.5rem;
     vertical-align: middle;
 }
 
 .cd-grid {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--muted);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 0.05rem 0.3rem;
     margin-left: 0.2rem;
-}
-
-@media (max-width: 600px) {
-    .cd-grid {
-        font-size: 0.58rem;
-        padding: 0.03rem 0.25rem;
-    }
 }
 
 /* 32px tap targets on phones. The link inside a sentence gets inline padding, which
@@ -2049,7 +1954,6 @@ a.tl-where:hover {
         min-height: 32px;
     }
 
-    .lr-link,
     .hp-prob a {
         padding: 8px 0;
     }

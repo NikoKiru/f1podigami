@@ -369,7 +369,7 @@ def test_landing_trio_board_marks_happened_and_new(dist):
     assert "Most likely trios" in html
     assert 'class="cand cand-done"' in html
     assert 'class="cand cand-new"' in html
-    assert "cand-pill" in html
+    assert "cand-pill plate plate-new" in html
     # done rows carry their history behind a hover/tap bubble
     assert 'class="trio-tip"' in html
     assert "trio-bubble" in html

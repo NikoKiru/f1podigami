@@ -59,6 +59,8 @@
     function applyContent(year) {
         const entries = bySeason[year] || [];
         yearEl.textContent = year;
+        document.querySelectorAll('.tl-chip').forEach(chip =>
+            chip.classList.toggle('is-on', chip.dataset.year === String(year)));
         countEl.textContent = entries.length
             ? `${entries.length} new tri${entries.length === 1 ? 'o' : 'os'}`
             : 'no new trios';
@@ -233,7 +235,7 @@
     if (isNaN(when.getTime())) return;
 
     const dateEl = box.querySelector('.nr-date');
-    const statusEl = box.querySelector('.nr-status');
+    const statusEl = box.querySelector('.nr-status-text');
 
     const localWhen = d => d.toLocaleString(undefined, {
         weekday: 'short', day: 'numeric', month: 'short',
@@ -265,6 +267,7 @@
         if (sinceStart < 0 || !statusEl) return;
         statusEl.textContent =
             sinceStart < RACE_WINDOW ? 'Lights out — race underway' : 'Awaiting results';
+        box.classList.add('has-status');
     }
 
     showStatus();

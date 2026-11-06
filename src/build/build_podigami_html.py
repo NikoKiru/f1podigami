@@ -163,7 +163,7 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
     if not nxt:
         return (
             '<section class="next-race nr-empty">'
-            '<span class="nr-tag">Next race</span>'
+            '<span class="nr-tag plate plate-primary">Next race</span>'
             '<span class="nr-name">Season complete &mdash; see you next year</span>'
             "</section>"
         )
@@ -199,15 +199,16 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         f'<section class="next-race{"" if plate else " nr-noplate"}"'
         f' data-datetime="{esc(_iso_datetime(nxt))}"{quali_attr}>'
         f'  <div class="nr-main">'
-        f'    <span class="nr-tag">Next race</span>'
+        f'    <span class="nr-tag plate plate-primary">Next race</span>'
         f'    <div class="nr-head">'
         f"      {fl}"
-        f'      <span class="nr-round">Round {esc(nxt["round"])} / {esc(schedule.get("totalRounds", ""))}</span>'
+        f'      <span class="nr-round">R{esc(nxt["round"])} / {esc(schedule.get("totalRounds", ""))}</span>'
         f"    </div>"
         f'    <h2 class="nr-name">{name_html}</h2>'
         f'    <div class="nr-circuit">{circuit_line}</div>'
         f'    <div class="nr-when">'
-        f'      <span class="nr-status"></span>'
+        f'      <span class="nr-status plate plate-status">'
+        f'<span class="plate-dot"></span><span class="nr-status-text"></span></span>'
         f'      <span class="nr-date">{_when_line(nxt)}</span>'
         f"    </div>"
         f"  </div>"
@@ -260,6 +261,21 @@ def render_last_race_drivers(pod: dict, constructor_map: dict, meta: dict) -> st
         else:
             steps.append(spans[0])
     return '<span class="lr-sep">/</span>'.join(steps)
+
+
+def render_verdict(combo: dict | None) -> str:
+    """The scorigami-style verdict plate for the last race's trio."""
+    if not combo or combo["count"] == 1:
+        return (
+            '<span class="lr-verdict plate plate-new"'
+            ' title="First time this trio has shared a podium">Podigami</span>'
+        )
+    cnt = combo["count"]
+    title = esc(f"This trio's {_ordinal(cnt)} podium together")
+    return (
+        f'<span class="lr-verdict plate plate-secondary" title="{title}">'
+        f"No Podigami <b>({cnt})</b></span>"
+    )
 
 
 def render_last_race(
@@ -316,34 +332,17 @@ def render_last_race(
             f' aria-label="See this trio on the combos page"'
             f' title="See this trio on the combos page">{trio_block}</a>'
         )
-    if combo and combo["count"] == 1:
-        status_html = '<span class="lr-podigami">PODIGAMI</span>'
-    elif combo:
-        cnt = combo["count"]
-        prev = combo.get("races", [])
-        second_last = prev[-2] if len(prev) >= 2 else combo["lastRace"]
-        repeat_url = race_url(
-            links, second_last["season"], second_last["round"], second_last["raceName"]
-        )
-        status_html = (
-            f'<span class="lr-status">{_ordinal(cnt)} time'
-            f' &middot; last <a class="lr-link" href="{esc(repeat_url)}"'
-            f' target="_blank" rel="noopener">'
-            f"{esc(second_last['season'])} R{esc(second_last['round'])} &middot;"
-            f" {esc(second_last['raceName'])}</a></span>"
-        )
-    else:
-        status_html = '<span class="lr-podigami">PODIGAMI</span>'
+    verdict_html = render_verdict(combo)
 
     return (
         f'<section class="last-race">'
-        f'<span class="lr-tag">Last race</span>'
+        f'<span class="lr-tag plate plate-secondary">Last race</span>'
         f"{fl}"
         f'<a class="lr-name" href="{esc(name_url)}" target="_blank" rel="noopener">'
         f"R{esc(rnd)} &middot; {name}</a>"
         f"{trio_block}"
-        f"{status_html}"
-        # The status describes the trio, so it follows it; this spacer takes the
+        f"{verdict_html}"
+        # The verdict describes the trio, so it follows it; this spacer takes the
         # slack that used to be handed to a margin-left:auto push to the far edge.
         f'<span class="lr-sp"></span>'
         f"</section>"
@@ -424,7 +423,7 @@ def _trio_chips(per_driver: list[dict], meta: dict) -> str:
     for p in per_driver:
         v = driver_view(p, meta)
         gp = p.get("gridPosition")
-        grid_chip = f'<span class="cd-grid">P{gp}</span>' if gp else ""
+        grid_chip = f'<span class="cd-grid plate plate-secondary">P{gp}</span>' if gp else ""
         chips.append(
             f'<span class="cd" style="--team:{v["color"]}" title="{esc(display_name(v["name"]))}">'
             f'<span class="cd-dot"></span><span class="cd-code">{esc(v["code"])}</span>{grid_chip}'
@@ -493,7 +492,13 @@ def _board_rows(board: list[dict], meta: dict, driver_form: list[dict], combos) 
         pct = round(100 * r["prob"] / top)
         if not r["happened"]:
             rows.append(
-                _cand_row(names, pct, r["prob"], " cand-new", '<span class="cand-pill">NEW</span>')
+                _cand_row(
+                    names,
+                    pct,
+                    r["prob"],
+                    " cand-new",
+                    '<span class="cand-pill plate plate-new">NEW</span>',
+                )
             )
             continue
         bubble, label = _board_history(r, combos)
@@ -540,7 +545,7 @@ def render_candidates(
         )
     else:
         return ""
-    badge = '<span class="panel-badge">grid-aware</span>' if grid_aware else ""
+    badge = '<span class="panel-badge plate plate-status">grid-aware</span>' if grid_aware else ""
     return (
         f'<section class="panel">'
         f"  <h2>Most likely trios"
@@ -621,7 +626,8 @@ def _quickpicks(lo: int, current: int, counts: dict) -> str:
     if current != lo:
         picks.append((current, "this season"))
     chips = "".join(
-        f'<button type="button" class="tl-chip" data-year="{y}">{y} &middot; {esc(label)}</button>'
+        f'<button type="button" class="tl-chip plate-chip{" is-on" if y == current else ""}"'
+        f' data-year="{y}"><b>{y}</b> &middot; {esc(label)}</button>'
         for y, label in picks
     )
     return f'<div class="tl-chips">{chips}</div>'

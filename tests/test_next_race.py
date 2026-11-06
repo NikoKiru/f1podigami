@@ -164,7 +164,7 @@ def test_render_next_race_box_contents():
     html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
     assert 'class="next-race"' in html
     assert 'data-datetime="2026-06-28T13:00:00Z"' in html
-    assert "Round 2 / 3" in html
+    assert "R2 / 3" in html and "Round 2" not in html
     assert "Red Bull Ring" in html and "4.318 km" in html
     assert "<svg" in html  # flag + track outline
     assert "nr-track" in html
@@ -221,7 +221,10 @@ def test_render_next_race_has_no_countdown():
     html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
     assert "Lights out in" not in html
     assert "nr-countdown" not in html
-    assert '<span class="nr-status"></span>' in html
+    assert (
+        '<span class="nr-status plate plate-status"><span class="plate-dot"></span>'
+        '<span class="nr-status-text"></span></span>'
+    ) in html
 
 
 def test_render_next_race_merges_race_and_qualifying_into_one_line():
@@ -419,7 +422,7 @@ def test_render_last_race_trio_links_to_combos_page_when_combo_exists():
 def test_render_last_race_trio_links_even_for_brand_new_podigami():
     # A brand-new trio (count == 1) has still happened -> still linkable.
     html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [_combo_for_trio(1)], {}, [])
-    assert "lr-podigami" in html  # status still says PODIGAMI
+    assert "plate-new" in html  # verdict still says Podigami
     assert 'class="combo-link"' in html
     assert "combos.html?d=George+Russell" in html
 
@@ -431,35 +434,24 @@ def test_render_last_race_trio_not_linked_when_combo_missing():
     assert "combos.html?d=" not in html
 
 
-def test_render_last_race_status_sits_next_to_the_trio():
-    # The status describes the trio, so it follows it immediately; a trailing
-    # spacer takes up the slack instead of shoving the status to the far edge.
+def test_verdict_repeat_trio_counts_this_race():
     html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [_combo_for_trio(3)], {}, [])
-    assert html.index('class="lr-trio"') < html.index('class="lr-status"')
-    assert html.index('class="lr-status"') < html.index('class="lr-sp"')
+    assert 'class="lr-verdict plate plate-secondary"' in html
+    assert "No Podigami <b>(3)</b>" in html
+    assert 'title="This trio&#x27;s 3rd podium together"' in html  # title goes through esc()
+    assert "lr-link" not in html and "lr-status" not in html
 
 
-def test_render_last_race_podigami_badge_also_sits_next_to_the_trio():
+def test_verdict_new_trio_is_the_red_plate():
     html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [_combo_for_trio(1)], {}, [])
-    assert html.index('class="lr-podigami"') < html.index('class="lr-sp"')
+    assert 'class="lr-verdict plate plate-new"' in html and ">Podigami</span>" in html
 
 
-def test_render_last_race_repeat_link_names_the_year():
-    # The "last time" pill points at a *previous* season, so it must show the
-    # year -- otherwise "R22" reads as the current season (#158 follow-up).
-    combo = {
-        "driverIds": ["antonelli", "russell", "verstappen"],
-        "drivers": ["George Russell", "Max Verstappen", "Andrea Kimi Antonelli"],
-        "count": 3,
-        "races": [
-            {"season": "2025", "round": "10", "raceName": "Canadian Grand Prix"},
-            {"season": "2025", "round": "22", "raceName": "Las Vegas Grand Prix"},
-            {"season": "2026", "round": "2", "raceName": "B GP"},
-        ],
-        "lastRace": {"season": "2026", "round": "2", "raceName": "B GP"},
-        "lastRaceKey": 202602,
-    }
-    html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [combo], {}, [])
-    anchor = html.split('class="lr-link"', 1)[1].split("</a>", 1)[0]
-    assert "2025 R22" in anchor
-    assert "Las Vegas Grand Prix" in anchor
+def test_verdict_without_combo_data_reads_as_new():
+    html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [], {}, [])
+    assert "plate-new" in html
+
+
+def test_verdict_follows_the_trio():
+    html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [_combo_for_trio(3)], {}, [])
+    assert html.index('class="lr-trio"') < html.index("lr-verdict") < html.index('class="lr-sp"')

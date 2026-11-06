@@ -8,7 +8,7 @@ from build import _hooks
 def test_hook_card_structure_and_escaping():
     out = _hooks.hook_card("Kick & er", "<b>stat</b>", "combos.html?a=1&b=2", "Go <now>")
     assert out.startswith('<a class="hook-card" href="combos.html?a=1&amp;b=2">')
-    assert '<span class="hook-kicker">Kick &amp; er</span>' in out
+    assert '<span class="hook-kicker plate plate-secondary">Kick &amp; er</span>' in out
     assert '<span class="hook-stat"><b>stat</b></span>' in out  # stat_html is trusted HTML
     assert "Go &lt;now&gt;" in out  # CTA text is escaped
     assert "hook-arrow" in out

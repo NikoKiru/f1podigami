@@ -313,6 +313,14 @@ def test_quickpicks_first_record_current():
     assert 'data-year="2026"' in out and "this season" in out
 
 
+def test_quickpicks_current_year_chip_is_the_selected_one():
+    out = bp._quickpicks(1950, 2026, {"1950": 3, "1982": 17, "2026": 5})
+    assert out.count("is-on") == 1
+    assert 'class="tl-chip plate-chip is-on" data-year="2026"' in out
+    assert "<b>2026</b>" in out
+    assert 'class="tl-chip plate-chip" data-year="1950"' in out
+
+
 def test_quickpicks_record_tie_prefers_earliest_and_dedupes():
     # tie between 1950 and 1982 -> earliest (1950) wins; 1950 is already the
     # "first season" chip, so no separate record chip is emitted
@@ -323,7 +331,7 @@ def test_quickpicks_record_tie_prefers_earliest_and_dedupes():
 
 def test_quickpicks_empty_counts_and_single_season():
     out = bp._quickpicks(2026, 2026, {})
-    assert out.count('class="tl-chip"') == 1  # just the first-season chip
+    assert out.count('class="tl-chip plate-chip is-on"') == 1  # just the first-season chip
 
 
 V2_DATA = {"params": {"model": "dbpl-v2", "w_qual": 0.6}}
@@ -446,9 +454,14 @@ def _grid_cands():
 
 def test_render_candidates_grid_aware_badge_and_chips():
     out = bp.render_candidates(_grid_cands(), META, grid_aware=True)
-    assert "panel-badge" in out and "grid-aware" in out
-    assert out.count('class="cd-grid"') == 3
+    assert "panel-badge plate plate-status" in out and "grid-aware" in out
+    assert out.count('class="cd-grid plate plate-secondary"') == 3
     assert ">P1<" in out and ">P3<" in out and ">P7<" in out
+
+
+def test_trio_chips_grid_position_is_a_secondary_plate():
+    out = bp._trio_chips(_grid_cands()[0]["perDriver"], META)
+    assert out.count('class="cd-grid plate plate-secondary"') == 3
 
 
 def test_render_candidates_default_has_no_grid_markup():
@@ -625,6 +638,11 @@ def test_board_renders_happened_and_new_rows():
     assert out.count('class="cand cand-done"') == 1
     assert out.count('class="cand cand-new"') == 1
     assert "ANT" in out and "PIA" in out
+
+
+def test_board_new_rows_carry_the_new_plate():
+    out = _render_board()
+    assert out.count('class="cand-pill plate plate-new"') == 1
 
 
 def test_board_row_order_follows_the_data():

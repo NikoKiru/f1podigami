@@ -251,7 +251,7 @@ def test_next_race_says_so_once_the_race_has_started(dist, hours_in, message):
         page.clock.set_fixed_time(_race_start(page) + timedelta(hours=hours_in))
         page.reload()
 
-        assert page.locator(".nr-status").inner_text() == message
+        assert page.locator(".nr-status-text").text_content() == message
         browser.close()
 
 
@@ -267,7 +267,7 @@ def test_next_race_status_appears_on_a_page_left_open(dist):
 
         page.clock.run_for(2 * 60 * 1000)
 
-        assert page.locator(".nr-status").inner_text() == "Lights out — race underway"
+        assert page.locator(".nr-status-text").text_content() == "Lights out — race underway"
         browser.close()
 
 

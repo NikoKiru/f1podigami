@@ -36,7 +36,7 @@ def hook_card(kicker: str, stat_html: str, href: str, cta: str) -> str:
     stat = f'<span class="hook-stat">{stat_html}</span>' if stat_html else ""
     return (
         f'<a class="hook-card" href="{esc(href)}">'
-        f'<span class="hook-kicker">{esc(kicker)}</span>'
+        f'<span class="hook-kicker plate plate-secondary">{esc(kicker)}</span>'
         f"{stat}"
         f'<span class="hook-cta">{esc(cta)}'
         f' <span class="hook-arrow" aria-hidden="true">&rarr;</span></span>'
