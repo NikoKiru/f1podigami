@@ -2123,6 +2123,7 @@ def test_phone_landing_is_about_two_screens(dist):
         page.wait_for_load_state("load")
         height = page.evaluate("document.documentElement.scrollHeight")
         browser.close()
+    # Measured 1516px (1.80 screens) at 390x844 with the FAQ folded.
     assert height <= 2.6 * 844, height
 
 
@@ -2141,5 +2142,22 @@ def test_phone_without_javascript_shows_everything(dist):
         assert rows.count() == page.locator(".cand-list > li:visible").count()
         assert not page.locator(".cand-more").is_visible()
         assert not page.locator(".faq-fold").is_visible()
+        assert page.locator(".faq-item:visible").count() == 8
+        browser.close()
+
+
+def test_phone_faq_fold_closes_after_arriving_via_the_hash(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html", "#faq"))
+        page.wait_for_load_state("load")
+        fold = page.locator(".faq-fold")
+        assert page.locator(".faq-item").first.is_visible()
+        assert fold.get_attribute("aria-expanded") == "true"
+        fold.click()
+        assert page.locator(".faq-item:visible").count() == 0
+        assert fold.get_attribute("aria-expanded") == "false"
+        fold.click()
         assert page.locator(".faq-item:visible").count() == 8
         browser.close()

@@ -582,5 +582,10 @@
     }
 
     openFirstAnswer();
-    window.addEventListener('hashchange', openFirstAnswer);
+    window.addEventListener('hashchange', function () {
+        const wasFolded = section && !section.classList.contains('is-open');
+        openFirstAnswer();
+        // The browser had nothing to scroll to while the FAQ was folded away.
+        if (wasFolded && section && location.hash === '#faq') section.scrollIntoView();
+    });
 })();

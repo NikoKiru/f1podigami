@@ -2086,12 +2086,12 @@ a.tl-where:hover {
         font-weight: 500;
     }
 
-    .js .landing .faq-section:not(.is-open):not(:target) > h2,
-    .js .landing .faq-section:not(.is-open):not(:target) > .faq-list {
+    .js .landing .faq-section:not(.is-open) > h2,
+    .js .landing .faq-section:not(.is-open) > .faq-list {
         display: none;
     }
 
-    .js .landing .faq-section:not(.is-open):not(:target) {
+    .js .landing .faq-section:not(.is-open) {
         padding-top: 4px;
         padding-bottom: 4px;
     }
