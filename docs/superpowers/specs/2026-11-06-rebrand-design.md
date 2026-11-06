@@ -126,13 +126,13 @@ At the mobile breakpoint (`max-width: 600px`), top to bottom:
    - Line 1: the big % and a short sentence, "chance the podium is a trio F1 has never seen."
    - Line 2: "Likeliest new:", the trio in codes with team dots, and a red `NEW` plate.
    - Hidden on phones: the full-name/team driver cards and the model-accuracy sentence, which the Scorecard page already covers.
-4. **Most likely trios:** keeps today's heading. The top 5 rows, **all the same size** (the owner rejected an enlarged first row). Each row has the trio, its %, and a thin bar.
+4. **Most likely trios:** keeps today's heading. The top **3** rows (the owner's call after checkpoint 1; the first draft said 5), **all the same size** (the owner rejected an enlarged first row). Each row has the trio, its %, and a thin bar.
 
 The "Most likely trios" list must start above the fold on a 390×844 phone.
 
 ### 6. Landing page on a phone, below the first screen (`phone-whole-page.html`)
 
-- **Most likely trios:** after the top 5, two buttons side by side, "All 15 ▾" (the count is the board's length) and "Current form ▾" (today's form toggle).
+- **Most likely trios:** after the top 3, two buttons side by side, "All 15 ▾" (the count is the board's length) and "Current form ▾" (today's form toggle).
 - **New podiums through the years:**
   - The heading, the year and count readout ("2026 · 11 new trios"), the bar chart and the year chips stay.
   - The season list shows the **latest 3** new trios of the selected season, then "All 11 this season ▾".
