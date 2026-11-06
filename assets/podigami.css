@@ -5,6 +5,22 @@ main {
     flex: 1;
 }
 
+/* The landing page's title strip: the nav already names the site, so it is off
+   screen at every width. Clipped rather than display:none, so the <h1> is still
+   there for search engines and screen readers. Other pages keep their banner. */
+.landing-head {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
 /* shared trio name styling (matches the combinations page) */
 .trio {
     color: var(--text);
@@ -106,6 +122,11 @@ main {
     text-transform: uppercase;
     letter-spacing: 1px;
     font-variant-numeric: tabular-nums;
+}
+
+/* The race start for the phone strip; wider screens have the session line. */
+.nr-start {
+    display: none;
 }
 
 .nr-tag {
@@ -252,6 +273,11 @@ main {
     color: var(--accent-bright);
 }
 
+/* "Grand Prix" in full; a phone swaps in "GP" (race_label_html). */
+.gp-abbr {
+    display: none;
+}
+
 .lr-trio {
     display: inline-flex;
     align-items: center;
@@ -339,6 +365,13 @@ main {
     margin: 2px 0 0;
     font-size: 13px;
     color: var(--muted);
+}
+
+/* The phone's short sentence and one-line trio; wider screens keep the long
+   sentence and the full-name cards. */
+.hc-label-short,
+.hero-pick-short {
+    display: none;
 }
 
 .hero-pick {
@@ -1716,6 +1749,95 @@ a.tl-where:hover {
        just push the status onto a line of its own. */
     .lr-sp {
         display: none;
+    }
+
+    /* ── Landing page, first screen ──────────────────────────────────────
+       "Most likely trios" has to start on a phone's first screen, so the race
+       card and the chance box give up what a phone can spare. Every rule is
+       scoped to .landing: this sheet also styles four other pages. */
+
+    /* Race card: tag, flag, round and the start time on one line, then the
+       name. The place, the session line and the track drawing go. */
+    .landing .nr-circuit,
+    .landing .nr-art,
+    .landing .nr-date {
+        display: none;
+    }
+
+    .landing .nr-head {
+        flex: 1 1 auto;
+    }
+
+    .landing .nr-start {
+        display: block;
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Once the race is underway the status plate says so, under the name. */
+    .landing .next-race.has-status .nr-start {
+        display: none;
+    }
+
+    .landing .gp-full {
+        display: none;
+    }
+
+    .landing .gp-abbr {
+        display: inline;
+    }
+
+    /* Last race: tag, flag and race on the first line; the trio and its verdict
+       start the next one together, the verdict straight after the trio. The
+       zero-height, full-width ::before between them is the line break. */
+    .landing .last-race::before {
+        content: "";
+        flex-basis: 100%;
+        order: 1;
+    }
+
+    .landing .last-race > .combo-link,
+    .landing .last-race > .lr-trio,
+    .landing .lr-verdict,
+    .landing .lr-sp {
+        order: 2;
+    }
+
+    /* Chance box: the figure and one short sentence, then the trio as codes on
+       one line. The full-name cards and the accuracy line go; the Scorecard
+       page carries the accuracy. */
+    .landing .hc-label-long,
+    .landing .hero-pick,
+    .landing .hp-prob {
+        display: none;
+    }
+
+    .landing .hc-label-short {
+        display: block;
+        font-size: 15px;
+        line-height: 1.35;
+        color: var(--text);
+    }
+
+    /* Inline, not flex, so a long post-qualifying line wraps after a "/",
+       never before one. */
+    .landing .hero-pick-short {
+        display: block;
+        margin: 10px 0 0;
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--muted);
+    }
+
+    .landing .hero-pick-short .cd,
+    .landing .hero-pick-short .plate {
+        vertical-align: middle;
     }
 
     /* timing tower: drop the surname and team name on narrow screens —

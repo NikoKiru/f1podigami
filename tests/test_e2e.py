@@ -121,9 +121,9 @@ def test_info_tip_tap_toggles(dist):
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 400, "height": 800})
         page.goto(_url(dist, "index.html"))
-        page.wait_for_selector(".info-tip")
+        page.wait_for_selector(".info-tip:visible")
 
-        tip = page.locator(".info-tip").first
+        tip = page.locator(".info-tip:visible").first
         assert not tip.evaluate("el => el.classList.contains('open')")
 
         tip.click()
@@ -142,9 +142,9 @@ def test_info_tip_outside_tap_dismisses(dist):
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 400, "height": 800})
         page.goto(_url(dist, "index.html"))
-        page.wait_for_selector(".info-tip")
+        page.wait_for_selector(".info-tip:visible")
 
-        tip = page.locator(".info-tip").first
+        tip = page.locator(".info-tip:visible").first
         tip.click()
         assert tip.evaluate("el => el.classList.contains('open')")
 
@@ -162,9 +162,9 @@ def test_info_tip_escape_dismisses(dist):
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 400, "height": 800})
         page.goto(_url(dist, "index.html"))
-        page.wait_for_selector(".info-tip")
+        page.wait_for_selector(".info-tip:visible")
 
-        tip = page.locator(".info-tip").first
+        tip = page.locator(".info-tip:visible").first
         tip.click()
         assert tip.evaluate("el => el.classList.contains('open')")
 
@@ -1423,22 +1423,33 @@ def test_faq_and_season_list_use_the_width_on_desktop(dist):
     assert columns == [2, 2]
 
 
-def test_hero_tooltip_stays_on_screen_on_a_phone(dist):
-    """The number sits beside its sentence on phones now, which moves the info
-    icon: its bubble must still open fully inside the viewport."""
+def test_tooltips_stay_on_screen_on_a_phone(dist):
+    """Every info icon a phone shows opens its bubble fully inside the viewport.
+    The hero's icon belongs to the long sentence, which a phone swaps for the
+    short one, so the hero shows none there."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 360, "height": 800}, has_touch=True)
         page.goto(_url(dist, "index.html"))
-        page.wait_for_selector(".hero .info-tip")
-        tip = page.locator(".hero .info-tip")
-        tip.tap()
-        rect = tip.evaluate(
-            "el => { const r = el.querySelector('.info-bubble').getBoundingClientRect();"
-            " return {left: r.left, right: r.right}; }"
-        )
+        page.wait_for_selector(".info-tip:visible")
+        hero_tips = page.locator(".hero .info-tip:visible").count()
+        tips = page.locator(".info-tip:visible")
+        rects = []
+        for i in range(tips.count()):
+            tip = tips.nth(i)
+            tip.tap()
+            rects.append(
+                tip.evaluate(
+                    "el => { const r = el.querySelector('.info-bubble').getBoundingClientRect();"
+                    " return {left: r.left, right: r.right}; }"
+                )
+            )
+            tip.tap()
         browser.close()
-    assert rect["left"] >= 0 and rect["right"] <= 360, rect
+    assert hero_tips == 0
+    assert rects, "the page shows no tooltip on a phone"
+    for rect in rects:
+        assert rect["left"] >= 0 and rect["right"] <= 360, rect
 
 
 def test_board_rows_stay_on_one_line_with_grid_chips(dist):
@@ -1465,6 +1476,185 @@ def test_board_rows_stay_on_one_line_with_grid_chips(dist):
         )
         browser.close()
     assert tallest <= 36, f"a board row wrapped to {tallest}px with grid chips"
+
+
+# ── Phone first screen (podigami.css, podigami.js) ─────────────────────────
+
+
+def test_most_likely_trios_starts_above_the_fold_on_a_phone(dist):
+    """The race card and the chance box are trimmed on a phone so the trio board
+    starts in the first screen. Measured with the race status showing, the
+    tallest the race card gets."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        if page.locator(".next-race[data-datetime]").count():
+            page.clock.set_fixed_time(_race_start(page) + timedelta(hours=5))
+            page.reload()
+        page.wait_for_selector(".cand-list > li")
+        top, bottom = page.evaluate(
+            "() => { window.scrollTo(0, 0);"
+            " const r = document.querySelector('.cand-list > li').getBoundingClientRect();"
+            " return [r.top, r.bottom]; }"
+        )
+        titles = page.locator(".landing-head h1").count()
+        browser.close()
+    assert titles == 1, "the page title stays in the DOM for search and screen readers"
+    assert top < 844, f"the first likely trio starts at {top}px"
+    # A phone's browser bars take roughly the last 100px of those 844 (the fold
+    # line in the approved mockup), and the whole first row has to clear them.
+    assert bottom < 736, f"the first likely trio ends at {bottom}px, under the browser bar"
+
+
+@pytest.mark.parametrize("width", [390, 1280])
+def test_landing_title_is_read_but_not_shown(dist, width):
+    """The nav already names the site, so the landing page's title strip is off
+    screen at every width. Its <h1> stays in the DOM for search and screen
+    readers, and the race card starts right under the nav."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        head = page.locator(".landing-head").bounding_box()
+        title = page.locator(".landing-head h1").text_content()
+        nav = page.locator("nav.nav").bounding_box()
+        card = page.locator(".next-race").bounding_box()
+        browser.close()
+    assert title == "F1 Podigami"
+    assert head is not None, "visually hidden, not display:none"
+    assert head["width"] <= 1 and head["height"] <= 1, head
+    assert card["y"] - (nav["y"] + nav["height"]) < 30, "the title strip still takes room"
+
+
+@pytest.mark.parametrize(
+    "width, start_shows, date_shows", [(390, True, False), (1280, False, True)]
+)
+def test_race_start_shows_in_local_time_on_a_phone(dist, width, start_shows, date_shows):
+    """A phone's race strip says when the race starts, in the visitor's clock,
+    in place of the longer session line; desktop keeps the session line."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(
+            viewport={"width": width, "height": 844}, locale="en-GB", timezone_id="Asia/Tokyo"
+        )
+        page.goto(_url(dist, "index.html"))
+        start = _race_start(page)
+        if not (page.locator(".nr-start").text_content() or "").strip():
+            browser.close()
+            pytest.skip("the next race has no start time in this build")
+        page.clock.set_fixed_time(start - timedelta(days=1))
+        page.reload()
+        shown = page.locator(".nr-start").is_visible()
+        text = page.locator(".nr-start").text_content()
+        date_visible = page.locator(".nr-date").is_visible()
+        browser.close()
+    tokyo = start + timedelta(hours=9)  # no daylight saving in Tokyo
+    assert text == f"{tokyo:%a} {tokyo:%H:%M}"
+    assert shown is start_shows
+    assert date_visible is date_shows
+
+
+def test_race_start_gives_way_to_the_status_on_a_phone(dist):
+    """Once the race is underway the status plate says so, and a start time
+    beside it would describe a moment already past."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.clock.set_fixed_time(_race_start(page) + timedelta(hours=1))
+        page.reload()
+        status = page.locator(".nr-status").is_visible()
+        start = page.locator(".nr-start").is_visible()
+        browser.close()
+    assert status and not start
+
+
+def test_last_race_reads_gp_on_a_phone(dist):
+    """The last race's name fits one line on a phone by shortening "Grand
+    Prix", and the trio and its verdict start the next line together."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        if not page.locator(".last-race").count():
+            browser.close()
+            pytest.skip("no last race in this build")
+        name = page.locator(".lr-name").inner_text()
+        rows = page.evaluate(
+            """() => {
+                const top = sel => Math.round(
+                    document.querySelector('.last-race ' + sel).getBoundingClientRect().top);
+                const mid = sel => {
+                    const r = document.querySelector('.last-race ' + sel).getBoundingClientRect();
+                    return r.top + r.height / 2;
+                };
+                const trio = document.querySelector('.last-race .lr-trio');
+                const verdict = document.querySelector('.last-race .lr-verdict');
+                return {
+                    tag: mid('.lr-tag'), name: mid('.lr-name'),
+                    trio: mid('.lr-trio'), verdict: mid('.lr-verdict'),
+                    gap: verdict.getBoundingClientRect().left - trio.getBoundingClientRect().right,
+                    nameTop: top('.lr-name'), trioTop: top('.lr-trio'),
+                };
+            }"""
+        )
+        browser.close()
+    assert "Grand Prix" not in name, f"the last race reads {name!r} on a phone"
+    assert abs(rows["tag"] - rows["name"]) < 4, "tag, flag and race share the first line"
+    assert rows["trioTop"] > rows["nameTop"] + 10, "the trio starts a new line"
+    assert abs(rows["trio"] - rows["verdict"]) < 4, "the verdict sits beside the trio"
+    assert 0 <= rows["gap"] < 24, "the verdict follows the trio directly"
+
+
+def test_compact_hero_fits_after_qualifying(tmp_path):
+    """After qualifying every driver in the short pick line carries a grid
+    plate, the widest it gets, and the movement line joins the head. No
+    committed build is post-qualifying, so render that hero on its own."""
+    from pathlib import Path
+
+    from build import build_podigami_html as bp
+    from datalib import load_current_drivers, load_podigami
+
+    assets = Path(__file__).resolve().parents[1] / "assets"
+    meta = {d.driverId: d.model_dump() for d in load_current_drivers().drivers}
+    form = [d.model_dump() for d in load_podigami().driverForm if d.driverId in meta][:3]
+    top = {
+        "prob": 2.4,
+        "perDriver": [{**d, "gridPosition": i} for i, d in enumerate(form, start=1)],
+    }
+    hero = bp.render_hero(top, 40.0, meta, pre_chance=31.0, race_name="Mexico City Grand Prix")
+    page_file = tmp_path / "hero.html"
+    page_file.write_text(
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+        f"<link rel='stylesheet' href='{(assets / 'style.css').as_uri()}'>"
+        f"<link rel='stylesheet' href='{(assets / 'podigami.css').as_uri()}'>"
+        "</head><body><main class='landing'><div class='container'>"
+        f"{hero}</div></main></body></html>",
+        encoding="utf-8",
+    )
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(page_file.as_uri())
+        page.add_style_tag(content=WIDER_FONT)
+        sub = page.locator(".hc-sub").is_visible()
+        pick = page.locator(".hero-pick-short").is_visible()
+        grid = page.locator(".hero-pick-short .cd-grid").count()
+        widths = page.evaluate(
+            """() => ({
+                pick: document.querySelector('.hero-pick-short').scrollWidth,
+                pickBox: document.querySelector('.hero-pick-short').clientWidth,
+                hero: document.querySelector('.hero').clientWidth,
+            })"""
+        )
+        browser.close()
+    assert sub and pick
+    assert grid == 3
+    assert widths["pick"] <= widths["hero"], widths
+    assert widths["pick"] <= widths["pickBox"], "nothing runs past the line"
 
 
 # ── First-visit card (welcome.js) ──────────────────────────────────────────

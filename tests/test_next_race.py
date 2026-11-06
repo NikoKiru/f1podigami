@@ -455,3 +455,53 @@ def test_verdict_without_combo_data_reads_as_new():
 def test_verdict_follows_the_trio():
     html = bp.render_last_race(SCHED, [_PODIUM_TRIO], [_combo_for_trio(3)], {}, [])
     assert html.index('class="lr-trio"') < html.index("lr-verdict") < html.index('class="lr-sp"')
+
+
+# --- phone first screen: race start + short race label ----------------------
+
+
+def test_race_label_html_can_shorten_grand_prix():
+    # Both spellings ship; the stylesheet picks "GP" on a phone and "Grand Prix"
+    # everywhere else. The space is non-breaking because at <=720px the link is
+    # inline-flex, which trims a plain space at the edge of a run of text.
+    assert bp.race_label_html("United States Grand Prix") == (
+        'United States&nbsp;<span class="gp-full">Grand Prix</span><span class="gp-abbr">GP</span>'
+    )
+
+
+def test_race_label_html_leaves_other_names_alone():
+    assert bp.race_label_html("Indianapolis 500") == "Indianapolis 500"
+
+
+def test_race_label_html_escapes_the_name():
+    assert bp.race_label_html("A & B Grand Prix").startswith("A &amp; B&nbsp;<span")
+    assert bp.race_label_html("A & B") == "A &amp; B"
+
+
+def test_render_last_race_name_can_shorten_grand_prix():
+    pod = {**_PODIUM_TRIO, "season": "2025", "round": "19", "raceName": "United States Grand Prix"}
+    html = bp.render_last_race(SCHED, [pod], [], {}, [])
+    name = html.split('class="lr-name"', 1)[1].split("</a>", 1)[0]
+    assert name.endswith(
+        'R19 &middot; United States&nbsp;<span class="gp-full">Grand Prix</span>'
+        '<span class="gp-abbr">GP</span>'
+    )
+
+
+def test_render_next_race_puts_the_start_time_at_the_end_of_the_head():
+    # The phone strip shows when the race starts on the right of the head row;
+    # the server renders it in UTC and podigami.js puts it in the visitor's time.
+    html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
+    head = html.split('class="nr-head"', 1)[1].split("</div>", 1)[0]
+    assert head.rstrip().endswith('<span class="nr-start">Sun 13:00 UTC</span>')
+
+
+def test_render_next_race_start_slot_is_empty_without_a_time():
+    # Round 3 has a date but no time: an empty slot, never a made-up midnight.
+    html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "2"})
+    assert '<span class="nr-start"></span>' in html
+
+
+def test_render_next_race_season_complete_has_no_start_slot():
+    html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "3"})
+    assert "nr-start" not in html

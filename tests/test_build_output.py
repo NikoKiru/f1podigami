@@ -89,6 +89,17 @@ def test_landing_h1_keyword_has_real_space(dist):
     assert '<h1><span class="accent">F1</span> Podigami</h1>' in html
 
 
+def test_only_the_landing_page_hides_its_title_strip(dist):
+    """The landing page's strip is visually hidden (the nav names the site);
+    every other page keeps its banner, which names the page you're on."""
+    assert '<header class="landing-head">' in (dist / "index.html").read_text(encoding="utf-8")
+    for page in PAGES:
+        if page == "index.html":
+            continue
+        html = (dist / page).read_text(encoding="utf-8")
+        assert "<header>" in html and "landing-head" not in html, page
+
+
 def test_google_site_verification_present(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert (

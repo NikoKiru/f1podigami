@@ -375,3 +375,62 @@ def test_trio_board_scrollbar_keeps_webkit_styling_alive():
     rest = s.replace(guarded.group(0), "")
     assert "scrollbar-width" not in rest
     assert "scrollbar-color" not in rest
+
+
+def _hides(selector: str, css_text: str) -> bool:
+    """A rule whose selector list names ``selector`` (a whole class, not a
+    prefix of a longer one) sets ``display: none``."""
+    import re
+
+    sel = re.escape(selector) + r"(?![\w-])"
+    return bool(re.search(r"(?:^|[},])\s*[^{}]*" + sel + r"[^{]*\{[^}]*display:\s*none", css_text))
+
+
+def test_phone_first_screen_trims_the_landing_page():
+    """On a phone "Most likely trios" has to start in the first screen, so the
+    race card loses its locality line, track drawing and session times, and the
+    chance box its long sentence, full-name cards and accuracy line. Each rule
+    is scoped to the landing page: podigami.css also styles four other pages."""
+    s = css("podigami.css")
+    phone = s[s.index("@media (max-width: 600px)") :]
+    for sel in (
+        ".nr-circuit",
+        ".nr-art",
+        ".nr-date",
+        ".hc-label-long",
+        ".hero-pick",
+        ".hp-prob",
+        ".gp-full",
+    ):
+        assert _hides(".landing " + sel, phone), (
+            f"{sel} must hide on the landing page's phone layout"
+        )
+
+
+def test_phone_only_pieces_stay_hidden_on_desktop():
+    """The short label, short pick line, "GP" and the start time exist only for
+    phones: outside the breakpoint they must not show, so desktop stays as it was."""
+    s = css("podigami.css")
+    base = s[: s.index("@media (max-width: 600px)")]
+    for sel in (".hc-label-short", ".hero-pick-short", ".gp-abbr", ".nr-start"):
+        assert _hides(sel, base), f"{sel} must be hidden outside the phone breakpoint"
+
+
+def test_landing_title_is_hidden_from_view_not_from_readers():
+    """The landing page's title strip is off screen at every width, but its <h1>
+    stays in the DOM for search engines and screen readers: the clip pattern,
+    never display:none, and in no media query. The other pages keep theirs."""
+    import re
+
+    s = css("podigami.css")
+    rules = list(re.finditer(r"\.landing-head\s*\{([^}]*)\}", s))
+    assert len(rules) == 1, ".landing-head needs exactly one rule"
+    rule = rules[0]
+    preceding = s[: rule.start()]
+    assert preceding.count("{") == preceding.count("}"), (
+        ".landing-head must not sit in a media query"
+    )
+    body = rule.group(1)
+    assert "display: none" not in body
+    assert re.search(r"clip-path:\s*inset\(50%\)", body)
+    assert re.search(r"position:\s*absolute", body)

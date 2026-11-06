@@ -61,7 +61,7 @@ def test_render_hero_head_pairs_the_number_with_its_sentence():
     assert 'class="hero-head"' in out
     assert 'class="hero-head-text"' in out
     assert 'class="hc-num">55%' in out
-    assert 'class="hc-label"' in out
+    assert 'class="hc-label hc-label-long"' in out
 
 
 def test_render_hero_names_the_race_when_given():
@@ -715,3 +715,53 @@ def test_panel_title_is_no_longer_new_only():
     out = _render_board()
     assert "Most likely trios" in out
     assert "Most likely new trios" not in out
+
+
+# --- phone first screen: the compact hero ----------------------------------
+
+
+def _short_pick(out: str) -> str:
+    import re
+
+    m = re.search(r'<p class="hero-pick-short">(.*?)</p>', out, re.S)
+    assert m, "the hero must carry a hero-pick-short line for phones"
+    return m.group(1)
+
+
+def test_render_hero_has_a_short_label_for_phones():
+    """Phones get one short sentence; the long one stays for wider screens."""
+    out = bp.render_hero(_hero_top(), 55.0, META, race_name="Mexico City Grand Prix")
+    assert 'class="hc-label hc-label-long"' in out
+    assert (
+        '<span class="hc-label-short">chance the podium is a trio F1 has never seen</span>' in out
+    )
+    assert out.index("hc-label-long") < out.index("hc-label-short")
+
+
+def test_render_hero_has_a_short_pick_line_for_phones():
+    """The phone's pick line: "Likeliest new:", the trio as team-coloured codes,
+    then the red NEW plate, after the full-name cards it stands in for."""
+    out = bp.render_hero(_hero_top(), 55.0, META)
+    short = _short_pick(out)
+    assert short.startswith("Likeliest new: ")
+    assert short.count('class="cd"') == 3
+    assert ">ANT<" in short and ">NOR<" in short and ">RUS<" in short
+    assert short.rstrip().endswith('<span class="plate plate-new">NEW</span>')
+    assert out.index('class="hero-pick"') < out.index('class="hero-pick-short"')
+
+
+def test_render_hero_short_pick_keeps_the_grid_slots_after_qualifying():
+    top = {
+        "prob": 3.5,
+        "perDriver": [
+            {**pd("antonelli", "Andrea Kimi Antonelli", "mercedes", 6), "gridPosition": 3},
+            {**pd("russell", "George Russell", "mercedes", 3), "gridPosition": 1},
+            {**pd("norris", "Lando Norris", "mclaren", 2), "gridPosition": 2},
+        ],
+    }
+    out = bp.render_hero(top, 40.0, META, pre_chance=31.0)
+    assert 'class="hc-sub"' in out
+    short = _short_pick(out)
+    assert short.count('class="cd-grid plate plate-secondary"') == 3
+    # front to back, as the full cards read
+    assert short.index(">RUS<") < short.index(">NOR<") < short.index(">ANT<")

@@ -145,6 +145,38 @@ def _session_when(date: str, time: str | None) -> str:
     return f"{base} &middot; {time[:5]} UTC" if time else base
 
 
+def _start_label(race: dict) -> str:
+    """The race start as "Sun 13:00 UTC" for the phone strip; empty without a time.
+
+    ``podigami.js`` rewrites it into the visitor's timezone. An untimed race gets
+    nothing rather than a made-up midnight.
+    """
+    time = race.get("time")
+    if not time:
+        return ""
+    try:
+        d = dt.datetime.strptime(race["date"], "%Y-%m-%d")
+    except (KeyError, TypeError, ValueError):
+        return ""
+    return f"{d:%a} {time[:5]} UTC"
+
+
+def race_label_html(name: str) -> str:
+    """A race name whose "Grand Prix" can shorten to "GP" where space is tight.
+
+    Both spellings ship and the stylesheet shows one. The space before them is
+    non-breaking: at <=720px the last-race link is inline-flex, which trims a
+    plain space at the edge of a run of text.
+    """
+    stem, sep, rest = name.rpartition("Grand Prix")
+    if not sep or rest or not stem.endswith(" "):
+        return esc(name)
+    return (
+        f"{esc(stem.rstrip())}&nbsp;"
+        '<span class="gp-full">Grand Prix</span><span class="gp-abbr">GP</span>'
+    )
+
+
 def _when_line(race: dict) -> str:
     """Race and qualifying on one line, server-rendered in UTC.
 
@@ -203,6 +235,7 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         f'    <div class="nr-head">'
         f"      {fl}"
         f'      <span class="nr-round">R{esc(nxt["round"])} / {esc(schedule.get("totalRounds", ""))}</span>'
+        f'      <span class="nr-start">{_start_label(nxt)}</span>'
         f"    </div>"
         f'    <h2 class="nr-name">{name_html}</h2>'
         f'    <div class="nr-circuit">{circuit_line}</div>'
@@ -314,7 +347,7 @@ def render_last_race(
         last = {"country": country, "raceName": pod["raceName"], "round": rnd}
 
     fl = flag_svg(last["country"])
-    name = esc(last["raceName"])
+    name = race_label_html(last["raceName"])
     name_url = race_url(links, pod["season"], last["round"], last["raceName"])
 
     constructor_map = {d["driverId"]: d.get("constructorId", "") for d in driver_form}
@@ -400,18 +433,24 @@ def render_hero(
         f'  <div class="hero-head">'
         f'    <span class="hc-num">{chance:.0f}%</span>'
         f'    <div class="hero-head-text">'
-        f'      <p class="hc-label">chance of a podium trio Formula&nbsp;1 has never seen {where}'
+        f'      <p class="hc-label hc-label-long">chance of a podium trio Formula&nbsp;1 has never seen {where}'
         f'<span class="info-tip info-tip-sm" tabindex="0" aria-label="More info">'
         f'<span class="info-icon">i</span>'
         f'<span class="info-bubble">The overall probability that any brand-new podium trio appears at the next race, not just the top-ranked one.</span>'
         f"</span>"
-        f"      </p>{sub}"
+        f"      </p>"
+        # Phones show this one instead: the race is named in the card above.
+        f'<span class="hc-label-short">chance the podium is a trio F1 has never seen</span>'
+        f"{sub}"
         f"    </div>"
         f"  </div>"
         f'  <div class="hero-pick">'
         f'    <p class="hp-label">Most likely new trio &middot; {top["prob"]:.1f}%</p>'
         f'    <div class="hero-drivers">{drivers}</div>'
         f"  </div>"
+        # ...and the trio as codes on one line, in place of the full-name cards.
+        f'  <p class="hero-pick-short">Likeliest new: {_trio_chips(entries, meta)}'
+        f' <span class="plate plate-new">NEW</span></p>'
         f'  <p class="hp-prob">{acc_note}</p>'
         f"</section>"
     )
@@ -1056,14 +1095,14 @@ def main() -> int:
 <body>
 {nav("index.html")}
 {WELCOME}
-<header>
+<header class="landing-head">
     <div class="container">
         <h1><span class="accent">F1</span> Podigami</h1>
         <p class="tagline">Keeping track of every F1 podium trio ever
         and predicting the next one.</p>
     </div>
 </header>
-<main>
+<main class="landing">
     <div class="container">
         {next_race}
         {last_race}

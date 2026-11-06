@@ -256,6 +256,17 @@
         } catch (e) { /* keep the server-rendered UTC fallback */ }
     }
 
+    // The phone strip's start time, e.g. "Sun 21:00". Left empty when the race has
+    // no time, so a date-only race doesn't get a made-up local midnight.
+    const startEl = box.querySelector('.nr-start');
+    if (startEl && startEl.textContent.trim()) {
+        try {
+            startEl.textContent = when.toLocaleString(undefined, {
+                weekday: 'short', hour: '2-digit', minute: '2-digit',
+            });
+        } catch (e) { /* keep the server-rendered UTC fallback */ }
+    }
+
     // The box only rolls over when results land, which can take hours, so after
     // lights out the date alone would describe a race already run as still to
     // come. A race runs well under 3h; after that it is clearly over even if the
