@@ -1876,15 +1876,13 @@ a.tl-where:hover {
 }
 
 .tl-chip {
-    font: inherit;
-    font-size: 12px;
-    padding: 3px 10px;
+    font-family: inherit;
     cursor: pointer;
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .tl-chip:hover {
-    border-color: var(--accent);
+    border-color: var(--border-strong);
 }
 
 /* Scroll-reveal (class applied by JS only — raw HTML never hides content). */
@@ -1958,8 +1956,9 @@ a.tl-where:hover {
         padding: 8px 0;
     }
 
+    /* Deliberate tap-target size (test_phone_links_are_big_enough_to_tap). */
     .tl-chip {
-        padding: 7px 12px;
+        padding: 8px 12px;
     }
 }
 
