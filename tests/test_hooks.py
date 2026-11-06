@@ -111,3 +111,15 @@ def test_explore_grid_links_every_other_page():
         assert f'href="{href}"' in out
     assert "Keep exploring" in out
     assert out.count("hook-card") >= 4
+
+
+def test_overdue_hook_keeps_surname_particles():
+    od = NS(
+        allTime=[
+            NS(
+                names=["Wolfgang von Trips", "Phil Hill", "Jim Clark"],
+                racesTogether=3,
+            )
+        ]
+    )
+    assert "von Trips / Hill / Clark" in _hooks.overdue_hook(od)

@@ -15,20 +15,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import driver_name  # noqa: E402  (needs the sys.path entry above)
+from _names import surname  # noqa: E402
 
 
 def esc(s) -> str:
     return html.escape(str(s))
 
 
-def _surname(name: str) -> str:
-    parts = str(name).split()
-    return parts[-1] if parts else str(name)
-
-
 def _surnames(names) -> str:
     """Escaped "A / B / C" surname line for a trio."""
-    return " / ".join(esc(_surname(n)) for n in names)
+    return " / ".join(esc(surname(n)) for n in names)
 
 
 def hook_card(kicker: str, stat_html: str, href: str, cta: str) -> str:
