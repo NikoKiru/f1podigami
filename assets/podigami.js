@@ -257,12 +257,13 @@
     }
 
     // The phone strip's start time, e.g. "Sun 21:00". Left empty when the race has
-    // no time, so a date-only race doesn't get a made-up local midnight.
+    // no time, so a date-only race doesn't get a made-up local midnight. Always a
+    // 24-hour clock: "Sun 09:00 PM" pushes it off the tag's line on a narrow phone.
     const startEl = box.querySelector('.nr-start');
     if (startEl && startEl.textContent.trim()) {
         try {
             startEl.textContent = when.toLocaleString(undefined, {
-                weekday: 'short', hour: '2-digit', minute: '2-digit',
+                weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
             });
         } catch (e) { /* keep the server-rendered UTC fallback */ }
     }

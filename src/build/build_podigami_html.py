@@ -158,7 +158,7 @@ def _start_label(race: dict) -> str:
         d = dt.datetime.strptime(race["date"], "%Y-%m-%d")
     except (KeyError, TypeError, ValueError):
         return ""
-    return f"{d:%a} {time[:5]} UTC"
+    return f"{d:%a} {esc(time[:5])} UTC"
 
 
 def race_label_html(name: str) -> str:

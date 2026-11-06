@@ -1556,6 +1556,32 @@ def test_race_start_shows_in_local_time_on_a_phone(dist, width, start_shows, dat
     assert date_visible is date_shows
 
 
+def test_nr_start_keeps_a_24_hour_clock_on_the_tag_line(dist):
+    """A 12-hour clock ("Sun 03:00 PM") is wide enough to push the round and the
+    start off the tag's line on a narrow phone, so the time is always 24-hour.
+    en-US is the locale that would otherwise ask for AM/PM."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 320, "height": 700}, locale="en-US")
+        page.goto(_url(dist, "index.html"))
+        start = _race_start(page)
+        if not (page.locator(".nr-start").text_content() or "").strip():
+            browser.close()
+            pytest.skip("the next race has no start time in this build")
+        page.clock.set_fixed_time(start - timedelta(days=1))
+        page.reload()
+        page.add_style_tag(content=WIDER_FONT)
+        text = page.locator(".nr-start").text_content()
+        tops = page.evaluate(
+            """() => ['.nr-tag', '.nr-start'].map(
+                sel => document.querySelector('.next-race ' + sel).getBoundingClientRect().top
+            )"""
+        )
+        browser.close()
+    assert re.fullmatch(r"\S+ \d{2}:\d{2}", text), text
+    assert abs(tops[0] - tops[1]) <= 2, f"tag at {tops[0]}px, start at {tops[1]}px"
+
+
 def test_race_start_gives_way_to_the_status_on_a_phone(dist):
     """Once the race is underway the status plate says so, and a start time
     beside it would describe a moment already past."""

@@ -502,6 +502,14 @@ def test_render_next_race_start_slot_is_empty_without_a_time():
     assert '<span class="nr-start"></span>' in html
 
 
+def test_render_next_race_start_time_is_escaped():
+    # The schedule's time is an unchecked string straight from the API.
+    race = {**SCHED["races"][1], "time": "<i>x</i>"}
+    html = bp.render_next_race({**SCHED, "races": [race]}, asof={"season": "2026", "round": "1"})
+    start = html.split('class="nr-start">', 1)[1].split("</span>", 1)[0]
+    assert start == "Sun &lt;i&gt;x&lt; UTC"
+
+
 def test_render_next_race_season_complete_has_no_start_slot():
     html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "3"})
     assert "nr-start" not in html
