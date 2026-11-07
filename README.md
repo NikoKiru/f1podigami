@@ -326,7 +326,7 @@ endpoint, no API key required. Race reports link to the **official Formula 1** r
 
 The **newest** race and qualifying session come first from **[OpenF1](https://openf1.org)**: at the one race measured so far (the 2026 Spanish GP) it had the classification about three hours after the start, nearly four hours before Jolpica. OpenF1's rows are written in Jolpica's exact format, held back while the stewards could still change the podium, and replaced by Jolpica's as soon as it publishes (a changed podium raises an alert). All history comes from Jolpica. The post-qualifying prediction's starting grid is F1's official one, from OpenF1's mirror of formula1.com's starting-grid page.
 
-To check the sources yourself, `docs/postman/` has a [Postman](https://www.postman.com) collection of every request the pipeline makes to Jolpica, OpenF1 and formula1.com, with a table of each response in Postman's Visualize tab. It's stored in Postman's folder format, and `.postman/resources.yaml` links it to a Postman workspace opened on the repo.
+To check the sources yourself, `postman/collections/` has a [Postman](https://www.postman.com) collection of every request the pipeline makes to Jolpica, OpenF1 and formula1.com, with a table of each response in Postman's Visualize tab. It's stored in Postman's folder format, where Postman's Collections panel finds it when the repo is opened as a Postman workspace.
 
 <div align="center">
 <sub>Includes the Indy 500 (1950–1960) · excludes Sprint races · predictions are for fun, not betting 🏎️</sub>

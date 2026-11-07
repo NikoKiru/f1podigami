@@ -1,8 +1,9 @@
-"""The Postman collection in docs/postman/ stays in step with the fetchers.
+"""The Postman collection in postman/collections/ stays in step with the fetchers.
 
 It's a hand tool for checking the upstream APIs, kept in Postman's own folder
-format (one YAML file per request) so a Postman workspace opened on this repo
-syncs it through git. Nothing in the pipeline reads it, so nothing else would
+format (one YAML file per request), in the folder Postman lists in its
+Collections panel, so a Postman workspace opened on this repo syncs it through
+git. Nothing in the pipeline reads it, so nothing else would
 notice if a base URL moved in the code and the collection kept the old one, or
 a request used a variable that no longer exists.
 
@@ -18,7 +19,7 @@ from pathlib import Path
 from fetch import fetch_podiums, fetch_race_links, openf1
 
 REPO = Path(__file__).resolve().parents[1]
-COLLECTION = REPO / "docs" / "postman" / "F1 Podigami upstream APIs"
+COLLECTION = REPO / "postman" / "collections" / "F1 Podigami upstream APIs"
 F1COM_ROOT = fetch_race_links.INDEX_URL.split("{year}")[0]
 VAR_RE = re.compile(r"\{\{([^{}]+)\}\}")
 
@@ -80,9 +81,3 @@ def test_every_variable_used_is_defined():
 def test_request_names_are_unique():
     paths = list(COLLECTION.rglob("*.request.yaml"))
     assert len(paths) == len({p.name for p in paths})
-
-
-def test_postman_can_find_the_collection():
-    """The workspace file maps the folder, which is how Postman on another PC finds it."""
-    resources = (REPO / ".postman" / "resources.yaml").read_text(encoding="utf-8")
-    assert f"../docs/postman/{COLLECTION.name}" in resources
