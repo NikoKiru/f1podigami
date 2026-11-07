@@ -1,0 +1,11 @@
+$kind: http-request
+description: Used by `src/fetch/fetch_constructor_standings.py` for each team's strength.
+url: "{{jolpica}}/{{season}}/constructorStandings.json?limit=100&_={{$timestamp}}"
+method: GET
+queryParams:
+  - key: limit
+    value: "100"
+  - key: _
+    value: "{{$timestamp}}"
+    description: Cache-buster. Jolpica caches by request headers and can serve hour-old current-season data; a unique value gets fresh data. Untick it to see what a cached client sees.
+order: 7000

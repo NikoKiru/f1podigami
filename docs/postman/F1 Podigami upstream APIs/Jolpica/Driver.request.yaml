@@ -1,0 +1,5 @@
+$kind: http-request
+description: One driver's details. `src/fetch/fetch_podiums.py` uses it to name a driver it hasn't seen before.
+url: "{{jolpica}}/drivers/{{driverId}}.json"
+method: GET
+order: 9000

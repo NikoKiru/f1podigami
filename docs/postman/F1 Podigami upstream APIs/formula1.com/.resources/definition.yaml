@@ -1,0 +1,3 @@
+$kind: collection
+description: "Only read for its links: the landing page's official result link for each race. No results are taken from formula1.com."
+order: 4000

@@ -1,0 +1,7 @@
+$kind: http-request
+description: Flags, penalties and stewards' notes. `src/fetch/fetch_openf1.py` holds the fast result back while the stewards could still change the podium.
+url: "{{openf1}}/race_control?session_key={{race_session_key}}"
+method: GET
+queryParams:
+  session_key: "{{race_session_key}}"
+order: 4000

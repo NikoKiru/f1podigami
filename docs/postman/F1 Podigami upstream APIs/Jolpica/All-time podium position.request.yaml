@@ -1,0 +1,11 @@
+$kind: http-request
+description: Every race's P`{{position}}` since 1950, 100 per page. Used by `src/fetch/fetch_podiums.py --full`.
+url: "{{jolpica}}/results/{{position}}.json?limit=100&offset={{offset}}"
+method: GET
+queryParams:
+  - key: limit
+    value: "100"
+  - key: offset
+    value: "{{offset}}"
+    description: Jolpica pages by result row, not by race. Read MRData.total.
+order: 5000

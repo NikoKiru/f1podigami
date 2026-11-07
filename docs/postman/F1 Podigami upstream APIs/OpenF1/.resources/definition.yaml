@@ -1,0 +1,9 @@
+$kind: collection
+description: |-
+  The fast lane: OpenF1 usually has the newest race about an hour after the flag, hours before Jolpica. Run this folder top to bottom: the two `sessions` requests set `{{race_session_key}}` and `{{quali_session_key}}`, and `Drivers` saves names for the result tables.
+
+  - **Every request gets a 401 while any F1 session is live**, practice included, and it can last well past the session's scheduled end. The 401's message says why. Free data opens about 30 minutes after a session ends.
+  - A 404 with `No results found.` means not published yet.
+  - `session_result` doesn't apply post-race time penalties.
+  - Rate limit: 30 requests/minute, so give the Collection Runner a delay of 2100 ms.
+order: 3000

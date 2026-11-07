@@ -1,0 +1,7 @@
+$kind: http-request
+description: The classification `src/fetch/fetch_openf1.py` writes before Jolpica publishes.
+url: "{{openf1}}/session_result?session_key={{race_session_key}}"
+method: GET
+queryParams:
+  session_key: "{{race_session_key}}"
+order: 3000

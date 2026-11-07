@@ -1,0 +1,20 @@
+$kind: http-request
+description: Car numbers, names and teams. `src/fetch/fetch_openf1.py` maps each car to a Jolpica driver by number. Saves the names for the tables below.
+url: "{{openf1}}/drivers?session_key={{race_session_key}}"
+method: GET
+queryParams:
+  session_key: "{{race_session_key}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Save car number -> name, so the result and grid tables can show names.
+      if (pm.response.code === 200) {
+        const names = {};
+        pm.response.json().forEach((d) => {
+          names[d.driver_number] = [d.first_name, d.last_name].filter(Boolean).join(' ') || d.full_name || d.name_acronym || '';
+        });
+        pm.collectionVariables.set('openf1_driver_names', JSON.stringify(names));
+        console.log('Saved ' + Object.keys(names).length + ' driver names for the OpenF1 tables.');
+      }
+    language: text/javascript
+order: 2000

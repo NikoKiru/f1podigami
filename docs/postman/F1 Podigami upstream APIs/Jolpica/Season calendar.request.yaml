@@ -1,0 +1,11 @@
+$kind: http-request
+description: Rounds with race, qualifying and sprint times in UTC. Used by `src/fetch/fetch_schedule.py` and the update guard (`src/check_update_due.py`, which notices calendar changes).
+url: "{{jolpica}}/{{season}}.json?limit=100&_={{$timestamp}}"
+method: GET
+queryParams:
+  - key: limit
+    value: "100"
+  - key: _
+    value: "{{$timestamp}}"
+    description: Cache-buster. Jolpica caches by request headers and can serve hour-old current-season data; a unique value gets fresh data. Untick it to see what a cached client sees.
+order: 1000

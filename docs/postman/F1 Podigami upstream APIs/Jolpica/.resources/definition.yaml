@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  Every Jolpica (Ergast successor) request the pipeline makes. No key needed. Rate limit: 4 requests/s burst, 500/hour.
+
+  Round-indexed URLs such as `/2026/20/results.json` can stay empty for hours after the season-wide feeds already have the round, so the pipeline reads those first. Jolpica also revises settled results without notice, which is why the fetchers re-read the whole current season.
+order: 2000

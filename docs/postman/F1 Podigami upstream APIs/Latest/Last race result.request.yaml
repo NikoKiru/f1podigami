@@ -1,0 +1,22 @@
+$kind: http-request
+description: Jolpica's newest race. `last` means the highest round number, not the most recent race by date. The results watcher (`src/wait_for_results.py`) polls this to see when a race is published. Sets `{{round}}`.
+url: "{{jolpica}}/{{season}}/last/results.json?_={{$timestamp}}"
+method: GET
+queryParams:
+  - key: _
+    value: "{{$timestamp}}"
+    description: Cache-buster. Jolpica caches by request headers and can serve hour-old current-season data; a unique value gets fresh data. Untick it to see what a cached client sees.
+scripts:
+  - type: afterResponse
+    code: |-
+      // Point {{round}} at this race, so the round-indexed requests use it.
+      if (pm.response.code === 200) {
+        const race = (pm.response.json().MRData.RaceTable.Races || [])[0];
+        if (race) {
+          pm.collectionVariables.set('round', race.round);
+          const podium = race.Results.slice(0, 3).map((r) => r.Driver.familyName).join(', ');
+          console.log('Jolpica has ' + race.season + ' R' + race.round + ' ' + race.raceName + ' (' + race.date + '), podium ' + podium + '. {{round}} is now ' + race.round + '.');
+        }
+      }
+    language: text/javascript
+order: 1000

@@ -1,0 +1,7 @@
+$kind: http-request
+description: The classification of OpenF1's newest session. A 404 `No results found.` means not published yet; a 401 means a session is live.
+url: "{{openf1}}/session_result?session_key=latest"
+method: GET
+queryParams:
+  session_key: latest
+order: 5000
