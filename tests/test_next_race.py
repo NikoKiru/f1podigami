@@ -1,5 +1,7 @@
 """Tests for the next-race box: geo→SVG, flags, race picker, and rendering."""
 
+import re
+
 from build import build_podigami_html as bp
 from build import flags
 from fetch import track_geo
@@ -488,12 +490,12 @@ def test_render_last_race_name_can_shorten_grand_prix():
     )
 
 
-def test_render_next_race_puts_the_start_time_at_the_end_of_the_head():
+def test_render_next_race_puts_the_start_at_the_end_of_the_head():
     # The phone strip shows when the race starts on the right of the head row;
-    # the server renders it in UTC and podigami.js puts it in the visitor's time.
+    # the server renders the UTC date and podigami.js puts it in the visitor's time.
     html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
     head = html.split('class="nr-head"', 1)[1].split("</div>", 1)[0]
-    assert head.rstrip().endswith('<span class="nr-start">Sun 13:00 UTC</span>')
+    assert head.rstrip().endswith('<span class="nr-start">Sun 28 Jun</span>')
 
 
 def test_render_next_race_start_slot_is_empty_without_a_time():
@@ -502,12 +504,12 @@ def test_render_next_race_start_slot_is_empty_without_a_time():
     assert '<span class="nr-start"></span>' in html
 
 
-def test_render_next_race_start_time_is_escaped():
-    # The schedule's time is an unchecked string straight from the API.
-    race = {**SCHED["races"][1], "time": "<i>x</i>"}
-    html = bp.render_next_race({**SCHED, "races": [race]}, asof={"season": "2026", "round": "1"})
+def test_render_next_race_start_fallback_is_a_date_with_no_time():
+    # No-JS visitors see this: a UTC clock would mislead, so it is weekday + date.
+    html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
     start = html.split('class="nr-start">', 1)[1].split("</span>", 1)[0]
-    assert start == "Sun &lt;i&gt;x&lt; UTC"
+    assert re.fullmatch(r"[A-Z][a-z]{2} \d{1,2} [A-Z][a-z]{2}", start), start
+    assert ":" not in start and "UTC" not in start
 
 
 def test_render_next_race_season_complete_has_no_start_slot():

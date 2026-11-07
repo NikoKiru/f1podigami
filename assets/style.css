@@ -227,6 +227,7 @@ body {
 }
 
 .plate-chip {
+    padding: 4px 9px;
     background: var(--chip-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -244,6 +245,11 @@ body {
 
 .plate-chip.is-on {
     border-color: var(--accent);
+}
+
+/* A kicker above a card title may be a long race name: let it wrap. */
+.hook-kicker.plate {
+    white-space: normal;
 }
 
 .plate-shape {

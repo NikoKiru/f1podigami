@@ -83,11 +83,10 @@
         }
 
         listEl.innerHTML = shown.map(e => {
-            // Each name carries the "/" after it: inline, the trio wraps only
-            // after a separator; on a phone, CSS stacks one name per line. The
+            // Each name carries the "/" after it: the trio wraps only after a
+            // separator, on a phone too, where the list is inline surnames. The
             // space is that break: two touching nowrap spans offer none, and a
-            // trio that can't wrap overflows any row too narrow for it. Keep it
-            // a space: an element here would come between `.pdriver + .pdriver`.
+            // trio that can't wrap overflows any row too narrow for it.
             const labels = narrow
                 ? e.names.map((n, i) => (e.short && e.short[i]) || n)
                 : e.names.map(displayName);
@@ -287,15 +286,18 @@
         } catch (e) { /* keep the server-rendered UTC fallback */ }
     }
 
-    // The phone strip's start time, e.g. "Sun 21:00". Left empty when the race has
-    // no time, so a date-only race doesn't get a made-up local midnight. Always a
-    // 24-hour clock: "Sun 09:00 PM" pushes it off the tag's line on a narrow phone.
+    // The phone strip's start, e.g. "Sun 21:00", or "Sun 1 Nov" when the race is
+    // more than 6 days off (a bare weekday would read as this week). Left empty
+    // when the race has no time, so a date-only race doesn't get a made-up local
+    // midnight. Always a 24-hour clock: "Sun 09:00 PM" pushes it off the tag's
+    // line on a narrow phone.
     const startEl = box.querySelector('.nr-start');
     if (startEl && startEl.textContent.trim()) {
         try {
-            startEl.textContent = when.toLocaleString(undefined, {
-                weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-            });
+            const far = when.getTime() - Date.now() > 6 * 24 * 3600 * 1000;
+            startEl.textContent = when.toLocaleString(undefined, far
+                ? { weekday: 'short', day: 'numeric', month: 'short' }
+                : { weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
         } catch (e) { /* keep the server-rendered UTC fallback */ }
     }
 
@@ -582,6 +584,17 @@
     }
 
     openFirstAnswer();
+    // A second tap on a FAQ link doesn't change the hash, so hashchange is silent.
+    document.addEventListener('click', function (e) {
+        const link = e.target.closest && e.target.closest('a[href$="#faq"]');
+        if (!link || !section || section.classList.contains('is-open')) return;
+        const url = new URL(link.href, location.href);
+        if (url.pathname !== location.pathname) return;
+        setOpen(true);
+        const first = document.querySelector('#faq .faq-item');
+        if (first) first.open = true;
+        section.scrollIntoView();
+    });
     window.addEventListener('hashchange', function () {
         const wasFolded = section && !section.classList.contains('is-open');
         openFirstAnswer();

@@ -1679,6 +1679,34 @@ def test_nr_start_keeps_a_24_hour_clock_on_the_tag_line(dist):
     assert abs(tops[0] - tops[1]) <= 2, f"tag at {tops[0]}px, start at {tops[1]}px"
 
 
+def test_nr_start_names_the_date_when_the_race_is_over_a_week_away(dist):
+    """A bare "SUN" for a race 12 days off reads as this Sunday, so beyond 6
+    days the phone strip carries the date instead of a time, on the tag's line."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(
+            viewport={"width": 320, "height": 700}, locale="en-US", timezone_id="UTC"
+        )
+        page.goto(_url(dist, "index.html"))
+        start = _race_start(page)
+        if not (page.locator(".nr-start").text_content() or "").strip():
+            browser.close()
+            pytest.skip("the next race has no start time in this build")
+        page.clock.set_fixed_time(start - timedelta(days=12))
+        page.reload()
+        page.add_style_tag(content=WIDER_FONT)
+        text = page.locator(".nr-start").text_content()
+        tops = page.evaluate(
+            """() => ['.nr-tag', '.nr-start'].map(
+                sel => document.querySelector('.next-race ' + sel).getBoundingClientRect().top
+            )"""
+        )
+        browser.close()
+    assert not re.search(r"\d{2}:\d{2}", text), text
+    assert str(start.day) in text, text
+    assert abs(tops[0] - tops[1]) <= 2, f"tag at {tops[0]}px, start at {tops[1]}px"
+
+
 def test_race_start_gives_way_to_the_status_on_a_phone(dist):
     """Once the race is underway the status plate says so, and a start time
     beside it would describe a moment already past."""
@@ -2085,6 +2113,43 @@ def test_phone_shows_explore_list_not_hook_cards(dist):
         assert page.locator(".explore-list").is_visible()
         assert page.locator(".explore-list .ex-row:visible").count() == 5
         browser.close()
+
+
+def test_phone_explore_stats_share_a_left_edge(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        page.add_style_tag(content=WIDER_FONT)
+        lefts = page.evaluate(
+            """() => [...document.querySelectorAll('.explore-list .ex-stat')].map(
+                e => e.getBoundingClientRect().left
+            )"""
+        )
+        browser.close()
+    assert len(lefts) == 5
+    assert max(lefts) - min(lefts) <= 1, lefts
+
+
+def test_phone_faq_reopens_on_a_second_tap_of_a_faq_link(dist):
+    """After arriving at #faq and closing the fold, the hash is already #faq, so
+    tapping a link to it fires no hashchange: the click has to reopen the fold."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html", "#faq"))
+        page.wait_for_load_state("load")
+        fold = page.locator(".faq-fold")
+        fold.click()
+        assert page.locator(".faq-item:visible").count() == 0
+        page.locator('footer a[href$="#faq"]').first.click()
+        first = page.locator(".faq-item").first
+        visible = first.is_visible()
+        expanded = fold.get_attribute("aria-expanded")
+        browser.close()
+    assert visible
+    assert expanded == "true"
 
 
 def test_phone_faq_is_folded_until_the_row_is_tapped(dist):

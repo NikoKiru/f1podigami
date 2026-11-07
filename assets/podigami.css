@@ -2005,7 +2005,7 @@ a.tl-where:hover {
 
     .landing .explore-list {
         display: block;
-        padding: 10px var(--pad-panel);
+        padding: var(--pad-panel);
         margin-top: var(--gap-section);
     }
 
@@ -2029,7 +2029,8 @@ a.tl-where:hover {
     }
 
     .landing .ex-row .plate {
-        flex: 0 0 92px;
+        flex: 0 0 116px;
+        justify-content: center;
         text-align: center;
     }
 
@@ -2203,7 +2204,7 @@ a.tl-where:hover {
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.tl-chip:hover {
+.tl-chip:not(.is-on):hover {
     border-color: var(--border-strong);
 }
 

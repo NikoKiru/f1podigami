@@ -457,3 +457,21 @@ def test_badge_classes_have_no_round_pill_radius():
                     r"\s*(?:a)?(\.[\w-]+)", sel.strip().split()[-1] if sel.strip() else ""
                 )
                 assert not base or base.group(1) not in badges, f"{path.name}: {sel.strip()}"
+
+
+def test_hook_kickers_wrap_instead_of_overflowing_the_card():
+    """A kicker is a nowrap plate, but "Next up: {long race name}" must wrap."""
+    s = css("style.css")
+    block = s[s.index(".hook-kicker.plate {") :].split("}", 1)[0]
+    assert "white-space: normal;" in block
+
+
+def test_selected_season_chip_keeps_its_border_on_hover():
+    s = css("podigami.css")
+    assert ".tl-chip:not(.is-on):hover" in s
+
+
+def test_plate_chip_sets_its_own_padding():
+    s = css("style.css")
+    block = s[s.index(".plate-chip {") :].split("}", 1)[0]
+    assert "padding: 4px 9px;" in block

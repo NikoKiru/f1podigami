@@ -3,7 +3,7 @@
 ## 2026-11-07
 
 ### Features
-- **A new look: a white slanted P on a red plate.** New logo, stacked "FORMULA 1 / PODIGAMI" wordmark, favicon, home-screen icon and share image, and every badge on the site is now a number-plate style label, with red kept for NEW and PODIGAMI only. The last race now says "NO PODIGAMI (n)" or "PODIGAMI" instead of how many times the trio has happened (#PR)
+- **A new look: a white slanted P on a red plate.** New logo, stacked "FORMULA 1 / PODIGAMI" wordmark, favicon, home-screen icon and share image, and every badge on the site is now a number-plate style label, with red kept for NEW and PODIGAMI only. The last race now says "NO PODIGAMI (n)" or "PODIGAMI" instead of the old "3rd time · last …" history line (#PR)
 - **The landing page is about 1.8 screens on a phone instead of 4½.** The race card and chance box are shorter, "Most likely trios" and the season list show the top few with buttons for the rest, one "Explore" list replaces the cards, and the FAQ folds behind "Questions & answers". Without JavaScript nothing collapses (#PR)
 
 ### Improvements

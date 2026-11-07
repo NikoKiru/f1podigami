@@ -148,10 +148,11 @@ def _session_when(date: str, time: str | None) -> str:
 
 
 def _start_label(race: dict) -> str:
-    """The race start as "Sun 13:00 UTC" for the phone strip; empty without a time.
+    """The race start as "Sun 1 Nov" for the phone strip; empty without a time.
 
-    ``podigami.js`` rewrites it into the visitor's timezone. An untimed race gets
-    nothing rather than a made-up midnight.
+    A date, never a time, so a no-JS reader can't be misled by a UTC clock.
+    ``podigami.js`` rewrites it into the visitor's timezone (a clock within a
+    week). An untimed race gets nothing rather than a made-up midnight.
     """
     time = race.get("time")
     if not time:
@@ -160,7 +161,7 @@ def _start_label(race: dict) -> str:
         d = dt.datetime.strptime(race["date"], "%Y-%m-%d")
     except (KeyError, TypeError, ValueError):
         return ""
-    return f"{d:%a} {esc(time[:5])} UTC"
+    return f"{d:%a} {d.day} {d:%b}"
 
 
 def race_label_html(name: str) -> str:
