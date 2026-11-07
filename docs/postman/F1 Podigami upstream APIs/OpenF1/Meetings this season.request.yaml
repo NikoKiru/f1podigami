@@ -1,0 +1,7 @@
+$kind: http-request
+description: Race weekends. A `meeting_key` is also the race id in formula1.com's result page URLs.
+url: "{{openf1}}/meetings?year={{season}}"
+method: GET
+queryParams:
+  year: "{{season}}"
+order: 8000

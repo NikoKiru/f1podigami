@@ -1,0 +1,226 @@
+$kind: collection
+description: |-
+  Every upstream request the f1podigami pipeline makes, so you can see what the APIs have right now. Start with the **Latest** folder.
+
+  **Reading responses.** Open the **Visualize** tab for a table, and the Console (bottom bar) for a one-line summary. Run a folder in the Collection Runner to chain its requests.
+
+  **Variables** (collection → Variables). `season` is 2026: change it for another year. `round` starts as `last` and is set by *Last race result*. `race_session_key` and `quali_session_key` start as `latest` and are set by the two OpenF1 *sessions* requests. Set `driverId`, `position` and `offset` by hand.
+
+  **Things that look wrong but aren't**
+  - Jolpica caches by request headers and can serve hour-old data, so current-season requests carry a unique `_` parameter. Untick it to see what a cached client sees.
+  - Jolpica's `last` is the highest round number, not the most recent race by date, and rounds get renumbered mid-season.
+  - OpenF1 answers 401 to everything while any session is live.
+
+  **Rate limits.** Jolpica: 4 requests/s, 500/hour. OpenF1: 30/minute.
+
+  `tests/test_postman_collection.py` keeps the base URLs in step with the fetchers.
+variables:
+  jolpica: https://api.jolpi.ca/ergast/f1
+  openf1: https://api.openf1.org/v1
+  season: "2026"
+  round: last
+  position: "1"
+  offset: "0"
+  quali_offset: "0"
+  driverId: max_verstappen
+  race_session_key: latest
+  quali_session_key: latest
+  openf1_driver_names: ""
+scripts:
+  - type: http:afterResponse
+    code: |-
+      // Shared by every request: a status check, a hint for the usual upstream
+      // surprises, and a table of the response in the "Visualize" tab.
+      (function () {
+        const host = pm.request.url.getHost();
+        const code = pm.response.code;
+        const isOpenF1 = host.includes('openf1');
+
+        pm.test('HTTP 200', function () {
+          pm.response.to.have.status(200);
+        });
+        let detail = '';
+        if (code !== 200) {
+          try {
+            detail = pm.response.json().detail || '';
+          } catch (e) {
+            detail = '';
+          }
+        }
+        if (code === 401 && isOpenF1) {
+          console.warn('OpenF1 401: ' + (detail || 'no detail given.') + ' While OpenF1 counts a session as live (practice included), every request without a key is refused, past sessions too.');
+        } else if (code === 404 && isOpenF1) {
+          console.log('OpenF1 404: ' + (detail || 'no detail given.') + ' This usually means not published yet: free data opens about 30 minutes after a session ends.');
+        } else if (code === 429) {
+          console.warn('Rate limited, Retry-After ' + pm.response.headers.get('Retry-After') + ' s. Jolpica allows 4 requests/s and 500/h, OpenF1 30/min.');
+        }
+        if (code !== 200) return;
+
+        const cell = (v) => (v === null || v === undefined ? '' : Array.isArray(v) ? v.map((x) => (x === null || x === undefined ? '-' : cell(x))).join(' / ') : typeof v === 'object' ? JSON.stringify(v) : String(v));
+        const person = (d) => d.givenName + ' ' + d.familyName;
+        // "2026-03-08" + "04:00:00Z" -> "2026-03-08 04:00Z".
+        const at = (o) => (o ? (o.date + ' ' + (o.time || '').replace(/:00Z$/, 'Z')).trim() : '');
+        // Short cells stay on one line; long text (race control messages) wraps.
+        const box = (v) => {
+          const text = cell(v);
+          return { v: text, w: text.length > 40 };
+        };
+        const table = (title, meta, columns, rows) => ({ title: title, meta: meta, columns: columns, rows: rows.map((r) => r.map(box)) });
+
+        function jolpica(mr) {
+          const total = Number(mr.total);
+          const offset = Number(mr.offset);
+          const limit = Number(mr.limit);
+          const shown = (n) => (n ? 'Rows ' + (offset + 1) + '-' + (offset + n) + ' of ' + total + ' (limit ' + limit + ', offset ' + offset + ').' : 'No rows (total ' + total + ').');
+          const rt = mr.RaceTable;
+          const st = mr.StandingsTable;
+          const dt = mr.DriverTable;
+
+          if (rt) {
+            const races = rt.Races || [];
+            const kind = races.some((r) => r.Results) ? 'Results' : races.some((r) => r.QualifyingResults) ? 'QualifyingResults' : null;
+            if (!kind) {
+              return [table(((rt.season || '') + ' calendar').trim(), shown(races.length), ['Rd', 'Race', 'Circuit', 'Place', 'Race (UTC)', 'Qualifying (UTC)', 'Sprint (UTC)'],
+                races.map((r) => [r.round, r.raceName, r.Circuit.circuitName, r.Circuit.Location.locality + ', ' + r.Circuit.Location.country, at(r), at(r.Qualifying), at(r.Sprint)]))];
+            }
+            const race = kind === 'Results';
+            const columns = race ? ['Pos', 'No', 'Driver', 'Constructor', 'Grid', 'Laps', 'Status', 'Time', 'Pts'] : ['Pos', 'No', 'Driver', 'Constructor', 'Q1', 'Q2', 'Q3'];
+            const line = (x) => (race
+              ? [x.positionText, x.number, person(x.Driver), x.Constructor.name, x.grid, x.laps, x.status, x.Time && x.Time.time, x.points]
+              : [x.position, x.number, person(x.Driver), x.Constructor.name, x.Q1, x.Q2, x.Q3]);
+            const count = races.reduce((n, r) => n + r[kind].length, 0);
+
+            // One row per race (winners, a driver's career): a single flat table.
+            if (races.length > 1 && races.every((r) => r[kind].length === 1)) {
+              return [table((rt.season || 'All seasons') + ', one row per race', shown(count), ['Season', 'Rd', 'Race', 'Date'].concat(columns),
+                races.map((r) => [r.season, r.round, r.raceName, r.date].concat(line(r[kind][0]))))];
+            }
+            // Otherwise a table per race, newest first. Jolpica pages by result row,
+            // so the races at either end of a page can be partial.
+            const last = races.length - 1;
+            const sections = races.map((r, i) => {
+              const cut = (i === 0 && offset > 0) || (i === last && offset + count < total);
+              const rows = r[kind].slice().sort((a, b) => Number(a.position) - Number(b.position)).map(line);
+              const title = r.season + ' R' + r.round + ' ' + r.raceName + ', ' + r.date + (race ? ' · race' : ' · qualifying') + (cut ? ' (cut off by paging)' : '');
+              return table(title, '', columns, rows);
+            }).reverse();
+            if (!sections.length) return [table('No results yet', shown(0), [], [])];
+            sections[0].meta = shown(count) + (races.length > 1 ? ' Newest race first.' : '');
+            return sections;
+          }
+
+          if (st) {
+            const out = [];
+            (st.StandingsLists || []).forEach((l) => {
+              const after = l.season + ', after round ' + l.round;
+              if (l.DriverStandings) {
+                out.push(table("Drivers' championship · " + after, '', ['Pos', 'Driver', 'Constructor', 'Pts', 'Wins'],
+                  l.DriverStandings.map((s) => [s.positionText, person(s.Driver), s.Constructors.map((c) => c.name).join(', '), s.points, s.wins])));
+              }
+              if (l.ConstructorStandings) {
+                out.push(table("Constructors' championship · " + after, '', ['Pos', 'Constructor', 'Pts', 'Wins'],
+                  l.ConstructorStandings.map((s) => [s.positionText, s.Constructor.name, s.points, s.wins])));
+              }
+            });
+            return out.length ? out : [table('No standings yet', '', [], [])];
+          }
+
+          if (dt) {
+            const ds = dt.Drivers || [];
+            return [table('Drivers', shown(ds.length), ['driverId', 'Code', 'No', 'Name', 'Nationality', 'Born'],
+              ds.map((d) => [d.driverId, d.code, d.permanentNumber, person(d), d.nationality, d.dateOfBirth]))];
+          }
+          return [table('Response', 'No table view for this shape: see the Pretty tab.', [], [])];
+        }
+
+        function openf1(data) {
+          const endpoint = pm.request.url.getPath().split('/').filter(Boolean).pop();
+          if (!Array.isArray(data) || !data.length) return [table('OpenF1 ' + endpoint, 'No rows.', [], [])];
+          let rows = data;
+          if (rows.some((r) => 'position' in r)) {
+            const pos = (r) => (r.position === null || r.position === undefined ? 999 : r.position);
+            rows = rows.slice().sort((a, b) => pos(a) - pos(b));
+          }
+          // Driver names saved by the "Drivers" request, keyed by car number.
+          let names = {};
+          if (endpoint !== 'drivers') {
+            try {
+              names = JSON.parse(pm.collectionVariables.get('openf1_driver_names') || '{}');
+            } catch (e) {
+              names = {};
+            }
+          }
+          let keys = [];
+          rows.forEach((r) => Object.keys(r).forEach((k) => {
+            if (!keys.includes(k) && !/_url$/.test(k)) keys.push(k);
+          }));
+          // A column with the same value on every row moves to the line above the table.
+          const same = rows.length > 1 ? keys.filter((k) => rows.every((r) => cell(r[k]) === cell(rows[0][k]))) : [];
+          keys = keys.filter((k) => !same.includes(k));
+          const first = ['position', 'driver_number'].filter((k) => keys.includes(k));
+          keys = first.concat(keys.filter((k) => !first.includes(k)));
+          const named = keys.includes('driver_number') && Object.keys(names).length > 0;
+          const columns = [];
+          keys.forEach((k) => {
+            columns.push(k);
+            if (k === 'driver_number' && named) columns.push('driver');
+          });
+          const meta = same.map((k) => k + ': ' + cell(rows[0][k])).concat([rows.length + ' rows']).join(' · ');
+          return [table('OpenF1 ' + endpoint, meta, columns, rows.map((r) => columns.map((k) => (k === 'driver' ? names[r.driver_number] || '' : r[k]))))];
+        }
+
+        function formula1() {
+          const seen = {};
+          const rows = [];
+          (pm.response.text().match(/\/en\/results\/\d{4}\/races\/\d+\/[a-z0-9-]+\/race-result/g) || []).forEach((href) => {
+            if (seen[href]) return;
+            seen[href] = true;
+            const parts = href.split('/');
+            rows.push([parts[5], parts[6], 'https://www.formula1.com' + href]);
+          });
+          return [table('formula1.com race result pages', rows.length + " links found. The race id is OpenF1's meeting_key.", ['Race id', 'Slug', 'URL'], rows)];
+        }
+
+        // Pick the view by the shape of the body: OpenF1 answers with a JSON array,
+        // Jolpica with an object holding MRData, formula1.com with HTML.
+        let sections;
+        try {
+          if (host.includes('formula1.com')) {
+            sections = formula1();
+          } else {
+            const body = pm.response.json();
+            sections = Array.isArray(body) ? openf1(body) : body && body.MRData ? jolpica(body.MRData) : null;
+          }
+          if (!sections) {
+            console.log('No table view for this response: see the Pretty tab.');
+            return;
+          }
+        } catch (e) {
+          console.warn('No table view: ' + e);
+          return;
+        }
+
+        const template = `
+          <style>
+            body { margin: 0; padding: 12px; font: 13px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; color: #1d1d1f; background: #fff; }
+            h3 { margin: 18px 0 2px; font-size: 14px; }
+            h3:first-child { margin-top: 0; }
+            .meta { color: #666; margin-bottom: 6px; }
+            table { border-collapse: collapse; }
+            th, td { padding: 3px 12px 3px 0; border-bottom: 1px solid #e6e6e6; text-align: left; vertical-align: top; white-space: nowrap; }
+            th { font-weight: 600; color: #444; }
+            td.wrap { white-space: normal; min-width: 24em; }
+          </style>
+          {{#each sections}}
+            <h3>{{title}}</h3>
+            {{#if meta}}<div class="meta">{{meta}}</div>{{/if}}
+            {{#if columns.length}}
+              <table>
+                <thead><tr>{{#each columns}}<th>{{this}}</th>{{/each}}</tr></thead>
+                <tbody>{{#each rows}}<tr>{{#each this}}<td{{#if w}} class="wrap"{{/if}}>{{v}}</td>{{/each}}</tr>{{/each}}</tbody>
+              </table>
+            {{/if}}
+          {{/each}}`;
+        pm.visualizer.set(template, { sections: sections });
+      })();
+    language: text/javascript

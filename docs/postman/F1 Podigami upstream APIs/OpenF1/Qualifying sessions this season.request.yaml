@@ -1,0 +1,29 @@
+$kind: http-request
+description: Sets `{{quali_session_key}}` to the newest finished qualifying.
+url: "{{openf1}}/sessions?year={{season}}&session_name=Qualifying"
+method: GET
+queryParams:
+  year: "{{season}}"
+  session_name: Qualifying
+scripts:
+  - type: afterResponse
+    code: |-
+      // Point {{quali_session_key}} at the newest qualifying session that has finished.
+      if (pm.response.code === 200) {
+        const now = Date.now();
+        const done = pm.response.json()
+          .filter((s) => !s.is_cancelled && Date.parse(s.date_end) < now)
+          .sort((a, b) => Date.parse(a.date_start) - Date.parse(b.date_start));
+        const s = done[done.length - 1];
+        if (s) {
+          pm.collectionVariables.set('quali_session_key', String(s.session_key));
+          const mins = Math.round((now - Date.parse(s.date_end)) / 60000);
+          const where = [s.location, s.country_name].filter(Boolean).join(', ');
+          console.log('Newest finished qualifying: ' + where + ', ended ' + s.date_end + ' (' + mins + ' min ago). {{quali_session_key}} is now ' + s.session_key + (s.meeting_key ? ', meeting_key ' + s.meeting_key : '') + '.');
+          if (mins < 30) console.log('It ended under 30 minutes ago, so OpenF1 may not serve it yet.');
+        } else {
+          console.log('No finished qualifying session this season yet.');
+        }
+      }
+    language: text/javascript
+order: 5000

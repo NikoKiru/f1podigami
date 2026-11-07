@@ -1,0 +1,3 @@
+$kind: collection
+description: The quickest look at what each source has right now. Every response has a table in the **Visualize** tab, and the Console gets a one-line summary.
+order: 1000

@@ -1,0 +1,39 @@
+$kind: http-request
+description: Jolpica's newest qualifying, read from the end of the season feed the way `src/wait_for_results.py` does, because the round-indexed URL lags.
+url: "{{jolpica}}/{{season}}/qualifying.json?limit=30&offset={{quali_offset}}&_={{$timestamp}}"
+method: GET
+queryParams:
+  - key: limit
+    value: "30"
+  - key: offset
+    value: "{{quali_offset}}"
+    description: Set by the pre-request script.
+  - key: _
+    value: "{{$timestamp}}"
+    description: Cache-buster. Jolpica caches by request headers and can serve hour-old current-season data; a unique value gets fresh data. Untick it to see what a cached client sees.
+scripts:
+  - type: beforeRequest
+    code: |-
+      // The aggregate feed has a new round hours before /{season}/{round}/qualifying.json
+      // does (wait_for_results.py polls it the same way). Read its row count, then
+      // ask for the last 30 rows: the newest qualifying in full, plus the tail of the
+      // one before.
+      const url = pm.variables.replaceIn('{{jolpica}}/{{season}}/qualifying.json?limit=1&_={{$timestamp}}');
+      pm.sendRequest(url, (err, res) => {
+        if (err || res.code !== 200) {
+          console.warn('Could not read the qualifying row count: ' + (err || res.code));
+          return;
+        }
+        const total = Number(res.json().MRData.total);
+        pm.collectionVariables.set('quali_offset', String(Math.max(0, total - 30)));
+      });
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 200) {
+        const races = pm.response.json().MRData.RaceTable.Races || [];
+        const r = races[races.length - 1];
+        if (r) console.log('Jolpica has qualifying up to ' + r.season + ' R' + r.round + ' ' + r.raceName + '.');
+      }
+    language: text/javascript
+order: 2000

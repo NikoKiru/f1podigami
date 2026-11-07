@@ -220,7 +220,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 1341 tests + coverage gate (≥70%)
+pytest --cov                          # 1435 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
@@ -325,6 +325,8 @@ All race data comes from the **[Jolpica F1 API](https://api.jolpi.ca)** — an E
 endpoint, no API key required. Race reports link to the **official Formula 1** result pages (with a Wikipedia fallback for any race not yet mapped).
 
 The **newest** race and qualifying session come first from **[OpenF1](https://openf1.org)**: at the one race measured so far (the 2026 Spanish GP) it had the classification about three hours after the start, nearly four hours before Jolpica. OpenF1's rows are written in Jolpica's exact format, held back while the stewards could still change the podium, and replaced by Jolpica's as soon as it publishes (a changed podium raises an alert). All history comes from Jolpica. The post-qualifying prediction's starting grid is F1's official one, from OpenF1's mirror of formula1.com's starting-grid page.
+
+To check the sources yourself, `docs/postman/` has a [Postman](https://www.postman.com) collection of every request the pipeline makes to Jolpica, OpenF1 and formula1.com, with a table of each response in Postman's Visualize tab. It's stored in Postman's folder format, and `.postman/resources.yaml` links it to a Postman workspace opened on the repo.
 
 <div align="center">
 <sub>Includes the Indy 500 (1950–1960) · excludes Sprint races · predictions are for fun, not betting 🏎️</sub>

@@ -1,0 +1,7 @@
+$kind: http-request
+description: F1's official grid with penalties applied, keyed by the **qualifying** session. Used by `src/fetch/fetch_starting_grid.py`. It can change on Sunday morning (pit-lane starts, power-unit penalties).
+url: "{{openf1}}/starting_grid?session_key={{quali_session_key}}"
+method: GET
+queryParams:
+  session_key: "{{quali_session_key}}"
+order: 7000

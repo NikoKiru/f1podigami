@@ -1,0 +1,7 @@
+$kind: http-request
+description: The page `src/fetch/fetch_race_links.py` reads to find each race's result-page URL. The Visualize tab lists the links it finds.
+url: https://www.formula1.com/en/results/{{season}}/races
+method: GET
+headers:
+  Accept: text/html
+order: 1000
