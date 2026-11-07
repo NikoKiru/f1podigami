@@ -1533,8 +1533,12 @@ def test_tooltips_stay_on_screen_on_a_phone(dist):
             tip.tap()
             rects.append(
                 tip.evaluate(
-                    "el => { const r = el.querySelector('.info-bubble').getBoundingClientRect();"
-                    " return {left: r.left, right: r.right}; }"
+                    # The page nudges the bubble inside the viewport on the frame
+                    # after the tap, so measure after two frames, not instantly.
+                    "el => new Promise(done => requestAnimationFrame(() =>"
+                    " requestAnimationFrame(() => {"
+                    " const r = el.querySelector('.info-bubble').getBoundingClientRect();"
+                    " done({left: r.left, right: r.right}); })))"
                 )
             )
             tip.tap()

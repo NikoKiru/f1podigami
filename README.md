@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-1341%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1419%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -31,6 +31,8 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 ## ✨ Features
 
 - 🔮 **Podigami predictor** — ranks the never-before podium trios most likely to debut next, with a scorigami-style *"% chance the next race is brand-new"*.
+- 🏷️ **Plate-style brand** — a white slanted P on a red plate, with matching favicon, touch icon and share image, and badges styled as number plates site-wide (red only for NEW / PODIGAMI).
+- 📱 **Short landing page on phones** — the race card, chance box, trio lists, season list and FAQ fold down (the page is about 1.8 screens instead of 4½), and nothing collapses without JavaScript.
 - 👋 **First-visit welcome** — a small card points new visitors to the FAQ, once, on whichever page they land on.
 - 🧮 **Backtested model** — the algorithm was *chosen by data*, not guesswork (see [the model](#-how-the-predictor-works)).
 - 🤝 **Shared drives** — until 1960 two drivers could share one car and both be classified, so those 18 races put more than one trio on the podium at once; every trio they produced counts, and the combinations table marks them.
@@ -51,7 +53,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 | | Page | What it shows |
 |---|---|---|
-| 🔮 | **`index.html`** | The **Podigami predictor** — next/last race (with the upcoming qualifying time), most likely brand-new trio and a **trio board** ranking every trio in play for the next race — already-happened ones muted with their history on hover/tap, never-happened ones highlighted — all of which **refresh after qualifying using the starting grid** (with a collapsible current-form tower), season debut timeline (with quick-pick season chips), FAQ, plus live-stat discovery hooks and a "Keep exploring" grid routing to every other page |
+| 🔮 | **`index.html`** | The **Podigami predictor** — next/last race (with the upcoming qualifying time; the last race reads "NO PODIGAMI (n)" or "PODIGAMI"), most likely brand-new trio and a **trio board** ranking every trio in play for the next race — already-happened ones muted with their history on hover/tap, never-happened ones highlighted — all of which **refresh after qualifying using the starting grid** (with a collapsible current-form tower), season debut timeline (with quick-pick season chips), FAQ, plus live-stat discovery hooks and a "Keep exploring" grid routing to every other page (on phones: one "Explore" list, the FAQ behind "Questions & answers", the top 3 trios and the newest 3 new trios with buttons for the rest) |
 | 🧩 | `combos.html` | Every unique three-driver combination that has shared a podium since 1950 — sortable, filterable by driver and season range (on mobile the filters fold into a slide-out panel), expandable (on phones each trio collapses to one row — its three drivers stacked one per line beside the podium count — with its detail on tap), with shared-drive podiums marked |
 | ⏳ | `overdue.html` | Trios "overdue" to appear — driver pairs whose current form suggests a shared podium is imminent |
 | 🎲 | `unlikeliest.html` | The mirror of Overdue — podium trios that *did* happen ranked by how statistically improbable they were, led by the single biggest fluke in F1 history |
@@ -303,6 +305,9 @@ flowchart LR
 | `src/build/_layout.py` | Shared page chrome: `head()`, `nav()`, footer |
 | `src/build/_rows.py` | Shared ranked table (Overdue / Unlikeliest / Soulmates), mirroring the combinations table: section heading, framed container, column labels, expandable rows |
 | `src/build/flags.py` | Country flag SVGs |
+| `src/build/brand.py` | Plate logo mark and stacked "FORMULA 1 / PODIGAMI" wordmark |
+| `src/build/_names.py` | Particle-aware surnames ("von Trips", "Piquet Jr.") and season-wide initials |
+| `src/build/render_brand_assets.py` | Dev tool (hand-run, Playwright): regenerates `assets/apple-touch-icon.png` and `assets/og-image.png` |
 | `src/build/team_colors.py` | Constructor colour lookup + contrast-safe text colour |
 | **Data layer** | |
 | `src/datalib/schemas.py` | Pydantic v2 schemas for every `data/*.json` |
