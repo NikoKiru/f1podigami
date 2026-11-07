@@ -331,13 +331,13 @@
     "season": "2026",
     "round": "20",
     "raceName": "Brazilian Grand Prix",
-    "stage": "pre-quali",
-    "chanceNew": 38.2,
+    "stage": "post-quali",
+    "chanceNew": 44.6,
     "topPick": [
       "Andrea Kimi Antonelli",
-      "Lewis Hamilton",
-      "Charles Leclerc"
+      "Charles Leclerc",
+      "Lando Norris"
     ],
-    "topPickProb": 3.248
+    "topPickProb": 6.346
   }
 }
