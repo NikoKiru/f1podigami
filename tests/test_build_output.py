@@ -89,6 +89,17 @@ def test_landing_h1_keyword_has_real_space(dist):
     assert '<h1><span class="accent">F1</span> Podigami</h1>' in html
 
 
+def test_only_the_landing_page_hides_its_title_strip(dist):
+    """The landing page's strip is visually hidden (the nav names the site);
+    every other page keeps its banner, which names the page you're on."""
+    assert '<header class="landing-head">' in (dist / "index.html").read_text(encoding="utf-8")
+    for page in PAGES:
+        if page == "index.html":
+            continue
+        html = (dist / page).read_text(encoding="utf-8")
+        assert "<header>" in html and "landing-head" not in html, page
+
+
 def test_google_site_verification_present(dist):
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert (
@@ -369,7 +380,7 @@ def test_landing_trio_board_marks_happened_and_new(dist):
     assert "Most likely trios" in html
     assert 'class="cand cand-done"' in html
     assert 'class="cand cand-new"' in html
-    assert "cand-pill" in html
+    assert "cand-pill plate plate-new" in html
     # done rows carry their history behind a hover/tap bubble
     assert 'class="trio-tip"' in html
     assert "trio-bubble" in html
@@ -687,3 +698,28 @@ def test_drawer_marks_active_page(dist):
     html = (dist / "combos.html").read_text(encoding="utf-8")
     drawer = html[html.index('<aside class="nav-drawer"') : html.index("</aside>")]
     assert 'href="combos.html" class="active"' in drawer, "drawer should highlight the current page"
+
+
+def test_landing_explore_list_sits_before_the_faq(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    assert html.index('class="panel explore-list"') < html.index('class="panel faq-section"')
+    assert html.count('class="ex-row"') == 5
+
+
+def test_landing_faq_fold_counts_the_questions(dist):
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    items = html.count('class="faq-item"')
+    m = re.search(
+        r'<button type="button" class="faq-fold"[^>]*>.*?<span class="faq-n">(\d+)</span>', html
+    )
+    assert m, "the FAQ fold button is missing"
+    assert int(m.group(1)) == items
+    assert 'aria-controls="faq-list"' in html and 'id="faq-list"' in html
+
+
+def test_theme_init_marks_the_page_as_js_enabled():
+    from build._layout import _THEME_INIT
+
+    assert 'document.documentElement.classList.add("js")' in _THEME_INIT
+    # outside the try/catch, so a storage error cannot skip it
+    assert _THEME_INIT.index('classList.add("js")') < _THEME_INIT.index("try{")

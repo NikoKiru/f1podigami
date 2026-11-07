@@ -74,7 +74,7 @@ def test_every_page_has_full_nav(dist):
 
 def test_race_report_links_are_official_f1(dist):
     html = (dist / "combos.html").read_text(encoding="utf-8")
-    links = re.findall(r'<a class="race-pill" href="([^"]+)"', html)
+    links = re.findall(r'<a class="race-pill plate-shape" href="([^"]+)"', html)
     assert links, "combos page should have race-report links"
     for url in links:
         # every pill links to F1's result page, or (rarely) the wiki fallback

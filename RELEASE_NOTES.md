@@ -2,8 +2,16 @@
 
 ## 2026-11-07
 
+### Features
+- **A new look: a white slanted P on a red plate.** New logo, stacked "FORMULA 1 / PODIGAMI" wordmark, favicon, home-screen icon and share image, and every badge on the site is now a number-plate style label, with red kept for NEW and PODIGAMI only. The last race now says "NO PODIGAMI (n)" or "PODIGAMI" instead of the old "3rd time · last …" history line, and the landing page drops its title banner (#413)
+- **The landing page is about 1.8 screens on a phone instead of 4½.** The race card and chance box are shorter, "Most likely trios" and the season list show the top few with buttons for the rest, one "Explore" list replaces the cards, and the FAQ folds behind "Questions & answers". Without JavaScript nothing collapses (#413)
+
 ### Improvements
+- Drivers with a particle or suffix now show their surname properly in the season list and discovery text ("von Trips", "de la Rosa", "Piquet Jr."), and shared surnames get initials ("G. Hill", "P. Hill") (#413)
 - Grid penalties for the 2026 Brazilian GP (round 20): Verstappen starts from the back (several power-unit components), Russell drops five places and Hamilton and Leclerc ten each, entered ahead of qualifying so the post-qualifying prediction uses them until F1's official grid is published (#411)
+
+### Fixes
+- The season chips on the landing page are tall enough to tap on every phone again, not only where Segoe UI is the font (#414)
 
 ## 2026-11-01
 

@@ -186,3 +186,31 @@ def test_both_table_systems_share_the_row_padding_token():
     podigami = (ASSETS / "podigami.css").read_text(encoding="utf-8")
     assert re.search(r"tbody tr\.combo>td\s*\{[^}]*padding:\s*var\(--pad-row\)", index)
     assert re.search(r"\.rr-face\s*\{[^}]*padding:\s*var\(--pad-row\)", podigami)
+
+
+PLATE_PAIRS = [
+    ("--plate-primary-ink", "--plate-primary-bg"),
+    ("--plate-secondary-ink", "--plate-secondary-bg"),
+    ("--plate-new-ink", "--plate-new-bg"),
+]
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+@pytest.mark.parametrize(("ink", "bg"), PLATE_PAIRS)
+def test_plates_meet_wcag_aa(theme, ink, bg):
+    t = THEMES[theme]
+    assert contrast_ratio(t[ink], t[bg]) >= 4.5
+
+
+def test_plate_classes_exist():
+    for cls in (
+        ".plate",
+        ".plate-primary",
+        ".plate-secondary",
+        ".plate-new",
+        ".plate-status",
+        ".plate-dot",
+        ".plate-chip",
+        ".plate-shape",
+    ):
+        assert re.search(re.escape(cls) + r"\s*[,{]", STYLE_CSS), cls

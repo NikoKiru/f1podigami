@@ -87,9 +87,9 @@ def times(n: int) -> str:
 def render_tags(race: ScoredRace) -> str:
     tags = []
     if race.isNew:
-        tags.append('<span class="sc-tag sc-new">New trio</span>')
+        tags.append('<span class="sc-tag plate plate-new">New trio</span>')
     if race.topPickHit:
-        tags.append('<span class="sc-tag sc-hit">Called it</span>')
+        tags.append('<span class="sc-tag plate plate-primary">Called it</span>')
     return "".join(tags)
 
 

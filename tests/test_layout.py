@@ -106,7 +106,7 @@ def test_nav_has_brand_home_link():
     out = nav("index.html")
     assert 'class="brand"' in out
     assert 'href="index.html"' in out
-    assert "brand-mark" in out  # podium logo svg
+    assert "brand-mark" in out  # plate logo svg
     assert "brand-name" in out
 
 

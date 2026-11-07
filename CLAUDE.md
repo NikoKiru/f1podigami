@@ -79,7 +79,7 @@ Orchestrators:
 | `soulmates.html` | `build/build_soulmates_html.py` | Driver shared-podium relationships |
 | `scorecard.html` | `build/build_scorecard_html.py` | Each race's published prediction against its real podium, with the totals |
 
-Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTER`, `WELCOME`), `build/_hooks.py` (cross-page discovery hook cards), `build/flags.py` (country flag SVGs), `build/team_colors.py` (`team_color()`, `text_on()`).
+Shared build helpers: `build/_layout.py` (page chrome: `head()`, `nav()`, `FOOTER`, `WELCOME`), `build/_hooks.py` (cross-page discovery hook cards), `build/flags.py` (country flag SVGs), `build/team_colors.py` (`team_color()`, `text_on()`), `build/brand.py` (the plate mark and stacked wordmark), `build/_names.py` (particle-aware surnames and season-wide initials), `build/render_brand_assets.py` (dev tool, hand-run with Playwright: regenerates `assets/apple-touch-icon.png` and `assets/og-image.png`; not part of the build).
 
 ### Prediction model
 

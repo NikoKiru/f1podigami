@@ -5,6 +5,22 @@ main {
     flex: 1;
 }
 
+/* The landing page's title strip: the nav already names the site, so it is off
+   screen at every width. Clipped rather than display:none, so the <h1> is still
+   there for search engines and screen readers. Other pages keep their banner. */
+.landing-head {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
 /* shared trio name styling (matches the combinations page) */
 .trio {
     color: var(--text);
@@ -108,13 +124,14 @@ main {
     font-variant-numeric: tabular-nums;
 }
 
+/* The race start for the phone strip; wider screens have the session line. */
+.nr-start {
+    display: none;
+}
+
 .nr-tag {
-    display: block;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--accent-bright);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    display: flex;
+    width: fit-content;
 }
 
 .nr-name {
@@ -146,14 +163,8 @@ main {
     gap: 0 10px;
 }
 
-/* Empty until lights out, when podigami.js fills it. */
-.nr-status {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent-bright);
-}
-
-.nr-status:empty {
+/* Hidden until lights out, when podigami.js fills it and sets .has-status. */
+.next-race:not(.has-status) .nr-status {
     display: none;
 }
 
@@ -242,11 +253,7 @@ main {
 }
 
 .lr-tag {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    flex-shrink: 0;
 }
 
 .last-race .nr-flag {
@@ -264,6 +271,11 @@ main {
 
 .lr-name:hover {
     color: var(--accent-bright);
+}
+
+/* "Grand Prix" in full; a phone swaps in "GP" (race_label_html). */
+.gp-abbr {
+    display: none;
 }
 
 .lr-trio {
@@ -291,41 +303,17 @@ main {
     font-weight: 400;
 }
 
-.lr-podigami {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--accent-bright);
-    background: color-mix(in srgb, var(--accent) 15%, transparent);
-    padding: 2px 8px;
-    border-radius: 4px;
+.lr-verdict {
     margin-left: 4px;
 }
 
-/* The status describes the trio it follows, so it stays beside it; the spacer
-   below takes the leftover width that used to push it to the far edge. */
-.lr-status {
-    font-size: 12px;
-    color: var(--muted);
-    margin-left: 6px;
-    white-space: nowrap;
+.lr-verdict b {
+    color: var(--text);
+    font-weight: 900;
 }
 
 .lr-sp {
     flex: 1 1 auto;
-}
-
-.lr-link {
-    color: var(--muted);
-    text-decoration: underline;
-    text-decoration-color: var(--border);
-    text-underline-offset: 2px;
-}
-
-.lr-link:hover {
-    color: var(--accent-bright);
-    text-decoration-color: var(--accent-bright);
 }
 
 /* ── hero ────────────────────────────────────────────────────────────────────
@@ -377,6 +365,13 @@ main {
     margin: 2px 0 0;
     font-size: 13px;
     color: var(--muted);
+}
+
+/* The phone's short sentence and one-line trio; wider screens keep the long
+   sentence and the full-name cards. */
+.hc-label-short,
+.hero-pick-short {
+    display: none;
 }
 
 .hero-pick {
@@ -930,15 +925,6 @@ main {
 
 .cand-pill {
     margin-left: 10px;
-    padding: 1px 6px;
-    border-radius: 99px;
-    /* --accent, not --accent-bright: white clears 4.5:1 on it in both themes,
-       where the brighter red only reaches 3.7:1 in dark mode. */
-    background: var(--accent);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
 }
 
 /* A done row's history. The bubble is position:fixed — an absolutely positioned
@@ -1090,7 +1076,9 @@ main {
     display: none;
 }
 
-.form-details .fd-open {
+.form-details .fd-open,
+.form-details .fd-short,
+.cand-more {
     display: none;
 }
 
@@ -1509,9 +1497,9 @@ a.tl-where:hover {
         grid-column: 1 / -1;
     }
 
-    /* The bottom row has a left cell too. <h2> is child 1, so the left column is
-       the even children. */
-    .faq-item:nth-last-child(2):nth-child(even) {
+    /* The bottom row has a left cell too. <h2> sits outside the list, so the left column is
+       the odd children inside the (display: contents) list. */
+    .faq-item:nth-last-child(2):nth-child(odd) {
         border-bottom: none;
     }
 }
@@ -1730,10 +1718,6 @@ a.tl-where:hover {
         padding: 6px 12px;
     }
 
-    .lr-tag {
-        font-size: 10px;
-    }
-
     .last-race .nr-flag {
         width: 20px;
     }
@@ -1759,15 +1743,7 @@ a.tl-where:hover {
         margin: 0 2px;
     }
 
-    .lr-podigami {
-        font-size: 10px;
-        padding: 2px 6px;
-        margin-left: 0;
-    }
-
-    .lr-status {
-        font-size: 11px;
-        white-space: normal;
+    .lr-verdict {
         margin-left: 0;
     }
 
@@ -1775,6 +1751,174 @@ a.tl-where:hover {
        just push the status onto a line of its own. */
     .lr-sp {
         display: none;
+    }
+
+    /* Trio board: top three, then "All N" and "Current form" side by side. */
+    .landing .cand-scroll {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .js .landing .cand-board:not(.is-open) .cand-list > li:nth-child(n + 4) {
+        display: none;
+    }
+
+    .landing .cand-board::after {
+        display: none;
+    }
+
+    .landing .cand-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .js .landing .cand-more,
+    .landing .cand-actions .form-details {
+        flex: 1;
+        min-width: 0;
+        margin-top: 0;
+    }
+
+    .landing .cand-actions .form-details[open] {
+        flex-basis: 100%;
+    }
+
+    /* A closed form is only half the row wide; its hidden tower would still be
+       laid out at that width and run past the card. */
+    .landing .cand-actions .form-details:not([open]) > :not(summary) {
+        display: none;
+    }
+
+    .js .landing .cand-more {
+        display: block;
+        box-sizing: border-box;
+        width: auto;
+        min-height: 32px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface-2);
+        color: var(--text-dim);
+        cursor: pointer;
+    }
+
+    .js .landing .cand-more:hover {
+        border-color: var(--accent);
+        color: var(--text);
+    }
+
+    .landing .cand-actions .form-details > summary {
+        width: auto;
+        text-align: center;
+        box-sizing: border-box;
+        margin: 0;
+    }
+
+    .landing .form-details .fd-short {
+        display: inline;
+    }
+
+    .landing .form-details .fd-closed {
+        display: none;
+    }
+
+    .landing .form-details[open] .fd-short {
+        display: none;
+    }
+
+    /* ── Landing page, first screen ──────────────────────────────────────
+       "Most likely trios" has to start on a phone's first screen, so the race
+       card and the chance box give up what a phone can spare. Every rule is
+       scoped to .landing: this sheet also styles four other pages. */
+
+    /* Race card: tag, flag, round and the start time on one line, then the
+       name. The place, the session line and the track drawing go. */
+    .landing .nr-circuit,
+    .landing .nr-art,
+    .landing .nr-date {
+        display: none;
+    }
+
+    .landing .nr-head {
+        flex: 1 1 auto;
+    }
+
+    .landing .nr-start {
+        display: block;
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Once the race is underway the status plate says so, under the name. */
+    .landing .next-race.has-status .nr-start {
+        display: none;
+    }
+
+    .landing .gp-full {
+        display: none;
+    }
+
+    .landing .gp-abbr {
+        display: inline;
+    }
+
+    /* Last race: tag, flag and race on the first line; the trio and its verdict
+       start the next one together, the verdict straight after the trio. The
+       zero-height, full-width ::before between them is the line break. */
+    .landing .last-race::before {
+        content: "";
+        flex-basis: 100%;
+        order: 1;
+    }
+
+    .landing .last-race > .combo-link,
+    .landing .last-race > .lr-trio,
+    .landing .lr-verdict,
+    .landing .lr-sp {
+        order: 2;
+    }
+
+    /* Chance box: the figure and one short sentence, then the trio as codes on
+       one line. The full-name cards and the accuracy line go; the Scorecard
+       page carries the accuracy. */
+    .landing .hc-label-long,
+    .landing .hero-pick,
+    .landing .hp-prob {
+        display: none;
+    }
+
+    .landing .hc-label-short {
+        display: block;
+        font-size: 15px;
+        line-height: 1.35;
+        color: var(--text);
+    }
+
+    /* Inline, not flex, so a long post-qualifying line wraps after a "/",
+       never before one. */
+    .landing .hero-pick-short {
+        display: block;
+        margin: 10px 0 0;
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--muted);
+    }
+
+    .landing .hero-pick-short .cd,
+    .landing .hero-pick-short .plate {
+        vertical-align: middle;
     }
 
     /* timing tower: drop the surname and team name on narrow screens —
@@ -1804,43 +1948,153 @@ a.tl-where:hover {
         gap: 2px 12px;
     }
 
-    /* Stacked trios: the strong border between entries outweighs the faint
-       hairlines inside each trio. The race sits beside the names rather than
-       under them, as the count does on the combinations table. */
-    .tl-item {
-        align-items: center;
-        padding: 6px 0;
+    /* The season list (landing page only: this file styles five pages): a trio
+       of surnames wraps inline, only at a slash, with its race on a line under
+       it. The strong border between entries separates them. */
+    .landing .tl-item {
+        display: block;
+        padding: 2px 0;
         border-bottom-color: var(--border-strong);
     }
 
-    .tl-where {
-        flex: 0 1 auto;
-        min-width: 0;
-        text-align: right;
+    /* Each link is its own 32px tap target; the text sits at the edge they
+       share, so trio and race still read as one two-line row. */
+    .landing .tl-item .combo-link {
+        display: flex;
+        align-items: flex-end;
+        min-height: 32px;
+    }
+
+    .landing .tl-where {
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-start;
         white-space: normal;
+        font-size: 12px;
     }
 
-    /* One driver per line, a hairline between them in place of the "/" — as
-       on the combinations table. The link takes the free width so the hairlines
-       do too, rather than stopping at the longest name. */
-    .tl-item .combo-link {
-        display: block;
-        flex: 1 0 auto;
-    }
-
-    .trio,
-    .trio .pdriver {
-        display: block;
-    }
-
-    .trio .pdriver + .pdriver {
-        border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-        margin-top: 2px;
-        padding-top: 2px;
-    }
-
-    .trio .sep {
+    /* Only a season's newest three until "All N" opens the rest. */
+    .landing .tl-list.is-clipped:not(.is-open) .tl-item:nth-child(n + 4) {
         display: none;
+    }
+
+    .landing .tl-more {
+        display: flex;
+        align-items: center;
+        min-height: 36px;
+        margin: 4px 0 0;
+        padding: 0 4px;
+        background: none;
+        border: 0;
+        color: var(--accent-bright);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .landing .tl-more[hidden] {
+        display: none;
+    }
+
+    /* One Explore list stands in for the hook cards and the Keep exploring grid. */
+    .landing .hook-row,
+    .landing .explore {
+        display: none;
+    }
+
+    .landing .explore-list {
+        display: block;
+        padding: var(--pad-panel);
+        margin-top: var(--gap-section);
+    }
+
+    .landing .explore-list > h2 {
+        margin: 0 0 4px;
+    }
+
+    .landing .ex-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 40px;
+        padding: 4px 0;
+        border-top: 1px solid var(--border);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .landing .ex-row:first-of-type {
+        border-top: none;
+    }
+
+    .landing .ex-row .plate {
+        flex: 0 0 116px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .landing .ex-stat {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        color: var(--text-dim);
+        line-height: 1.3;
+    }
+
+    .landing .ex-stat b {
+        color: var(--text);
+    }
+
+    .landing .ex-chev {
+        flex: 0 0 auto;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    /* The FAQ folds behind one row, but only where JS can reopen it. */
+    .js .landing .faq-fold {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 40px;
+        padding: 0;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        background: none;
+        border: 0;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .landing .faq-fold::after {
+        content: "\25BE";
+        color: var(--muted);
+        margin-left: 8px;
+    }
+
+    .landing .faq-fold[aria-expanded="true"]::after {
+        content: "\25B4";
+    }
+
+    .landing .faq-fold .faq-n {
+        margin-left: auto;
+        color: var(--muted);
+        font-weight: 500;
+    }
+
+    .js .landing .faq-section:not(.is-open) > h2,
+    .js .landing .faq-section:not(.is-open) > .faq-list {
+        display: none;
+    }
+
+    .js .landing .faq-section:not(.is-open) {
+        padding-top: 4px;
+        padding-bottom: 4px;
     }
 }
 /* ---- Discovery hooks & explore grid ------------------------------------ */
@@ -1865,14 +2119,6 @@ a.tl-where:hover {
 .hook-card:hover {
     border-color: var(--accent);
     transform: translateY(-1px);
-}
-
-.hook-kicker {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: var(--accent-bright);
 }
 
 .hook-stat {
@@ -1933,6 +2179,16 @@ a.tl-where:hover {
     }
 }
 
+/* Phone-only pieces: the Explore list and the FAQ fold button. */
+.explore-list,
+.faq-fold {
+    display: none;
+}
+
+.faq-list {
+    display: contents;
+}
+
 /* ---- Timeline quick-pick chips ------------------------------------------ */
 
 .tl-chips {
@@ -1943,21 +2199,13 @@ a.tl-where:hover {
 }
 
 .tl-chip {
-    font: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface-2);
-    color: var(--text-dim);
+    font-family: inherit;
     cursor: pointer;
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.tl-chip:hover {
-    border-color: var(--accent);
-    color: var(--text);
+.tl-chip:not(.is-on):hover {
+    border-color: var(--border-strong);
 }
 
 /* Scroll-reveal (class applied by JS only — raw HTML never hides content). */
@@ -1990,34 +2238,12 @@ a.tl-where:hover {
 }
 
 .panel-badge {
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--accent-bright);
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    padding: 0.12rem 0.5rem;
     margin-left: 0.5rem;
     vertical-align: middle;
 }
 
 .cd-grid {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--muted);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 0.05rem 0.3rem;
     margin-left: 0.2rem;
-}
-
-@media (max-width: 600px) {
-    .cd-grid {
-        font-size: 0.58rem;
-        padding: 0.03rem 0.25rem;
-    }
 }
 
 /* 32px tap targets on phones. The link inside a sentence gets inline padding, which
@@ -2049,13 +2275,15 @@ a.tl-where:hover {
         min-height: 32px;
     }
 
-    .lr-link,
     .hp-prob a {
         padding: 8px 0;
     }
 
+    /* Deliberate tap-target size (test_phone_links_are_big_enough_to_tap).
+       min-height keeps it 32px whatever the font's line box is. */
     .tl-chip {
-        padding: 7px 12px;
+        padding: 8px 12px;
+        min-height: 32px;
     }
 }
 
@@ -2095,22 +2323,8 @@ a.tl-where:hover {
 }
 
 .sc-tag {
-    display: inline-block;
     margin-left: 8px;
-    padding: 1px 7px;
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    color: var(--accent-link);
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.4;
     vertical-align: 1px;
-    white-space: nowrap;
-}
-
-.sc-tag.sc-hit {
-    background: var(--accent);
-    color: #fff;
 }
 
 .rr-stat-wide .rr-stat-val {

@@ -103,7 +103,7 @@ def render_race_pills(
         pill_parts: list[str] = []
         for r in group_list:
             co = shared.get((r.season, r.round))
-            cls = "race-pill race-pill-shared" if co else "race-pill"
+            cls = "race-pill race-pill-shared plate-shape" if co else "race-pill plate-shape"
             title = f"{r.season} {r.raceName} — race report"
             if co:
                 title = f"{title} (shared car with {co})"
@@ -146,7 +146,7 @@ def render_combo(
     is_shared = any((r.season, r.round) in shared for r in combo.races)
     shared_desc = "One podium step was a car shared by two drivers"
     badge = (
-        f'<span class="shared-badge" role="img"'
+        f'<span class="shared-badge plate-shape" role="img"'
         f' aria-label="{html.escape(shared_desc, quote=True)}"'
         f' title="{html.escape(shared_desc, quote=True)}">'
         "&#8644;</span>"

@@ -76,19 +76,18 @@ def test_combo_driver_names_are_nowrap():
 
 
 def test_leaderboard_and_timeline_trios_stack_on_mobile():
-    """Overdue, Unlikeliest and the landing-page timeline stack a trio one
-    driver per line on phones, hairline between, as the combinations table
-    does. (Soulmates pairs are two short names and stay inline.)"""
+    """Overdue and Unlikeliest stack a trio one driver per line on phones,
+    hairline between, as the combinations table does. (Soulmates pairs are two
+    short names and stay inline; the landing-page season list wraps surnames.)"""
     import re
 
     s = css("podigami.css")
     block = s[s.index("@media (max-width: 600px)") :]
-    for drv in (r"\.rr-drivers \.oddriver", r"\.rr-drivers \.undriver", r"\.trio \.pdriver"):
+    for drv in (r"\.rr-drivers \.oddriver", r"\.rr-drivers \.undriver"):
         assert re.search(drv + r"[^{]*\{[^}]*display:\s*block", block), f"{drv} must stack"
     for pair in (
         r"\.oddriver \+ \.oddriver",
         r"\.undriver \+ \.undriver",
-        r"\.pdriver \+ \.pdriver",
     ):
         assert re.search(pair + r"[^{]*\{[^}]*border-top:\s*1px solid", block), (
             f"{pair} needs a hairline between stacked names"
@@ -112,7 +111,6 @@ def test_trio_boundaries_outweigh_the_lines_inside_them_on_mobile():
     assert re.search(r"\.rankrow \+ \.rankrow > details\s*\{[^}]*var\(--border-strong\)", pod)
     assert re.search(r"\.tl-item\s*\{[^}]*var\(--border-strong\)", pod)
     assert re.search(r"\.undriver \+ \.undriver\s*\{[^}]*" + faint, pod)
-    assert re.search(r"\.pdriver \+ \.pdriver\s*\{[^}]*" + faint, pod)
 
 
 def test_combo_trio_stacks_one_driver_per_line_on_mobile():
@@ -375,3 +373,105 @@ def test_trio_board_scrollbar_keeps_webkit_styling_alive():
     rest = s.replace(guarded.group(0), "")
     assert "scrollbar-width" not in rest
     assert "scrollbar-color" not in rest
+
+
+def _hides(selector: str, css_text: str) -> bool:
+    """A rule whose selector list names ``selector`` (a whole class, not a
+    prefix of a longer one) sets ``display: none``."""
+    import re
+
+    sel = re.escape(selector) + r"(?![\w-])"
+    return bool(re.search(r"(?:^|[},])\s*[^{}]*" + sel + r"[^{]*\{[^}]*display:\s*none", css_text))
+
+
+def test_phone_first_screen_trims_the_landing_page():
+    """On a phone "Most likely trios" has to start in the first screen, so the
+    race card loses its locality line, track drawing and session times, and the
+    chance box its long sentence, full-name cards and accuracy line. Each rule
+    is scoped to the landing page: podigami.css also styles four other pages."""
+    s = css("podigami.css")
+    phone = s[s.index("@media (max-width: 600px)") :]
+    for sel in (
+        ".nr-circuit",
+        ".nr-art",
+        ".nr-date",
+        ".hc-label-long",
+        ".hero-pick",
+        ".hp-prob",
+        ".gp-full",
+    ):
+        assert _hides(".landing " + sel, phone), (
+            f"{sel} must hide on the landing page's phone layout"
+        )
+
+
+def test_phone_only_pieces_stay_hidden_on_desktop():
+    """The short label, short pick line, "GP" and the start time exist only for
+    phones: outside the breakpoint they must not show, so desktop stays as it was."""
+    s = css("podigami.css")
+    base = s[: s.index("@media (max-width: 600px)")]
+    for sel in (".hc-label-short", ".hero-pick-short", ".gp-abbr", ".nr-start"):
+        assert _hides(sel, base), f"{sel} must be hidden outside the phone breakpoint"
+
+
+def test_landing_title_is_hidden_from_view_not_from_readers():
+    """The landing page's title strip is off screen at every width, but its <h1>
+    stays in the DOM for search engines and screen readers: the clip pattern,
+    never display:none, and in no media query. The other pages keep theirs."""
+    import re
+
+    s = css("podigami.css")
+    rules = list(re.finditer(r"\.landing-head\s*\{([^}]*)\}", s))
+    assert len(rules) == 1, ".landing-head needs exactly one rule"
+    rule = rules[0]
+    preceding = s[: rule.start()]
+    assert preceding.count("{") == preceding.count("}"), (
+        ".landing-head must not sit in a media query"
+    )
+    body = rule.group(1)
+    assert "display: none" not in body
+    assert re.search(r"clip-path:\s*inset\(50%\)", body)
+    assert re.search(r"position:\s*absolute", body)
+
+
+def test_badge_classes_have_no_round_pill_radius():
+    """Badges take their corners from the plate family, never a 999px pill."""
+    import re
+
+    badges = {
+        ".race-pill",
+        ".shared-badge",
+        ".sc-tag",
+        ".cand-pill",
+        ".tl-chip",
+        ".nr-tag",
+        ".lr-tag",
+    }
+    for path in ASSETS.glob("*.css"):
+        text = path.read_text(encoding="utf-8")
+        for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", text):
+            if "999px" not in body or "border-radius" not in body:
+                continue
+            for sel in selectors.split(","):
+                base = re.match(
+                    r"\s*(?:a)?(\.[\w-]+)", sel.strip().split()[-1] if sel.strip() else ""
+                )
+                assert not base or base.group(1) not in badges, f"{path.name}: {sel.strip()}"
+
+
+def test_hook_kickers_wrap_instead_of_overflowing_the_card():
+    """A kicker is a nowrap plate, but "Next up: {long race name}" must wrap."""
+    s = css("style.css")
+    block = s[s.index(".hook-kicker.plate {") :].split("}", 1)[0]
+    assert "white-space: normal;" in block
+
+
+def test_selected_season_chip_keeps_its_border_on_hover():
+    s = css("podigami.css")
+    assert ".tl-chip:not(.is-on):hover" in s
+
+
+def test_plate_chip_sets_its_own_padding():
+    s = css("style.css")
+    block = s[s.index(".plate-chip {") :].split("}", 1)[0]
+    assert "padding: 4px 9px;" in block
