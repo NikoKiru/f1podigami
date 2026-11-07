@@ -11,6 +11,9 @@
     const yearEl = document.getElementById('tl-year');
     const countEl = document.getElementById('tl-count');
     const listEl = document.getElementById('tl-list');
+    const moreEl = document.getElementById('tl-more');
+    const CLIP = 3;
+    let moreLabel = '';
     const bars = Array.from(document.querySelectorAll('.tl-bar'));
 
     function esc(s) {
@@ -20,7 +23,7 @@
     }
 
     // Broadcast-style full name: "First MIDDLE? LASTNAME" (surname uppercased).
-    // On narrow screens, abbreviate to "F. LASTNAME" so trios fit.
+    // On phones the list shows build-time surnames instead (see applyContent).
     const narrowQ = window.matchMedia('(max-width: 600px)');
     let narrow = narrowQ.matches;
     narrowQ.addEventListener('change', e => {
@@ -32,7 +35,6 @@
         const parts = name.trim().split(/\s+/);
         if (parts.length === 0) return name;
         const surname = parts[parts.length - 1].toUpperCase();
-        if (narrow) return parts[0][0] + '. ' + surname;
         parts[parts.length - 1] = surname;
         return parts.join(' ');
     }
@@ -59,21 +61,43 @@
     function applyContent(year) {
         const entries = bySeason[year] || [];
         yearEl.textContent = year;
+        document.querySelectorAll('.tl-chip').forEach(chip =>
+            chip.classList.toggle('is-on', chip.dataset.year === String(year)));
         countEl.textContent = entries.length
             ? `${entries.length} new tri${entries.length === 1 ? 'o' : 'os'}`
             : 'no new trios';
 
-        listEl.innerHTML = entries.map(e => {
-            // Each name carries the "/" after it: inline, the trio wraps only
-            // after a separator; on a phone, CSS stacks one name per line. The
+        // Phones: the season's newest trios first, surnames only, three shown
+        // until "All N" opens the rest. Desktop keeps chronological full names.
+        const shown = narrow ? entries.slice().reverse() : entries;
+        const clipped = narrow && shown.length > CLIP;
+        listEl.classList.toggle('is-clipped', clipped);
+        listEl.classList.remove('is-open');
+        if (moreEl) {
+            moreEl.hidden = !clipped;
+            moreEl.setAttribute('aria-expanded', 'false');
+            moreLabel = year === String(data.currentSeason)
+                ? `All ${shown.length} this season ▾`
+                : `All ${shown.length} in ${year} ▾`;
+            moreEl.textContent = moreLabel;
+        }
+
+        listEl.innerHTML = shown.map(e => {
+            // Each name carries the "/" after it: the trio wraps only after a
+            // separator, on a phone too, where the list is inline surnames. The
             // space is that break: two touching nowrap spans offer none, and a
-            // trio that can't wrap overflows any row too narrow for it. Keep it
-            // a space: an element here would come between `.pdriver + .pdriver`.
-            const names = e.names
-                .map((n, i, all) => `<span class="pdriver">${esc(displayName(n))}` +
+            // trio that can't wrap overflows any row too narrow for it.
+            const labels = narrow
+                ? e.names.map((n, i) => (e.short && e.short[i]) || n)
+                : e.names.map(displayName);
+            const names = labels
+                .map((n, i, all) => `<span class="pdriver">${esc(n)}` +
                     (i < all.length - 1 ? '<span class="sep">/</span>' : '') + '</span>')
                 .join(' ');
             const fr = e.firstRace;
+            const where = narrow
+                ? fr.raceName.replace(/ Grand Prix$/, ' GP')
+                : fr.raceName;
             // Official F1 result URL embedded at build time; wiki as fallback.
             const url = fr.url || wikiUrl(year, fr.raceName);
             // This trio has happened -> link it to its stats on the combos page.
@@ -82,7 +106,7 @@
                 <a class="combo-link" href="${comboUrl}"
                    title="See this trio on the combos page"><span class="trio trio-sm">${names}</span></a>
                 <a class="tl-where" href="${url}" target="_blank" rel="noopener"
-                   title="${esc(year + ' ' + fr.raceName)} &mdash; race report">R${esc(fr.round)} &middot; ${esc(fr.raceName)}</a>
+                   title="${esc(year + ' ' + fr.raceName)} &mdash; race report">R${esc(fr.round)} &middot; ${esc(where)}</a>
             </li>`;
         }).join('');
 
@@ -126,6 +150,14 @@
             listEl.style.height = '';
             listEl.style.overflow = '';
         }, 300);
+    }
+
+    if (moreEl) {
+        moreEl.addEventListener('click', () => {
+            const open = listEl.classList.toggle('is-open');
+            moreEl.setAttribute('aria-expanded', String(open));
+            moreEl.textContent = open ? 'Show fewer ▴' : moreLabel;
+        });
     }
 
     // Coalesce the slider's rapid input events to one render per frame, always
@@ -233,7 +265,7 @@
     if (isNaN(when.getTime())) return;
 
     const dateEl = box.querySelector('.nr-date');
-    const statusEl = box.querySelector('.nr-status');
+    const statusEl = box.querySelector('.nr-status-text');
 
     const localWhen = d => d.toLocaleString(undefined, {
         weekday: 'short', day: 'numeric', month: 'short',
@@ -254,6 +286,21 @@
         } catch (e) { /* keep the server-rendered UTC fallback */ }
     }
 
+    // The phone strip's start, e.g. "Sun 21:00", or "Sun 1 Nov" when the race is
+    // more than 6 days off (a bare weekday would read as this week). Left empty
+    // when the race has no time, so a date-only race doesn't get a made-up local
+    // midnight. Always a 24-hour clock: "Sun 09:00 PM" pushes it off the tag's
+    // line on a narrow phone.
+    const startEl = box.querySelector('.nr-start');
+    if (startEl && startEl.textContent.trim()) {
+        try {
+            const far = when.getTime() - Date.now() > 6 * 24 * 3600 * 1000;
+            startEl.textContent = when.toLocaleString(undefined, far
+                ? { weekday: 'short', day: 'numeric', month: 'short' }
+                : { weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+        } catch (e) { /* keep the server-rendered UTC fallback */ }
+    }
+
     // The box only rolls over when results land, which can take hours, so after
     // lights out the date alone would describe a race already run as still to
     // come. A race runs well under 3h; after that it is clearly over even if the
@@ -265,6 +312,7 @@
         if (sinceStart < 0 || !statusEl) return;
         statusEl.textContent =
             sinceStart < RACE_WINDOW ? 'Lights out — race underway' : 'Awaiting results';
+        box.classList.add('has-status');
     }
 
     showStatus();
@@ -498,14 +546,59 @@
     window.addEventListener('resize', sync);
 })();
 
+// Phones show the top three trios; the button opens the whole board.
+(function () {
+    const btn = document.querySelector('.cand-more');
+    if (!btn) return;
+    const board = document.querySelector('.cand-board');
+    if (!board) return;
+    const n = btn.getAttribute('data-count');
+
+    btn.addEventListener('click', function () {
+        const open = board.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.textContent = open ? 'Top 3 ▴' : 'All ' + n + ' ▾';
+    });
+})();
+
 // A link to the FAQ lands on an open answer, not a wall of closed questions.
 (function () {
+    const section = document.querySelector('#faq');
+    const fold = document.querySelector('.faq-fold');
+
+    function setOpen(open) {
+        if (!section) return;
+        section.classList.toggle('is-open', open);
+        if (fold) fold.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    if (fold) fold.addEventListener('click', function () {
+        setOpen(!section.classList.contains('is-open'));
+    });
+
     function openFirstAnswer() {
         if (location.hash !== '#faq') return;
+        setOpen(true);
         const first = document.querySelector('#faq .faq-item');
         if (first) first.open = true;
     }
 
     openFirstAnswer();
-    window.addEventListener('hashchange', openFirstAnswer);
+    // A second tap on a FAQ link doesn't change the hash, so hashchange is silent.
+    document.addEventListener('click', function (e) {
+        const link = e.target.closest && e.target.closest('a[href$="#faq"]');
+        if (!link || !section || section.classList.contains('is-open')) return;
+        const url = new URL(link.href, location.href);
+        if (url.pathname !== location.pathname) return;
+        setOpen(true);
+        const first = document.querySelector('#faq .faq-item');
+        if (first) first.open = true;
+        section.scrollIntoView();
+    });
+    window.addEventListener('hashchange', function () {
+        const wasFolded = section && !section.classList.contains('is-open');
+        openFirstAnswer();
+        // The browser had nothing to scroll to while the FAQ was folded away.
+        if (wasFolded && section && location.hash === '#faq') section.scrollIntoView();
+    });
 })();

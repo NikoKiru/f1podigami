@@ -13,9 +13,13 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import sys
 import urllib.parse
 from functools import cache
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from brand import BRAND_NAME_HTML, plate_svg  # noqa: E402  (needs the sys.path entry above)
 
 _ASSETS_DIR = Path(__file__).resolve().parents[2] / "assets"
 
@@ -37,6 +41,7 @@ NAV_LINKS = [
 # plain string (not an f-string) so its braces need no escaping by callers.
 _THEME_INIT = (
     "<script>(function(){"
+    'document.documentElement.classList.add("js");'
     'try{var t=localStorage.getItem("theme");'
     'if(t!=="light"&&t!=="dark")'
     't=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";'
@@ -227,17 +232,6 @@ def head(
 </head>"""
 
 
-# Small podium logo mark for the header brand (matches the favicon).
-_BRAND_MARK = (
-    '<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">'
-    '<rect x="6" y="28" width="16" height="26" rx="2" fill="#c0c0c0"/>'
-    '<rect x="24" y="17" width="16" height="37" rx="2" fill="#f4c430"/>'
-    '<rect x="42" y="35" width="16" height="19" rx="2" fill="#cd7f32"/>'
-    '<rect x="5" y="54" width="54" height="5" rx="2.5" fill="#e10600"/>'
-    "</svg>"
-)
-
-
 # Progressive enhancement for the mobile drawer: the checkbox hack works with
 # no JS at all; this layer only adds aria state, Escape-to-close, keyboard
 # toggling on the burger label, and a body scroll lock while open.
@@ -277,8 +271,8 @@ def nav(active: str) -> str:
             <span></span><span></span><span></span>
         </label>
         <a class="brand" href="index.html" aria-label="F1 Podigami home">
-            {_BRAND_MARK}
-            <span class="brand-name"><span class="accent">F1</span> Podigami</span>
+            {plate_svg("pm-nav", "brand-mark")}
+            {BRAND_NAME_HTML}
         </a>
         <div class="nav-links">
 {links}
@@ -287,8 +281,8 @@ def nav(active: str) -> str:
         <label for="nav-drawer-toggle" class="nav-scrim" aria-hidden="true"></label>
         <aside class="nav-drawer" id="nav-drawer" aria-label="Site navigation">
             <div class="nav-drawer-head">
-                {_BRAND_MARK}
-                <span class="brand-name"><span class="accent">F1</span> Podigami</span>
+                {plate_svg("pm-drawer", "brand-mark")}
+                {BRAND_NAME_HTML}
             </div>
 {drawer_links}
         </aside>

@@ -166,3 +166,9 @@ def test_the_built_page_is_in_the_nav_and_says_how_it_works(dist):
     assert "frozen there and never rewritten" in html
     nav = html[html.index('<nav class="nav">') : html.index("</nav>")]
     assert 'href="scorecard.html" class="active"' in nav
+
+
+def test_scorecard_tags_are_plates():
+    assert 'class="sc-tag plate plate-new"' in bs.render_race(race(isNew=True), {})
+    hit = bs.render_race(race(topPickHit=True, driversRight=3), {})
+    assert 'class="sc-tag plate plate-primary"' in hit

@@ -1,11 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Podium">
-  <rect width="64" height="64" rx="14" fill="#0b0d12"/>
-  <!-- 2nd place (silver) -->
-  <rect x="6"  y="28" width="16" height="26" rx="2" fill="#c0c0c0"/>
-  <!-- 1st place (gold) -->
-  <rect x="24" y="17" width="16" height="37" rx="2" fill="#f4c430"/>
-  <!-- 3rd place (bronze) -->
-  <rect x="42" y="35" width="16" height="19" rx="2" fill="#cd7f32"/>
-  <!-- red base line -->
-  <rect x="5" y="54" width="54" height="5" rx="2.5" fill="#e10600"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="F1 Podigami" viewBox="0 0 64 64"><defs><mask id="p-cuts" maskUnits="userSpaceOnUse" x="-20" y="-20" width="120" height="120"><rect x="-20" y="-20" width="120" height="120" fill="#fff"/><rect x="9" y="44" width="21" height="3" fill="#000"/><rect x="9" y="51" width="21" height="3" fill="#000"/></mask></defs><rect width="64" height="64" rx="14" fill="#e10600"/><g transform="translate(5 7) scale(.78)"><g transform="translate(8 0) skewX(-10)"><path fill-rule="evenodd" fill="#fff" mask="url(#p-cuts)" d="M13 58V6H36C46.5 6 54 13.2 54 22.5C54 31.8 46.5 39 36 39H27V58Z M27 17.5H35.5C39 17.5 41.5 19.7 41.5 22.5C41.5 25.3 39 27.5 35.5 27.5H27Z"/></g></g></svg>

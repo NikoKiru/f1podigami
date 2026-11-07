@@ -329,3 +329,14 @@ def test_season_control_mobile_selects_cover_every_season():
     # each select opens on its own end of the range
     assert '<option value="1950" selected>1950</option>' in out
     assert '<option value="2026" selected>2026</option>' in out
+
+
+def test_race_pills_take_the_plate_radius():
+    out = bc.render_race_pills([race_ref("2021", "3", "Monaco Grand Prix")])
+    assert 'class="race-pill plate-shape"' in out
+
+
+def test_shared_badge_takes_the_plate_radius_and_keeps_its_glyph():
+    out = bc.render_combo(_shared_combo(), None, {("1955", "1"): "Froilan Gonzalez"})
+    assert "shared-badge plate-shape" in out
+    assert "&#8644;" in out

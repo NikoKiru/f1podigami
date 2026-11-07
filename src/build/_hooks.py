@@ -15,20 +15,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _layout import driver_name  # noqa: E402  (needs the sys.path entry above)
+from _names import surname  # noqa: E402
 
 
 def esc(s) -> str:
     return html.escape(str(s))
 
 
-def _surname(name: str) -> str:
-    parts = str(name).split()
-    return parts[-1] if parts else str(name)
-
-
 def _surnames(names) -> str:
     """Escaped "A / B / C" surname line for a trio."""
-    return " / ".join(esc(_surname(n)) for n in names)
+    return " / ".join(esc(surname(n)) for n in names)
 
 
 def hook_card(kicker: str, stat_html: str, href: str, cta: str) -> str:
@@ -36,7 +32,7 @@ def hook_card(kicker: str, stat_html: str, href: str, cta: str) -> str:
     stat = f'<span class="hook-stat">{stat_html}</span>' if stat_html else ""
     return (
         f'<a class="hook-card" href="{esc(href)}">'
-        f'<span class="hook-kicker">{esc(kicker)}</span>'
+        f'<span class="hook-kicker plate plate-secondary">{esc(kicker)}</span>'
         f"{stat}"
         f'<span class="hook-cta">{esc(cta)}'
         f' <span class="hook-arrow" aria-hidden="true">&rarr;</span></span>'
@@ -120,6 +116,43 @@ _EXPLORE = [
         "See how it did",
     ),
 ]
+
+
+def _ex_row(label: str, stat_html: str, href: str) -> str:
+    return (
+        f'<a class="ex-row" href="{esc(href)}">'
+        f'<span class="plate plate-secondary">{esc(label)}</span>'
+        f'<span class="ex-stat">{stat_html}</span>'
+        f'<span class="ex-chev" aria-hidden="true">&rsaquo;</span>'
+        f"</a>"
+    )
+
+
+def explore_list(total_combos: int, since_year, soulmates, overdue, unlikeliest) -> str:
+    """Phone hub: the five pages as one-line rows, each with a live stat. Replaces
+    the hook cards and the Keep exploring grid on phones. A missing dataset
+    leaves its stat empty, never the row."""
+    combos = f"<b>{total_combos:,}</b> trios since {esc(since_year)}" if total_combos else ""
+    due = ""
+    if overdue is not None and overdue.allTime:
+        t = overdue.allTime[0]
+        due = f"<b>{_surnames(t.names)}</b> &middot; {t.racesTogether} races"
+    long_shot = ""
+    if unlikeliest is not None and unlikeliest.trios:
+        t = unlikeliest.trios[0]
+        long_shot = f"<b>{_surnames(t.names)}</b> &middot; {esc(t.happened.season)}"
+    duo = ""
+    if soulmates is not None and soulmates.topPairs:
+        p = soulmates.topPairs[0]
+        duo = f"<b>{esc(surname(p.a))} &amp; {esc(surname(p.b))}</b> &middot; {p.count} together"
+    rows = [
+        _ex_row("Combinations", combos, "combos.html"),
+        _ex_row("Overdue", due, "overdue.html"),
+        _ex_row("Unlikeliest", long_shot, "unlikeliest.html"),
+        _ex_row("Soulmates", duo, "soulmates.html"),
+        _ex_row("Scorecard", "Every prediction, graded", "scorecard.html"),
+    ]
+    return f'<section class="panel explore-list"><h2>Explore</h2>{"".join(rows)}</section>'
 
 
 def explore_grid(current: str = "") -> str:

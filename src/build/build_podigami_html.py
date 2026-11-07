@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from _hooks import (  # noqa: E402
     combos_hook,
     explore_grid,
+    explore_list,
     overdue_hook,
     soulmates_hook,
     unlikeliest_hook,
@@ -36,6 +37,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
     organization_schema,
     race_url,
 )
+from _names import short_names_by_season, surname  # noqa: E402
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
 
@@ -145,6 +147,39 @@ def _session_when(date: str, time: str | None) -> str:
     return f"{base} &middot; {time[:5]} UTC" if time else base
 
 
+def _start_label(race: dict) -> str:
+    """The race start as "Sun 1 Nov" for the phone strip; empty without a time.
+
+    A date, never a time, so a no-JS reader can't be misled by a UTC clock.
+    ``podigami.js`` rewrites it into the visitor's timezone (a clock within a
+    week). An untimed race gets nothing rather than a made-up midnight.
+    """
+    time = race.get("time")
+    if not time:
+        return ""
+    try:
+        d = dt.datetime.strptime(race["date"], "%Y-%m-%d")
+    except (KeyError, TypeError, ValueError):
+        return ""
+    return f"{d:%a} {d.day} {d:%b}"
+
+
+def race_label_html(name: str) -> str:
+    """A race name whose "Grand Prix" can shorten to "GP" where space is tight.
+
+    Both spellings ship and the stylesheet shows one. The space before them is
+    non-breaking: at <=720px the last-race link is inline-flex, which trims a
+    plain space at the edge of a run of text.
+    """
+    stem, sep, rest = name.rpartition("Grand Prix")
+    if not sep or rest or not stem.endswith(" "):
+        return esc(name)
+    return (
+        f"{esc(stem.rstrip())}&nbsp;"
+        '<span class="gp-full">Grand Prix</span><span class="gp-abbr">GP</span>'
+    )
+
+
 def _when_line(race: dict) -> str:
     """Race and qualifying on one line, server-rendered in UTC.
 
@@ -163,7 +198,7 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
     if not nxt:
         return (
             '<section class="next-race nr-empty">'
-            '<span class="nr-tag">Next race</span>'
+            '<span class="nr-tag plate plate-primary">Next race</span>'
             '<span class="nr-name">Season complete &mdash; see you next year</span>'
             "</section>"
         )
@@ -199,15 +234,17 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         f'<section class="next-race{"" if plate else " nr-noplate"}"'
         f' data-datetime="{esc(_iso_datetime(nxt))}"{quali_attr}>'
         f'  <div class="nr-main">'
-        f'    <span class="nr-tag">Next race</span>'
+        f'    <span class="nr-tag plate plate-primary">Next race</span>'
         f'    <div class="nr-head">'
         f"      {fl}"
-        f'      <span class="nr-round">Round {esc(nxt["round"])} / {esc(schedule.get("totalRounds", ""))}</span>'
+        f'      <span class="nr-round">R{esc(nxt["round"])} / {esc(schedule.get("totalRounds", ""))}</span>'
+        f'      <span class="nr-start">{_start_label(nxt)}</span>'
         f"    </div>"
         f'    <h2 class="nr-name">{name_html}</h2>'
         f'    <div class="nr-circuit">{circuit_line}</div>'
         f'    <div class="nr-when">'
-        f'      <span class="nr-status"></span>'
+        f'      <span class="nr-status plate plate-status">'
+        f'<span class="plate-dot"></span><span class="nr-status-text"></span></span>'
         f'      <span class="nr-date">{_when_line(nxt)}</span>'
         f"    </div>"
         f"  </div>"
@@ -262,6 +299,21 @@ def render_last_race_drivers(pod: dict, constructor_map: dict, meta: dict) -> st
     return '<span class="lr-sep">/</span>'.join(steps)
 
 
+def render_verdict(combo: dict | None) -> str:
+    """The scorigami-style verdict plate for the last race's trio."""
+    if not combo or combo["count"] == 1:
+        return (
+            '<span class="lr-verdict plate plate-new"'
+            ' title="First time this trio has shared a podium">Podigami</span>'
+        )
+    cnt = combo["count"]
+    title = esc(f"This trio's {_ordinal(cnt)} podium together")
+    return (
+        f'<span class="lr-verdict plate plate-secondary" title="{title}">'
+        f"No Podigami <b>({cnt})</b></span>"
+    )
+
+
 def render_last_race(
     schedule: dict,
     podiums: list[dict],
@@ -298,7 +350,7 @@ def render_last_race(
         last = {"country": country, "raceName": pod["raceName"], "round": rnd}
 
     fl = flag_svg(last["country"])
-    name = esc(last["raceName"])
+    name = race_label_html(last["raceName"])
     name_url = race_url(links, pod["season"], last["round"], last["raceName"])
 
     constructor_map = {d["driverId"]: d.get("constructorId", "") for d in driver_form}
@@ -316,34 +368,17 @@ def render_last_race(
             f' aria-label="See this trio on the combos page"'
             f' title="See this trio on the combos page">{trio_block}</a>'
         )
-    if combo and combo["count"] == 1:
-        status_html = '<span class="lr-podigami">PODIGAMI</span>'
-    elif combo:
-        cnt = combo["count"]
-        prev = combo.get("races", [])
-        second_last = prev[-2] if len(prev) >= 2 else combo["lastRace"]
-        repeat_url = race_url(
-            links, second_last["season"], second_last["round"], second_last["raceName"]
-        )
-        status_html = (
-            f'<span class="lr-status">{_ordinal(cnt)} time'
-            f' &middot; last <a class="lr-link" href="{esc(repeat_url)}"'
-            f' target="_blank" rel="noopener">'
-            f"{esc(second_last['season'])} R{esc(second_last['round'])} &middot;"
-            f" {esc(second_last['raceName'])}</a></span>"
-        )
-    else:
-        status_html = '<span class="lr-podigami">PODIGAMI</span>'
+    verdict_html = render_verdict(combo)
 
     return (
         f'<section class="last-race">'
-        f'<span class="lr-tag">Last race</span>'
+        f'<span class="lr-tag plate plate-secondary">Last race</span>'
         f"{fl}"
         f'<a class="lr-name" href="{esc(name_url)}" target="_blank" rel="noopener">'
         f"R{esc(rnd)} &middot; {name}</a>"
         f"{trio_block}"
-        f"{status_html}"
-        # The status describes the trio, so it follows it; this spacer takes the
+        f"{verdict_html}"
+        # The verdict describes the trio, so it follows it; this spacer takes the
         # slack that used to be handed to a margin-left:auto push to the far edge.
         f'<span class="lr-sp"></span>'
         f"</section>"
@@ -401,18 +436,24 @@ def render_hero(
         f'  <div class="hero-head">'
         f'    <span class="hc-num">{chance:.0f}%</span>'
         f'    <div class="hero-head-text">'
-        f'      <p class="hc-label">chance of a podium trio Formula&nbsp;1 has never seen {where}'
+        f'      <p class="hc-label hc-label-long">chance of a podium trio Formula&nbsp;1 has never seen {where}'
         f'<span class="info-tip info-tip-sm" tabindex="0" aria-label="More info">'
         f'<span class="info-icon">i</span>'
         f'<span class="info-bubble">The overall probability that any brand-new podium trio appears at the next race, not just the top-ranked one.</span>'
         f"</span>"
-        f"      </p>{sub}"
+        f"      </p>"
+        # Phones show this one instead: the race is named in the card above.
+        f'<span class="hc-label-short">chance the podium is a trio F1 has never seen</span>'
+        f"{sub}"
         f"    </div>"
         f"  </div>"
         f'  <div class="hero-pick">'
         f'    <p class="hp-label">Most likely new trio &middot; {top["prob"]:.1f}%</p>'
         f'    <div class="hero-drivers">{drivers}</div>'
         f"  </div>"
+        # ...and the trio as codes on one line, in place of the full-name cards.
+        f'  <p class="hero-pick-short">Likeliest new: {_trio_chips(entries, meta)}'
+        f' <span class="plate plate-new">NEW</span></p>'
         f'  <p class="hp-prob">{acc_note}</p>'
         f"</section>"
     )
@@ -424,7 +465,7 @@ def _trio_chips(per_driver: list[dict], meta: dict) -> str:
     for p in per_driver:
         v = driver_view(p, meta)
         gp = p.get("gridPosition")
-        grid_chip = f'<span class="cd-grid">P{gp}</span>' if gp else ""
+        grid_chip = f'<span class="cd-grid plate plate-secondary">P{gp}</span>' if gp else ""
         chips.append(
             f'<span class="cd" style="--team:{v["color"]}" title="{esc(display_name(v["name"]))}">'
             f'<span class="cd-dot"></span><span class="cd-code">{esc(v["code"])}</span>{grid_chip}'
@@ -493,7 +534,13 @@ def _board_rows(board: list[dict], meta: dict, driver_form: list[dict], combos) 
         pct = round(100 * r["prob"] / top)
         if not r["happened"]:
             rows.append(
-                _cand_row(names, pct, r["prob"], " cand-new", '<span class="cand-pill">NEW</span>')
+                _cand_row(
+                    names,
+                    pct,
+                    r["prob"],
+                    " cand-new",
+                    '<span class="cand-pill plate plate-new">NEW</span>',
+                )
             )
             continue
         bubble, label = _board_history(r, combos)
@@ -540,7 +587,14 @@ def render_candidates(
         )
     else:
         return ""
-    badge = '<span class="panel-badge">grid-aware</span>' if grid_aware else ""
+    badge = '<span class="panel-badge plate plate-status">grid-aware</span>' if grid_aware else ""
+    # Phones show the top three; this opens the rest. Desktop hides the button.
+    more = (
+        f'<button type="button" class="cand-more" aria-expanded="false"'
+        f' data-count="{len(rows)}">All {len(rows)} &#9662;</button>'
+        if len(rows) > 3
+        else ""
+    )
     return (
         f'<section class="panel">'
         f"  <h2>Most likely trios"
@@ -554,7 +608,7 @@ def render_candidates(
         f'      <ol class="cand-list">{"".join(rows)}</ol>'
         f"    </div>"
         f"  </div>"
-        f"  {form_html}"
+        f'  <div class="cand-actions">{more}{form_html}</div>'
         f"</section>"
     )
 
@@ -600,6 +654,7 @@ def render_form(
     return (
         f'<details class="form-details">'
         f"<summary>"
+        f'<span class="fd-short">Current form &#9662;</span>'
         f'<span class="fd-closed">Show current form &#9662;</span>'
         f'<span class="fd-open">Hide current form &#9652;</span>'
         f"</summary>"
@@ -621,7 +676,8 @@ def _quickpicks(lo: int, current: int, counts: dict) -> str:
     if current != lo:
         picks.append((current, "this season"))
     chips = "".join(
-        f'<button type="button" class="tl-chip" data-year="{y}">{y} &middot; {esc(label)}</button>'
+        f'<button type="button" class="tl-chip plate-chip{" is-on" if y == current else ""}"'
+        f' data-year="{y}"><b>{y}</b> &middot; {esc(label)}</button>'
         for y, label in picks
     )
     return f'<div class="tl-chips">{chips}</div>'
@@ -668,6 +724,7 @@ def render_timeline(data: dict) -> str:
         f'    <select id="tl-select" aria-label="Timeline year">{"".join(options)}</select>'
         f"  </div>"
         f'  <ul class="tl-list" id="tl-list"></ul>'
+        f'  <button type="button" class="tl-more" id="tl-more" aria-expanded="false" aria-controls="tl-list" hidden></button>'
         f"</section>"
     )
 
@@ -827,7 +884,10 @@ def render_faq(
     return (
         f'<section class="panel faq-section" id="faq">'
         f"  <h2>Frequently asked questions</h2>"
-        f"  {''.join(entries)}"
+        f'  <button type="button" class="faq-fold" aria-expanded="false"'
+        f' aria-controls="faq-list">Questions &amp; answers'
+        f' <span class="faq-n">{len(items)}</span></button>'
+        f'  <div class="faq-list" id="faq-list">{"".join(entries)}</div>'
         f"</section>"
     )
 
@@ -984,6 +1044,7 @@ def main() -> int:
         f"{unlikeliest_hook(unlikeliest_data)}</div>"
     )
     explore = explore_grid()
+    explore_phone = explore_list(total_combos, lo, soulmates_data, overdue_data, unlikeliest_data)
 
     acc_note = render_accuracy_note(model_eval)
     # The hero predicts the race after asOf — the same one the next-race box names.
@@ -1025,6 +1086,13 @@ def main() -> int:
 
     # Embedded data for the slider (only what the client needs).
     # `</script>`-neutralized so an embedded string can never prematurely close the tag.
+    # Phone names: surnames, with initials season-wide only where one is shared.
+    short = short_names_by_season(podiums_dicts)
+    for _season, _trios in data["bySeason"].items():
+        # `names` already hold display names; the lookup is keyed by API names.
+        _by_display = {driver_name(k): v for k, v in short.get(_season, {}).items()}
+        for _trio in _trios:
+            _trio["short"] = [_by_display.get(n) or surname(n) for n in _trio["names"]]
     embed = json.dumps(
         {
             "bySeason": data["bySeason"],
@@ -1050,14 +1118,14 @@ def main() -> int:
 <body>
 {nav("index.html")}
 {WELCOME}
-<header>
+<header class="landing-head">
     <div class="container">
         <h1><span class="accent">F1</span> Podigami</h1>
         <p class="tagline">Keeping track of every F1 podium trio ever
         and predicting the next one.</p>
     </div>
 </header>
-<main>
+<main class="landing">
     <div class="container">
         {next_race}
         {last_race}
@@ -1066,6 +1134,7 @@ def main() -> int:
         {hook_row_board}
         {timeline}
         {hook_row_timeline}
+        {explore_phone}
         {faq}
         {explore}
     </div>

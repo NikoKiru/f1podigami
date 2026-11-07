@@ -61,7 +61,7 @@ def test_render_hero_head_pairs_the_number_with_its_sentence():
     assert 'class="hero-head"' in out
     assert 'class="hero-head-text"' in out
     assert 'class="hc-num">55%' in out
-    assert 'class="hc-label"' in out
+    assert 'class="hc-label hc-label-long"' in out
 
 
 def test_render_hero_names_the_race_when_given():
@@ -313,6 +313,14 @@ def test_quickpicks_first_record_current():
     assert 'data-year="2026"' in out and "this season" in out
 
 
+def test_quickpicks_current_year_chip_is_the_selected_one():
+    out = bp._quickpicks(1950, 2026, {"1950": 3, "1982": 17, "2026": 5})
+    assert out.count("is-on") == 1
+    assert 'class="tl-chip plate-chip is-on" data-year="2026"' in out
+    assert "<b>2026</b>" in out
+    assert 'class="tl-chip plate-chip" data-year="1950"' in out
+
+
 def test_quickpicks_record_tie_prefers_earliest_and_dedupes():
     # tie between 1950 and 1982 -> earliest (1950) wins; 1950 is already the
     # "first season" chip, so no separate record chip is emitted
@@ -323,7 +331,7 @@ def test_quickpicks_record_tie_prefers_earliest_and_dedupes():
 
 def test_quickpicks_empty_counts_and_single_season():
     out = bp._quickpicks(2026, 2026, {})
-    assert out.count('class="tl-chip"') == 1  # just the first-season chip
+    assert out.count('class="tl-chip plate-chip is-on"') == 1  # just the first-season chip
 
 
 V2_DATA = {"params": {"model": "dbpl-v2", "w_qual": 0.6}}
@@ -446,9 +454,14 @@ def _grid_cands():
 
 def test_render_candidates_grid_aware_badge_and_chips():
     out = bp.render_candidates(_grid_cands(), META, grid_aware=True)
-    assert "panel-badge" in out and "grid-aware" in out
-    assert out.count('class="cd-grid"') == 3
+    assert "panel-badge plate plate-status" in out and "grid-aware" in out
+    assert out.count('class="cd-grid plate plate-secondary"') == 3
     assert ">P1<" in out and ">P3<" in out and ">P7<" in out
+
+
+def test_trio_chips_grid_position_is_a_secondary_plate():
+    out = bp._trio_chips(_grid_cands()[0]["perDriver"], META)
+    assert out.count('class="cd-grid plate plate-secondary"') == 3
 
 
 def test_render_candidates_default_has_no_grid_markup():
@@ -627,6 +640,11 @@ def test_board_renders_happened_and_new_rows():
     assert "ANT" in out and "PIA" in out
 
 
+def test_board_new_rows_carry_the_new_plate():
+    out = _render_board()
+    assert out.count('class="cand-pill plate plate-new"') == 1
+
+
 def test_board_row_order_follows_the_data():
     out = _render_board()
     assert out.index("cand-done") < out.index("cand-new")
@@ -697,3 +715,122 @@ def test_panel_title_is_no_longer_new_only():
     out = _render_board()
     assert "Most likely trios" in out
     assert "Most likely new trios" not in out
+
+
+# --- phone first screen: the compact hero ----------------------------------
+
+
+def _short_pick(out: str) -> str:
+    import re
+
+    m = re.search(r'<p class="hero-pick-short">(.*?)</p>', out, re.S)
+    assert m, "the hero must carry a hero-pick-short line for phones"
+    return m.group(1)
+
+
+def test_render_hero_has_a_short_label_for_phones():
+    """Phones get one short sentence; the long one stays for wider screens."""
+    out = bp.render_hero(_hero_top(), 55.0, META, race_name="Mexico City Grand Prix")
+    assert 'class="hc-label hc-label-long"' in out
+    assert (
+        '<span class="hc-label-short">chance the podium is a trio F1 has never seen</span>' in out
+    )
+    assert out.index("hc-label-long") < out.index("hc-label-short")
+
+
+def test_render_hero_has_a_short_pick_line_for_phones():
+    """The phone's pick line: "Likeliest new:", the trio as team-coloured codes,
+    then the red NEW plate, after the full-name cards it stands in for."""
+    out = bp.render_hero(_hero_top(), 55.0, META)
+    short = _short_pick(out)
+    assert short.startswith("Likeliest new: ")
+    assert short.count('class="cd"') == 3
+    assert ">ANT<" in short and ">NOR<" in short and ">RUS<" in short
+    assert short.rstrip().endswith('<span class="plate plate-new">NEW</span>')
+    assert out.index('class="hero-pick"') < out.index('class="hero-pick-short"')
+
+
+def test_render_hero_short_pick_keeps_the_grid_slots_after_qualifying():
+    top = {
+        "prob": 3.5,
+        "perDriver": [
+            {**pd("antonelli", "Andrea Kimi Antonelli", "mercedes", 6), "gridPosition": 3},
+            {**pd("russell", "George Russell", "mercedes", 3), "gridPosition": 1},
+            {**pd("norris", "Lando Norris", "mclaren", 2), "gridPosition": 2},
+        ],
+    }
+    out = bp.render_hero(top, 40.0, META, pre_chance=31.0)
+    assert 'class="hc-sub"' in out
+    short = _short_pick(out)
+    assert short.count('class="cd-grid plate plate-secondary"') == 3
+    # front to back, as the full cards read
+    assert short.index(">RUS<") < short.index(">NOR<") < short.index(">ANT<")
+
+
+# ── phone board: top three, then All N ───────────────────────────────────────
+
+
+def _rows_board(n):
+    ids = ["antonelli", "norris", "russell", "piastri"]
+    return [
+        {"driverIds": ids[:3], "prob": 9.0 - i * 0.1, "happened": bool(i % 2)} for i in range(n)
+    ]
+
+
+def _n_cands(n):
+    return [_grid_cands()[0] for _ in range(n)]
+
+
+def test_board_of_fifteen_offers_all_fifteen():
+    out = bp.render_candidates(
+        _n_cands(2), META, board=_rows_board(15), driver_form=BOARD_FORM, combos=BOARD_COMBOS
+    )
+    assert 'class="cand-more"' in out
+    assert "All 15" in out
+    assert 'aria-expanded="false"' in out
+
+
+def test_board_of_four_offers_all_four():
+    out = bp.render_candidates(
+        _n_cands(2), META, board=_rows_board(4), driver_form=BOARD_FORM, combos=BOARD_COMBOS
+    )
+    assert "All 4" in out
+
+
+def test_three_row_board_has_no_more_button():
+    out = bp.render_candidates(
+        _n_cands(2), META, board=_rows_board(3), driver_form=BOARD_FORM, combos=BOARD_COMBOS
+    )
+    assert "cand-more" not in out
+    assert 'class="cand-actions"' in out
+
+
+def test_two_candidate_fallback_has_no_more_button():
+    assert "cand-more" not in bp.render_candidates(_n_cands(2), META)
+
+
+def test_seven_candidate_fallback_offers_all_seven():
+    out = bp.render_candidates(_n_cands(7), META)
+    assert "All 7" in out
+
+
+def test_form_toggle_has_a_short_phone_label():
+    out = bp.render_form([], False, META)
+    assert "fd-short" in out
+    assert "Current form" in out
+
+
+def test_embedded_season_entries_carry_short_names(dist):
+    """The phone list reads the season-wide short names from the embed."""
+    import json
+    import re
+
+    html = (dist / "index.html").read_text(encoding="utf-8")
+    blob = re.search(r'<script[^>]*id="podigami-data"[^>]*>(.*?)</script>', html, re.S).group(1)
+    by_season = json.loads(blob)["bySeason"]
+    for season, entries in by_season.items():
+        for e in entries:
+            assert len(e["short"]) == len(e["names"]), season
+    hills = [e for e in by_season["1962"] if any("Hill" in n for n in e["names"])]
+    shorts = {s for e in hills for s in e["short"]}
+    assert {"G. Hill", "P. Hill"} <= shorts
