@@ -1,13 +1,7 @@
-# Use this workspace to collaborate
 workspace:
   id: f795c3fd-6f2d-4c0a-8f77-d38515832c4e
-
-localResources:
-  collections:
-    - ../docs/postman/F1 Podigami upstream APIs
-
-# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
-
 cloudResources:
   collections:
-    ../docs/postman/F1 Podigami upstream APIs: 6f1c2a9e-4b7d-4f3a-9c51-0d2e8b7a1f64
+    ../postman/collections/F1 Podigami upstream APIs: 6f1c2a9e-4b7d-4f3a-9c51-0d2e8b7a1f64
+  globals:
+    ../postman/globals/workspace.globals.yaml: a8c65537-2e0d-4ea9-8801-6c98fefd4f23

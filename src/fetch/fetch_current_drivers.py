@@ -11,6 +11,12 @@ R12-R14) has not started any of those rounds, so once qualifying for the next
 race is in data/qualifying.json its entrants join the grid too. Their name,
 code and number come from the season's driver list.
 
+The OpenF1 fast lane and the official starting grid map cars by number, so
+every driver needs one. The API can list a driver with no permanent number (a
+debutant: Rafael Camara drove car #51 in 2026 R20), so a starter falls back to
+the number in his result row and a new qualifier to the one in his qualifying
+row.
+
 Current season + latest rounds are read from data/podiums.json (no guessing).
 
 Writes data/current_drivers.json:
@@ -36,6 +42,9 @@ SLEEP_BETWEEN = 1.0
 MAX_BACKOFF_RETRIES = 6
 USER_AGENT = "f1podigami/0.2 (https://github.com/local/f1podigami)"
 ROUNDS_BACK = 3  # union the last N completed rounds to catch seat rotations
+# Rows read from the end of the season's qualifying feed: one full grid with
+# room to spare, so the newest round is always complete.
+QUALI_TAIL = 30
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 PODIUMS_PATH = DATA_DIR / "podiums.json"
@@ -77,8 +86,8 @@ def season_and_recent_rounds(today_year: int | None = None) -> tuple[int, list[i
     return year, rounds[-ROUNDS_BACK:]
 
 
-def pending_qualifiers(season: int, rounds: list[int]) -> tuple[str, list[str]] | None:
-    """(season, driverIds) of a qualifying session newer than the last race, if any.
+def pending_qualifiers(season: int, rounds: list[int]) -> tuple[str, str, list[str]] | None:
+    """(season, round, driverIds) of a qualifying session newer than the last race, if any.
 
     ``season``/``rounds`` are what the grid is built from. The newest qualifying
     round after the last of them is the next race's entry list, which can hold a
@@ -91,20 +100,22 @@ def pending_qualifiers(season: int, rounds: list[int]) -> tuple[str, list[str]] 
     if not newer:
         return None
     q = max(newer, key=lambda q: (int(q["season"]), int(q["round"])))
-    return str(q["season"]), [r["driverId"] for r in q["results"]]
+    return str(q["season"]), str(q["round"]), [r["driverId"] for r in q["results"]]
 
 
-def _entry(d: dict) -> dict:
+def _entry(d: dict, car_number: str | None = None) -> dict:
     """{name, code, number} from the API's Driver object.
 
-    ``code`` (the 3-letter TLA) and ``number`` (permanent car number) may be
-    absent for some drivers, in which case the key is omitted.
+    ``code`` (the 3-letter TLA) and ``number`` may be absent for some drivers,
+    in which case the key is omitted. ``number`` is the permanent car number,
+    or ``car_number`` (the number on a result row) when the API has none.
     """
     entry: dict = {"name": f"{d['givenName']} {d['familyName']}"}
     if d.get("code"):
         entry["code"] = d["code"]
-    if d.get("permanentNumber"):
-        entry["number"] = d["permanentNumber"]
+    number = d.get("permanentNumber") or car_number
+    if number:
+        entry["number"] = number
     return entry
 
 
@@ -114,7 +125,10 @@ def fetch_round_drivers(season: int, rnd: int) -> dict[str, dict]:
     lists = data["MRData"]["RaceTable"]["Races"]
     if not lists:
         return {}
-    return {r["Driver"]["driverId"]: _entry(r["Driver"]) for r in lists[0].get("Results", [])}
+    return {
+        r["Driver"]["driverId"]: _entry(r["Driver"], r.get("number"))
+        for r in lists[0].get("Results", [])
+    }
 
 
 def fetch_season_drivers(season: str) -> dict[str, dict]:
@@ -128,6 +142,26 @@ def fetch_season_drivers(season: str) -> dict[str, dict]:
     return {d["driverId"]: _entry(d) for d in data["MRData"]["DriverTable"]["Drivers"]}
 
 
+def qualifying_numbers(season: str, rnd: str) -> dict[str, str]:
+    """{driverId: car number} from one round's qualifying rows.
+
+    Read from the end of the season's qualifying feed, which has a new round
+    hours before the round-indexed URL does (#178): its row count first, then
+    the last QUALI_TAIL rows.
+    """
+    url = f"{API_ROOT}/{season}/qualifying.json"
+    total = int(get(url, fresh({"limit": 1}))["MRData"]["total"])
+    time.sleep(SLEEP_BETWEEN)
+    data = get(url, fresh({"limit": QUALI_TAIL, "offset": max(0, total - QUALI_TAIL)}))
+    return {
+        q["Driver"]["driverId"]: q["number"]
+        for race in data["MRData"]["RaceTable"]["Races"]
+        if str(race["round"]) == rnd
+        for q in race.get("QualifyingResults", [])
+        if q.get("number")
+    }
+
+
 def main() -> int:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     season, rounds = season_and_recent_rounds()
@@ -138,7 +172,7 @@ def main() -> int:
         time.sleep(SLEEP_BETWEEN)
 
     pending = pending_qualifiers(season, rounds)
-    missing = [d for d in pending[1] if d not in grid] if pending else []
+    missing = [d for d in pending[2] if d not in grid] if pending else []
     if missing:
         roster = fetch_season_drivers(pending[0])
         for driver_id in missing:
@@ -147,6 +181,15 @@ def main() -> int:
                 print(f"  {driver_id}: qualified for the next race, added to the grid")
             else:
                 print(f"  {driver_id}: qualified but is not in the {pending[0]} driver list")
+        unnumbered = [d for d in missing if d in grid and "number" not in grid[d]]
+        if unnumbered:
+            numbers = qualifying_numbers(pending[0], pending[1])
+            for driver_id in unnumbered:
+                if driver_id in numbers:
+                    grid[driver_id]["number"] = numbers[driver_id]
+                    print(f"  {driver_id}: no permanent number, raced as #{numbers[driver_id]}")
+                else:
+                    print(f"  {driver_id}: no car number in the API, so OpenF1 can't map him")
 
     drivers = [{"driverId": k, **v} for k, v in sorted(grid.items())]
     out = {"season": str(season), "drivers": drivers}
