@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-11-07
+
+### Improvements
+- Grid penalties for the 2026 Brazilian GP (round 20): Verstappen starts from the back (several power-unit components), Russell drops five places and Hamilton and Leclerc ten each, entered ahead of qualifying so the post-qualifying prediction uses them until F1's official grid is published (#411)
+
 ## 2026-11-01
 
 ### Features
