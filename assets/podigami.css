@@ -2279,9 +2279,11 @@ a.tl-where:hover {
         padding: 8px 0;
     }
 
-    /* Deliberate tap-target size (test_phone_links_are_big_enough_to_tap). */
+    /* Deliberate tap-target size (test_phone_links_are_big_enough_to_tap).
+       min-height keeps it 32px whatever the font's line box is. */
     .tl-chip {
         padding: 8px 12px;
+        min-height: 32px;
     }
 }
 

@@ -1984,6 +1984,28 @@ def test_phone_links_are_big_enough_to_tap(dist, page_name):
     assert small == []
 
 
+def test_phone_season_chips_stay_tap_sized_in_a_shorter_font(dist):
+    """CI renders Liberation Sans, whose 11px line box is 12px against Segoe UI's
+    15px, so a chip that only reaches 32px through its line height measured 30px
+    there. Local Arial still rounds to 15px, so pin the line box CI measured."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        page.add_style_tag(
+            content='* { font-family: Arial, "Liberation Sans", sans-serif !important;'
+            " line-height: 12px !important; }"
+        )
+        heights = page.evaluate(
+            """() => [...document.querySelectorAll('.tl-chip')]
+                .map(el => el.getBoundingClientRect().height)"""
+        )
+        browser.close()
+    assert heights
+    assert min(heights) >= 31.5, heights
+
+
 @pytest.mark.new_visitor
 @pytest.mark.parametrize(("width", "height"), LANDING_SCREENS)
 def test_faq_link_from_a_sub_page_lands_on_an_open_answer(dist, width, height):
