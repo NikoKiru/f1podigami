@@ -125,7 +125,7 @@
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.9,
           "uncertainty": 0.491,
           "gridPosition": null
@@ -138,7 +138,7 @@
           "recentPodiums": 9,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.895,
           "uncertainty": 0.377,
           "gridPosition": null
@@ -156,7 +156,7 @@
         "Charles Leclerc",
         "Lando Norris"
       ],
-      "prob": 1.835,
+      "prob": 1.836,
       "perDriver": [
         {
           "driverId": "antonelli",
@@ -192,7 +192,7 @@
           "recentPodiums": 3,
           "constructorId": "mclaren",
           "constructor": "McLaren",
-          "constructorStrength": 0.589,
+          "constructorStrength": 0.579,
           "finishProb": 0.914,
           "uncertainty": 0.356,
           "gridPosition": null
@@ -220,7 +220,7 @@
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.9,
           "uncertainty": 0.491,
           "gridPosition": null
@@ -246,7 +246,7 @@
           "recentPodiums": 9,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.895,
           "uncertainty": 0.377,
           "gridPosition": null
@@ -287,7 +287,7 @@
           "recentPodiums": 9,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.895,
           "uncertainty": 0.377,
           "gridPosition": null
@@ -300,7 +300,7 @@
           "recentPodiums": 0,
           "constructorId": "mclaren",
           "constructor": "McLaren",
-          "constructorStrength": 0.589,
+          "constructorStrength": 0.579,
           "finishProb": 0.917,
           "uncertainty": 0.36,
           "gridPosition": null
@@ -354,7 +354,7 @@
           "recentPodiums": 3,
           "constructorId": "mclaren",
           "constructor": "McLaren",
-          "constructorStrength": 0.589,
+          "constructorStrength": 0.579,
           "finishProb": 0.914,
           "uncertainty": 0.356,
           "gridPosition": null
@@ -395,7 +395,7 @@
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.9,
           "uncertainty": 0.491,
           "gridPosition": null
@@ -449,7 +449,7 @@
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.9,
           "uncertainty": 0.491,
           "gridPosition": null
@@ -503,7 +503,7 @@
           "recentPodiums": 3,
           "constructorId": "mclaren",
           "constructor": "McLaren",
-          "constructorStrength": 0.589,
+          "constructorStrength": 0.579,
           "finishProb": 0.914,
           "uncertainty": 0.356,
           "gridPosition": null
@@ -544,7 +544,7 @@
           "recentPodiums": 9,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.895,
           "uncertainty": 0.377,
           "gridPosition": null
@@ -557,7 +557,7 @@
           "recentPodiums": 0,
           "constructorId": "mclaren",
           "constructor": "McLaren",
-          "constructorStrength": 0.589,
+          "constructorStrength": 0.579,
           "finishProb": 0.917,
           "uncertainty": 0.36,
           "gridPosition": null
@@ -598,7 +598,7 @@
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.9,
           "uncertainty": 0.491,
           "gridPosition": null
@@ -624,7 +624,7 @@
           "recentPodiums": 9,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.895,
           "uncertainty": 0.377,
           "gridPosition": null
@@ -652,7 +652,7 @@
           "recentPodiums": 1,
           "constructorId": "red_bull",
           "constructor": "Red Bull",
-          "constructorStrength": 0.603,
+          "constructorStrength": 0.606,
           "finishProb": 0.9,
           "uncertainty": 0.491,
           "gridPosition": null
@@ -693,7 +693,7 @@
         "max_verstappen",
         "russell"
       ],
-      "prob": 6.495,
+      "prob": 6.496,
       "happened": true
     },
     {
@@ -702,7 +702,7 @@
         "leclerc",
         "max_verstappen"
       ],
-      "prob": 6.052,
+      "prob": 6.053,
       "happened": true
     },
     {
@@ -711,7 +711,7 @@
         "hamilton",
         "max_verstappen"
       ],
-      "prob": 5.05,
+      "prob": 5.051,
       "happened": true
     },
     {
@@ -729,7 +729,7 @@
         "leclerc",
         "russell"
       ],
-      "prob": 4.152,
+      "prob": 4.153,
       "happened": true
     },
     {
@@ -828,7 +828,7 @@
         "leclerc",
         "norris"
       ],
-      "prob": 1.835,
+      "prob": 1.836,
       "happened": false
     },
     {
@@ -936,7 +936,7 @@
         "hadjar",
         "hamilton"
       ],
-      "prob": 1.163,
+      "prob": 1.162,
       "happened": true
     },
     {
@@ -994,7 +994,7 @@
       "recentPodiums": 9,
       "constructorId": "red_bull",
       "constructor": "Red Bull",
-      "constructorStrength": 0.603,
+      "constructorStrength": 0.606,
       "finishProb": 0.895,
       "uncertainty": 0.377,
       "gridPosition": null
@@ -1059,7 +1059,7 @@
       "recentPodiums": 3,
       "constructorId": "mclaren",
       "constructor": "McLaren",
-      "constructorStrength": 0.589,
+      "constructorStrength": 0.579,
       "finishProb": 0.914,
       "uncertainty": 0.356,
       "gridPosition": null
@@ -1072,7 +1072,7 @@
       "recentPodiums": 1,
       "constructorId": "red_bull",
       "constructor": "Red Bull",
-      "constructorStrength": 0.603,
+      "constructorStrength": 0.606,
       "finishProb": 0.9,
       "uncertainty": 0.491,
       "gridPosition": null
@@ -1085,7 +1085,7 @@
       "recentPodiums": 0,
       "constructorId": "mclaren",
       "constructor": "McLaren",
-      "constructorStrength": 0.589,
+      "constructorStrength": 0.579,
       "finishProb": 0.917,
       "uncertainty": 0.36,
       "gridPosition": null
@@ -1124,7 +1124,7 @@
       "recentPodiums": 0,
       "constructorId": "alpine",
       "constructor": "Alpine F1 Team",
-      "constructorStrength": 0.117,
+      "constructorStrength": 0.11,
       "finishProb": 0.876,
       "uncertainty": 0.925,
       "gridPosition": null
@@ -1137,7 +1137,7 @@
       "recentPodiums": 0,
       "constructorId": "rb",
       "constructor": "RB F1 Team",
-      "constructorStrength": 0.165,
+      "constructorStrength": 0.171,
       "finishProb": 0.892,
       "uncertainty": 0.939,
       "gridPosition": null
@@ -1150,7 +1150,7 @@
       "recentPodiums": 0,
       "constructorId": "rb",
       "constructor": "RB F1 Team",
-      "constructorStrength": 0.165,
+      "constructorStrength": 0.171,
       "finishProb": 0.889,
       "uncertainty": 1.139,
       "gridPosition": null
@@ -1176,7 +1176,7 @@
       "recentPodiums": 0,
       "constructorId": "haas",
       "constructor": "Haas F1 Team",
-      "constructorStrength": 0.048,
+      "constructorStrength": 0.049,
       "finishProb": 0.882,
       "uncertainty": 1.075,
       "gridPosition": null
@@ -1202,7 +1202,7 @@
       "recentPodiums": 0,
       "constructorId": "audi",
       "constructor": "Audi",
-      "constructorStrength": 0.037,
+      "constructorStrength": 0.043,
       "finishProb": 0.885,
       "uncertainty": 1.261,
       "gridPosition": null
@@ -1228,7 +1228,7 @@
       "recentPodiums": 0,
       "constructorId": "alpine",
       "constructor": "Alpine F1 Team",
-      "constructorStrength": 0.117,
+      "constructorStrength": 0.11,
       "finishProb": 0.879,
       "uncertainty": 1.195,
       "gridPosition": null
@@ -1254,7 +1254,7 @@
       "recentPodiums": 0,
       "constructorId": "haas",
       "constructor": "Haas F1 Team",
-      "constructorStrength": 0.048,
+      "constructorStrength": 0.049,
       "finishProb": 0.877,
       "uncertainty": 1.403,
       "gridPosition": null
@@ -1267,7 +1267,7 @@
       "recentPodiums": 0,
       "constructorId": "haas",
       "constructor": "Haas F1 Team",
-      "constructorStrength": 0.048,
+      "constructorStrength": 0.049,
       "finishProb": 0.883,
       "uncertainty": 1.289,
       "gridPosition": null
@@ -1280,7 +1280,7 @@
       "recentPodiums": 0,
       "constructorId": "audi",
       "constructor": "Audi",
-      "constructorStrength": 0.037,
+      "constructorStrength": 0.043,
       "finishProb": 0.888,
       "uncertainty": 1.477,
       "gridPosition": null
