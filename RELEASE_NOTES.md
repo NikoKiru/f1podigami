@@ -12,6 +12,7 @@
 - Grid penalties for the 2026 Brazilian GP (round 20): Verstappen starts from the back (several power-unit components), Russell drops five places and Hamilton and Leclerc ten each, entered ahead of qualifying so the post-qualifying prediction uses them until F1's official grid is published (#411)
 
 ### Fixes
+- A debutant no longer holds up the fast results. Rafael Camara, driving Ocon's Haas in Brazil, is listed by the results API without a permanent car number, so OpenF1's qualifying, race result and official grid all refused car #51 and waited hours for the slower source. A driver with no permanent number now takes the number from his own qualifying or race row (#420)
 - The Postman collection now shows up in Postman's Collections panel. It moved to `postman/collections/`, the only folder that panel lists (#419)
 - The season chips on the landing page are tall enough to tap on every phone again, not only where Segoe UI is the font (#414)
 
