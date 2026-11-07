@@ -19,42 +19,42 @@
     {
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 380.0,
+      "points": 382.0,
       "position": 3,
       "wins": 3
     },
     {
       "constructorId": "mclaren",
       "name": "McLaren",
-      "points": 371.0,
+      "points": 365.0,
       "position": 4,
       "wins": 2
     },
     {
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 104.0,
+      "points": 108.0,
       "position": 5,
       "wins": 0
     },
     {
       "constructorId": "alpine",
       "name": "Alpine F1 Team",
-      "points": 74.0,
+      "points": 69.0,
       "position": 6,
       "wins": 0
     },
     {
       "constructorId": "haas",
       "name": "Haas F1 Team",
-      "points": 30.0,
+      "points": 31.0,
       "position": 7,
       "wins": 0
     },
     {
       "constructorId": "audi",
       "name": "Audi",
-      "points": 23.0,
+      "points": 27.0,
       "position": 8,
       "wins": 0
     },
@@ -87,17 +87,17 @@
     "leclerc": "ferrari",
     "norris": "mclaren",
     "russell": "mercedes",
-    "piastri": "mclaren",
-    "colapinto": "alpine",
     "lawson": "rb",
-    "gasly": "alpine",
     "bortoleto": "audi",
     "hadjar": "red_bull",
     "ryo_hirakawa": "haas",
     "albon": "williams",
     "sainz": "williams",
+    "piastri": "mclaren",
     "hulkenberg": "audi",
+    "colapinto": "alpine",
     "perez": "cadillac",
+    "gasly": "alpine",
     "arvid_lindblad": "rb",
     "bearman": "haas",
     "bottas": "cadillac",
