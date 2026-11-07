@@ -2320,22 +2320,8 @@ a.tl-where:hover {
 }
 
 .sc-tag {
-    display: inline-block;
     margin-left: 8px;
-    padding: 1px 7px;
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    color: var(--accent-link);
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.4;
     vertical-align: 1px;
-    white-space: nowrap;
-}
-
-.sc-tag.sc-hit {
-    background: var(--accent);
-    color: #fff;
 }
 
 .rr-stat-wide .rr-stat-val {

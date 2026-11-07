@@ -432,3 +432,28 @@ def test_landing_title_is_hidden_from_view_not_from_readers():
     assert "display: none" not in body
     assert re.search(r"clip-path:\s*inset\(50%\)", body)
     assert re.search(r"position:\s*absolute", body)
+
+
+def test_badge_classes_have_no_round_pill_radius():
+    """Badges take their corners from the plate family, never a 999px pill."""
+    import re
+
+    badges = {
+        ".race-pill",
+        ".shared-badge",
+        ".sc-tag",
+        ".cand-pill",
+        ".tl-chip",
+        ".nr-tag",
+        ".lr-tag",
+    }
+    for path in ASSETS.glob("*.css"):
+        text = path.read_text(encoding="utf-8")
+        for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", text):
+            if "999px" not in body or "border-radius" not in body:
+                continue
+            for sel in selectors.split(","):
+                base = re.match(
+                    r"\s*(?:a)?(\.[\w-]+)", sel.strip().split()[-1] if sel.strip() else ""
+                )
+                assert not base or base.group(1) not in badges, f"{path.name}: {sel.strip()}"

@@ -720,7 +720,7 @@ tr.detail>td {
     align-items: baseline;
     gap: 6px;
     padding: 2px 9px;
-    border-radius: 999px;
+    border-radius: var(--plate-radius);
     background: var(--surface-2);
     border: 1px solid var(--border);
     font-size: 12.5px;
