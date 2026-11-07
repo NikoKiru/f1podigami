@@ -1,0 +1,29 @@
+$kind: http-request
+description: Every Grand Prix session this season. `src/fetch/fetch_openf1.py` matches one to a Jolpica race by UTC date. Sets `{{race_session_key}}` to the newest finished one.
+url: "{{openf1}}/sessions?year={{season}}&session_name=Race"
+method: GET
+queryParams:
+  year: "{{season}}"
+  session_name: Race
+scripts:
+  - type: afterResponse
+    code: |-
+      // Point {{race_session_key}} at the newest race session that has finished.
+      if (pm.response.code === 200) {
+        const now = Date.now();
+        const done = pm.response.json()
+          .filter((s) => !s.is_cancelled && Date.parse(s.date_end) < now)
+          .sort((a, b) => Date.parse(a.date_start) - Date.parse(b.date_start));
+        const s = done[done.length - 1];
+        if (s) {
+          pm.collectionVariables.set('race_session_key', String(s.session_key));
+          const mins = Math.round((now - Date.parse(s.date_end)) / 60000);
+          const where = [s.location, s.country_name].filter(Boolean).join(', ');
+          console.log('Newest finished race: ' + where + ', ended ' + s.date_end + ' (' + mins + ' min ago). {{race_session_key}} is now ' + s.session_key + (s.meeting_key ? ', meeting_key ' + s.meeting_key : '') + '.');
+          if (mins < 30) console.log('It ended under 30 minutes ago, so OpenF1 may not serve it yet.');
+        } else {
+          console.log('No finished race session this season yet.');
+        }
+      }
+    language: text/javascript
+order: 1000

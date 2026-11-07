@@ -7,6 +7,7 @@
 - **The landing page is about 1.8 screens on a phone instead of 4½.** The race card and chance box are shorter, "Most likely trios" and the season list show the top few with buttons for the rest, one "Explore" list replaces the cards, and the FAQ folds behind "Questions & answers". Without JavaScript nothing collapses (#413)
 
 ### Improvements
+- A Postman collection of every request the pipeline makes to Jolpica, OpenF1 and formula1.com, for checking what the sources have right now. Each response gets a table in Postman's Visualize tab, the OpenF1 requests point themselves at the newest race and qualifying, and a test keeps the base URLs in step with the fetchers. It's in `docs/postman/` (#416)
 - Drivers with a particle or suffix now show their surname properly in the season list and discovery text ("von Trips", "de la Rosa", "Piquet Jr."), and shared surnames get initials ("G. Hill", "P. Hill") (#413)
 - Grid penalties for the 2026 Brazilian GP (round 20): Verstappen starts from the back (several power-unit components), Russell drops five places and Hamilton and Leclerc ten each, entered ahead of qualifying so the post-qualifying prediction uses them until F1's official grid is published (#411)
 

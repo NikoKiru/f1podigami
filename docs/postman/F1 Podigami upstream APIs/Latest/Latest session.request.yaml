@@ -1,0 +1,15 @@
+$kind: http-request
+description: OpenF1's newest session of any kind (practice, qualifying, sprint, race).
+url: "{{openf1}}/sessions?session_key=latest"
+method: GET
+queryParams:
+  session_key: latest
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 200) {
+        const s = pm.response.json()[0];
+        if (s) console.log("OpenF1's latest session: " + s.session_name + ', ' + s.location + ', ' + s.date_start + ' to ' + s.date_end + ' (session_key ' + s.session_key + ').');
+      }
+    language: text/javascript
+order: 4000

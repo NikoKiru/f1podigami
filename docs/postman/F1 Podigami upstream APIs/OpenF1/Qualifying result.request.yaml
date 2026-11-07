@@ -1,0 +1,7 @@
+$kind: http-request
+description: Q1/Q2/Q3 times per car. Used by `src/fetch/fetch_openf1.py`. A driver who set no time is left out.
+url: "{{openf1}}/session_result?session_key={{quali_session_key}}"
+method: GET
+queryParams:
+  session_key: "{{quali_session_key}}"
+order: 6000

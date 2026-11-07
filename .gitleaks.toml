@@ -1,0 +1,10 @@
+# Gitleaks config for the Secret scan job (security.yml). Every default rule
+# stays on; this only adds an allowlist.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Postman's workspace file, which maps local folders to Postman workspace and collection IDs: identifiers, not credentials"
+paths = [
+  '''(^|/)\.postman/resources\.yaml$''',
+]
