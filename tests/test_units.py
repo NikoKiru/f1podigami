@@ -193,7 +193,11 @@ def test_pending_qualifiers_are_the_entrants_of_a_round_after_the_last_race(tmp_
     )
     monkeypatch.setattr(fcd, "QUALIFYING_PATH", f)
 
-    assert fcd.pending_qualifiers(2026, [12, 13, 14]) == ("2026", ["max_verstappen", "hadjar"])
+    assert fcd.pending_qualifiers(2026, [12, 13, 14]) == (
+        "2026",
+        "15",
+        ["max_verstappen", "hadjar"],
+    )
     assert fcd.pending_qualifiers(2026, [13, 14, 15]) is None
 
 
@@ -206,7 +210,7 @@ def test_pending_qualifiers_reach_into_the_next_season(tmp_path, monkeypatch):
     f.write_text(json.dumps(_qualifying(("2025", "24", ["norris"]), ("2026", "1", ["rookie"]))))
     monkeypatch.setattr(fcd, "QUALIFYING_PATH", f)
 
-    assert fcd.pending_qualifiers(2025, [22, 23, 24]) == ("2026", ["rookie"])
+    assert fcd.pending_qualifiers(2025, [22, 23, 24]) == ("2026", "1", ["rookie"])
 
 
 def test_grid_keeps_a_driver_who_qualified_after_missing_the_last_rounds(tmp_path, monkeypatch):
@@ -275,3 +279,102 @@ def test_grid_skips_the_roster_request_when_every_qualifier_already_raced(tmp_pa
     monkeypatch.setattr(fcd, "get", fake_get)
     assert fcd.main() == 0
     assert not any(u.endswith("/drivers.json") for u in urls)
+
+
+# --- fetch_current_drivers: a debutant with no permanent number -----------------
+
+
+def test_round_starter_without_a_permanent_number_keeps_the_number_he_raced(monkeypatch):
+    """The fast lane and the official grid map cars by number, so a driver the
+    API lists without a permanent number would fail both closed."""
+    from fetch import fetch_current_drivers as fcd
+
+    camara = {"driverId": "rafael_camara", "givenName": "Rafael", "familyName": "Camara"}
+    verstappen = _driver("max_verstappen", "Max", "Verstappen", "VER", "3")
+    starters = [{"number": "3", "Driver": verstappen}, {"number": "51", "Driver": camara}]
+    monkeypatch.setattr(
+        fcd,
+        "get",
+        lambda url, params: {"MRData": {"RaceTable": {"Races": [{"Results": starters}]}}},
+    )
+
+    drivers = fcd.fetch_round_drivers(2026, 20)
+    assert drivers["rafael_camara"] == {"name": "Rafael Camara", "number": "51"}
+    assert drivers["max_verstappen"]["number"] == "3"
+
+
+def test_debutant_qualifier_gets_his_car_number_from_the_qualifying_rows(tmp_path, monkeypatch):
+    """Rafael Camara drove Ocon's Haas in 2026 R20 qualifying as car #51. The
+    season driver list had him with no permanent number, so the grid lacked #51
+    and the OpenF1 fast lane and the official grid both failed closed on it."""
+    from datalib import repository
+    from fetch import fetch_current_drivers as fcd
+    from fetch.api_cache import CACHE_BUSTER
+
+    (tmp_path / "qualifying.json").write_text(
+        json.dumps(_qualifying(("2026", "20", ["max_verstappen", "rafael_camara"])))
+    )
+    monkeypatch.setattr(fcd, "QUALIFYING_PATH", tmp_path / "qualifying.json")
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(fcd, "SLEEP_BETWEEN", 0)
+    monkeypatch.setattr(fcd, "season_and_recent_rounds", lambda: (2026, [17, 18, 19]))
+
+    verstappen = _driver("max_verstappen", "Max", "Verstappen", "VER", "3")
+    ocon = _driver("ocon", "Esteban", "Ocon", "OCO", "31")
+    camara = {"driverId": "rafael_camara", "givenName": "Rafael", "familyName": "Camara"}
+    calls = []
+
+    def fake_get(url, params):
+        calls.append((url, params))
+        if url.endswith("/2026/drivers.json"):
+            return {"MRData": {"DriverTable": {"Drivers": [verstappen, ocon, camara]}}}
+        if url.endswith("/2026/qualifying.json"):
+            rows = [
+                {"number": "16", "Driver": _driver("leclerc", "Charles", "Leclerc", "LEC", "16")},
+            ]
+            newest = [{"number": "3", "Driver": verstappen}, {"number": "51", "Driver": camara}]
+            races = [
+                {"round": "19", "QualifyingResults": rows},
+                {"round": "20", "QualifyingResults": newest},
+            ]
+            return {"MRData": {"total": "415", "RaceTable": {"Races": races}}}
+        starters = [{"number": "3", "Driver": verstappen}, {"number": "31", "Driver": ocon}]
+        return {"MRData": {"RaceTable": {"Races": [{"Results": starters}]}}}
+
+    monkeypatch.setattr(fcd, "get", fake_get)
+    assert fcd.main() == 0
+
+    grid = json.loads((tmp_path / "current_drivers.json").read_text())
+    assert {d["driverId"]: d.get("number") for d in grid["drivers"]} == {
+        "max_verstappen": "3",
+        "ocon": "31",
+        "rafael_camara": "51",
+    }
+    quali = [params for url, params in calls if url.endswith("/qualifying.json")]
+    assert quali and all(CACHE_BUSTER in p for p in quali)
+
+
+def test_no_qualifying_request_when_every_qualifier_has_a_number(tmp_path, monkeypatch):
+    from datalib import repository
+    from fetch import fetch_current_drivers as fcd
+
+    (tmp_path / "qualifying.json").write_text(
+        json.dumps(_qualifying(("2026", "15", ["max_verstappen", "hadjar"])))
+    )
+    monkeypatch.setattr(fcd, "QUALIFYING_PATH", tmp_path / "qualifying.json")
+    monkeypatch.setattr(repository, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(fcd, "SLEEP_BETWEEN", 0)
+    monkeypatch.setattr(fcd, "season_and_recent_rounds", lambda: (2026, [14]))
+    verstappen = _driver("max_verstappen", "Max", "Verstappen", "VER", "3")
+    hadjar = _driver("hadjar", "Isack", "Hadjar", "HAD", "6")
+    urls = []
+
+    def fake_get(url, params):
+        urls.append(url)
+        if url.endswith("/2026/drivers.json"):
+            return {"MRData": {"DriverTable": {"Drivers": [verstappen, hadjar]}}}
+        return {"MRData": {"RaceTable": {"Races": [{"Results": [{"Driver": verstappen}]}]}}}
+
+    monkeypatch.setattr(fcd, "get", fake_get)
+    assert fcd.main() == 0
+    assert not any(u.endswith("/qualifying.json") for u in urls)
