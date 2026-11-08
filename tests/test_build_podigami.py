@@ -645,6 +645,19 @@ def test_board_new_rows_carry_the_new_plate():
     assert out.count('class="cand-pill plate plate-new"') == 1
 
 
+def test_board_pill_sits_in_its_own_slot_outside_the_names():
+    """The NEW pill can't share the names' box, or a long trio wraps to make
+    room for it. Every row carries the slot, so the bar tracks stay equal."""
+    import re
+
+    out = _render_board()
+    names = re.findall(r'<div class="cand-names">(.*?)</div>', out, re.S)
+    assert names and not any("cand-pill" in n for n in names)
+    flags = re.findall(r'<span class="cand-flag">(.*?)</span>\s*<div class="cand-bar-wrap">', out)
+    assert len(flags) == out.count('<li class="cand')
+    assert sum("cand-pill" in f for f in flags) == 1
+
+
 def test_board_row_order_follows_the_data():
     out = _render_board()
     assert out.index("cand-done") < out.index("cand-new")
@@ -740,13 +753,15 @@ def test_render_hero_has_a_short_label_for_phones():
 
 def test_render_hero_has_a_short_pick_line_for_phones():
     """The phone's pick line: "Likeliest new:", the trio as team-coloured codes,
-    then the red NEW plate, after the full-name cards it stands in for."""
+    then the red NEW plate, after the full-name cards it stands in for. The trio
+    and the plate share one wrapper, so the label can take a line of its own."""
     out = bp.render_hero(_hero_top(), 55.0, META)
     short = _short_pick(out)
-    assert short.startswith("Likeliest new: ")
-    assert short.count('class="cd"') == 3
-    assert ">ANT<" in short and ">NOR<" in short and ">RUS<" in short
-    assert short.rstrip().endswith('<span class="plate plate-new">NEW</span>')
+    assert short.startswith('<span class="hps-label">Likeliest new:</span> ')
+    trio = short[short.index('<span class="hps-trio">') :]
+    assert trio.count('class="cd"') == 3
+    assert ">ANT<" in trio and ">NOR<" in trio and ">RUS<" in trio
+    assert trio.rstrip().endswith('<span class="plate plate-new">NEW</span></span>')
     assert out.index('class="hero-pick"') < out.index('class="hero-pick-short"')
 
 

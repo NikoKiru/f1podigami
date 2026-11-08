@@ -451,9 +451,11 @@ def render_hero(
         f'    <p class="hp-label">Most likely new trio &middot; {top["prob"]:.1f}%</p>'
         f'    <div class="hero-drivers">{drivers}</div>'
         f"  </div>"
-        # ...and the trio as codes on one line, in place of the full-name cards.
-        f'  <p class="hero-pick-short">Likeliest new: {_trio_chips(entries, meta)}'
-        f' <span class="plate plate-new">NEW</span></p>'
+        # ...and the trio as codes, in place of the full-name cards. The label
+        # takes its own line on phones so the trio and its pill share the next.
+        f'  <p class="hero-pick-short"><span class="hps-label">Likeliest new:</span>'
+        f' <span class="hps-trio">{_trio_chips(entries, meta)}'
+        f' <span class="plate plate-new">NEW</span></span></p>'
         f'  <p class="hp-prob">{acc_note}</p>'
         f"</section>"
     )
@@ -476,11 +478,17 @@ def _trio_chips(per_driver: list[dict], meta: dict) -> str:
 
 def _cand_row(names: str, pct: int, prob: float, cls: str = "", extra: str = "") -> str:
     """One board row. No rank column: the list is already ordered, and the bar
-    and percentage carry the ranking without spending width on a number."""
+    and percentage carry the ranking without spending width on a number.
+
+    The NEW pill gets its own slot, outside the names, so the trio never wraps
+    to make room for it. The slot is there (empty) on every row: on a phone it
+    sits on the bar's line, and a row without it would get a longer bar track.
+    """
     return (
         f'<li class="cand{cls}">'
         f'<div class="cand-body">'
-        f'  <div class="cand-names">{names}{extra}</div>'
+        f'  <div class="cand-names">{names}</div>'
+        f'  <span class="cand-flag">{extra}</span>'
         f'  <div class="cand-bar-wrap"><div class="cand-bar" style="width:{pct}%"></div></div>'
         f"</div>"
         f'<span class="cand-prob">{prob:.2f}%</span>'
