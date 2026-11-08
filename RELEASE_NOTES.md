@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-11-08
+
+### Fixes
+- The trios in "Most likely trios" and the chance box's "Likeliest new" stay on one line after qualifying. A long trio used to push the NEW badge onto its own line, and phones broke the trio in the middle. Now NEW has its own column on desktop and sits on the bar's line on phones, and "Likeliest new:" takes a line of its own above its trio (#423)
+
 ## 2026-11-07
 
 ### Features

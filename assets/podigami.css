@@ -831,13 +831,22 @@ main {
     gap: 14px;
 }
 
-/* A fixed width so every bar starts at the same x. 340px holds the longest row:
-   three drivers with their grid slots, plus the NEW pill. */
+/* Fixed widths so every bar starts at the same x. 300px holds the longest trio
+   (three drivers with two-digit grid slots, ~285px); the NEW pill has its own
+   slot after it, so it can't push the trio onto a second line. min-width keeps
+   a wider font from overlapping the slot: it nudges that one bar instead. */
 .cand-names {
-    flex: 0 0 340px;
+    flex: 0 0 auto;
+    width: 300px;
+    min-width: max-content;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
+}
+
+.cand-flag {
+    flex: 0 0 auto;
+    width: 40px;
+    display: flex;
 }
 
 /* candidate trio: team-colour dot + TLA code (full name on hover) */
@@ -921,10 +930,6 @@ main {
 
 .cand-new .cand-prob {
     color: var(--text);
-}
-
-.cand-pill {
-    margin-left: 10px;
 }
 
 /* A done row's history. The bubble is position:fixed — an absolutely positioned
@@ -1554,12 +1559,46 @@ a.tl-where:hover {
         --board-row-h: 56px;
     }
 
+    /* No room for the trio beside the percentage, so the trio takes the whole
+       first line and the bar, NEW pill and percentage share the second. The
+       pill slot is a fixed width on every row so all bar tracks match. */
+    .cand {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        column-gap: 10px;
+        row-gap: 5px;
+    }
+
     .cand-body {
-        display: block;
+        display: contents;
     }
 
     .cand-names {
-        margin-bottom: 4px;
+        grid-column: 1 / -1;
+        width: auto;
+        min-width: 0;
+        flex-wrap: wrap;
+    }
+
+    .cand-bar-wrap {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .cand-flag {
+        grid-column: 2;
+        grid-row: 2;
+        justify-content: flex-end;
+    }
+
+    .cand-prob {
+        grid-column: 3;
+        grid-row: 2;
+        min-width: 48px;
+    }
+
+    .cd-sep {
+        margin: 0 6px;
     }
 
     /* Capped well inside the viewport: allowed to fill the screen it stopped
@@ -1916,9 +1955,24 @@ a.tl-where:hover {
         color: var(--muted);
     }
 
-    .landing .hero-pick-short .cd,
-    .landing .hero-pick-short .plate {
-        vertical-align: middle;
+    /* The label alone, then the trio and its NEW pill on one line: label and
+       all were ~400px, more than any phone gives the hero. */
+    .landing .hero-pick-short .hps-label {
+        display: block;
+    }
+
+    .landing .hero-pick-short .hps-trio {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .landing .hero-pick-short .cd-sep {
+        margin: 0 6px;
+    }
+
+    .landing .hero-pick-short .plate-new {
+        margin-left: 8px;
     }
 
     /* timing tower: drop the surname and team name on narrow screens —
@@ -2344,5 +2398,41 @@ a.tl-where:hover {
 
     .sc-tag {
         margin: 3px 6px 0 0;
+    }
+}
+
+/* Phones up to 429px: with a two-digit grid slot on every driver, the board's
+   trio and the hero's trio-plus-NEW run up to ~45px too wide in a wide font,
+   so their chips close up, mostly by slimming the grid plates. A font wider
+   still lets them wrap rather than spill. */
+@media (max-width: 429px) {
+    .cand .cd,
+    .landing .hero-pick-short .cd {
+        gap: 3px;
+    }
+
+    .cand .cd-code,
+    .landing .hero-pick-short .cd-code {
+        font-size: 12px;
+    }
+
+    .cand .cd-grid,
+    .landing .hero-pick-short .cd-grid {
+        margin-left: 1px;
+        padding: 3px 4px;
+        letter-spacing: 0.06em;
+    }
+
+    .cand .cd-sep,
+    .landing .hero-pick-short .cd-sep {
+        margin: 0 4px;
+    }
+}
+
+/* Under 360px even the closed-up hero trio has no room for its pill, and the
+   label right above it already says "new". */
+@media (max-width: 359px) {
+    .landing .hero-pick-short .plate-new {
+        display: none;
     }
 }
