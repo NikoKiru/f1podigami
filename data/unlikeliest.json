@@ -4,8 +4,8 @@
   },
   "asOf": {
     "season": "2026",
-    "round": "19",
-    "raceName": "Mexico City Grand Prix"
+    "round": "20",
+    "raceName": "Brazilian Grand Prix"
   },
   "trios": [
     {
@@ -271,8 +271,8 @@
         {
           "name": "Fernando Alonso",
           "podiums": 106,
-          "starts": 447,
-          "rate": 0.2371
+          "starts": 448,
+          "rate": 0.2366
         },
         {
           "name": "Michael Schumacher",
@@ -357,14 +357,14 @@
         {
           "name": "Sergio Pérez",
           "podiums": 39,
-          "starts": 302,
-          "rate": 0.1291
+          "starts": 303,
+          "rate": 0.1287
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 210,
-          "rate": 0.0143
+          "starts": 211,
+          "rate": 0.0142
         }
       ]
     },
@@ -619,7 +619,7 @@
         "Carlos Sainz",
         "Lance Stroll"
       ],
-      "racesTogether": 194,
+      "racesTogether": 195,
       "score": 0.0081,
       "count": 1,
       "happened": {
@@ -631,20 +631,20 @@
         {
           "name": "Pierre Gasly",
           "podiums": 5,
-          "starts": 197,
-          "rate": 0.0254
+          "starts": 198,
+          "rate": 0.0253
         },
         {
           "name": "Carlos Sainz",
           "podiums": 29,
-          "starts": 251,
-          "rate": 0.1155
+          "starts": 252,
+          "rate": 0.1151
         },
         {
           "name": "Lance Stroll",
           "podiums": 3,
-          "starts": 210,
-          "rate": 0.0143
+          "starts": 211,
+          "rate": 0.0142
         }
       ]
     },

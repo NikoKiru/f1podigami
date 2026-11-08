@@ -20018,5 +20018,22 @@
       "driverId": "antonelli",
       "name": "Andrea Kimi Antonelli"
     }
+  },
+  {
+    "season": "2026",
+    "round": "20",
+    "raceName": "Brazilian Grand Prix",
+    "p1": {
+      "driverId": "norris",
+      "name": "Lando Norris"
+    },
+    "p2": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p3": {
+      "driverId": "hadjar",
+      "name": "Isack Hadjar"
+    }
   }
 ]

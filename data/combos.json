@@ -14433,6 +14433,37 @@
     "drivers": [
       "Isack Hadjar",
       "Max Verstappen",
+      "Lando Norris"
+    ],
+    "driverIds": [
+      "hadjar",
+      "max_verstappen",
+      "norris"
+    ],
+    "count": 1,
+    "lastRace": {
+      "season": "2026",
+      "round": "20",
+      "raceName": "Brazilian Grand Prix"
+    },
+    "firstRace": {
+      "season": "2026",
+      "round": "20",
+      "raceName": "Brazilian Grand Prix"
+    },
+    "lastRaceKey": 2026020,
+    "races": [
+      {
+        "season": "2026",
+        "round": "20",
+        "raceName": "Brazilian Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
+      "Isack Hadjar",
+      "Max Verstappen",
       "Oscar Piastri"
     ],
     "driverIds": [
