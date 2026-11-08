@@ -1,39 +1,39 @@
 {
   "season": "2026",
-  "round": "19",
+  "round": "20",
   "constructors": [
     {
       "constructorId": "mercedes",
       "name": "Mercedes",
-      "points": 630.0,
+      "points": 652.0,
       "position": 1,
       "wins": 12
     },
     {
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 504.0,
+      "points": 512.0,
       "position": 2,
       "wins": 2
     },
     {
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 382.0,
+      "points": 415.0,
       "position": 3,
       "wins": 3
     },
     {
       "constructorId": "mclaren",
       "name": "McLaren",
-      "points": 365.0,
+      "points": 398.0,
       "position": 4,
-      "wins": 2
+      "wins": 3
     },
     {
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 108.0,
+      "points": 112.0,
       "position": 5,
       "wins": 0
     },
@@ -54,7 +54,7 @@
     {
       "constructorId": "audi",
       "name": "Audi",
-      "points": 27.0,
+      "points": 28.0,
       "position": 8,
       "wins": 0
     },
@@ -81,27 +81,27 @@
     }
   ],
   "driverConstructor": {
-    "max_verstappen": "red_bull",
-    "hamilton": "ferrari",
-    "antonelli": "mercedes",
-    "leclerc": "ferrari",
     "norris": "mclaren",
-    "russell": "mercedes",
-    "lawson": "rb",
-    "bortoleto": "audi",
+    "max_verstappen": "red_bull",
     "hadjar": "red_bull",
-    "ryo_hirakawa": "haas",
-    "albon": "williams",
-    "sainz": "williams",
+    "russell": "mercedes",
+    "antonelli": "mercedes",
     "piastri": "mclaren",
+    "leclerc": "ferrari",
+    "lawson": "rb",
+    "hamilton": "ferrari",
     "hulkenberg": "audi",
-    "colapinto": "alpine",
-    "perez": "cadillac",
-    "gasly": "alpine",
     "arvid_lindblad": "rb",
+    "alonso": "aston_martin",
+    "colapinto": "alpine",
+    "gasly": "alpine",
+    "albon": "williams",
+    "bortoleto": "audi",
     "bearman": "haas",
-    "bottas": "cadillac",
+    "perez": "cadillac",
+    "sainz": "williams",
+    "rafael_camara": "haas",
     "stroll": "aston_martin",
-    "alonso": "aston_martin"
+    "bottas": "cadillac"
   }
 }

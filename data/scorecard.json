@@ -1,19 +1,45 @@
 {
   "totals": {
-    "races": 12,
-    "newTrios": 4,
-    "meanChanceNew": 39.8,
-    "brierNew": 0.2077,
-    "baselineBrierNew": 0.2271,
-    "baseRateNew": 40.4,
+    "races": 13,
+    "newTrios": 5,
+    "meanChanceNew": 40.2,
+    "brierNew": 0.2153,
+    "baselineBrierNew": 0.2372,
+    "baseRateNew": 40.7,
     "topPickHits": 2,
-    "topPickExpected": 0.71,
-    "meanDriversRight": 1.83,
-    "boardRaces": 6,
+    "topPickExpected": 0.78,
+    "meanDriversRight": 1.77,
+    "boardRaces": 7,
     "onBoard": 6,
     "boardTopThree": 4
   },
   "races": [
+    {
+      "season": "2026",
+      "round": "20",
+      "raceName": "Brazilian Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Lando Norris",
+        "Max Verstappen",
+        "Isack Hadjar"
+      ],
+      "isNew": true,
+      "chanceNew": 44.6,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Charles Leclerc",
+        "Lando Norris"
+      ],
+      "topPickProb": 6.349,
+      "topPickHit": false,
+      "driversRight": 1,
+      "podiumProb": null,
+      "boardSize": 27,
+      "boardRank": null,
+      "boardFloor": 1.023
+    },
     {
       "season": "2026",
       "round": "19",
@@ -329,15 +355,15 @@
   ],
   "next": {
     "season": "2026",
-    "round": "20",
-    "raceName": "Brazilian Grand Prix",
-    "stage": "post-quali",
-    "chanceNew": 44.6,
+    "round": "21",
+    "raceName": "Las Vegas Grand Prix",
+    "stage": "pre-quali",
+    "chanceNew": 39.6,
     "topPick": [
       "Andrea Kimi Antonelli",
-      "Charles Leclerc",
-      "Lando Norris"
+      "Lewis Hamilton",
+      "Charles Leclerc"
     ],
-    "topPickProb": 6.349
+    "topPickProb": 2.641
   }
 }
