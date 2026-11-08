@@ -1759,6 +1759,60 @@ def test_last_race_reads_gp_on_a_phone(dist):
     assert 0 <= rows["gap"] < 24, "the verdict follows the trio directly"
 
 
+@pytest.mark.parametrize("wider_font", [False, True], ids=["site-font", "wider-font"])
+def test_trio_lines_stay_on_one_line_after_qualifying(tmp_path, wider_font):
+    """Two-digit grid plates on all three drivers make a trio its widest; even
+    then a board row and the hero's pick line keep the trio (and its NEW pill)
+    on one line, from the narrowest phone to desktop. Rendered on its own
+    because no committed build is post-qualifying."""
+    from pathlib import Path
+
+    from build import build_podigami_html as bp
+    from datalib import load_current_drivers, load_podigami
+
+    assets = Path(__file__).resolve().parents[1] / "assets"
+    meta = {d.driverId: d.model_dump() for d in load_current_drivers().drivers}
+    form = [d.model_dump() for d in load_podigami().driverForm if d.driverId in meta][:3]
+    form = [{**d, "gridPosition": g} for d, g in zip(form, (18, 20, 22), strict=True)]
+    ids = [d["driverId"] for d in form]
+    board = [{"driverIds": ids, "prob": 5.0, "happened": False}]
+    hero = bp.render_hero({"prob": 5.0, "perDriver": form}, 40.0, meta, pre_chance=31.0)
+    panel = bp.render_candidates([], meta, grid_aware=True, board=board, driver_form=form)
+    page_file = tmp_path / "trios.html"
+    page_file.write_text(
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+        f"<link rel='stylesheet' href='{(assets / 'style.css').as_uri()}'>"
+        f"<link rel='stylesheet' href='{(assets / 'podigami.css').as_uri()}'>"
+        "</head><body><main class='landing'><div class='container'>"
+        f"{hero}{panel}</div></main></body></html>",
+        encoding="utf-8",
+    )
+    lines_js = """sel => {
+        const box = document.querySelector(sel);
+        const kids = [...box.querySelectorAll('.cd, .plate-new')]
+            .filter(e => getComputedStyle(e).display !== 'none');
+        return new Set(kids.map(e => {
+            const r = e.getBoundingClientRect();
+            return Math.round((r.top + r.bottom) / 2);
+        })).size;
+    }"""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        seen = {}
+        for width in (320, 360, 375, 390, 430, 1280):
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.goto(page_file.as_uri())
+            if wider_font:
+                page.add_style_tag(content=WIDER_FONT)
+            seen[width] = {"board": page.evaluate(lines_js, ".cand-names")}
+            if width <= 600:
+                seen[width]["hero"] = page.evaluate(lines_js, ".hps-trio")
+            page.close()
+        browser.close()
+    assert all(n == 1 for lines in seen.values() for n in lines.values()), seen
+
+
 def test_compact_hero_fits_after_qualifying(tmp_path):
     """After qualifying every driver in the short pick line carries a grid
     plate, the widest it gets, and the movement line joins the head. No
