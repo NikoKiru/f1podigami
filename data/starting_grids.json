@@ -291,13 +291,13 @@
         "position": 11
       },
       {
-        "driverId": "sainz",
-        "constructorId": "williams",
+        "driverId": "arvid_lindblad",
+        "constructorId": "rb",
         "position": 12
       },
       {
-        "driverId": "colapinto",
-        "constructorId": "alpine",
+        "driverId": "sainz",
+        "constructorId": "williams",
         "position": 13
       },
       {
@@ -306,23 +306,23 @@
         "position": 14
       },
       {
-        "driverId": "gasly",
+        "driverId": "colapinto",
         "constructorId": "alpine",
         "position": 15
       },
       {
+        "driverId": "gasly",
+        "constructorId": "alpine",
+        "position": 16
+      },
+      {
         "driverId": "stroll",
         "constructorId": "aston_martin",
-        "position": 16
+        "position": 17
       },
       {
         "driverId": "bottas",
         "constructorId": "cadillac",
-        "position": 17
-      },
-      {
-        "driverId": "arvid_lindblad",
-        "constructorId": "rb",
         "position": 18
       },
       {
