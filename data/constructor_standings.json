@@ -12,7 +12,7 @@
     {
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 512.0,
+      "points": 510.0,
       "position": 2,
       "wins": 2
     },
@@ -33,7 +33,7 @@
     {
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 112.0,
+      "points": 114.0,
       "position": 5,
       "wins": 0
     },
@@ -87,8 +87,8 @@
     "russell": "mercedes",
     "antonelli": "mercedes",
     "piastri": "mclaren",
-    "leclerc": "ferrari",
     "lawson": "rb",
+    "leclerc": "ferrari",
     "hamilton": "ferrari",
     "hulkenberg": "audi",
     "arvid_lindblad": "rb",
