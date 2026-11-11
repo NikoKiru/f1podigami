@@ -43,6 +43,7 @@ __all__ = [
     "lineage_root",
     "model",
     "predict_race",
+    "start_slots",
 ]
 
 # Locked by the walk-forward tuner (backtest.py --tune-v2) on 2010-2018:
@@ -88,10 +89,21 @@ DEFAULT_PARAMS_V2: dict = {
     "p_wild": 0.0,  # probability a race is "wild" (safety cars, rain, chaos)
     "t_wild": 2.5,  # temperature multiplier applied in a wild race
     # Post-quali grid term (grid_offsets), locked by backtest.py --tune-v2-grid
-    # on 2010-2018 (2026-07-16): coordinate descent on trio logLoss + novelty
-    # logLoss, J 4.201 -> 4.056. Both knobs pin to the grid ceiling.
-    "w_grid": 0.4,  # weight of the causal grid-position term
-    "grid_circuit_beta": 1.0,  # circuit modulation: disp_ratio ** (-beta)
+    # on 2010-2018. Re-derived 2026-11-11 (J 4.039 -> 3.887): the first tune
+    # (w_grid 0.4, beta 1.0) scored the term against qualifying positions and
+    # stopped at the top of grids that ended there. Scored against the grid
+    # each race really started from, and with room to move, the weight settles
+    # at 1.0 and the circuit modulation earns nothing, so it is switched off.
+    "w_grid": 1.0,  # weight of the causal grid-position term
+    "grid_circuit_beta": 0.0,  # circuit modulation: disp_ratio ** (-beta)
+    # Share of that same grid term used to EXPLAIN a finished race in the
+    # post-qualifying rating pass (HistoryFilter(grid_aware=True)): a win from
+    # pole is partly the slot, a podium from 15th is all pace. 1.0 ties learning
+    # and prediction to one grid effect; 0.0 is the old pass, which credited the
+    # slot to the car and then added the slot again on race day. The race-morning
+    # pass never uses it: with no grid to condition on, it needs the ratings that
+    # already carry each car's usual starting position.
+    "grid_fit": 1.0,
     # Adaptive constructor diffusion: a car that keeps moving the SAME way race
     # after race has genuinely changed, so let its belief loosen and catch up.
     # Noise pushes the mean both ways and cancels in the signed EWMA, so this
@@ -231,6 +243,28 @@ def grid_offsets(quali_pos: dict[str, int], disp_ratio: float, params: dict) -> 
     return {d: scale * (mean_log - lg) for d, lg in logs.items()}
 
 
+def start_slots(rows: list[dict], quali_pos: dict[str, int] | None = None) -> dict[str, int]:
+    """The grid a race really started from, as slots 1..n, from its classification.
+
+    The ``grid`` column carries what a qualifying order cannot: penalties, and
+    the gaps left by cars that never took the start. A pit-lane start (grid 0)
+    lines up behind every gridded car; several of them keep their qualifying
+    order, then driverId, so the slots never depend on how the race went.
+    Returns {} when the classification has no grid at all.
+    """
+    grid: dict[str, int] = {}
+    for row in rows:
+        grid.setdefault(row["driverId"], row["grid"])
+    if not any(g > 0 for g in grid.values()):
+        return {}
+    quali_pos = quali_pos or {}
+    order = sorted(
+        grid,
+        key=lambda d: (grid[d] <= 0, grid[d] if grid[d] > 0 else quali_pos.get(d, 10**6), d),
+    )
+    return {d: i + 1 for i, d in enumerate(order)}
+
+
 @dataclass
 class Gauss:
     """A Gaussian belief over one latent log-worth."""
@@ -358,6 +392,7 @@ class RatingEngine:
         depth: int | None = None,
         weight: float = 1.0,
         sign: int = 1,
+        offsets: list[float] | None = None,
     ) -> None:
         """One ADF step on an observed decomposition order.
 
@@ -365,7 +400,9 @@ class RatingEngine:
         for a finishing/qualifying order; first *failure* first with ``sign=-1``
         for the attrition channel. ``depth`` truncates the likelihood to the
         first N picks (the tail is treated as an unranked pool); ``weight`` is
-        the channel's power weight κ.
+        the channel's power weight κ. ``offsets`` are known per-entry additions
+        to the strengths (the grid term): the order is explained by rating plus
+        offset, so the ratings learn only what the offsets leave unexplained.
         """
         m = len(entries)
         if m < 2 or weight <= 0.0:
@@ -373,7 +410,11 @@ class RatingEngine:
         r = m - 1 if depth is None else max(1, min(depth, m - 1))
 
         states = [(self.driver(d), self.constructor(c)) for d, c in entries]
-        s = [max(-30.0, min(30.0, sign * (ds.mu + cs.mu))) for ds, cs in states]
+        known = offsets if offsets is not None else [0.0] * m
+        s = [
+            max(-30.0, min(30.0, sign * (ds.mu + cs.mu + o)))
+            for (ds, cs), o in zip(states, known, strict=True)
+        ]
         w = [math.exp(v) for v in s]
         Z = [0.0] * (m + 1)  # Z[j] = Σ_{i>=j} w_i (the stage-j normaliser)
         for j in range(m - 1, -1, -1):
@@ -557,10 +598,19 @@ class HistoryFilter:
     knowledge: qualifying is observed *before* the snapshot (legitimate
     conditioning — quali precedes the race). Either way the quali order is
     observed exactly once, never twice.
+
+    ``grid_aware`` selects which ratings the pass learns. Off (the race-morning
+    pass), a finishing order is explained by the ratings alone, so they absorb
+    each car's usual starting position — right for a forecast made before the
+    grid exists. On (the post-qualifying pass), the order is explained by the
+    ratings plus ``grid_fit`` of the grid term on the slots the race really
+    started from, so the ratings are pace net of track position and the race-day
+    grid term can be added without counting the slot twice.
     """
 
-    def __init__(self, params: dict):
+    def __init__(self, params: dict, *, grid_aware: bool = False):
         self.params = params
+        self.grid_aware = grid_aware
         self.engine = RatingEngine(params)
         self.reliability = ReliabilityTracker(params["rel_half_life"])
         self.circuits = CircuitStats()
@@ -577,6 +627,23 @@ class HistoryFilter:
                 qseen.add(q["driverId"])
                 qentries.append((q["driverId"], q["constructorId"]))
         self.engine.observe_order(qentries, depth=int(p["depth_qual"]), weight=p["w_qual"])
+
+    def _race_offsets(
+        self, rows: list[dict], classified: list[dict], quali: dict | None, disp_ratio: float
+    ) -> list[float] | None:
+        """Grid-term offsets for the classified finishers, or None when the pass
+        is not grid-aware (or the race has no grid on record)."""
+        share = self.params.get("grid_fit", 0.0) if self.grid_aware else 0.0
+        if share <= 0.0 or self.params["w_grid"] <= 0.0:
+            return None
+        qpos: dict[str, int] = {}
+        for q in sorted((quali or {}).get("results", ()), key=lambda q: q["position"]):
+            qpos.setdefault(q["driverId"], q["position"])
+        slots = start_slots(rows, qpos)
+        if not slots:
+            return None
+        offs = grid_offsets(slots, disp_ratio, self.params)
+        return [share * offs[r["driverId"]] for r in classified]
 
     def step(
         self, race: dict, quali: dict | None = None, *, snapshot_after_quali: bool = False
@@ -633,6 +700,7 @@ class HistoryFilter:
             [(r["driverId"], r["constructorId"]) for r in classified],
             depth=int(p["depth_race"]),
             weight=1.0,
+            offsets=self._race_offsets(rows, classified, quali, snapshot["disp_ratio"]),
         )
 
         # ---- channel 3: attrition (reverse PL: first failure picked first) ----

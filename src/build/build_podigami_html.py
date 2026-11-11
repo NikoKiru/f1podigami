@@ -846,10 +846,10 @@ def faq_items(
         ),
     ]
     if is_v2:
-        rung = next(
-            (r for r in (ev.get("ladder") or []) if r.get("model") == "v2 post-quali +grid"),
-            None,
-        )
+        # The rung the post-qualifying gates left standing; a model_eval.json from
+        # before they named one only ever had the grid rung.
+        served = ev.get("postQualiModel") or "v2 post-quali +grid"
+        rung = next((r for r in (ev.get("ladder") or []) if r.get("model") == served), None)
         cite = (
             f" In backtests, the grid-aware update places the actual podium trio in its "
             f"top&nbsp;3 {round(100 * rung['top3'])}% of the time."
@@ -861,11 +861,12 @@ def faq_items(
             (
                 "Why does the prediction update after qualifying?",
                 "Qualifying is the most informative pre-race session: it reveals current pace "
-                "and fixes the starting grid, whose track-position advantage has strong "
-                "historical precedent. Once the grid is set, the model feeds the qualifying "
-                "order through its rating engine and adds a grid-position term scaled by how "
-                "processional the circuit historically is &mdash; stronger where overtaking "
-                "is hard, weaker where the grid gets shuffled." + cite,
+                "and fixes the starting grid, and where a car starts decides a lot of where "
+                "it finishes. Once the grid is set, the model switches to ratings learned "
+                "with every past grid taken into account, so a win from pole counts for less "
+                "than a podium from the back. It feeds the new qualifying order through them "
+                "and adds each car&rsquo;s advantage from the slot it really starts in, "
+                "penalties included." + cite,
             ),
         )
     return items

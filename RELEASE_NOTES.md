@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2026-11-11
+
+### Improvements
+- **The prediction after qualifying is noticeably sharper.** Across every race since 2019 it now puts the real podium in its top three 46% of the time, up from 40%, and names the exact trio 28% of the time, up from 24% (log-loss 3.423 → 3.172, new-trio Brier 0.219 → 0.205). Three things changed. Past races are scored against the grid they really started from, penalties and pit-lane starts included, instead of the qualifying order. The weight on a car's starting slot went from 0.4 to 1.0: the old value was the largest the first tuning run was allowed to try. And after qualifying the model reads ratings learned with every past grid taken into account, so a win from pole counts for less than a podium from the back and the slot isn't counted twice. The circuit scaling of the grid term is off, because it no longer earned its place. The forecast before qualifying is unchanged (#433)
+- A full review of the race-morning model found nothing worth shipping. Re-tuning every knob on wider grids won the 2010–2018 tuning seasons and tied on the frozen 2019+ window. Simulating the grid before the race improved the new-trio chance but lost on trio log-loss. Re-tuning season by season gained less than its own noise. Team-mates sharing one car draw, a wild-race mixture and qualifying lap-time gaps didn't earn a place either (#433)
+
 ## 2026-11-08
 
 ### Fixes

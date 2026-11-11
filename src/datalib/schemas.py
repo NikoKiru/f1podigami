@@ -275,6 +275,9 @@ class PodigamiParamsV2(_Base):
     # develop->main promotion merge keeps main's newer data, which predates them.
     con_adapt_gain: float = 0.0
     con_adapt_hl: float = 4.0
+    # Grid-aware learning in the post-qualifying rating pass (added 2026-11-11).
+    # Optional for the same reason; 0.0 is what a file from before it ran.
+    grid_fit: float = 0.0
     usingQualifying: bool
     circuitId: str | None = None
     nDraws: int
@@ -419,6 +422,8 @@ class ModelParamsV2(_Base):
     # model_eval.json written under the previous params still validates.
     con_adapt_gain: float = 0.0
     con_adapt_hl: float = 4.0
+    # Grid-aware learning in the post-qualifying rating pass (added 2026-11-11).
+    grid_fit: float = 0.0
 
 
 class LadderRow(_Base):
@@ -462,6 +467,8 @@ class ModelEval(_Base):
     poolNote: str
     # which ladder rung the site actually serves (absent in pre-v2 files)
     chosenModel: str | None = None
+    # which post-qualifying rung its gates left standing (absent before 2026-11-11)
+    postQualiModel: str | None = None
 
 
 # --- constructor_standings.json ----------------------------------------------

@@ -28,10 +28,11 @@
     "chaos_eta": 0.7,
     "p_wild": 0.0,
     "t_wild": 2.5,
-    "w_grid": 0.4,
-    "grid_circuit_beta": 1.0,
+    "w_grid": 1.0,
+    "grid_circuit_beta": 0.0,
     "con_adapt_gain": 0.0,
-    "con_adapt_hl": 1.0
+    "con_adapt_hl": 1.0,
+    "grid_fit": 1.0
   },
   "ladder": [
     {
@@ -137,12 +138,22 @@
     {
       "model": "v2 post-quali +grid",
       "n": 170,
-      "top1": 0.2412,
-      "top3": 0.4059,
-      "top5": 0.5118,
-      "logLoss": 3.4147,
-      "brierSet": 0.9016,
-      "brierNew": 0.219
+      "top1": 0.2706,
+      "top3": 0.4824,
+      "top5": 0.5529,
+      "logLoss": 3.2103,
+      "brierSet": 0.8792,
+      "brierNew": 0.207
+    },
+    {
+      "model": "v2 post-quali +grid fit",
+      "n": 170,
+      "top1": 0.2882,
+      "top3": 0.4706,
+      "top5": 0.5647,
+      "logLoss": 3.1602,
+      "brierSet": 0.8753,
+      "brierNew": 0.2051
     }
   ],
   "chosen": {
@@ -230,5 +241,6 @@
     }
   ],
   "poolNote": "candidate pools = drivers active that race (driver_races) + the actual podium",
-  "chosenModel": "v2 full"
+  "chosenModel": "v2 full",
+  "postQualiModel": "v2 post-quali +grid fit"
 }

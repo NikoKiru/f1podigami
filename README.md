@@ -66,9 +66,9 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 
 ![Backtested](https://img.shields.io/badge/backtested-1950–2026-1f6feb?style=flat-square)
 ![Engine](https://img.shields.io/badge/engine-Bayesian_ratings_(dbpl--v2)-e10600?style=flat-square)
-![Top-1](https://img.shields.io/badge/exact_trio_top--1-17%25-brightgreen?style=flat-square)
-![Top-3](https://img.shields.io/badge/trio_top--3-36%25-brightgreen?style=flat-square)
-![Hold-outs](https://img.shields.io/badge/frozen_test_races-165-8957e5?style=flat-square)
+![Top-1](https://img.shields.io/badge/exact_trio_top--1-16%25-brightgreen?style=flat-square)
+![Top-3](https://img.shields.io/badge/trio_top--3-35%25-brightgreen?style=flat-square)
+![Hold-outs](https://img.shields.io/badge/frozen_test_races-172-8957e5?style=flat-square)
 
 A *podigami* = a 3-driver podium **set** that has **never** finished a podium together before.
 
@@ -78,17 +78,18 @@ The predictor is a **dynamic Bayesian rating engine** ([`src/compute/model_v2.py
 - **Time** — ratings diffuse a little every race, more over a winter, a lot for cars when the technical regulations reset (2009, 2014, 2022, 2026…).
 - **Survival** — exponentially-decayed DNF hazards, era-relative: mechanical failures charge the car, incidents charge the driver.
 - **Chaos** — each circuit's grid→finish shuffle and DNF propensity adjust the prediction temperature and finish odds.
-- **Grid** — once a race's qualifying is classified, the grid order feeds back through the ratings and a **circuit-modulated track-position term** shifts each driver's finishing odds — amplified at processional circuits where the grid rarely reshuffles, damped where it does — so the headline refreshes after qualifying. The starting slots for this term are **F1's official starting grid** — penalties applied, drivers without a lap time included — picked up automatically a few hours after qualifying and re-checked by the race-day watch in the hours before the start, so race-morning changes such as pit-lane starts count too; until it is published, hand-curated penalties in `data/grid_penalties.json` rebuild the grid from the qualifying order. The qualifying order itself still counts at face value — a penalised driver demonstrated that pace regardless of where they start. Mid-race retirements can be recorded by hand (`data/retirements.json`), taking a crashed or broken-down car out of the running field so the headline can be refreshed while the race is live.
+- **Grid** — once a race's qualifying is classified, the headline refreshes from a second rating pass that is **grid-aware**: it explains every past race by rating *plus* the grid it started from, so a win from pole counts for less than a podium from the back and the ratings are pace net of track position. The new qualifying order feeds through those ratings, and a **track-position term** then adds each car's advantage from the slot it starts in. The race-morning forecast keeps the plain ratings, which carry each car's usual starting position: with no grid yet, that is the right thing to know. The starting slots are **F1's official starting grid** — penalties applied, drivers without a lap time included — picked up automatically a few hours after qualifying and re-checked by the race-day watch in the hours before the start, so race-morning changes such as pit-lane starts count too; until it is published, hand-curated penalties in `data/grid_penalties.json` rebuild the grid from the qualifying order. The qualifying order itself still counts at face value — a penalised driver demonstrated that pace regardless of where they start. Mid-race retirements can be recorded by hand (`data/retirements.json`), taking a crashed or broken-down car out of the running field so the headline can be refreshed while the race is live.
 - **Prediction** — the engine simulates the next race (deterministic seed): skill noise + who survives, with *exact* conditional Plackett–Luce trio probabilities per draw. `P(next race is new)` is the exact complement of every already-seen trio.
 
-> **Why this model?** Walk-forward evaluation — tuned on 2010–2018 only, then scored once on a frozen 2019–2026 test window (165 races) it never saw:
+> **Why this model?** Walk-forward evaluation — tuned on 2010–2018 only, then scored on a frozen 2019–2026 test window (172 races) it never saw:
 >
 > | model | top-1 | top-3 | top-5 | log-loss |
 > |---|---|---|---|---|
-> | recency Plackett–Luce (previous) | 12.1% | 29.1% | 40.6% | 4.101 |
-> | **rating engine (live, pre-qualifying)** | **17.0%** | **35.8%** | **44.2%** | **3.878** |
-> | + qualifying order (post-qualifying) | 19.4% | 36.4% | 48.5% | 3.706 |
-> | **+ grid position (post-qualifying)** | **24.2%** | **39.4%** | **50.3%** | **3.434** |
+> | recency Plackett–Luce (previous) | 11.6% | 28.5% | 41.3% | 4.074 |
+> | **rating engine (live, pre-qualifying)** | **16.3%** | **34.9%** | **43.6%** | **3.872** |
+> | + qualifying order (post-qualifying) | 18.6% | 35.5% | 47.7% | 3.706 |
+> | + grid position (post-qualifying) | 26.7% | 47.7% | 55.2% | 3.221 |
+> | **+ ratings learned net of the grid (live, post-qualifying)** | **28.5%** | **46.5%** | **55.8%** | **3.172** |
 >
 >
 > **One knob is not blind to the hold-out.** The driver-rating prior `sigma0_drv` was widened
@@ -100,7 +101,9 @@ The predictor is a **dynamic Bayesian rating engine** ([`src/compute/model_v2.py
 > one knob; the next genuinely frozen check needs seasons after 2026. Every other knob is
 > validation-tuned as described.
 >
-> Ablations: pace + reliability alone already beat v1; adding the qualifying order gave the biggest jump; a failure-order (attrition) channel earned zero weight and is off, as does an adaptive car-diffusion channel that lets a constructor's rating loosen when its form keeps shifting the same way — it won the tuning window and lost the hold-out, so it ships dormant. Once a race's qualifying is in, replaying the grid order through the ratings **plus** a circuit-aware grid-position term (gate-accepted on the same hold-out) lifts top-3 to 39.4% and log-loss to 3.434. Full ladder in [`data/model_eval.json`](data/model_eval.json).
+> Ablations: pace + reliability alone already beat v1; adding the qualifying order gave the biggest jump; a failure-order (attrition) channel earned zero weight and is off, as does an adaptive car-diffusion channel that lets a constructor's rating loosen when its form keeps shifting the same way — it won the tuning window and lost the hold-out, so it ships dormant. Once a race's qualifying is in, the grid order replays through the ratings, a grid-position term is added, and the ratings themselves are learned net of the grid; each step is gate-accepted on the same hold-out. Full ladder in [`data/model_eval.json`](data/model_eval.json).
+>
+> **The post-qualifying model was re-derived in Nov 2026.** The first grid term was scored against qualifying positions and its weight stopped at the top of a tuning grid that ended at 0.4. Scored against the grid each race really started from, with room to move, the weight settles at 1.0, the circuit modulation earns nothing and is off, and grid-aware learning wins its own gate: post-qualifying top-3 went from 40.1% to 46.5% and log-loss from 3.423 to 3.172 on the hold-out. Top-k is counted from a coarser simulation than log-loss, which is why the last row can trail the one above it on top-3 while beating it on both gated scores. The same review tried to improve the race-morning forecast and found nothing worth shipping. A wider re-tune of every knob won the tuning seasons and tied on the hold-out; simulating the grid before the race improved the new-trio chance but lost on trio log-loss; re-tuning season by season gained less than its own noise. Team-mates sharing one car draw and a wild-race mixture did not even win the tuning seasons, and qualifying lap-time gaps added too little on top of the corrected grid term to justify a new dataset. The race-morning model is unchanged.
 
 ---
 

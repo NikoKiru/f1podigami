@@ -546,6 +546,53 @@ def test_post_quali_deterministic(scenario_post_quali):
     assert cp.compute(podiums, combos, grid, **kw) == cp.compute(podiums, combos, grid, **kw)
 
 
+def _alf_from_the_back(rres):
+    """The same results, except alf started every race behind the whole field."""
+    return [
+        {
+            **r,
+            "results": [
+                {**row, "grid": 99} if row["driverId"] == "alf" else row for row in r["results"]
+            ],
+        }
+        for r in rres
+    ]
+
+
+def _with_and_without_grid_fit(scenario_post_quali, monkeypatch):
+    podiums, combos, grid, con, rres, quali = scenario_post_quali
+    kw = {
+        "constructor_data": con,
+        "race_results": _alf_from_the_back(rres),
+        "qualifying": quali,
+        "schedule": SCHED_R6,
+    }
+    fit = cp.compute(podiums, combos, grid, **kw)
+    monkeypatch.setitem(cp.model_v2.DEFAULT_PARAMS_V2, "grid_fit", 0.0)
+    return fit, cp.compute(podiums, combos, grid, **kw)
+
+
+def test_post_quali_ratings_are_learned_net_of_the_grid(scenario_post_quali, monkeypatch):
+    """What alf did from the back of the grid says more about his pace than the
+    same results from the front would, and the post-qualifying ratings know it."""
+    fit, plain = _with_and_without_grid_fit(scenario_post_quali, monkeypatch)
+
+    def share(res):
+        form = {d["driverId"]: d["weight"] for d in res["postQuali"]["driverForm"]}
+        return form["alf"] / sum(form.values())
+
+    assert share(fit) > share(plain)
+
+
+def test_the_race_morning_forecast_never_uses_grid_fit(scenario_post_quali, monkeypatch):
+    """Before qualifying there is no grid to condition on, so the ratings the
+    headline forecast reads must be the plain ones whatever grid_fit says."""
+    fit, plain = _with_and_without_grid_fit(scenario_post_quali, monkeypatch)
+    for k in ("chanceNextRaceNew", "candidates", "trioBoard", "driverForm"):
+        assert fit[k] == plain[k]
+    assert fit["postQuali"] != plain["postQuali"]
+
+
 SCHED_R7 = {
     "season": "2025",
     "totalRounds": 7,
