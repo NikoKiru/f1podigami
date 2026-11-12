@@ -467,7 +467,7 @@ class ModelEval(_Base):
     poolNote: str
     # which ladder rung the site actually serves (absent in pre-v2 files)
     chosenModel: str | None = None
-    # which post-qualifying rung its gates left standing (absent before 2026-11-11)
+    # the post-qualifying rung the live params reproduce (absent before 2026-11-11)
     postQualiModel: str | None = None
 
 

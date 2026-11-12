@@ -457,6 +457,9 @@ def test_evaluate_appends_post_quali_rungs_and_gate():
         assert gate["champion"] == "v2 post-quali +grid fit"
     else:
         assert gate["champion"] == "v2 post-quali +grid"
+    # whatever the gates say, the site cites the rung its live params reproduce
+    assert gate["served"] == "v2 post-quali +grid fit"
+    assert dict(backtest.RUNGS_V2_POSTQUALI)[gate["served"]] == {}
     # the pre-quali chosen selection is untouched by the new rungs
     assert res["chosenName"] in ("PL + tuned (chosen)", "v2 full")
 
@@ -487,6 +490,7 @@ def test_grid_tune_grid_reaches_past_the_locked_weight():
     for knob, grid in backtest.V2_GRID_TUNE_GRID.items():
         assert locked[knob] in grid
     assert max(backtest.V2_GRID_TUNE_GRID["w_grid"]) > locked["w_grid"]
+    assert max(backtest.V2_GRID_TUNE_GRID["grid_fit"]) > locked["grid_fit"]
 
 
 def test_main_names_the_post_quali_champion(monkeypatch, capsys):
@@ -500,7 +504,7 @@ def test_main_names_the_post_quali_champion(monkeypatch, capsys):
 
     assert backtest.main([]) == 0
 
-    assert saved["postQualiModel"] in [name for name, _ in backtest.RUNGS_V2_POSTQUALI]
+    assert saved["postQualiModel"] == "v2 post-quali +grid fit"
     assert saved["postQualiModel"] in [row["model"] for row in saved["ladder"]]
     assert "gridFitAccepted=" in capsys.readouterr().out
 

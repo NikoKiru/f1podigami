@@ -507,6 +507,27 @@ def test_start_slots_never_read_the_row_order():
     assert model_v2.start_slots(list(reversed(rows))) == model_v2.start_slots(rows)
 
 
+def test_start_slots_settle_a_shared_grid_number_by_driver_id():
+    # the classification sometimes gives two cars the same grid number
+    rows = [_grow("zed", 3), _grow("amy", 3), _grow("bob", 1)]
+    assert model_v2.start_slots(rows) == {"bob": 1, "amy": 2, "zed": 3}
+
+
+def _srow(did, status):
+    return {"driverId": did, "status": status}
+
+
+def test_starters_drop_non_starters_and_keep_a_shared_drives_first_start():
+    rows = [
+        _srow("a", "Finished"),
+        _srow("b", "Did not start"),
+        _srow("b", "+1 Lap"),  # b's car was taken over: his first row that started
+        _srow("a", "Engine"),  # a's second (shared) row is dropped
+        _srow("c", "Withdrew"),
+    ]
+    assert model_v2.starters(rows) == [rows[0], rows[2]]
+
+
 def test_start_slots_empty_without_any_grid_on_record():
     assert model_v2.start_slots([_grow("a", 0), _grow("b", 0)]) == {}
     assert model_v2.start_slots([]) == {}

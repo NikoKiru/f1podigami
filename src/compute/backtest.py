@@ -261,7 +261,7 @@ RUNGS_V2_POSTQUALI = [
 V2_GRID_TUNE_GRID: dict[str, list] = {
     "w_grid": [0.0, 0.2, 0.4, 0.7, 1.0, 1.4, 2.0],
     "grid_circuit_beta": [0.0, 0.5, 1.0, 1.5],
-    "grid_fit": [0.0, 1.0],
+    "grid_fit": [0.0, 0.5, 1.0, 1.5, 2.0, 2.5],
 }
 
 
@@ -335,7 +335,9 @@ def score_window_v2(
                 ):
                     qpos.setdefault(q["driverId"], q["position"])
                 qpos = {d: g for d, g in qpos.items() if d in mu_var}
-                started = [row for row in race["results"] if row["driverId"] in mu_var]
+                started = [
+                    row for row in model_v2.starters(race["results"]) if row["driverId"] in mu_var
+                ]
                 gpos = model_v2.start_slots(started, qpos) or qpos
                 offs = model_v2.grid_offsets(gpos, snap["disp_ratio"], params)
                 mu_var = {d: (mv[0] + offs.get(d, 0.0), mv[1]) for d, mv in mu_var.items()}
@@ -517,10 +519,14 @@ def evaluate(races, active, test, v2_data=None) -> dict:
             champion = POST_QUALI_RATINGS
         else:
             champion = POST_QUALI_GRID_FIT if fit_ok else POST_QUALI_GRID
+        # The gates are advisory: the live site always serves DEFAULT_PARAMS_V2,
+        # whose rung is POST_QUALI_GRID_FIT, so that is the rung the site cites.
+        # A failed gate is reported loudly instead of switching what is quoted.
         post_quali_info = {
             "gridAccepted": grid_ok,
             "gridFitAccepted": fit_ok,
             "champion": champion,
+            "served": POST_QUALI_GRID_FIT,
         }
 
     base_rate = sum(r["is_new"] for r in rf) / max(len(rf), 1)
@@ -624,7 +630,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     if v2_data is not None:
         payload["chosenModel"] = res["chosenName"]
-        payload["postQualiModel"] = res["postQuali"]["champion"]
+        payload["postQualiModel"] = res["postQuali"]["served"]
     save_model_eval(payload)
 
     print(f"Chosen model: {res['chosenName']}\nModel params: {params}")
@@ -656,6 +662,11 @@ def main(argv: list[str] | None = None) -> int:
             f" | post-vs-pre logLoss {post['logLoss']:.3f} vs {pre['logLoss']:.3f}"
             f"{' OK' if sane else '  WARNING: post-quali scored worse than pre-quali'}"
         )
+        if gate["champion"] != gate["served"]:
+            print(
+                f"WARNING: the gates prefer {gate['champion']!r} but the site serves"
+                f" {gate['served']!r} (DEFAULT_PARAMS_V2); revisit the grid knobs."
+            )
     print(
         f"\nP(new) base-rate {res['baseRate']:.3f} | brierNew base {res['brierNewBase']:.3f} "
         f"vs model {chosen['brierNew']:.3f} | ECE {res['ece']:.3f}"

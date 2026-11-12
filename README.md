@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-1419%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1465%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -103,7 +103,7 @@ The predictor is a **dynamic Bayesian rating engine** ([`src/compute/model_v2.py
 >
 > Ablations: pace + reliability alone already beat v1; adding the qualifying order gave the biggest jump; a failure-order (attrition) channel earned zero weight and is off, as does an adaptive car-diffusion channel that lets a constructor's rating loosen when its form keeps shifting the same way — it won the tuning window and lost the hold-out, so it ships dormant. Once a race's qualifying is in, the grid order replays through the ratings, a grid-position term is added, and the ratings themselves are learned net of the grid; each step is gate-accepted on the same hold-out. Full ladder in [`data/model_eval.json`](data/model_eval.json).
 >
-> **The post-qualifying model was re-derived in Nov 2026.** The first grid term was scored against qualifying positions and its weight stopped at the top of a tuning grid that ended at 0.4. Scored against the grid each race really started from, with room to move, the weight settles at 1.0, the circuit modulation earns nothing and is off, and grid-aware learning wins its own gate: post-qualifying top-3 went from 40.1% to 46.5% and log-loss from 3.423 to 3.172 on the hold-out. Top-k is counted from a coarser simulation than log-loss, which is why the last row can trail the one above it on top-3 while beating it on both gated scores. The same review tried to improve the race-morning forecast and found nothing worth shipping. A wider re-tune of every knob won the tuning seasons and tied on the hold-out; simulating the grid before the race improved the new-trio chance but lost on trio log-loss; re-tuning season by season gained less than its own noise. Team-mates sharing one car draw and a wild-race mixture did not even win the tuning seasons, and qualifying lap-time gaps added too little on top of the corrected grid term to justify a new dataset. The race-morning model is unchanged.
+> **The post-qualifying model was re-derived in Nov 2026.** The first grid term was scored against qualifying positions and its weight stopped at the top of a tuning grid that ended at 0.4. Scored against the grid each race really started from, with room to move, the weight settles at 1.0, the circuit modulation earns nothing and is off, and grid-aware learning wins its own gate. Measured the same way (on real starting grids), post-qualifying top-3 went from 41.9% to 46.5% and log-loss from 3.379 to 3.172 on the hold-out. Those figures assume the race's real grid; before F1 publishes it the site rebuilds the grid from qualifying and hand-entered penalties, and on that grid the model scores 44.7% and 3.232. Top-k is counted from a coarser simulation than log-loss, which is why the last row can trail the one above it on top-3 while beating it on both gated scores. The same review tried to improve the race-morning forecast and found nothing worth shipping. A wider re-tune of every knob won the tuning seasons and tied on the hold-out; simulating the grid before the race improved the new-trio chance but lost on trio log-loss; re-tuning season by season gained less than its own noise. Team-mates sharing one car draw and a wild-race mixture did not even win the tuning seasons, and qualifying lap-time gaps added too little on top of the corrected grid term to justify a new dataset. The race-morning model is unchanged.
 
 ---
 
@@ -182,7 +182,7 @@ assets/         source CSS + JS (copied into dist/ at build time)
 .claude/        Claude Code rules, commit hook and helper scripts
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (1341 tests, run in CI)
+tests/          pytest suite (1465 tests, run in CI)
 ```
 
 </details>
@@ -223,7 +223,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 1435 tests + coverage gate (≥70%)
+pytest --cov                          # 1465 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami

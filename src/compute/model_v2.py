@@ -44,6 +44,7 @@ __all__ = [
     "model",
     "predict_race",
     "start_slots",
+    "starters",
 ]
 
 # Locked by the walk-forward tuner (backtest.py --tune-v2) on 2010-2018:
@@ -103,6 +104,10 @@ DEFAULT_PARAMS_V2: dict = {
     # slot to the car and then added the slot again on race day. The race-morning
     # pass never uses it: with no grid to condition on, it needs the ratings that
     # already carry each car's usual starting position.
+    # NOT the --tune-v2-grid winner: on 2010-2018 alone the tuner climbs to 2.0
+    # (J 3.887 -> 3.867), but 2.0 is worse on both 1994-2002 and 2003-2009, so it
+    # fails the rule every other change in the 2026-11 review had to pass (better
+    # on both halves of 2003-2018). 1.0 is the value the structure argues for.
     "grid_fit": 1.0,
     # Adaptive constructor diffusion: a car that keeps moving the SAME way race
     # after race has genuinely changed, so let its belief loosen and catch up.
@@ -230,8 +235,9 @@ def grid_offsets(quali_pos: dict[str, int], disp_ratio: float, params: dict) -> 
     """Causal track-position term: additive log-worth offsets from grid slots.
 
     ``x(g) = -(ln g - mean ln g)`` -- a centered power-law decay in grid
-    position -- scaled by ``w_grid`` and amplified at processional circuits
-    (low displacement ratio) via ``disp_ratio ** (-grid_circuit_beta)``.
+    position -- scaled by ``w_grid`` and by ``disp_ratio ** (-grid_circuit_beta)``,
+    which would amplify it at processional circuits (low displacement ratio).
+    The locked beta is 0, so today the term is the same at every circuit.
     Zero-sum across the field, so it shifts relative order, not overall level.
     """
     w = params["w_grid"]
@@ -241,6 +247,22 @@ def grid_offsets(quali_pos: dict[str, int], disp_ratio: float, params: dict) -> 
     mean_log = sum(logs.values()) / len(logs)
     scale = w * (max(disp_ratio, 1e-6) ** (-params["grid_circuit_beta"]))
     return {d: scale * (mean_log - lg) for d, lg in logs.items()}
+
+
+def starters(results: list[dict]) -> list[dict]:
+    """The rows of a classification that took the start, one per driver.
+
+    DNS/DNQ/withdrawn entries never took the start and are dropped; a shared
+    drive (1950s) keeps the driver's first row that did start.
+    """
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for row in results:
+        if classify_status(row["status"]) == "excluded" or row["driverId"] in seen:
+            continue
+        seen.add(row["driverId"])
+        rows.append(row)
+    return rows
 
 
 def start_slots(rows: list[dict], quali_pos: dict[str, int] | None = None) -> dict[str, int]:
@@ -658,15 +680,8 @@ class HistoryFilter:
         self.season = season
 
         circuit = race.get("circuitId", "")
-        rows: list[dict] = []
-        seen_dids: set[str] = set()
-        for row in race["results"]:
-            # DNS/DNQ/withdrawn entries never took the start: invisible everywhere.
-            # Shared drives (1950s) keep only the driver's first row.
-            if classify_status(row["status"]) == "excluded" or row["driverId"] in seen_dids:
-                continue
-            seen_dids.add(row["driverId"])
-            rows.append(row)
+        # DNS/DNQ/withdrawn entries never took the start: invisible everywhere.
+        rows = starters(race["results"])
 
         # ---- channel 1: qualifying order (before the snapshot in post-quali mode) ----
         if snapshot_after_quali:
