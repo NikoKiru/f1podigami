@@ -343,7 +343,7 @@ def test_grid_term_sharpens_on_grid_follows_finish_history():
             quali_map[(str(season), str(rnd))] = _q_for(season, rnd, order)
             trio_keys[(str(season), str(rnd))] = tuple(sorted(d for d, _ in order[:3]))
     base = dict(backtest.model_v2.DEFAULT_PARAMS_V2, w_grid=0.0)
-    grid = dict(backtest.model_v2.DEFAULT_PARAMS_V2, w_grid=0.4)
+    grid = dict(backtest.model_v2.DEFAULT_PARAMS_V2, w_grid=0.4, grid_fit=0.0)
     r0 = backtest.score_window_v2(
         rresults, quali_map, trio_keys, (2011, 2011), base, post_quali=True
     )
@@ -355,12 +355,81 @@ def test_grid_term_sharpens_on_grid_follows_finish_history():
     assert p1 > p0
 
 
+def _history(starts):
+    """(rresults, quali_map, trio_keys) from [(season, rnd, quali order, start order)];
+    every race finishes in the order it started."""
+    rresults, quali_map, trio_keys = [], {}, {}
+    for season, rnd, q_order, start, with_grid in starts:
+        rows = [_rrow_v2(d, c, i + 1 if with_grid else 0, i + 1) for i, (d, c) in enumerate(start)]
+        rresults.append(
+            {
+                "season": str(season),
+                "round": str(rnd),
+                "raceName": "GP",
+                "date": "",
+                "circuitId": "ring",
+                "results": rows,
+            }
+        )
+        quali_map[(str(season), str(rnd))] = _q_for(season, rnd, q_order)
+        trio_keys[(str(season), str(rnd))] = tuple(sorted(d for d, _ in start[:3]))
+    return rresults, quali_map, trio_keys
+
+
+def _penalty_history(with_grid):
+    """The pole-sitter of every round is sent to the back and the finish follows
+    the start order, while the qualifying order rotates so long-run ratings
+    equalise: only the grid the race really started from says who is on the
+    podium. ``with_grid=False`` blanks the grid column of the classification."""
+    drivers = [("a", "t1"), ("b", "t1"), ("c", "t2"), ("d", "t2")]
+    starts = []
+    for season in (2010, 2011):
+        for rnd in range(1, 16):
+            q_order = drivers[rnd % 4 :] + drivers[: rnd % 4]
+            starts.append((season, rnd, q_order, q_order[1:] + q_order[:1], with_grid))
+    return _history(starts)
+
+
+def _mean_p_true(history, **overrides):
+    params = dict(backtest.model_v2.DEFAULT_PARAMS_V2, **overrides)
+    recs = backtest.score_window_v2(*history, (2011, 2011), params, post_quali=True)
+    return sum(r["p_true"] for r in recs) / len(recs)
+
+
+def test_post_quali_scores_the_grid_the_race_started_from():
+    # With the grid column, the penalised pole-sitter is known to start last.
+    # Without it the qualifying order stands in, and puts him on pole. Grid-aware
+    # learning is off, so the grid can only reach the forecast as its offsets.
+    real = _mean_p_true(_penalty_history(True), grid_fit=0.0)
+    stand_in = _mean_p_true(_penalty_history(False), grid_fit=0.0)
+    assert real > stand_in
+
+
+def test_grid_fit_stops_the_slot_being_counted_twice():
+    # a and b start and finish on the front row all season, c and d behind them.
+    # The plain pass credits the front row to the ratings of a and b and then
+    # adds the front row again on race day. Then the grid flips: only ratings
+    # learned net of the grid can follow it.
+    front, back = [("a", "t1"), ("b", "t1")], [("c", "t2"), ("d", "t2")]
+    starts = [(2010, rnd, front + back, front + back, True) for rnd in range(1, 16)]
+    starts.append((2011, 1, back + front, back + front, True))
+    history = _history(starts)
+    assert _mean_p_true(history, grid_fit=1.0) > _mean_p_true(history, grid_fit=0.0)
+
+
 def test_rungs_v2_postquali_shape():
     names = [name for name, _ in backtest.RUNGS_V2_POSTQUALI]
-    assert names == ["v2 post-quali (ratings)", "v2 post-quali +grid"]
+    assert names == [
+        "v2 post-quali (ratings)",
+        "v2 post-quali +grid",
+        "v2 post-quali +grid fit",
+    ]
     by = dict(backtest.RUNGS_V2_POSTQUALI)
     assert by["v2 post-quali (ratings)"] == {"w_grid": 0.0}
-    assert by["v2 post-quali +grid"] == {}
+    # the grid rung is the shipped model with grid-aware learning switched off
+    assert by["v2 post-quali +grid"] == {"grid_fit": 0.0}
+    assert by["v2 post-quali +grid fit"] == {}
+    assert backtest.model_v2.DEFAULT_PARAMS_V2["grid_fit"] > 0.0
 
 
 def _races_for(trio_keys):
@@ -373,8 +442,24 @@ def test_evaluate_appends_post_quali_rungs_and_gate():
     active = _active_all(races, ["a", "b", "c", "d"])
     res = backtest.evaluate(races, active, (2011, 2011), v2_data=(rresults, quali_map))
     names = [name for name, _ in res["ladder"]]
-    assert names[-2:] == ["v2 post-quali (ratings)", "v2 post-quali +grid"]
-    assert isinstance(res["postQuali"]["gridAccepted"], bool)
+    assert names[-3:] == [
+        "v2 post-quali (ratings)",
+        "v2 post-quali +grid",
+        "v2 post-quali +grid fit",
+    ]
+    gate = res["postQuali"]
+    assert isinstance(gate["gridAccepted"], bool)
+    assert isinstance(gate["gridFitAccepted"], bool)
+    # the champion is the last rung whose gate held, in order
+    if not gate["gridAccepted"]:
+        assert gate["champion"] == "v2 post-quali (ratings)"
+    elif gate["gridFitAccepted"]:
+        assert gate["champion"] == "v2 post-quali +grid fit"
+    else:
+        assert gate["champion"] == "v2 post-quali +grid"
+    # whatever the gates say, the site cites the rung its live params reproduce
+    assert gate["served"] == "v2 post-quali +grid fit"
+    assert dict(backtest.RUNGS_V2_POSTQUALI)[gate["served"]] == {}
     # the pre-quali chosen selection is untouched by the new rungs
     assert res["chosenName"] in ("PL + tuned (chosen)", "v2 full")
 
@@ -390,11 +475,45 @@ def test_tune_v2_grid_touches_only_the_grid_knobs():
     winner = backtest.tune_v2_grid(
         rresults, quali_map, trio_keys, (2010, 2010), sweeps=1, verbose=False
     )
-    assert winner["w_grid"] in backtest.V2_GRID_TUNE_GRID["w_grid"]
-    assert winner["grid_circuit_beta"] in backtest.V2_GRID_TUNE_GRID["grid_circuit_beta"]
+    assert set(backtest.V2_GRID_TUNE_GRID) == {"w_grid", "grid_circuit_beta", "grid_fit"}
+    for knob, grid in backtest.V2_GRID_TUNE_GRID.items():
+        assert winner[knob] in grid
     for k, v in backtest.model_v2.DEFAULT_PARAMS_V2.items():
-        if k not in ("w_grid", "grid_circuit_beta"):
+        if k not in backtest.V2_GRID_TUNE_GRID:
             assert winner[k] == v
+
+
+def test_grid_tune_grid_reaches_past_the_locked_weight():
+    # The first tune locked w_grid at the top of its grid, which hid that the
+    # optimum lay beyond it. A locked value on the edge is a grid that is too short.
+    locked = backtest.model_v2.DEFAULT_PARAMS_V2
+    for knob, grid in backtest.V2_GRID_TUNE_GRID.items():
+        assert locked[knob] in grid
+    assert max(backtest.V2_GRID_TUNE_GRID["w_grid"]) > locked["w_grid"]
+    assert max(backtest.V2_GRID_TUNE_GRID["grid_fit"]) > locked["grid_fit"]
+
+
+def test_main_names_the_post_quali_champion(monkeypatch, capsys):
+    rresults, quali_map, trio_keys = _quali_informative_history()
+    races = _races_for(trio_keys)
+    active = _active_all(races, ["a", "b", "c", "d"])
+    monkeypatch.setattr(backtest, "load", lambda: (races, active))
+    monkeypatch.setattr(backtest, "load_v2", lambda: (rresults, quali_map))
+    saved = {}
+    monkeypatch.setattr(backtest, "save_model_eval", lambda payload: saved.update(payload))
+
+    assert backtest.main([]) == 0
+
+    assert saved["postQualiModel"] == "v2 post-quali +grid fit"
+    assert saved["postQualiModel"] in [row["model"] for row in saved["ladder"]]
+    assert "gridFitAccepted=" in capsys.readouterr().out
+
+
+def test_committed_eval_names_a_post_quali_rung_it_carries():
+    ev = json.loads((DATA / "model_eval.json").read_text(encoding="utf-8"))
+    served = ev.get("postQualiModel")
+    if served is not None:  # a file from before the gates named one has none
+        assert served in [row["model"] for row in ev["ladder"]]
 
 
 def test_main_tune_v2_grid_flag_prints_winner(monkeypatch, capsys):

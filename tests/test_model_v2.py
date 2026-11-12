@@ -48,6 +48,7 @@ def test_default_params_have_exactly_the_locked_knobs():
         "t_wild",
         "w_grid",
         "grid_circuit_beta",
+        "grid_fit",
         "con_adapt_gain",
         "con_adapt_hl",
     }
@@ -480,6 +481,100 @@ def test_grid_offsets_zero_weight_and_empty():
     assert model_v2.grid_offsets({}, 1.0, _gparams()) == {}
 
 
+# --- start_slots ------------------------------------------------------------------
+
+
+def _grow(did, grid):
+    return {"driverId": did, "grid": grid}
+
+
+def test_start_slots_close_the_gap_a_missing_car_leaves():
+    # the car that qualified 2nd never took the start: everyone behind moves up
+    rows = [_grow("a", 1), _grow("c", 3), _grow("d", 4)]
+    assert model_v2.start_slots(rows) == {"a": 1, "c": 2, "d": 3}
+
+
+def test_start_slots_put_pit_lane_starts_behind_the_grid_in_quali_order():
+    rows = [_grow("z", 0), _grow("b", 2), _grow("y", 0), _grow("a", 1)]
+    assert model_v2.start_slots(rows, {"z": 3, "y": 9}) == {"a": 1, "b": 2, "z": 3, "y": 4}
+
+
+def test_start_slots_never_read_the_row_order():
+    # rows arrive in finishing order, so reading it would leak the result into
+    # the grid: with no qualifying order to go by, driverId settles the pit lane
+    rows = [_grow("z", 0), _grow("b", 2), _grow("y", 0), _grow("a", 1)]
+    assert model_v2.start_slots(rows) == {"a": 1, "b": 2, "y": 3, "z": 4}
+    assert model_v2.start_slots(list(reversed(rows))) == model_v2.start_slots(rows)
+
+
+def test_start_slots_settle_a_shared_grid_number_by_driver_id():
+    # the classification sometimes gives two cars the same grid number
+    rows = [_grow("zed", 3), _grow("amy", 3), _grow("bob", 1)]
+    assert model_v2.start_slots(rows) == {"bob": 1, "amy": 2, "zed": 3}
+
+
+def _srow(did, status):
+    return {"driverId": did, "status": status}
+
+
+def test_starters_drop_non_starters_and_keep_a_shared_drives_first_start():
+    rows = [
+        _srow("a", "Finished"),
+        _srow("b", "Did not start"),
+        _srow("b", "+1 Lap"),  # b's car was taken over: his first row that started
+        _srow("a", "Engine"),  # a's second (shared) row is dropped
+        _srow("c", "Withdrew"),
+    ]
+    assert model_v2.starters(rows) == [rows[0], rows[2]]
+
+
+def test_start_slots_empty_without_any_grid_on_record():
+    assert model_v2.start_slots([_grow("a", 0), _grow("b", 0)]) == {}
+    assert model_v2.start_slots([]) == {}
+
+
+def test_start_slots_keep_a_shared_cars_first_row():
+    rows = [_grow("a", 1), _grow("b", 2), _grow("a", 5)]
+    assert model_v2.start_slots(rows) == {"a": 1, "b": 2}
+
+
+# --- observe_order offsets --------------------------------------------------------
+
+
+_ORDER3 = [("a", "ca"), ("b", "cb"), ("c", "cc")]
+
+
+def test_offsets_of_zero_change_nothing():
+    plain, zero = engine(), engine()
+    plain.observe_order(_ORDER3)
+    zero.observe_order(_ORDER3, offsets=[0.0, 0.0, 0.0])
+    for d, c in _ORDER3:
+        assert zero.driver(d).mu == plain.driver(d).mu
+        assert zero.constructor(c).var == plain.constructor(c).var
+
+
+def test_a_common_offset_changes_nothing():
+    # worths are relative: the same constant on every entry is no information
+    plain, shifted = engine(), engine()
+    plain.observe_order(_ORDER3)
+    shifted.observe_order(_ORDER3, offsets=[0.7, 0.7, 0.7])
+    for d, _ in _ORDER3:
+        assert shifted.driver(d).mu == pytest.approx(plain.driver(d).mu)
+
+
+def test_an_expected_win_teaches_less_than_an_upset():
+    order = [("a", "ca"), ("b", "cb")]
+    plain, helped, hindered = engine(), engine(), engine()
+    plain.observe_order(order)
+    helped.observe_order(order, offsets=[1.0, -1.0])  # the winner had the better slot
+    hindered.observe_order(order, offsets=[-1.0, 1.0])  # the winner came from behind
+
+    def gain(eng):
+        return eng.driver("a").mu - DEFAULT_PARAMS_V2["rookie_mu"]
+
+    assert 0.0 < gain(helped) < gain(plain) < gain(hindered)
+
+
 # --- HistoryFilter ----------------------------------------------------------------
 
 
@@ -661,6 +756,93 @@ def test_qualifying_channel_moves_ratings():
     # b out-qualified a, so with the quali channel on, b must end up better off.
     assert on.engine.driver("b").mu > off.engine.driver("b").mu
     assert on.engine.driver("a").mu < off.engine.driver("a").mu
+
+
+# --- grid-aware pass ----------------------------------------------------------------
+
+
+def _race_from(season, rnd, finish, grid):
+    """``finish``: drivers in finishing order; ``grid``: driver -> the slot he started from."""
+    return _rrace(
+        season,
+        rnd,
+        "somewhere",
+        [_rrow(d, "car_" + d, grid[d], i + 1, 50, "Finished") for i, d in enumerate(finish)],
+    )
+
+
+_FROM_POLE = {"a": 1, "b": 2, "c": 3}
+_FROM_LAST = {"a": 3, "b": 2, "c": 1}
+
+
+def test_plain_pass_ignores_the_grid():
+    front, back = (model_v2.HistoryFilter(dict(DEFAULT_PARAMS_V2)) for _ in range(2))
+    front.step(_race_from(2020, 1, ["a", "b", "c"], _FROM_POLE))
+    back.step(_race_from(2020, 1, ["a", "b", "c"], _FROM_LAST))
+    for d in "abc":
+        assert front.engine.driver(d).mu == back.engine.driver(d).mu
+
+
+def test_grid_aware_pass_credits_a_win_from_last_more_than_one_from_pole():
+    p = dict(DEFAULT_PARAMS_V2)
+    front, back = (model_v2.HistoryFilter(p, grid_aware=True) for _ in range(2))
+    front.step(_race_from(2020, 1, ["a", "b", "c"], _FROM_POLE))
+    back.step(_race_from(2020, 1, ["a", "b", "c"], _FROM_LAST))
+    # the same win is worth more from the back...
+    assert back.engine.driver("a").mu > front.engine.driver("a").mu
+    # ...and finishing last costs more from pole than from the back
+    assert back.engine.driver("c").mu < front.engine.driver("c").mu
+
+
+def test_grid_aware_pass_leaves_the_snapshot_alone():
+    # the flag changes what a result teaches, never what was known before it
+    p = dict(DEFAULT_PARAMS_V2)
+    plain, aware = model_v2.HistoryFilter(p), model_v2.HistoryFilter(p, grid_aware=True)
+    race = _race_from(2020, 1, ["a", "b", "c"], _FROM_LAST)
+    assert aware.step(race) == plain.step(race)
+
+
+def test_grid_aware_pass_with_no_share_is_the_plain_pass():
+    p = dict(DEFAULT_PARAMS_V2, grid_fit=0.0)
+    plain, aware = model_v2.HistoryFilter(p), model_v2.HistoryFilter(p, grid_aware=True)
+    for rnd in range(1, 4):
+        race = _race_from(2020, rnd, ["a", "b", "c"], _FROM_LAST)
+        plain.step(race)
+        aware.step(race)
+    for d in "abc":
+        assert aware.engine.driver(d).mu == plain.engine.driver(d).mu
+        assert aware.engine.constructor("car_" + d).var == plain.engine.constructor("car_" + d).var
+
+
+def test_grid_aware_pass_needs_the_grid_term_itself():
+    p = dict(DEFAULT_PARAMS_V2, w_grid=0.0)
+    plain, aware = model_v2.HistoryFilter(p), model_v2.HistoryFilter(p, grid_aware=True)
+    race = _race_from(2020, 1, ["a", "b", "c"], _FROM_LAST)
+    plain.step(race)
+    aware.step(race)
+    assert aware.engine.driver("a").mu == plain.engine.driver("a").mu
+
+
+def test_grid_aware_pass_falls_back_when_a_race_has_no_grid():
+    p = dict(DEFAULT_PARAMS_V2)
+    plain, aware = model_v2.HistoryFilter(p), model_v2.HistoryFilter(p, grid_aware=True)
+    race = _race_from(2020, 1, ["a", "b", "c"], {"a": 0, "b": 0, "c": 0})
+    plain.step(race)
+    aware.step(race)
+    for d in "abc":
+        assert aware.engine.driver(d).mu == plain.engine.driver(d).mu
+
+
+def test_grid_aware_pass_orders_the_pit_lane_by_qualifying():
+    # b and c both start from the pit lane, so only qualifying says who lined up
+    # ahead. Quali channel off, so the order can reach the ratings only this way.
+    p = dict(DEFAULT_PARAMS_V2, w_qual=0.0)
+    race = _race_from(2020, 1, ["a", "b", "c"], {"a": 1, "b": 0, "c": 0})
+    b_ahead, b_behind = (model_v2.HistoryFilter(p, grid_aware=True) for _ in range(2))
+    b_ahead.step(race, _quali(2020, 1, ["a", "b", "c"]))
+    b_behind.step(race, _quali(2020, 1, ["a", "c", "b"]))
+    # beating c is worth more to b when c had the slot in front
+    assert b_behind.engine.driver("b").mu > b_ahead.engine.driver("b").mu
 
 
 # --- predict_race -------------------------------------------------------------------
