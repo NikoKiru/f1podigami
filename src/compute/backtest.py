@@ -242,17 +242,26 @@ V2_TUNE_GRID: dict[str, list] = {
 }
 
 # Post-quali protocol rungs: quali observed BEFORE the snapshot (legitimate
-# conditioning — qualifying precedes the race) with grid offsets applied.
-# The ratings rung is the acceptance-gate baseline for the grid term.
+# conditioning — qualifying precedes the race) with grid offsets applied on the
+# slots the race really started from. Each rung is the acceptance-gate baseline
+# for the next: the grid term must beat the ratings alone, and learning the
+# ratings net of the grid (grid_fit) must beat the grid term on its own.
+POST_QUALI_RATINGS = "v2 post-quali (ratings)"
+POST_QUALI_GRID = "v2 post-quali +grid"
+POST_QUALI_GRID_FIT = "v2 post-quali +grid fit"
 RUNGS_V2_POSTQUALI = [
-    ("v2 post-quali (ratings)", {"w_grid": 0.0}),
-    ("v2 post-quali +grid", {}),
+    (POST_QUALI_RATINGS, {"w_grid": 0.0}),
+    (POST_QUALI_GRID, {"grid_fit": 0.0}),
+    (POST_QUALI_GRID_FIT, {}),
 ]
 
-# Per-knob grids for --tune-v2-grid (the other 18 knobs stay frozen).
+# Per-knob grids for --tune-v2-grid (every other knob stays frozen). The grids
+# reach well past the locked values on purpose: the first tune stopped at the
+# top of a w_grid grid that ended at 0.4.
 V2_GRID_TUNE_GRID: dict[str, list] = {
-    "w_grid": [0.0, 0.05, 0.1, 0.2, 0.4],
-    "grid_circuit_beta": [0.0, 0.5, 1.0],
+    "w_grid": [0.0, 0.2, 0.4, 0.7, 1.0, 1.4, 2.0],
+    "grid_circuit_beta": [0.0, 0.5, 1.0, 1.5],
+    "grid_fit": [0.0, 0.5, 1.0, 1.5, 2.0, 2.5],
 }
 
 
@@ -299,10 +308,13 @@ def score_window_v2(
     adds a coarser all-trio pass (``rank_draws``) — ordinal metrics only.
 
     When ``post_quali`` is set the qualifying order is observed BEFORE the
-    snapshot (legitimate conditioning — qualifying precedes the race) and the
-    causal grid offsets are folded into the driver means.
+    snapshot (legitimate conditioning — qualifying precedes the race), the pass
+    is grid-aware (see ``HistoryFilter``) and the causal grid offsets are folded
+    into the driver means. The offsets use the slots the race really started
+    from — known before lights out, and what the live site predicts from —
+    falling back to the qualifying order where a classification has no grid.
     """
-    hf = model_v2.HistoryFilter(params)
+    hf = model_v2.HistoryFilter(params, grid_aware=post_quali)
     seen: set = set()
     recs = []
     for race in rresults:
@@ -317,14 +329,18 @@ def score_window_v2(
             entrants = sorted(snap["drivers"])
             mu_var = {d: (v[0], v[1]) for d, v in snap["drivers"].items()}
             if post_quali:
-                quali = quali_map.get(rk)
-                if quali:
-                    qpos: dict[str, int] = {}
-                    for q in sorted(quali["results"], key=lambda q: q["position"]):
-                        qpos.setdefault(q["driverId"], q["position"])
-                    qpos = {d: g for d, g in qpos.items() if d in mu_var}
-                    offs = model_v2.grid_offsets(qpos, snap["disp_ratio"], params)
-                    mu_var = {d: (mv[0] + offs.get(d, 0.0), mv[1]) for d, mv in mu_var.items()}
+                qpos: dict[str, int] = {}
+                for q in sorted(
+                    (quali_map.get(rk) or {}).get("results", ()), key=lambda q: q["position"]
+                ):
+                    qpos.setdefault(q["driverId"], q["position"])
+                qpos = {d: g for d, g in qpos.items() if d in mu_var}
+                started = [
+                    row for row in model_v2.starters(race["results"]) if row["driverId"] in mu_var
+                ]
+                gpos = model_v2.start_slots(started, qpos) or qpos
+                offs = model_v2.grid_offsets(gpos, snap["disp_ratio"], params)
+                mu_var = {d: (mv[0] + offs.get(d, 0.0), mv[1]) for d, mv in mu_var.items()}
             p_fin = {d: v[2] for d, v in snap["drivers"].items()}
             seed = 20260704 + int(race["season"]) * 100 + int(race["round"])
             fine = model_v2.predict_race(
@@ -405,8 +421,8 @@ def tune_v2(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> d
 
 
 def tune_v2_grid(rresults, quali_map, trio_keys, val, *, sweeps=2, verbose=True) -> dict:
-    """Coordinate descent over ONLY the two grid knobs (post-quali protocol),
-    with the 18 locked v2 knobs frozen."""
+    """Coordinate descent over ONLY the grid knobs (post-quali protocol), with
+    every other locked v2 knob frozen."""
     best = dict(model_v2.DEFAULT_PARAMS_V2)
     best_j = v2_objective(
         score_window_v2(rresults, quali_map, trio_keys, val, best, post_quali=True)
@@ -491,12 +507,26 @@ def evaluate(races, active, test, v2_data=None) -> dict:
             )
             ladder.append((name, summarize(recs)))
             post_rows[name] = ladder[-1][1]
-        ratings, grid = post_rows["v2 post-quali (ratings)"], post_rows["v2 post-quali +grid"]
-        # Grid-term acceptance gate: +grid ships only if it wins BOTH headline scores.
+        ratings, grid = post_rows[POST_QUALI_RATINGS], post_rows[POST_QUALI_GRID]
+        fit = post_rows[POST_QUALI_GRID_FIT]
+        # Two acceptance gates, each needing BOTH headline scores: the grid term
+        # against the ratings alone, then grid-aware learning against the grid term.
+        grid_ok = bool(
+            grid["logLoss"] <= ratings["logLoss"] and grid["brierNew"] <= ratings["brierNew"]
+        )
+        fit_ok = bool(fit["logLoss"] <= grid["logLoss"] and fit["brierNew"] <= grid["brierNew"])
+        if not grid_ok:
+            champion = POST_QUALI_RATINGS
+        else:
+            champion = POST_QUALI_GRID_FIT if fit_ok else POST_QUALI_GRID
+        # The gates are advisory: the live site always serves DEFAULT_PARAMS_V2,
+        # whose rung is POST_QUALI_GRID_FIT, so that is the rung the site cites.
+        # A failed gate is reported loudly instead of switching what is quoted.
         post_quali_info = {
-            "gridAccepted": bool(
-                grid["logLoss"] <= ratings["logLoss"] and grid["brierNew"] <= ratings["brierNew"]
-            )
+            "gridAccepted": grid_ok,
+            "gridFitAccepted": fit_ok,
+            "champion": champion,
+            "served": POST_QUALI_GRID_FIT,
         }
 
     base_rate = sum(r["is_new"] for r in rf) / max(len(rf), 1)
@@ -583,7 +613,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         winner = tune_v2_grid(v2_data[0], v2_data[1], trio_keys_from(races), val)
         print("Best grid knobs (lock these into model_v2.DEFAULT_PARAMS_V2):")
-        print({k: winner[k] for k in ("w_grid", "grid_circuit_beta")})
+        print({k: winner[k] for k in V2_GRID_TUNE_GRID})
         return 0
 
     res = evaluate(races, active, test, v2_data)
@@ -600,6 +630,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     if v2_data is not None:
         payload["chosenModel"] = res["chosenName"]
+        payload["postQualiModel"] = res["postQuali"]["served"]
     save_model_eval(payload)
 
     print(f"Chosen model: {res['chosenName']}\nModel params: {params}")
@@ -622,13 +653,20 @@ def main(argv: list[str] | None = None) -> int:
         )
     if res.get("postQuali") is not None:
         by = dict(ladder)
-        pre, post = by["v2 full"], by["v2 post-quali +grid"]
+        gate = res["postQuali"]
+        pre, post = by["v2 full"], by[gate["champion"]]
         sane = post["logLoss"] <= pre["logLoss"]
         print(
-            f"\npost-quali gate: gridAccepted={res['postQuali']['gridAccepted']}"
+            f"\npost-quali gate: gridAccepted={gate['gridAccepted']}"
+            f" gridFitAccepted={gate['gridFitAccepted']} -> {gate['champion']}"
             f" | post-vs-pre logLoss {post['logLoss']:.3f} vs {pre['logLoss']:.3f}"
             f"{' OK' if sane else '  WARNING: post-quali scored worse than pre-quali'}"
         )
+        if gate["champion"] != gate["served"]:
+            print(
+                f"WARNING: the gates prefer {gate['champion']!r} but the site serves"
+                f" {gate['served']!r} (DEFAULT_PARAMS_V2); revisit the grid knobs."
+            )
     print(
         f"\nP(new) base-rate {res['baseRate']:.3f} | brierNew base {res['brierNewBase']:.3f} "
         f"vs model {chosen['brierNew']:.3f} | ECE {res['ece']:.3f}"

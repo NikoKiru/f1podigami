@@ -174,6 +174,29 @@ def _next_race(schedule: dict | None, as_of_season: int, as_of_round: int) -> di
     return min(upcoming, key=lambda r: int(r["round"]))
 
 
+def _run_filter(
+    ordered: list[dict],
+    qmap: dict[tuple[str, str], dict],
+    params: dict,
+    new_season: int | None,
+    *,
+    grid_aware: bool = False,
+) -> model_v2.HistoryFilter:
+    """Filter the whole history, then apply the dynamics up to the next race.
+
+    ``new_season`` is the season being entered when the next race opens one,
+    else None for the ordinary between-race step.
+    """
+    hf = model_v2.HistoryFilter(params, grid_aware=grid_aware)
+    for rr in ordered:
+        hf.step(rr, qmap.get((rr["season"], rr["round"])))
+    if new_season is not None:
+        hf.engine.advance_season(new_season)
+    else:
+        hf.engine.advance_race()
+    return hf
+
+
 def _v2_next_race_model(
     race_results: list[dict],
     qualifying: list[dict] | None,
@@ -193,14 +216,13 @@ def _v2_next_race_model(
     filter state simply misses the newest race until results catch up.
 
     Returns {"mu_var", "p_fin", "temp", "circuit", "chance_new", "ranked_new",
-    "trio_probs", "params", "hf", "next_race", "next_season"}.
+    "trio_probs", "params", "hf", "next_race", "next_season", "history",
+    "new_season"}; the last two are what ``_post_quali_block`` needs to run its
+    own grid-aware pass over the same history.
     """
     params = dict(model_v2.DEFAULT_PARAMS_V2)
     qmap = {(q["season"], q["round"]): q for q in (qualifying or [])}
     ordered = sorted(race_results, key=lambda r: (int(r["season"]), int(r["round"])))
-    hf = model_v2.HistoryFilter(params)
-    for rr in ordered:
-        hf.step(rr, qmap.get((rr["season"], rr["round"])))
 
     last_season = int(ordered[-1]["season"])
     last_round = int(ordered[-1]["round"])
@@ -211,10 +233,8 @@ def _v2_next_race_model(
 
     # Between-race dynamics up to the race being predicted.
     sched_season = int(schedule["season"]) if schedule else last_season
-    if circuit is not None and sched_season > last_season:
-        hf.engine.advance_season(sched_season)
-    else:
-        hf.engine.advance_race()
+    new_season = sched_season if circuit is not None and sched_season > last_season else None
+    hf = _run_filter(ordered, qmap, params, new_season)
 
     delta = params["chaos_gamma"] * hf.circuits.dnf_logodds_delta(circuit) if circuit else 0.0
     temp = hf.circuits.temp(circuit, params["chaos_eta"]) if circuit else 1.0
@@ -247,6 +267,8 @@ def _v2_next_race_model(
         "hf": hf,
         "next_race": next_race,
         "next_season": sched_season,
+        "history": (ordered, qmap),
+        "new_season": new_season,
     }
 
 
@@ -321,10 +343,13 @@ def _post_quali_block(
     starting grid (``starting_grids``), the entrants are exactly that grid's cars,
     so a driver with no lap time is added. F1 keeps a car that won't start on its
     grid, so ``retirements`` is still how to take one out of the field.
-    Two effects on top of the already-advanced filter state in ``v2["hf"]``: the
-    quali order through the standard rating channel, then grid_offsets folded into
-    the means. Seeded with the backtest convention so the output is a
-    deterministic function of its inputs.
+    The ratings come from a second pass over the same history, this one
+    grid-aware (``HistoryFilter(grid_aware=True)``): it explains every past race
+    by rating plus the grid it started from, so the ratings are pace net of
+    track position. Two effects on top of that state: the quali order through
+    the standard rating channel, then grid_offsets folded into the means.
+    Seeded with the backtest convention so the output is a deterministic
+    function of its inputs.
 
     The quali order feeds the rating channel untouched — a penalised driver
     still demonstrated that pace — but the causal grid term and the displayed
@@ -337,8 +362,7 @@ def _post_quali_block(
     actually formed) but leave the simulated field, so no trio containing one
     can score and P(new) is recomputed over the cars still circulating.
 
-    NOTE: mutates v2["hf"] (the quali observation) — call only after every
-    pre-quali value has been extracted from ``v2``.
+    The pre-quali state in ``v2["hf"]`` is left untouched.
     """
     nxt = v2["next_race"]
     if nxt is None or not qualifying:
@@ -348,7 +372,7 @@ def _post_quali_block(
     if q is None:
         return None
 
-    hf, params = v2["hf"], v2["params"]
+    params = v2["params"]
     qpos: dict[str, int] = {}
     qcid: dict[str, str] = {}
     entries: list[tuple[str, str]] = []
@@ -361,6 +385,9 @@ def _post_quali_block(
         entries.append((d, row["constructorId"]))
     if len(entries) < 3:
         return None
+
+    ordered, qmap = v2["history"]
+    hf = _run_filter(ordered, qmap, params, v2["new_season"], grid_aware=True)
 
     # Information effect: the fresh quali order through the standard channel.
     hf.engine.observe_order(entries, depth=int(params["depth_qual"]), weight=params["w_qual"])
@@ -568,8 +595,7 @@ def compute(
         key=lambda x: -x["weight"],
     )
 
-    # Grid-aware prediction once the next race's qualifying is known. MUST come
-    # after all pre-quali values are read from v2 — it mutates v2["hf"].
+    # Grid-aware prediction once the next race's qualifying is known.
     post_quali = None
     if v2 is not None:
         post_quali = _post_quali_block(

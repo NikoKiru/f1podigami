@@ -502,6 +502,29 @@ def test_faq_post_quali_item_present_for_v2_and_cites_rung():
     assert "33%" in out  # cites the "v2 post-quali +grid" rung's top3
 
 
+def test_faq_post_quali_item_cites_the_rung_the_gates_left_standing():
+    fit_rung = {
+        "model": "v2 post-quali +grid fit",
+        "n": 159,
+        "top1": 0.2,
+        "top3": 0.47,
+        "top5": 0.56,
+        "logLoss": 3.2,
+    }
+    ev = {
+        **EVAL_WITH_POSTQUALI,
+        "ladder": EVAL_WITH_POSTQUALI["ladder"] + [fit_rung],
+        "postQualiModel": "v2 post-quali +grid fit",
+    }
+    out = bp.render_faq(V2_DATA, ev, 123, 456, 789, 20, 1950)
+    assert "47%" in out and "33%" not in out
+    # a gate that fell back to the grid rung is cited as that rung
+    out = bp.render_faq(
+        V2_DATA, {**ev, "postQualiModel": "v2 post-quali +grid"}, 123, 456, 789, 20, 1950
+    )
+    assert "33%" in out and "47%" not in out
+
+
 def test_faq_post_quali_item_absent_for_v1():
     out = bp.render_faq({}, EVAL, 123, 456, 789, 20, 1950)
     assert "after qualifying" not in out

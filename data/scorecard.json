@@ -1,19 +1,71 @@
 {
   "totals": {
-    "races": 11,
-    "newTrios": 4,
-    "meanChanceNew": 40.5,
-    "brierNew": 0.2171,
-    "baselineBrierNew": 0.2332,
-    "baseRateNew": 40.6,
+    "races": 13,
+    "newTrios": 5,
+    "meanChanceNew": 40.2,
+    "brierNew": 0.2153,
+    "baselineBrierNew": 0.2372,
+    "baseRateNew": 40.7,
     "topPickHits": 2,
-    "topPickExpected": 0.65,
-    "meanDriversRight": 1.82,
-    "boardRaces": 5,
-    "onBoard": 5,
-    "boardTopThree": 3
+    "topPickExpected": 0.78,
+    "meanDriversRight": 1.77,
+    "boardRaces": 7,
+    "onBoard": 6,
+    "boardTopThree": 4
   },
   "races": [
+    {
+      "season": "2026",
+      "round": "20",
+      "raceName": "Brazilian Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Lando Norris",
+        "Max Verstappen",
+        "Isack Hadjar"
+      ],
+      "isNew": true,
+      "chanceNew": 44.6,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Charles Leclerc",
+        "Lando Norris"
+      ],
+      "topPickProb": 6.349,
+      "topPickHit": false,
+      "driversRight": 1,
+      "podiumProb": null,
+      "boardSize": 27,
+      "boardRank": null,
+      "boardFloor": 1.023
+    },
+    {
+      "season": "2026",
+      "round": "19",
+      "raceName": "Mexico City Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Max Verstappen",
+        "Lewis Hamilton",
+        "Andrea Kimi Antonelli"
+      ],
+      "isNew": false,
+      "chanceNew": 32.3,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Lewis Hamilton",
+        "Charles Leclerc"
+      ],
+      "topPickProb": 5.858,
+      "topPickHit": false,
+      "driversRight": 2,
+      "podiumProb": 6.101,
+      "boardSize": 29,
+      "boardRank": 2,
+      "boardFloor": 1.05
+    },
     {
       "season": "2026",
       "round": "18",
@@ -303,15 +355,15 @@
   ],
   "next": {
     "season": "2026",
-    "round": "19",
-    "raceName": "Mexico City Grand Prix",
-    "stage": "post-quali",
-    "chanceNew": 32.3,
+    "round": "21",
+    "raceName": "Las Vegas Grand Prix",
+    "stage": "pre-quali",
+    "chanceNew": 39.6,
     "topPick": [
       "Andrea Kimi Antonelli",
       "Lewis Hamilton",
       "Charles Leclerc"
     ],
-    "topPickProb": 5.859
+    "topPickProb": 2.641
   }
 }
