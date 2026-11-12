@@ -116,10 +116,22 @@
       "number": "81"
     },
     {
+      "driverId": "rafael_camara",
+      "name": "Rafael Camara",
+      "code": null,
+      "number": "51"
+    },
+    {
       "driverId": "russell",
       "name": "George Russell",
       "code": "RUS",
       "number": "63"
+    },
+    {
+      "driverId": "ryo_hirakawa",
+      "name": "Ryo Hirakawa",
+      "code": "HIR",
+      "number": "50"
     },
     {
       "driverId": "sainz",
