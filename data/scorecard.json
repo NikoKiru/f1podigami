@@ -357,13 +357,13 @@
     "season": "2026",
     "round": "21",
     "raceName": "Las Vegas Grand Prix",
-    "stage": "pre-quali",
-    "chanceNew": 39.6,
+    "stage": "post-quali",
+    "chanceNew": 31.0,
     "topPick": [
       "Andrea Kimi Antonelli",
-      "Lewis Hamilton",
-      "Charles Leclerc"
+      "Isack Hadjar",
+      "Max Verstappen"
     ],
-    "topPickProb": 2.641
+    "topPickProb": 8.803
   }
 }
