@@ -358,12 +358,12 @@
     "round": "21",
     "raceName": "Las Vegas Grand Prix",
     "stage": "post-quali",
-    "chanceNew": 31.0,
+    "chanceNew": 22.6,
     "topPick": [
       "Andrea Kimi Antonelli",
       "Isack Hadjar",
       "Max Verstappen"
     ],
-    "topPickProb": 8.803
+    "topPickProb": 3.892
   }
 }
