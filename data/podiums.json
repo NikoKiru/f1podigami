@@ -20035,5 +20035,22 @@
       "driverId": "hadjar",
       "name": "Isack Hadjar"
     }
+  },
+  {
+    "season": "2026",
+    "round": "21",
+    "raceName": "Las Vegas Grand Prix",
+    "p1": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen"
+    },
+    "p2": {
+      "driverId": "norris",
+      "name": "Lando Norris"
+    },
+    "p3": {
+      "driverId": "piastri",
+      "name": "Oscar Piastri"
+    }
   }
 ]
