@@ -552,6 +552,72 @@
   },
   {
     "drivers": [
+      "Max Verstappen",
+      "Lando Norris",
+      "Oscar Piastri"
+    ],
+    "driverIds": [
+      "max_verstappen",
+      "norris",
+      "piastri"
+    ],
+    "count": 8,
+    "lastRace": {
+      "season": "2026",
+      "round": "21",
+      "raceName": "Las Vegas Grand Prix"
+    },
+    "firstRace": {
+      "season": "2023",
+      "round": "16",
+      "raceName": "Japanese Grand Prix"
+    },
+    "lastRaceKey": 2026021,
+    "races": [
+      {
+        "season": "2023",
+        "round": "16",
+        "raceName": "Japanese Grand Prix"
+      },
+      {
+        "season": "2023",
+        "round": "17",
+        "raceName": "Qatar Grand Prix"
+      },
+      {
+        "season": "2024",
+        "round": "18",
+        "raceName": "Singapore Grand Prix"
+      },
+      {
+        "season": "2025",
+        "round": "3",
+        "raceName": "Japanese Grand Prix"
+      },
+      {
+        "season": "2025",
+        "round": "7",
+        "raceName": "Emilia Romagna Grand Prix"
+      },
+      {
+        "season": "2025",
+        "round": "16",
+        "raceName": "Italian Grand Prix"
+      },
+      {
+        "season": "2025",
+        "round": "24",
+        "raceName": "Abu Dhabi Grand Prix"
+      },
+      {
+        "season": "2026",
+        "round": "21",
+        "raceName": "Las Vegas Grand Prix"
+      }
+    ]
+  },
+  {
+    "drivers": [
       "Rubens Barrichello",
       "David Coulthard",
       "Michael Schumacher"
@@ -796,67 +862,6 @@
         "season": "2011",
         "round": "19",
         "raceName": "Brazilian Grand Prix"
-      }
-    ]
-  },
-  {
-    "drivers": [
-      "Max Verstappen",
-      "Lando Norris",
-      "Oscar Piastri"
-    ],
-    "driverIds": [
-      "max_verstappen",
-      "norris",
-      "piastri"
-    ],
-    "count": 7,
-    "lastRace": {
-      "season": "2025",
-      "round": "24",
-      "raceName": "Abu Dhabi Grand Prix"
-    },
-    "firstRace": {
-      "season": "2023",
-      "round": "16",
-      "raceName": "Japanese Grand Prix"
-    },
-    "lastRaceKey": 2025024,
-    "races": [
-      {
-        "season": "2023",
-        "round": "16",
-        "raceName": "Japanese Grand Prix"
-      },
-      {
-        "season": "2023",
-        "round": "17",
-        "raceName": "Qatar Grand Prix"
-      },
-      {
-        "season": "2024",
-        "round": "18",
-        "raceName": "Singapore Grand Prix"
-      },
-      {
-        "season": "2025",
-        "round": "3",
-        "raceName": "Japanese Grand Prix"
-      },
-      {
-        "season": "2025",
-        "round": "7",
-        "raceName": "Emilia Romagna Grand Prix"
-      },
-      {
-        "season": "2025",
-        "round": "16",
-        "raceName": "Italian Grand Prix"
-      },
-      {
-        "season": "2025",
-        "round": "24",
-        "raceName": "Abu Dhabi Grand Prix"
       }
     ]
   },

@@ -1,19 +1,45 @@
 {
   "totals": {
-    "races": 13,
+    "races": 14,
     "newTrios": 5,
-    "meanChanceNew": 40.2,
-    "brierNew": 0.2153,
-    "baselineBrierNew": 0.2372,
-    "baseRateNew": 40.7,
+    "meanChanceNew": 38.9,
+    "brierNew": 0.2036,
+    "baselineBrierNew": 0.2318,
+    "baseRateNew": 40.5,
     "topPickHits": 2,
-    "topPickExpected": 0.78,
-    "meanDriversRight": 1.77,
-    "boardRaces": 7,
+    "topPickExpected": 0.81,
+    "meanDriversRight": 1.71,
+    "boardRaces": 8,
     "onBoard": 6,
     "boardTopThree": 4
   },
   "races": [
+    {
+      "season": "2026",
+      "round": "21",
+      "raceName": "Las Vegas Grand Prix",
+      "stage": "post-quali",
+      "model": "dbpl-v2",
+      "podium": [
+        "Max Verstappen",
+        "Lando Norris",
+        "Oscar Piastri"
+      ],
+      "isNew": false,
+      "chanceNew": 22.6,
+      "topPick": [
+        "Andrea Kimi Antonelli",
+        "Isack Hadjar",
+        "Max Verstappen"
+      ],
+      "topPickProb": 3.892,
+      "topPickHit": false,
+      "driversRight": 1,
+      "podiumProb": null,
+      "boardSize": 18,
+      "boardRank": null,
+      "boardFloor": 1.052
+    },
     {
       "season": "2026",
       "round": "20",
@@ -355,15 +381,15 @@
   ],
   "next": {
     "season": "2026",
-    "round": "21",
-    "raceName": "Las Vegas Grand Prix",
-    "stage": "post-quali",
-    "chanceNew": 22.6,
+    "round": "22",
+    "raceName": "Qatar Grand Prix",
+    "stage": "pre-quali",
+    "chanceNew": 38.6,
     "topPick": [
       "Andrea Kimi Antonelli",
       "Isack Hadjar",
       "Max Verstappen"
     ],
-    "topPickProb": 3.892
+    "topPickProb": 3.068
   }
 }
