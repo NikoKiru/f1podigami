@@ -5,28 +5,28 @@
     {
       "constructorId": "mercedes",
       "name": "Mercedes",
-      "points": 652.0,
+      "points": 666.0,
       "position": 1,
       "wins": 12
     },
     {
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 510.0,
+      "points": 517.0,
       "position": 2,
       "wins": 2
     },
     {
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 415.0,
+      "points": 440.0,
       "position": 3,
-      "wins": 3
+      "wins": 4
     },
     {
       "constructorId": "mclaren",
       "name": "McLaren",
-      "points": 398.0,
+      "points": 431.0,
       "position": 4,
       "wins": 3
     },
@@ -40,7 +40,7 @@
     {
       "constructorId": "alpine",
       "name": "Alpine F1 Team",
-      "points": 69.0,
+      "points": 87.0,
       "position": 6,
       "wins": 0
     },
@@ -61,7 +61,7 @@
     {
       "constructorId": "williams",
       "name": "Williams",
-      "points": 12.0,
+      "points": 16.0,
       "position": 9,
       "wins": 0
     },
@@ -81,27 +81,27 @@
     }
   ],
   "driverConstructor": {
-    "norris": "mclaren",
     "max_verstappen": "red_bull",
-    "hadjar": "red_bull",
-    "russell": "mercedes",
-    "antonelli": "mercedes",
+    "norris": "mclaren",
     "piastri": "mclaren",
-    "lawson": "rb",
-    "leclerc": "ferrari",
-    "hamilton": "ferrari",
-    "hulkenberg": "audi",
-    "arvid_lindblad": "rb",
-    "alonso": "aston_martin",
-    "colapinto": "alpine",
+    "antonelli": "mercedes",
     "gasly": "alpine",
-    "albon": "williams",
+    "colapinto": "alpine",
+    "hamilton": "ferrari",
+    "sainz": "williams",
+    "russell": "mercedes",
+    "leclerc": "ferrari",
+    "hulkenberg": "audi",
     "bortoleto": "audi",
     "bearman": "haas",
-    "perez": "cadillac",
-    "sainz": "williams",
+    "lawson": "rb",
+    "hadjar": "red_bull",
     "rafael_camara": "haas",
     "stroll": "aston_martin",
-    "bottas": "cadillac"
+    "bottas": "cadillac",
+    "alonso": "aston_martin",
+    "arvid_lindblad": "rb",
+    "perez": "cadillac",
+    "albon": "williams"
   }
 }
