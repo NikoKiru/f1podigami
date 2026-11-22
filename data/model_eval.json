@@ -38,42 +38,42 @@
     {
       "model": "recent-frequency",
       "n": 173,
-      "top1": 0.1329,
-      "top3": 0.2775,
-      "top5": 0.3815,
-      "logLoss": 4.2336,
-      "brierSet": 0.9502,
-      "brierNew": 0.2345
+      "top1": 0.1272,
+      "top3": 0.2717,
+      "top5": 0.3757,
+      "logLoss": 4.2574,
+      "brierSet": 0.956,
+      "brierNew": 0.2352
     },
     {
       "model": "current (product)",
       "n": 173,
-      "top1": 0.1329,
-      "top3": 0.2775,
-      "top5": 0.4046,
-      "logLoss": 4.1497,
-      "brierSet": 0.9496,
-      "brierNew": 0.2411
+      "top1": 0.1272,
+      "top3": 0.2717,
+      "top5": 0.3988,
+      "logLoss": 4.1715,
+      "brierSet": 0.9553,
+      "brierNew": 0.242
     },
     {
       "model": "plackett-luce",
       "n": 173,
-      "top1": 0.1329,
-      "top3": 0.2659,
-      "top5": 0.4046,
-      "logLoss": 4.1259,
-      "brierSet": 0.9454,
-      "brierNew": 0.2364
+      "top1": 0.1272,
+      "top3": 0.2601,
+      "top5": 0.3988,
+      "logLoss": 4.1474,
+      "brierSet": 0.9511,
+      "brierNew": 0.2371
     },
     {
       "model": "PL + tuned (chosen)",
       "n": 173,
-      "top1": 0.1214,
-      "top3": 0.289,
-      "top5": 0.4162,
-      "logLoss": 4.0507,
-      "brierSet": 0.9431,
-      "brierNew": 0.2388
+      "top1": 0.1156,
+      "top3": 0.2832,
+      "top5": 0.4104,
+      "logLoss": 4.0745,
+      "brierSet": 0.9489,
+      "brierNew": 0.2397
     },
     {
       "model": "v2 pace",
