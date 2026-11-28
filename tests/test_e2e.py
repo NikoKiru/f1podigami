@@ -1462,8 +1462,8 @@ def test_phone_season_list_fits_a_narrow_wide_font_screen(dist):
 
 
 def test_next_race_card_is_a_single_band_on_desktop(dist):
-    """Race, session times and circuit plate share one band, so the prediction it
-    introduces starts near the top of the page instead of a screen down."""
+    """Race and session times share one band, so the prediction it introduces
+    starts near the top of the page instead of a screen down."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1280, "height": 800})
@@ -1478,6 +1478,64 @@ def test_next_race_card_is_a_single_band_on_desktop(dist):
         browser.close()
     assert card["height"] <= 110, f"next-race card is {card['height']}px tall"
     assert abs(when["y"] - circuit["y"]) < 4, "the session times should sit beside the place"
+
+
+_BAND_TEXT_UNDER_TRACK = """() => {
+    const band = document.querySelector('.race-band.has-track');
+    if (!band) return null;
+    const svg = band.querySelector('.band-track');
+    if (getComputedStyle(svg).display === 'none') return {shown: false, hits: []};
+    // The whole box, not this circuit's line: a wide circuit fills all of it.
+    const t = svg.getBoundingClientRect();
+    const drawn = svg.querySelector('path').getBoundingClientRect();
+    const over = b => b.width && b.right > t.left && b.left < t.right
+        && b.bottom > t.top && b.top < t.bottom;
+    const hits = [];
+    const walker = document.createTreeWalker(band, NodeFilter.SHOW_TEXT);
+    for (let n; (n = walker.nextNode());) {
+        if (!n.textContent.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(n);
+        if ([...range.getClientRects()].some(over)) hits.push(n.textContent.trim());
+    }
+    for (const el of band.querySelectorAll('.nr-flag, .plate'))
+        if (over(el.getBoundingClientRect())) hits.push(el.className.baseVal || el.className);
+    return {shown: true, hits, height: drawn.height};
+}"""
+
+
+@pytest.mark.parametrize(("width", "wider_font"), [(1280, False), (1280, True), (960, True)])
+def test_band_track_never_runs_under_text(dist, width, wider_font):
+    """The next circuit is drawn in full red across the race rows' right side.
+    The rows keep clear of its whole box, so no text, flag or plate is ever under
+    the line, whichever circuit is next."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        if wider_font:
+            page.add_style_tag(content=WIDER_FONT)
+        result = page.evaluate(_BAND_TEXT_UNDER_TRACK)
+        browser.close()
+    if result is None:
+        pytest.skip("no circuit outline for the next race in this build")
+    assert result["shown"], f"the drawing should show at {width}px"
+    assert result["height"] > 60, "the drawing should fill the band's height"
+    assert not result["hits"], f"text under the track drawing: {result['hits']}"
+
+
+def test_band_track_is_off_on_phones(dist):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 800})
+        page.goto(_url(dist, "index.html"))
+        page.wait_for_load_state("load")
+        result = page.evaluate(_BAND_TEXT_UNDER_TRACK)
+        browser.close()
+    if result is None:
+        pytest.skip("no circuit outline for the next race in this build")
+    assert not result["shown"]
 
 
 def test_trio_board_window_matches_its_rows(dist):

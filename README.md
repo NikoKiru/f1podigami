@@ -16,7 +16,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 [![Live site](https://img.shields.io/badge/live-nikokiru.github.io-e10600?style=flat-square&logo=githubpages&logoColor=white)](https://nikokiru.github.io/f1podigami/)
 
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-1465%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1485%20passing-brightgreen?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![Data: Jolpica F1](https://img.shields.io/badge/data-Jolpica%20F1%20API-15151E?style=flat-square&logo=formula1&logoColor=white)](https://api.jolpi.ca)
@@ -36,7 +36,7 @@ No server. No database. No JavaScript framework. Just Python, one `requests` dep
 - 👋 **First-visit welcome** — a small card points new visitors to the FAQ, once, on whichever page they land on.
 - 🧮 **Backtested model** — the algorithm was *chosen by data*, not guesswork (see [the model](#-how-the-predictor-works)).
 - 🤝 **Shared drives** — until 1960 two drivers could share one car and both be classified, so those 18 races put more than one trio on the podium at once; every trio they produced counts, and the combinations table marks them.
-- 🏁 **Next race + last race** — when and where the upcoming GP runs, in your local time, plus a compact recap of the last race's podium trio with its podigami status and linked history.
+- 🏁 **Next race + last race** — when and where the upcoming GP runs, in your local time, plus a compact recap of the last race's podium trio with its podigami status and linked history. On desktop the next circuit is drawn large across the band's right side, turned to whatever angle fills the space best.
 - 🗓️ **Season timeline** — drag a year slider to see every trio that debuted on a podium in each season since 1950.
 - ⏳ **Overdue trios** — driver pairs whose individual form says they *should* share a podium, but haven't yet.
 - 🎲 **Unlikeliest podiums** — the mirror of Overdue: trios that *did* happen despite the odds, ranked by how big a fluke they were.
@@ -182,7 +182,7 @@ assets/         source CSS + JS (copied into dist/ at build time)
 .claude/        Claude Code rules, commit hook and helper scripts
 data/           committed JSON datasets the site builds from
 dist/           generated, deployable site (git-ignored)
-tests/          pytest suite (1465 tests, run in CI)
+tests/          pytest suite (1485 tests, run in CI)
 ```
 
 </details>
@@ -223,7 +223,7 @@ python src/build_site.py
 ```bash
 pip install -r requirements-dev.txt   # tooling: ruff, pytest-cov, pip-audit
 ruff check . && ruff format --check .  # lint + format
-pytest --cov                          # 1465 tests + coverage gate (≥70%)
+pytest --cov                          # 1485 tests + coverage gate (≥70%)
 ```
 
 The suite covers **pure helpers**, **cross-dataset integrity** (combos derive from podiums, podigami
@@ -308,6 +308,7 @@ flowchart LR
 | `src/build/_layout.py` | Shared page chrome: `head()`, `nav()`, footer |
 | `src/build/_rows.py` | Shared ranked table (Overdue / Unlikeliest / Soulmates), mirroring the combinations table: section heading, framed container, column labels, expandable rows |
 | `src/build/flags.py` | Country flag SVGs |
+| `src/build/track_art.py` | Turns the next circuit's outline to fill the race band (plus the hand-picked list of circuits shown the other way up) |
 | `src/build/brand.py` | Plate logo mark and stacked "FORMULA 1 / PODIGAMI" wordmark |
 | `src/build/_names.py` | Particle-aware surnames ("von Trips", "Piquet Jr.") and season-wide initials |
 | `src/build/render_brand_assets.py` | Dev tool (hand-run, Playwright): regenerates `assets/apple-touch-icon.png` and `assets/og-image.png` |
