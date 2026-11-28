@@ -72,10 +72,10 @@ main {
 }
 
 /* next-race box: one band, so the prediction it introduces starts near the top
-   of the page. The race reads on the left, the circuit plate at the end. */
+   of the page. The circuit is drawn behind the band's right side (.band-track). */
 .next-race {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
     align-items: center;
     background: linear-gradient(135deg, var(--surface) 0%, var(--bg-2) 100%);
@@ -85,11 +85,6 @@ main {
     padding: 10px 12px 10px 18px;
     margin-bottom: var(--gap-section);
     overflow: hidden;
-}
-
-/* No track outline for this circuit -> no plate to sit beside. */
-.next-race.nr-noplate {
-    grid-template-columns: 1fr;
 }
 
 /* Tag and round on one line, the name on its own, then the place and session
@@ -174,40 +169,51 @@ main {
     color: var(--text-dim);
 }
 
-/* The track outline framed as a circuit plate, captioned with the circuit's
-   own name and length. */
-.nr-art {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    align-self: stretch;
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 6px 10px;
+/* The next-race and last-race rows share one band, and the next circuit is
+   drawn large on its right side, across both rows: a picture, with no name or
+   length. track_art.py turns each circuit to fill a box of this shape. */
+.race-band {
+    --band-art: 30%;
+    position: relative;
+    margin-bottom: var(--gap-section);
 }
 
-.nr-track {
-    width: 76px;
-    height: 54px;
-    flex: 0 0 auto;
+.race-band > .next-race,
+.race-band > .last-race {
+    margin-bottom: 0;
 }
 
-.nr-track path {
-    stroke: var(--accent-bright);
-    stroke-width: 2.4;
+/* Only where the band has room to give the drawing its own space: a full-red
+   line running under text would cost legibility. */
+.band-track {
+    display: none;
+}
+
+.band-track path {
     fill: none;
+    stroke: var(--accent-bright);
+    stroke-width: 2.4px;
+    vector-effect: non-scaling-stroke;
     stroke-linejoin: round;
     stroke-linecap: round;
 }
 
-.nr-plate-cap {
-    font-size: 10px;
-    line-height: 1.35;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--muted);
+@media (min-width: 960px) {
+    /* The rows keep clear of the drawing, so text wraps before it reaches it. */
+    .race-band.has-track > .next-race,
+    .race-band.has-track > .last-race {
+        padding-right: calc(var(--band-art) + 32px);
+    }
+
+    .band-track {
+        display: block;
+        position: absolute;
+        top: 6px;
+        right: 16px;
+        width: var(--band-art);
+        height: calc(100% - 12px);
+        pointer-events: none;
+    }
 }
 
 .next-race:has(+ .last-race) {
@@ -1729,27 +1735,8 @@ a.tl-where:hover {
         padding: 10px 12px;
     }
 
-    /* A small outline and its caption on one row, instead of an off-centre
-       doodle costing ~90px of scroll. */
-    .nr-art {
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 10px;
-        padding: 4px 10px;
-    }
-
-    .nr-track {
-        width: 48px;
-        height: 32px;
-    }
-
     .nr-date {
         font-size: 12px;
-    }
-
-    .nr-plate-cap {
-        letter-spacing: 0.4px;
     }
 
     .last-race {
@@ -1877,9 +1864,9 @@ a.tl-where:hover {
        scoped to .landing: this sheet also styles four other pages. */
 
     /* Race card: tag, flag, round and the start time on one line, then the
-       name. The place, the session line and the track drawing go. */
+       name. The place and the session line go (the track drawing is
+       desktop-only already). */
     .landing .nr-circuit,
-    .landing .nr-art,
     .landing .nr-date {
         display: none;
     }

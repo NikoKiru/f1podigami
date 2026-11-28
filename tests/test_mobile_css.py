@@ -184,26 +184,32 @@ def test_podigami_hero_trio_stacks_on_mobile():
     ), ".hero-drivers must collapse to one column inside the 600px breakpoint"
 
 
-def test_next_race_plate_becomes_a_band_on_mobile():
-    """The circuit plate must lay out as a row on phones.
-
-    Stacked, the outline renders as a small off-centre doodle costing ~90px of
-    scroll before the prediction hero. As a row it is a small outline beside its
-    caption — one band, roughly half the height, and it reads as a caption.
-    """
+def test_band_track_shows_only_where_the_band_has_room():
+    """The next circuit is drawn large beside the race rows, in full red. Where the
+    band is too narrow to give it its own space the line would run under text, so
+    the drawing is off by default and only a desktop min-width query turns it on."""
     import re
 
     s = css("podigami.css")
-    mobile = re.search(r"@media \(max-width: 600px\)[\s\S]*", s)
-    assert mobile, "podigami.css must keep the 600px breakpoint"
-    assert re.search(
-        r"\.nr-art\s*\{[^}]*flex-direction:\s*row",
-        mobile.group(0),
-    ), ".nr-art must lay out as a row inside the 600px breakpoint"
-    assert re.search(
-        r"\.nr-track\s*\{[^}]*width:\s*\d+px",
-        mobile.group(0),
-    ), ".nr-track must take a fixed width on phones so the band stays short"
+    base = re.sub(r"@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^{}]*\}", "", s)
+    assert re.search(r"\.band-track\s*\{[^}]*display:\s*none", base), (
+        ".band-track must be hidden outside its media query"
+    )
+    block = r"@media \(min-width: (\d+)px\)\s*\{((?:[^{}]*\{[^}]*\})*[^{}]*)\}"
+    queries = [
+        m
+        for m in re.finditer(block, s)
+        if re.search(r"\.band-track\s*\{[^}]*display:\s*block", m.group(2))
+    ]
+    assert queries, ".band-track must be shown inside a min-width query"
+    assert int(queries[0].group(1)) > 720, "the drawing is a desktop-only piece"
+
+
+def test_circuit_plate_is_gone():
+    """The framed plate and its caption were replaced by the band drawing."""
+    s = css("podigami.css")
+    for sel in (".nr-art", ".nr-track", ".nr-plate-cap", ".nr-noplate"):
+        assert sel not in s, f"{sel} is dead CSS once the plate is gone"
 
 
 def test_shared_nav_collapses_to_drawer_on_mobile():
@@ -386,14 +392,14 @@ def _hides(selector: str, css_text: str) -> bool:
 
 def test_phone_first_screen_trims_the_landing_page():
     """On a phone "Most likely trios" has to start in the first screen, so the
-    race card loses its locality line, track drawing and session times, and the
-    chance box its long sentence, full-name cards and accuracy line. Each rule
-    is scoped to the landing page: podigami.css also styles four other pages."""
+    race card loses its locality line and session times (the track drawing is
+    desktop-only), and the chance box its long sentence, full-name cards and
+    accuracy line. Each rule is scoped to the landing page: podigami.css also
+    styles four other pages."""
     s = css("podigami.css")
     phone = s[s.index("@media (max-width: 600px)") :]
     for sel in (
         ".nr-circuit",
-        ".nr-art",
         ".nr-date",
         ".hc-label-long",
         ".hero-pick",
