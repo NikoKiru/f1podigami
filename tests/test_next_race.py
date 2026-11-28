@@ -3,7 +3,7 @@
 import re
 
 from build import build_podigami_html as bp
-from build import flags
+from build import flags, track_art
 from fetch import track_geo
 
 # --- geo helpers --------------------------------------------------------------
@@ -91,6 +91,7 @@ SCHED = {
             "raceName": "A GP",
             "date": "2026-03-01",
             "country": "Austria",
+            "circuitId": "x_ring",
             "circuitName": "X",
             "locality": "L",
             "url": "",
@@ -104,6 +105,7 @@ SCHED = {
             "raceName": "B GP",
             "date": "2026-06-28",
             "country": "Austria",
+            "circuitId": "red_bull_ring",
             "circuitName": "Red Bull Ring",
             "locality": "Spielberg",
             "url": "http://x",
@@ -119,6 +121,7 @@ SCHED = {
             "raceName": "C GP",
             "date": "2026-09-01",
             "country": "Italy",
+            "circuitId": "z_ring",
             "circuitName": "Z",
             "locality": "M",
             "url": "",
@@ -167,9 +170,7 @@ def test_render_next_race_box_contents():
     assert 'class="next-race"' in html
     assert 'data-datetime="2026-06-28T13:00:00Z"' in html
     assert "R2 / 3" in html and "Round 2" not in html
-    assert "Red Bull Ring" in html and "4.318 km" in html
-    assert "<svg" in html  # flag + track outline
-    assert "nr-track" in html
+    assert "<svg" in html  # the flag
     assert 'href="https://en.wikipedia.org/wiki/2026_B_GP"' in html  # race_url wiki fallback
 
 
@@ -195,26 +196,59 @@ def test_last_race_keeps_its_flag_once_next_seasons_calendar_is_in():
     assert "R23" in html
 
 
-def test_render_next_race_circuit_identity_lives_in_the_plate_caption():
-    # The track outline is framed as a circuit plate, so the circuit's name and
-    # length caption it there rather than padding the locality line.
+def test_render_next_race_carries_no_circuit_data():
+    # The track is a drawing to look at, not an info box: neither the circuit's
+    # name nor its length appears anywhere on the card, with or without an outline.
+    for asof_round in ("1", "2"):
+        html = bp.render_next_race(SCHED, asof={"season": "2026", "round": asof_round})
+        assert "Red Bull Ring" not in html and "4.318 km" not in html
+        assert "nr-art" not in html and "nr-plate-cap" not in html and "nr-track" not in html
+        assert "nr-noplate" not in html
+
+
+def test_render_next_race_circuit_line_is_the_place():
     html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "1"})
-    caption = html.split('class="nr-plate-cap"', 1)[1].split("</div>", 1)[0]
-    assert "Red Bull Ring" in caption and "4.318 km" in caption
     circuit_line = html.split('class="nr-circuit"', 1)[1].split("</div>", 1)[0]
-    assert "Spielberg" in circuit_line and "Austria" in circuit_line
-    assert "Red Bull Ring" not in circuit_line
+    assert circuit_line == ">Spielberg, Austria"
 
 
-def test_render_next_race_without_a_track_drops_the_plate_entirely():
-    # Round 3 has no trackPath: an empty framed plate would be worse than none,
-    # so the card goes single-column and the circuit identity stays on the line
-    # it would otherwise have vacated.
-    html = bp.render_next_race(SCHED, asof={"season": "2026", "round": "2"})
-    assert "nr-art" not in html and "nr-plate-cap" not in html
-    assert "nr-noplate" in html
-    circuit_line = html.split('class="nr-circuit"', 1)[1].split("</div>", 1)[0]
-    assert "Z" in circuit_line and "M" in circuit_line
+def _band(asof_round: str, last_html: str = '<section class="last-race"></section>') -> str:
+    nxt = bp.pick_next_race(SCHED, {"season": "2026", "round": asof_round})
+    return bp.render_race_band(
+        bp.render_next_race(SCHED, {"season": "2026", "round": asof_round}), last_html, nxt
+    )
+
+
+def test_race_band_draws_the_next_circuit_behind_both_rows():
+    html = _band("1")
+    assert html.startswith('<div class="race-band has-track">')
+    # The drawing comes after both rows, so it can span them.
+    assert (
+        html.index('class="next-race"') < html.index('class="last-race"') < html.index("band-track")
+    )
+    svg = re.search(r'<svg class="band-track" viewBox="([^"]+)"[^>]*>', html)
+    assert svg and 'aria-hidden="true"' in svg.group(0)
+    view_box, _ = track_art.track_svg(
+        SCHED["races"][1]["trackPath"], SCHED["races"][1]["circuitId"]
+    )
+    assert svg.group(1) == view_box
+
+
+def test_race_band_without_an_outline_draws_nothing():
+    # Round 3 has no trackPath.
+    html = _band("2")
+    assert html.startswith('<div class="race-band">')
+    assert "band-track" not in html
+
+
+def test_race_band_between_seasons_draws_nothing():
+    html = _band("3")
+    assert "Season complete" in html
+    assert "band-track" not in html and "has-track" not in html
+
+
+def test_race_band_with_no_rows_is_empty():
+    assert bp.render_race_band("", "", None) == ""
 
 
 def test_render_next_race_has_no_countdown():

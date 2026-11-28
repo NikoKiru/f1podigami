@@ -245,7 +245,7 @@ def test_landing_page_has_next_race_box(dist):
         return
     assert 'class="next-race"' in html
     assert "data-datetime=" in html  # local-time + race-status hook
-    assert 'class="nr-track"' in html  # circuit outline SVG
+    assert '<svg class="band-track"' in html  # the next circuit, drawn behind the band
 
 
 def test_post_quali_hero_state_matches_data(dist, data):

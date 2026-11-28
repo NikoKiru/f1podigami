@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2026-11-28
+
+### Improvements
+- **The next race's circuit is now a big drawing, not an info box.** On desktop the circuit is drawn large across the right side of the race card, spanning both the next-race and last-race rows, in the same red as before. Each circuit is turned to whatever angle makes it biggest there, worked out again whenever the next race changes. Some circuits are shown the other way up because that's how fans are used to seeing them: Suzuka, Shanghai, Miami, Montréal, Monza, Madring, Mexico City, Las Vegas and Abu Dhabi. The circuit's name and length are gone from the card. Phones don't show the drawing, as before (#447)
+
 ## 2026-11-11
 
 ### Improvements

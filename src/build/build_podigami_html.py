@@ -40,6 +40,7 @@ from _layout import (  # noqa: E402  (needs the sys.path entry above)
 from _names import short_names_by_season, surname  # noqa: E402
 from flags import flag_svg  # noqa: E402
 from team_colors import team_color, text_on  # noqa: E402
+from track_art import track_svg  # noqa: E402
 
 from compute.shared_drives import slot_drivers  # noqa: E402
 from datalib import (  # noqa: E402
@@ -206,32 +207,16 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
     name = esc(nxt["raceName"])
     url = race_url(links or {}, schedule.get("season", ""), nxt["round"], nxt["raceName"])
     name_html = f'<a href="{esc(url)}" target="_blank" rel="noopener">{name}</a>'
-    # With a track outline the circuit's identity captions the plate; without one
-    # there is no plate to caption, so it stays on the locality line rather than
-    # disappearing with it.
+    # Just the place: the circuit is a drawing across the band (render_race_band),
+    # with no name or length beside it.
     place = esc(f"{nxt['locality']}, {nxt['country']}")
-    circuit_bits = [esc(nxt["circuitName"])]
-    if nxt.get("lengthKm"):
-        circuit_bits.append(f"{nxt['lengthKm']} km")
-    plate = ""
-    if nxt.get("trackPath"):
-        plate = (
-            f'<div class="nr-art">'
-            f'<svg class="nr-track" viewBox="{esc(nxt["trackViewBox"])}" '
-            f'fill="none" aria-hidden="true"><path d="{esc(nxt["trackPath"])}"/></svg>'
-            f'<div class="nr-plate-cap">{" &middot; ".join(circuit_bits)}</div>'
-            f"</div>"
-        )
-        circuit_line = place
-    else:
-        circuit_line = " &middot; ".join([circuit_bits[0], place, *circuit_bits[1:]])
     qd = nxt.get("qualifyingDate")
     quali_attr = ""
     if qd and _session_when(qd, nxt.get("qualifyingTime")):
         qt = nxt.get("qualifyingTime") or "00:00:00Z"
         quali_attr = f' data-quali-datetime="{esc(f"{qd}T{qt}")}"'
     return (
-        f'<section class="next-race{"" if plate else " nr-noplate"}"'
+        f'<section class="next-race"'
         f' data-datetime="{esc(_iso_datetime(nxt))}"{quali_attr}>'
         f'  <div class="nr-main">'
         f'    <span class="nr-tag plate plate-primary">Next race</span>'
@@ -241,15 +226,34 @@ def render_next_race(schedule: dict, asof: dict | None = None, links: dict | Non
         f'      <span class="nr-start">{_start_label(nxt)}</span>'
         f"    </div>"
         f'    <h2 class="nr-name">{name_html}</h2>'
-        f'    <div class="nr-circuit">{circuit_line}</div>'
+        f'    <div class="nr-circuit">{place}</div>'
         f'    <div class="nr-when">'
         f'      <span class="nr-status plate plate-status">'
         f'<span class="plate-dot"></span><span class="nr-status-text"></span></span>'
         f'      <span class="nr-date">{_when_line(nxt)}</span>'
         f"    </div>"
         f"  </div>"
-        f"  {plate}"
         f"</section>"
+    )
+
+
+def render_race_band(next_html: str, last_html: str, nxt: dict | None) -> str:
+    """The next-race and last-race rows in one band, the next circuit drawn beside them.
+
+    The drawing comes after both rows and is positioned over the band's right
+    side, so it spans the two. No outline (or no next race) means no drawing.
+    """
+    if not next_html and not last_html:
+        return ""
+    art = track_svg(nxt.get("trackPath"), nxt.get("circuitId", "")) if nxt else None
+    if not art:
+        return f'<div class="race-band">{next_html}{last_html}</div>'
+    view_box, d = art
+    return (
+        f'<div class="race-band has-track">{next_html}{last_html}'
+        f'<svg class="band-track" viewBox="{esc(view_box)}" preserveAspectRatio="xMaxYMid meet"'
+        f' fill="none" aria-hidden="true" focusable="false"><path d="{esc(d)}"/></svg>'
+        f"</div>"
     )
 
 
@@ -1058,6 +1062,7 @@ def main() -> int:
     acc_note = render_accuracy_note(model_eval)
     # The hero predicts the race after asOf — the same one the next-race box names.
     hero_race = pick_next_race(schedule, data.get("asOf")) if schedule else None
+    race_band = render_race_band(next_race, last_race, hero_race)
     hero = (
         render_hero(
             active_cands[0],
@@ -1136,8 +1141,7 @@ def main() -> int:
 </header>
 <main class="landing">
     <div class="container">
-        {next_race}
-        {last_race}
+        {race_band}
         {hero}
         {candidates}
         {hook_row_board}
